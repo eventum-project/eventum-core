@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "eventum"
+version = "0.1.0"
+description = "Flexible event generation tool"
+authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
+license = "Apache License 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
