@@ -2,9 +2,11 @@
 name = "eventum"
 version = "0.1.0"
 description = "Flexible event generation tool"
+license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
-license = "Apache License 2.0"
 readme = "README.md"
+repository = "https://github.com/rnv812/Eventum"
+keywords = ["generator", "testing", "data"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
