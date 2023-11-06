@@ -2,6 +2,8 @@ import argparse
 
 
 def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
+    """Add subparsers and arguments for initial argparser object."""
+
     subparsers = argparser.add_subparsers(
         description=''
     )
