@@ -13,6 +13,9 @@ python = "^3.11"
 pyyaml = "^6.0.1"
 
 
+[tool.poetry.group.studio.dependencies]
+streamlit = "^1.28.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
