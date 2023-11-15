@@ -2,6 +2,9 @@ import streamlit as st
 
 from eventum.studio import session
 
+MAX_TIME_PATTERNS = 5
+
+
 st.set_page_config(
     page_title="Eventum Studio",
 )
@@ -12,8 +15,33 @@ with st.sidebar:
     st.title('Time Patterns')
     if st.session_state['time_pattern_ids']:
         for id in st.session_state['time_pattern_ids']:
-            pattern_container = st.sidebar.container()
-            with st.expander(f'Pattern {id}'):
+            filepath = st.session_state[session.get_widget_key('pattern_filepath', id)]
+            label = st.session_state[session.get_widget_key('pattern_label', id)]
+            color = st.session_state[session.get_widget_key('pattern_color', id)]
+
+            with st.expander(f':{color}[{label}]'):
+                st.header('General')
+                st.text_input(
+                    'Label',
+                    key=session.get_widget_key('pattern_label', id)
+                )
+                st.write(f'File path: *:grey[{filepath}]*')
+                # TODO save_button (maybe save directly in repo????)
+                st.button(
+                    'Save',
+                    key=session.get_widget_key('save_pattern', id),
+                    use_container_width=True,
+                )
+                st.button(
+                    'Delete',
+                    key=session.get_widget_key('delete_pattern', id),
+                    on_click=lambda id=id: session.delete_pattern(st.session_state, id),
+                    use_container_width=True,
+                    type='primary'
+                )
+
+                st.divider()
+
                 st.header('Ocillator')
                 st.number_input(
                     'Interval',
@@ -77,27 +105,24 @@ with st.sidebar:
                     help='...'
                 )
 
-                st.divider()
-
-                st.button(
-                    'Save',
-                    key=session.get_widget_key('save_pattern', id),
-                    use_container_width=True,
-                )
-                st.button(
-                    'Delete',
-                    key=session.get_widget_key('delete_pattern', id),
-                    on_click=lambda id=id: session.delete_pattern(st.session_state, id),
-                    use_container_width=True,
-                    type='primary'
-                )
     else:
         st.sidebar.text('No time patterns')
 
     st.divider()
 
     st.button(
-        'Add',
+        'Add new',
+        disabled=True if len(st.session_state['time_pattern_ids']) >= MAX_TIME_PATTERNS else False,
         on_click=lambda: session.add_pattern(st.session_state),
         use_container_width=True
     )
+
+    st.button(
+        'Load existing',
+        disabled=True if len(st.session_state['time_pattern_ids']) >= MAX_TIME_PATTERNS else False,
+        on_click=lambda: session.add_pattern(st.session_state),
+        use_container_width=True
+    )
+
+    if len(st.session_state['time_pattern_ids']) >= MAX_TIME_PATTERNS:
+        st.write('*:grey[Maximum number of patterns]*')
