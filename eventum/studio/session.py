@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from typing import MutableMapping
+from typing import Callable, Optional, MutableMapping
 
 from yaml import YAMLError
 
@@ -47,8 +47,6 @@ def add_pattern(session_state: MutableMapping) -> None:
 
     session_state['time_pattern_ids'].append(pattern_id_counter)
 
-    session_state[get_widget_key('pattern_save_error', pattern_id_counter)] = ''
-    session_state[get_widget_key('pattern_save_success', pattern_id_counter)] = ''
     session_state[get_widget_key('pattern_is_saved', pattern_id_counter)] = False
     session_state[get_widget_key('pattern_label', pattern_id_counter)] = f'New Pattern {pattern_id_counter}'
     session_state[get_widget_key('pattern_color', pattern_id_counter)] = session_state['available_colors'].pop()
@@ -85,25 +83,31 @@ def get_pattern_data(session_state: MutableMapping, id: int) -> dict:
     }
 
 
-def save_pattern(session_state: MutableMapping, id: int, overwrite: bool = False) -> None:
+def save_pattern(
+        session_state: MutableMapping,
+        id: int,
+        overwrite: bool = False,
+        notify_callback: Optional[Callable] = None
+) -> None:
     """Save current state of pattern to library directory as yaml
     configuration file.
     """
-    session_state[get_widget_key('pattern_save_success', id)] = ''
-    session_state[get_widget_key('pattern_save_error', id)] = ''
+    if notify_callback is None:
+        def not_notify(message): pass
+        notify_callback = not_notify
 
     filename = session_state[get_widget_key('pattern_filename', id)]
 
     ok, message = validate_yaml_filename(filename)
 
     if not ok:
-        session_state[get_widget_key('pattern_save_error', id)] = message
+        notify_callback(f':red[{message}]')
         return
 
     filepath = os.path.join(TIME_PATTERNS_DIR, filename)
 
     if overwrite is False and os.path.exists(filepath):
-        session_state[get_widget_key('pattern_save_error', id)] = 'File already exists in library'
+        notify_callback(':red[File already exists in library]')
         return
 
     try:
@@ -112,11 +116,11 @@ def save_pattern(session_state: MutableMapping, id: int, overwrite: bool = False
             filepath=filepath
         )
     except (OSError, YAMLError) as e:
-        session_state[get_widget_key('pattern_save_error', id)] = e.strerror
+        notify_callback(f':red[{e.strerror}]')
         return
 
     session_state[get_widget_key('pattern_is_saved', id)] = True
-    session_state[get_widget_key('pattern_save_success', id)] = 'Saved in library'
+    notify_callback(':green[Saved in library]')
 
 
 def delete_pattern(session_state: MutableMapping, id: int) -> None:

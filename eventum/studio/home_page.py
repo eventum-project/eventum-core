@@ -15,8 +15,6 @@ with st.sidebar:
     st.title('Time Patterns')
     if st.session_state['time_pattern_ids']:
         for id in st.session_state['time_pattern_ids']:
-            save_error = st.session_state[session.get_widget_key('pattern_save_error', id)]
-            save_success = st.session_state[session.get_widget_key('pattern_save_success', id)]
             is_saved = st.session_state[session.get_widget_key('pattern_is_saved', id)]
 
             label = st.session_state[session.get_widget_key('pattern_label', id)]
@@ -34,23 +32,27 @@ with st.sidebar:
                     disabled=is_saved is True,
                 )
 
-                if save_error:
-                    st.write(f'*:red[{save_error}]*')
-                if save_success:
-                    st.write(f'*:green[{save_success}]*')
-
                 if is_saved:
                     st.button(
                         'Update',
                         key=session.get_widget_key('update_pattern', id),
-                        on_click=lambda id=id: session.save_pattern(st.session_state, id, overwrite=True),
+                        on_click=lambda id=id: session.save_pattern(
+                            st.session_state,
+                            id,
+                            overwrite=True,
+                            notify_callback=st.toast
+                        ),
                         use_container_width=True,
                     )
                 else:
                     st.button(
                         'Save',
                         key=session.get_widget_key('save_pattern', id),
-                        on_click=lambda id=id: session.save_pattern(st.session_state, id),
+                        on_click=lambda id=id: session.save_pattern(
+                            st.session_state,
+                            id,
+                            notify_callback=st.toast
+                        ),
                         use_container_width=True,
                     )
                 st.button(
