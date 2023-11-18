@@ -1,3 +1,4 @@
+import glob
 import os
 
 from string import ascii_letters, digits
@@ -58,3 +59,9 @@ def validate_yaml_filename(filename: str) -> tuple[bool, str]:
         return (False, 'Only **yml** and **yaml** extensions are allowed')
 
     return (True, 'ok')
+
+
+def get_directory_files(directory: str, pattern: str = '*') -> list[str]:
+    """Get list of files in `directory`. If `pattern` is not provided then all
+    files in directory will be returned else only those that match the pattern."""
+    return glob.glob(pathname=pattern, root_dir=directory)

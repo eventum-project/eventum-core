@@ -2,6 +2,9 @@ import streamlit as st
 
 from eventum.studio import session
 
+from eventum.utils.fs import get_directory_files, TIME_PATTERNS_DIR
+
+
 MAX_TIME_PATTERNS = 5
 
 
@@ -142,9 +145,10 @@ with st.sidebar:
         use_container_width=True
     )
     col1, col2 = st.columns([7, 3])
+
     col1.selectbox(
         'Time patterns',
-        options=['pattern1.yml', 'pattern1.yml', 'pattern1.yml'],
+        options=get_directory_files(TIME_PATTERNS_DIR, '*.y*ml'),
         label_visibility='collapsed'
     )
 
