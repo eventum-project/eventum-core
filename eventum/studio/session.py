@@ -1,6 +1,11 @@
+import datetime
+import os
+
 from typing import MutableMapping
 
-from eventum.utils.loaders import load_yaml
+from yaml import YAMLError
+
+from eventum.utils.fs import save_object_as_yaml, TIME_PATTERNS_DIR, validate_yaml_filename
 
 
 def initialize(session_state: MutableMapping) -> None:
@@ -38,12 +43,80 @@ def add_pattern(session_state: MutableMapping) -> None:
     `time_pattern_id_counter`.
     """
     pattern_id_counter = session_state['time_pattern_id_counter']
+    timestamp = datetime.datetime.now().replace(microsecond=0).isoformat()
 
     session_state['time_pattern_ids'].append(pattern_id_counter)
-    session_state[get_widget_key('pattern_filepath', pattern_id_counter)] = 'unsaved'
+
+    session_state[get_widget_key('pattern_save_error', pattern_id_counter)] = ''
+    session_state[get_widget_key('pattern_save_success', pattern_id_counter)] = ''
+    session_state[get_widget_key('pattern_is_saved', pattern_id_counter)] = False
     session_state[get_widget_key('pattern_label', pattern_id_counter)] = f'New Pattern {pattern_id_counter}'
     session_state[get_widget_key('pattern_color', pattern_id_counter)] = session_state['available_colors'].pop()
+
+    session_state[get_widget_key('oscillator_start_timestamp', pattern_id_counter)] = timestamp
+    session_state[get_widget_key('oscillator_end_timestamp', pattern_id_counter)] = timestamp
+
     session_state['time_pattern_id_counter'] += 1
+
+
+def get_pattern_data(session_state: MutableMapping, id: int) -> dict:
+    """Get object with settings of pattern with specified `id."""
+    return {
+        'label': session_state[get_widget_key('pattern_label', id)],
+        'oscillator': {
+            'interval':
+                str(session_state[get_widget_key('oscillator_interval', id)])
+                + session_state[get_widget_key('oscillator_interval_unit', id)],
+            'start': session_state[get_widget_key('oscillator_start_timestamp', id)],
+            'end': session_state[get_widget_key('oscillator_end_timestamp', id)]
+        },
+        'multiplier': {
+            'ratio': session_state[get_widget_key('multiplier_ratio', id)]
+        },
+        'randomizer': {
+            'mean': session_state[get_widget_key('randomizer_mean', id)],
+            'standard_deviation': session_state[get_widget_key('randomizer_deviation', id)],
+            'direction': session_state[get_widget_key('randomizer_direction', id)]
+        },
+        'spreader': {
+            'function': session_state[get_widget_key('spreader_function', id)],
+            'parameters': {}
+        }
+    }
+
+
+def save_pattern(session_state: MutableMapping, id: int, overwrite: bool = False) -> None:
+    """Save current state of pattern to library directory as yaml
+    configuration file.
+    """
+    session_state[get_widget_key('pattern_save_success', id)] = ''
+    session_state[get_widget_key('pattern_save_error', id)] = ''
+
+    filename = session_state[get_widget_key('pattern_filename', id)]
+
+    ok, message = validate_yaml_filename(filename)
+
+    if not ok:
+        session_state[get_widget_key('pattern_save_error', id)] = message
+        return
+
+    filepath = os.path.join(TIME_PATTERNS_DIR, filename)
+
+    if overwrite is False and os.path.exists(filepath):
+        session_state[get_widget_key('pattern_save_error', id)] = 'File already exists in library'
+        return
+
+    try:
+        save_object_as_yaml(
+            data=get_pattern_data(session_state, id),
+            filepath=filepath
+        )
+    except (OSError, YAMLError) as e:
+        session_state[get_widget_key('pattern_save_error', id)] = e.strerror
+        return
+
+    session_state[get_widget_key('pattern_is_saved', id)] = True
+    session_state[get_widget_key('pattern_save_success', id)] = 'Saved in library'
 
 
 def delete_pattern(session_state: MutableMapping, id: int) -> None:
