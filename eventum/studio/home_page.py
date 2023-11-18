@@ -1,8 +1,9 @@
+import glob
+
 import streamlit as st
 
 from eventum.studio import session
-
-from eventum.utils.fs import get_directory_files, TIME_PATTERNS_DIR
+from eventum.utils.fs import TIME_PATTERNS_DIR
 
 
 MAX_TIME_PATTERNS = 5
@@ -148,7 +149,7 @@ with st.sidebar:
 
     col1.selectbox(
         'Time patterns',
-        options=get_directory_files(TIME_PATTERNS_DIR, '*.y*ml'),
+        options=glob.glob(pathname='*.y*ml', root_dir=TIME_PATTERNS_DIR),
         label_visibility='collapsed'
     )
 
