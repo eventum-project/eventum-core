@@ -2,7 +2,7 @@ import glob
 
 import streamlit as st
 
-from eventum.studio import session
+from eventum.studio import session, models
 from eventum.utils.fs import TIME_PATTERNS_DIR
 
 
@@ -78,7 +78,7 @@ with st.sidebar:
                 )
                 col2.selectbox(
                     'Unit',
-                    options=['s', 'm', 'h', 'd'],
+                    options=[unit.value for unit in models.TimeUnit],
                     key=session.get_widget_key('oscillator_interval_unit', id)
                 )
                 col1, col2 = st.columns(2)
@@ -103,20 +103,14 @@ with st.sidebar:
                 st.divider()
 
                 st.header('Randomizer')
-                col1, col2 = st.columns(2)
-                col1.number_input(
-                    'Mean',
-                    value=1,
-                    key=session.get_widget_key('randomizer_mean', id)
-                )
-                col2.number_input(
+                st.number_input(
                     'Deviation',
                     value=0,
                     key=session.get_widget_key('randomizer_deviation', id)
                 )
                 st.selectbox(
                     'Direction',
-                    options=['Greater', 'Lower', 'Both'],
+                    options=[direction.value for direction in models.RandomizerDirection],
                     key=session.get_widget_key('randomizer_direction', id),
                     help='...'
                 )
@@ -126,7 +120,7 @@ with st.sidebar:
                 st.header('Spreader')
                 st.selectbox(
                     'Function',
-                    options=['Linear', 'Random', 'Gaussian'],
+                    options=[func.value for func in models.DistributionFunction],
                     key=session.get_widget_key('spreader_function', id),
                     help='...'
                 )
@@ -150,14 +144,22 @@ with st.sidebar:
     col1.selectbox(
         'Time patterns',
         options=glob.glob(pathname='*.y*ml', root_dir=TIME_PATTERNS_DIR),
+        key='pattern_selected_for_load',
         label_visibility='collapsed'
     )
 
     col2.button(
         'Load',
-        disabled=True if len(st.session_state['time_pattern_ids']) >= MAX_TIME_PATTERNS else False,
-        on_click=lambda: session.add_pattern(st.session_state),
-        use_container_width=True
+        disabled=(
+            len(st.session_state['time_pattern_ids']) >= MAX_TIME_PATTERNS
+            or not st.session_state['pattern_selected_for_load']
+        ),
+        on_click=lambda: session.load_pattern(
+            st.session_state,
+            st.session_state['pattern_selected_for_load'],
+            notify_callback=st.toast
+        ),
+        use_container_width=True,
     )
 
     if len(st.session_state['time_pattern_ids']) >= MAX_TIME_PATTERNS:

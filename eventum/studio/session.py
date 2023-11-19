@@ -1,11 +1,13 @@
-import datetime
 import os
 
+from dataclasses import asdict
+from datetime import datetime
 from typing import Callable, Optional, MutableMapping
 
 from yaml import YAMLError
 
 from eventum.utils.fs import save_object_as_yaml, TIME_PATTERNS_DIR, validate_yaml_filename
+import eventum.studio.models as models
 
 
 def initialize(session_state: MutableMapping) -> None:
@@ -38,49 +40,85 @@ def get_pattern_widget_keys(session_state: MutableMapping, id: int) -> list[str]
     return widget_keys
 
 
-def add_pattern(session_state: MutableMapping) -> None:
-    """Initialize new pattern objects in session state and increment
+def get_default_time_pattern_config(label: str) -> models.TimePatternConfig:
+    """Get `TimePatternConfig` object with default settings for
+    new time pattern created by user.
+    """
+    return models.TimePatternConfig(
+        label=label,
+        oscillator=models.OscillatorConfig(
+            interval=1,
+            unit=models.TimeUnit.SECONDS.value,
+            start=datetime.now().replace(microsecond=0).isoformat(),
+            end=datetime.now().replace(microsecond=0).isoformat()
+        ),
+        multiplier=models.MultiplierConfig(ratio=1),
+        randomizer=models.RandomizerConfig(
+            standard_deviation=0,
+            direction=models.RandomizerDirection.MIXED.value
+        ),
+        spreader=models.SpreaderConfig(
+            function=models.DistributionFunction.LINEAR.value,
+            parameters=models.DistributionParameters()
+        )
+    )
+
+
+def add_pattern(
+    session_state: MutableMapping,
+    initial_state: Optional[models.TimePatternConfig] = None,
+    saved: bool = False
+) -> None:
+    """Initialize objects for new pattern in session state and increment
     `time_pattern_id_counter`.
     """
-    pattern_id_counter = session_state['time_pattern_id_counter']
-    timestamp = datetime.datetime.now().replace(microsecond=0).isoformat()
-
-    session_state['time_pattern_ids'].append(pattern_id_counter)
-
-    session_state[get_widget_key('pattern_is_saved', pattern_id_counter)] = False
-    session_state[get_widget_key('pattern_label', pattern_id_counter)] = f'New Pattern {pattern_id_counter}'
-    session_state[get_widget_key('pattern_color', pattern_id_counter)] = session_state['available_colors'].pop()
-
-    session_state[get_widget_key('oscillator_start_timestamp', pattern_id_counter)] = timestamp
-    session_state[get_widget_key('oscillator_end_timestamp', pattern_id_counter)] = timestamp
-
+    id_counter = session_state['time_pattern_id_counter']
+    session_state['time_pattern_ids'].append(id_counter)
     session_state['time_pattern_id_counter'] += 1
 
+    if initial_state is None:
+        initial_state = get_default_time_pattern_config(f'New Pattern {id_counter}')
 
-def get_pattern_data(session_state: MutableMapping, id: int) -> dict:
-    """Get object with settings of pattern with specified `id."""
-    return {
-        'label': session_state[get_widget_key('pattern_label', id)],
-        'oscillator': {
-            'interval':
-                str(session_state[get_widget_key('oscillator_interval', id)])
-                + session_state[get_widget_key('oscillator_interval_unit', id)],
-            'start': session_state[get_widget_key('oscillator_start_timestamp', id)],
-            'end': session_state[get_widget_key('oscillator_end_timestamp', id)]
-        },
-        'multiplier': {
-            'ratio': session_state[get_widget_key('multiplier_ratio', id)]
-        },
-        'randomizer': {
-            'mean': session_state[get_widget_key('randomizer_mean', id)],
-            'standard_deviation': session_state[get_widget_key('randomizer_deviation', id)],
-            'direction': session_state[get_widget_key('randomizer_direction', id)]
-        },
-        'spreader': {
-            'function': session_state[get_widget_key('spreader_function', id)],
-            'parameters': {}
-        }
-    }
+    session_state[get_widget_key('pattern_label', id_counter)] = initial_state.label
+    session_state[get_widget_key('pattern_color', id_counter)] = session_state['available_colors'].pop()
+    session_state[get_widget_key('pattern_is_saved', id_counter)] = saved
+
+    session_state[get_widget_key('oscillator_interval', id_counter)] = initial_state.oscillator.interval
+    session_state[get_widget_key('oscillator_interval_unit', id_counter)] = initial_state.oscillator.unit
+    session_state[get_widget_key('oscillator_start_timestamp', id_counter)] = initial_state.oscillator.start
+    session_state[get_widget_key('oscillator_end_timestamp', id_counter)] = initial_state.oscillator.end
+
+    session_state[get_widget_key('multiplier_ratio', id_counter)] = initial_state.multiplier.ratio
+
+    session_state[get_widget_key('randomizer_deviation', id_counter)] = initial_state.randomizer.standard_deviation
+    session_state[get_widget_key('randomizer_direction', id_counter)] = initial_state.randomizer.direction
+
+    session_state[get_widget_key('spreader_function', id_counter)] = initial_state.spreader.function
+
+
+def get_pattern_config(session_state: MutableMapping, id: int) -> models.TimePatternConfig:
+    """Get `TimePatternConfig` object with current settings of time pattern with specified `id."""
+    return models.TimePatternConfig(
+        label=session_state[get_widget_key('pattern_label', id)],
+        oscillator=models.OscillatorConfig(
+            interval=session_state[get_widget_key('oscillator_interval', id)],
+            unit=session_state[get_widget_key('oscillator_interval_unit', id)],
+            start=session_state[get_widget_key('oscillator_start_timestamp', id)],
+            end=session_state[get_widget_key('oscillator_end_timestamp', id)]
+        ),
+        multiplier=models.MultiplierConfig(
+            ratio=session_state[get_widget_key('multiplier_ratio', id)]
+        ),
+        randomizer=models.RandomizerConfig(
+            standard_deviation=session_state[get_widget_key('randomizer_deviation', id)],
+            direction=session_state[get_widget_key('randomizer_direction', id)]
+        ),
+        spreader=models.SpreaderConfig(
+            function=session_state[get_widget_key('spreader_function', id)],
+            parameters=models.DistributionParameters()
+            # TODO: think how to handle parameters for different types of distrib. functions
+        )
+    )
 
 
 def save_pattern(
@@ -112,7 +150,7 @@ def save_pattern(
 
     try:
         save_object_as_yaml(
-            data=get_pattern_data(session_state, id),
+            data=asdict(get_pattern_config(session_state, id)),
             filepath=filepath
         )
     except (OSError, YAMLError) as e:
