@@ -7,7 +7,8 @@ from yaml import YAMLError
 
 import eventum.studio.models as models
 from eventum.utils.fs import (TIME_PATTERNS_DIR, save_object_as_yaml,
-                              validate_yaml_filename)
+                              validate_yaml_filename, load_object_from_yaml)
+from dacite import from_dict, DaciteError
 
 
 def initialize(session_state: MutableMapping) -> None:
@@ -51,8 +52,8 @@ def get_all_pattern_keys(
     return widget_keys
 
 
-def get_default_time_pattern_config(label: str) -> models.TimePatternConfig:
-    """Get `TimePatternConfig` object with default settings for new
+def create_default_time_pattern_config(label: str) -> models.TimePatternConfig:
+    """Create `TimePatternConfig` object with default settings for new
     time pattern created by user.
     """
     return models.TimePatternConfig(
@@ -90,7 +91,7 @@ def add_pattern(
     ss['time_pattern_id_counter'] += 1
 
     if initial_state is None:
-        initial_state = get_default_time_pattern_config(
+        initial_state = create_default_time_pattern_config(
             f'New Pattern {id_cnt}'
         )
     init = initial_state
@@ -98,6 +99,9 @@ def add_pattern(
     ss[_pwk('pattern_label', id_cnt)] = init.label
     ss[_pwk('pattern_color', id_cnt)] = ss['available_colors'].pop()
     ss[_pwk('pattern_is_saved', id_cnt)] = saved
+
+    if saved:
+        ss[_pwk('pattern_filename', id_cnt)] = ss['pattern_selected_for_load']
 
     ss[_pwk('oscillator_interval', id_cnt)] = init.oscillator.interval
     ss[_pwk('oscillator_interval_unit', id_cnt)] = init.oscillator.unit
@@ -112,7 +116,7 @@ def add_pattern(
     ss[_pwk('spreader_function', id_cnt)] = init.spreader.function
 
 
-def get_pattern_config(
+def get_pattern_config_from_state(
     session_state: MutableMapping,
     id: int
 ) -> models.TimePatternConfig:
@@ -144,6 +148,10 @@ def get_pattern_config(
     )
 
 
+def _empty_notifier(_):
+    pass
+
+
 def save_pattern(
     session_state: MutableMapping,
     id: int,
@@ -154,8 +162,7 @@ def save_pattern(
     configuration file.
     """
     if notify_callback is None:
-        def not_notify(_): pass
-        notify_callback = not_notify
+        notify_callback = _empty_notifier
 
     filename = session_state[_pwk('pattern_filename', id)]
     ok, message = validate_yaml_filename(filename)
@@ -170,11 +177,11 @@ def save_pattern(
 
     try:
         save_object_as_yaml(
-            data=asdict(get_pattern_config(session_state, id)),
+            data=asdict(get_pattern_config_from_state(session_state, id)),
             filepath=filepath
         )
     except (OSError, YAMLError) as e:
-        notify_callback(f':red[{e.strerror}]')
+        notify_callback(f':red[{e}]')
         return
 
     session_state[_pwk('pattern_is_saved', id)] = True
@@ -195,6 +202,34 @@ def delete_pattern(session_state: MutableMapping, id: int) -> None:
         del session_state[key]
 
 
-def load_pattern():
-    """Load pattern from existing set."""
-    ...
+def load_pattern(
+    session_state: MutableMapping,
+    filename: str,
+    notify_callback: Optional[Callable] = None
+) -> None:
+    """Load pattern from existing set in library."""
+    if notify_callback is None:
+        notify_callback = _empty_notifier
+
+    try:
+        data = load_object_from_yaml(
+            os.path.join(TIME_PATTERNS_DIR, filename)
+        )
+    except (OSError, YAMLError) as e:
+        notify_callback(f':red[{e}]')
+        return
+
+    try:
+        pattern_config = from_dict(
+            data_class=models.TimePatternConfig,
+            data=data
+        )
+    except DaciteError as e:
+        notify_callback(f':red[{e}]')
+        return
+
+    add_pattern(
+        session_state=session_state,
+        initial_state=pattern_config,
+        saved=True
+    )
