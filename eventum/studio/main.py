@@ -1,6 +1,5 @@
 import os
 
-
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 STUDIO_ENTRYPOINT = os.path.join(BASE_PATH, 'home_page.py')
 

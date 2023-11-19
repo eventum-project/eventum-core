@@ -1,17 +1,20 @@
 import os
-
 from dataclasses import asdict
 from datetime import datetime
-from typing import Callable, Optional, MutableMapping
+from typing import Callable, MutableMapping, Optional
 
 from yaml import YAMLError
 
-from eventum.utils.fs import save_object_as_yaml, TIME_PATTERNS_DIR, validate_yaml_filename
 import eventum.studio.models as models
+from eventum.utils.fs import (TIME_PATTERNS_DIR, save_object_as_yaml,
+                              validate_yaml_filename)
 
 
 def initialize(session_state: MutableMapping) -> None:
     """Create initial objects in session state."""
+    if 'initialized' in session_state:
+        return
+
     if 'time_pattern_id_counter' not in session_state:
         session_state['time_pattern_id_counter'] = 1
 
@@ -19,18 +22,26 @@ def initialize(session_state: MutableMapping) -> None:
         session_state['time_pattern_ids'] = []
 
     if 'available_colors' not in session_state:
-        session_state['available_colors'] = set(['blue', 'green', 'orange', 'red', 'violet'])
+        session_state['available_colors'] = set(
+            ['blue', 'green', 'orange', 'red', 'violet']
+        )
+
+    session_state['initialized'] = True
 
 
-def get_widget_key(name: str, id: int) -> str:
-    """Get unique key for a widget that will be used in session state.
-    The parameter `id` is assumed to be a time pattern ID.
-    """
-    return f'{name}_{id}'
+def get_pattern_widget_key(base_key: str, pattern_id: int) -> str:
+    """Get unique key for a widget that will be used in session state."""
+    return f'{base_key}_{pattern_id}'
 
 
-def get_pattern_widget_keys(session_state: MutableMapping, id: int) -> list[str]:
-    """Get all input widget keys that are in the pattern with specified `id`."""
+_pwk = get_pattern_widget_key
+
+
+def get_all_pattern_keys(
+    session_state: MutableMapping,
+    id: int
+) -> list[str]:
+    """Get all widget keys that are in the pattern with specified `id`."""
     widget_keys = []
     for key in session_state.keys():
         parts = key.rsplit(sep='_', maxsplit=1)
@@ -41,8 +52,8 @@ def get_pattern_widget_keys(session_state: MutableMapping, id: int) -> list[str]
 
 
 def get_default_time_pattern_config(label: str) -> models.TimePatternConfig:
-    """Get `TimePatternConfig` object with default settings for
-    new time pattern created by user.
+    """Get `TimePatternConfig` object with default settings for new
+    time pattern created by user.
     """
     return models.TimePatternConfig(
         label=label,
@@ -54,7 +65,7 @@ def get_default_time_pattern_config(label: str) -> models.TimePatternConfig:
         ),
         multiplier=models.MultiplierConfig(ratio=1),
         randomizer=models.RandomizerConfig(
-            standard_deviation=0,
+            deviation=0,
             direction=models.RandomizerDirection.MIXED.value
         ),
         spreader=models.SpreaderConfig(
@@ -69,81 +80,90 @@ def add_pattern(
     initial_state: Optional[models.TimePatternConfig] = None,
     saved: bool = False
 ) -> None:
-    """Initialize objects for new pattern in session state and increment
-    `time_pattern_id_counter`.
+    """Initialize objects for new pattern in session state and
+    increment `time_pattern_id_counter`.
     """
-    id_counter = session_state['time_pattern_id_counter']
-    session_state['time_pattern_ids'].append(id_counter)
-    session_state['time_pattern_id_counter'] += 1
+    ss = session_state
+
+    id_cnt = ss['time_pattern_id_counter']
+    ss['time_pattern_ids'].append(id_cnt)
+    ss['time_pattern_id_counter'] += 1
 
     if initial_state is None:
-        initial_state = get_default_time_pattern_config(f'New Pattern {id_counter}')
+        initial_state = get_default_time_pattern_config(
+            f'New Pattern {id_cnt}'
+        )
+    init = initial_state
 
-    session_state[get_widget_key('pattern_label', id_counter)] = initial_state.label
-    session_state[get_widget_key('pattern_color', id_counter)] = session_state['available_colors'].pop()
-    session_state[get_widget_key('pattern_is_saved', id_counter)] = saved
+    ss[_pwk('pattern_label', id_cnt)] = init.label
+    ss[_pwk('pattern_color', id_cnt)] = ss['available_colors'].pop()
+    ss[_pwk('pattern_is_saved', id_cnt)] = saved
 
-    session_state[get_widget_key('oscillator_interval', id_counter)] = initial_state.oscillator.interval
-    session_state[get_widget_key('oscillator_interval_unit', id_counter)] = initial_state.oscillator.unit
-    session_state[get_widget_key('oscillator_start_timestamp', id_counter)] = initial_state.oscillator.start
-    session_state[get_widget_key('oscillator_end_timestamp', id_counter)] = initial_state.oscillator.end
+    ss[_pwk('oscillator_interval', id_cnt)] = init.oscillator.interval
+    ss[_pwk('oscillator_interval_unit', id_cnt)] = init.oscillator.unit
+    ss[_pwk('oscillator_start_timestamp', id_cnt)] = init.oscillator.start
+    ss[_pwk('oscillator_end_timestamp', id_cnt)] = init.oscillator.end
 
-    session_state[get_widget_key('multiplier_ratio', id_counter)] = initial_state.multiplier.ratio
+    ss[_pwk('multiplier_ratio', id_cnt)] = init.multiplier.ratio
 
-    session_state[get_widget_key('randomizer_deviation', id_counter)] = initial_state.randomizer.standard_deviation
-    session_state[get_widget_key('randomizer_direction', id_counter)] = initial_state.randomizer.direction
+    ss[_pwk('randomizer_deviation', id_cnt)] = init.randomizer.deviation
+    ss[_pwk('randomizer_direction', id_cnt)] = init.randomizer.direction
 
-    session_state[get_widget_key('spreader_function', id_counter)] = initial_state.spreader.function
+    ss[_pwk('spreader_function', id_cnt)] = init.spreader.function
 
 
-def get_pattern_config(session_state: MutableMapping, id: int) -> models.TimePatternConfig:
-    """Get `TimePatternConfig` object with current settings of time pattern with specified `id."""
+def get_pattern_config(
+    session_state: MutableMapping,
+    id: int
+) -> models.TimePatternConfig:
+    """Get `TimePatternConfig` object with current settings of time
+    pattern with specified `id.
+    """
+    ss = session_state
+
     return models.TimePatternConfig(
-        label=session_state[get_widget_key('pattern_label', id)],
+        label=ss[_pwk('pattern_label', id)],
         oscillator=models.OscillatorConfig(
-            interval=session_state[get_widget_key('oscillator_interval', id)],
-            unit=session_state[get_widget_key('oscillator_interval_unit', id)],
-            start=session_state[get_widget_key('oscillator_start_timestamp', id)],
-            end=session_state[get_widget_key('oscillator_end_timestamp', id)]
+            interval=ss[_pwk('oscillator_interval', id)],
+            unit=ss[_pwk('oscillator_interval_unit', id)],
+            start=ss[_pwk('oscillator_start_timestamp', id)],
+            end=ss[_pwk('oscillator_end_timestamp', id)]
         ),
         multiplier=models.MultiplierConfig(
-            ratio=session_state[get_widget_key('multiplier_ratio', id)]
+            ratio=ss[_pwk('multiplier_ratio', id)]
         ),
         randomizer=models.RandomizerConfig(
-            standard_deviation=session_state[get_widget_key('randomizer_deviation', id)],
-            direction=session_state[get_widget_key('randomizer_direction', id)]
+            deviation=ss[_pwk('randomizer_deviation', id)],
+            direction=ss[_pwk('randomizer_direction', id)]
         ),
         spreader=models.SpreaderConfig(
-            function=session_state[get_widget_key('spreader_function', id)],
+            function=ss[_pwk('spreader_function', id)],
             parameters=models.DistributionParameters()
-            # TODO: think how to handle parameters for different types of distrib. functions
+            # TODO: think how to handle parameters for different distributions
         )
     )
 
 
 def save_pattern(
-        session_state: MutableMapping,
-        id: int,
-        overwrite: bool = False,
-        notify_callback: Optional[Callable] = None
+    session_state: MutableMapping,
+    id: int,
+    overwrite: bool = False,
+    notify_callback: Optional[Callable] = None
 ) -> None:
     """Save current state of pattern to library directory as yaml
     configuration file.
     """
     if notify_callback is None:
-        def not_notify(message): pass
+        def not_notify(_): pass
         notify_callback = not_notify
 
-    filename = session_state[get_widget_key('pattern_filename', id)]
-
+    filename = session_state[_pwk('pattern_filename', id)]
     ok, message = validate_yaml_filename(filename)
-
     if not ok:
         notify_callback(f':red[{message}]')
         return
 
     filepath = os.path.join(TIME_PATTERNS_DIR, filename)
-
     if overwrite is False and os.path.exists(filepath):
         notify_callback(':red[File already exists in library]')
         return
@@ -157,7 +177,7 @@ def save_pattern(
         notify_callback(f':red[{e.strerror}]')
         return
 
-    session_state[get_widget_key('pattern_is_saved', id)] = True
+    session_state[_pwk('pattern_is_saved', id)] = True
     notify_callback(':green[Saved in library]')
 
 
@@ -167,10 +187,10 @@ def delete_pattern(session_state: MutableMapping, id: int) -> None:
     """
     session_state['time_pattern_ids'].remove(id)
 
-    released_color = session_state[get_widget_key('pattern_color', id)]
+    released_color = session_state[_pwk('pattern_color', id)]
     session_state['available_colors'].add(released_color)
 
-    widget_keys = get_pattern_widget_keys(session_state, id)
+    widget_keys = get_all_pattern_keys(session_state, id)
     for key in widget_keys:
         del session_state[key]
 

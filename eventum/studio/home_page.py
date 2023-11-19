@@ -2,9 +2,11 @@ import glob
 
 import streamlit as st
 
-from eventum.studio import session, models
+from eventum.studio import models
+from eventum.studio.session import add_pattern, delete_pattern
+from eventum.studio.session import get_pattern_widget_key as pwk
+from eventum.studio.session import initialize, load_pattern, save_pattern
 from eventum.utils.fs import TIME_PATTERNS_DIR
-
 
 MAX_TIME_PATTERNS = 5
 
@@ -13,34 +15,35 @@ st.set_page_config(
     page_title="Eventum Studio",
 )
 
-session.initialize(st.session_state)
+initialize(st.session_state)
 
 with st.sidebar:
     st.title('Time Patterns')
+    st.divider()
     if st.session_state['time_pattern_ids']:
         for id in st.session_state['time_pattern_ids']:
-            is_saved = st.session_state[session.get_widget_key('pattern_is_saved', id)]
+            is_saved = st.session_state[pwk('pattern_is_saved', id)]
 
-            label = st.session_state[session.get_widget_key('pattern_label', id)]
-            color = st.session_state[session.get_widget_key('pattern_color', id)]
+            label = st.session_state[pwk('pattern_label', id)]
+            color = st.session_state[pwk('pattern_color', id)]
 
             with st.expander(f':{color}[{label}]'):
                 st.header('General')
                 st.text_input(
                     'Label',
-                    key=session.get_widget_key('pattern_label', id)
+                    key=pwk('pattern_label', id)
                 )
                 st.text_input(
                     'File name',
-                    key=session.get_widget_key('pattern_filename', id),
+                    key=pwk('pattern_filename', id),
                     disabled=is_saved is True,
                 )
 
                 if is_saved:
                     st.button(
                         'Update',
-                        key=session.get_widget_key('update_pattern', id),
-                        on_click=lambda id=id: session.save_pattern(
+                        key=pwk('update_pattern', id),
+                        on_click=lambda id=id: save_pattern(
                             st.session_state,
                             id,
                             overwrite=True,
@@ -51,8 +54,8 @@ with st.sidebar:
                 else:
                     st.button(
                         'Save',
-                        key=session.get_widget_key('save_pattern', id),
-                        on_click=lambda id=id: session.save_pattern(
+                        key=pwk('save_pattern', id),
+                        on_click=lambda id=id: save_pattern(
                             st.session_state,
                             id,
                             notify_callback=st.toast
@@ -61,8 +64,10 @@ with st.sidebar:
                     )
                 st.button(
                     'Delete',
-                    key=session.get_widget_key('delete_pattern', id),
-                    on_click=lambda id=id: session.delete_pattern(st.session_state, id),
+                    key=pwk('delete_pattern', id),
+                    on_click=(
+                        lambda id=id: delete_pattern(st.session_state, id)
+                    ),
                     use_container_width=True,
                     type='primary'
                 )
@@ -73,22 +78,22 @@ with st.sidebar:
                 col1, col2 = st.columns([8, 2])
                 col1.number_input(
                     'Interval',
-                    value=1,
-                    key=session.get_widget_key('oscillator_interval', id)
+                    step=1,
+                    key=pwk('oscillator_interval', id)
                 )
                 col2.selectbox(
                     'Unit',
                     options=[unit.value for unit in models.TimeUnit],
-                    key=session.get_widget_key('oscillator_interval_unit', id)
+                    key=pwk('oscillator_interval_unit', id)
                 )
                 col1, col2 = st.columns(2)
                 col1.text_input(
                     'Start timestamp',
-                    key=session.get_widget_key('oscillator_start_timestamp', id),
+                    key=pwk('oscillator_start_timestamp', id),
                 )
                 col2.text_input(
                     'End timestamp',
-                    key=session.get_widget_key('oscillator_end_timestamp', id),
+                    key=pwk('oscillator_end_timestamp', id),
                 )
 
                 st.divider()
@@ -96,8 +101,8 @@ with st.sidebar:
                 st.header('Multiplier')
                 st.number_input(
                     'Ratio',
-                    value=1,
-                    key=session.get_widget_key('multiplier_ratio', id)
+                    step=1,
+                    key=pwk('multiplier_ratio', id)
                 )
 
                 st.divider()
@@ -105,13 +110,16 @@ with st.sidebar:
                 st.header('Randomizer')
                 st.number_input(
                     'Deviation',
-                    value=0,
-                    key=session.get_widget_key('randomizer_deviation', id)
+                    step=1,
+                    key=pwk('randomizer_deviation', id)
                 )
                 st.selectbox(
                     'Direction',
-                    options=[direction.value for direction in models.RandomizerDirection],
-                    key=session.get_widget_key('randomizer_direction', id),
+                    options=[
+                        direction.value
+                        for direction in models.RandomizerDirection
+                    ],
+                    key=pwk('randomizer_direction', id),
                     help='...'
                 )
 
@@ -120,14 +128,21 @@ with st.sidebar:
                 st.header('Spreader')
                 st.selectbox(
                     'Function',
-                    options=[func.value for func in models.DistributionFunction],
-                    key=session.get_widget_key('spreader_function', id),
+                    options=[
+                        func.value
+                        for func in models.DistributionFunction
+                    ],
+                    key=pwk('spreader_function', id),
                     help='...'
                 )
 
     else:
         st.markdown(
-            '<div style="text-align: center; color: grey;">No time patterns</div>',
+            (
+                '<div style="text-align: center; color: grey;">'
+                'No time patterns'
+                '</div>'
+            ),
             unsafe_allow_html=True
         )
 
@@ -135,8 +150,10 @@ with st.sidebar:
 
     st.button(
         'Create new',
-        disabled=True if len(st.session_state['time_pattern_ids']) >= MAX_TIME_PATTERNS else False,
-        on_click=lambda: session.add_pattern(st.session_state),
+        disabled=(
+            len(st.session_state['time_pattern_ids']) >= MAX_TIME_PATTERNS
+        ),
+        on_click=lambda: add_pattern(st.session_state),
         use_container_width=True
     )
     col1, col2 = st.columns([7, 3])
@@ -154,7 +171,7 @@ with st.sidebar:
             len(st.session_state['time_pattern_ids']) >= MAX_TIME_PATTERNS
             or not st.session_state['pattern_selected_for_load']
         ),
-        on_click=lambda: session.load_pattern(
+        on_click=lambda: load_pattern(
             st.session_state,
             st.session_state['pattern_selected_for_load'],
             notify_callback=st.toast

@@ -42,7 +42,7 @@ class MultiplierConfig:
 
 @dataclass
 class RandomizerConfig:
-    standard_deviation: int
+    deviation: int
     direction: RandomizerDirection | str
 
 
