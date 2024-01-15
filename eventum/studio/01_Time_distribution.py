@@ -5,7 +5,8 @@ import streamlit as st
 from eventum.studio import models
 from eventum.studio.session import add_pattern, delete_pattern
 from eventum.studio.session import get_pattern_widget_key as pwk
-from eventum.studio.session import initialize, load_pattern, save_pattern
+from eventum.studio.session import (initialize, load_pattern, restore_state,
+                                    save_pattern)
 from eventum.utils.fs import TIME_PATTERNS_DIR
 
 MAX_TIME_PATTERNS = 5
@@ -17,9 +18,18 @@ st.set_page_config(
 
 initialize(st.session_state)
 
+IMMUTABLE_WIDGET_KEY_BASENAMES = (
+    'update_pattern', 'save_pattern', 'delete_pattern'
+)
+
+restore_state(
+    st.session_state,
+    skip_for=IMMUTABLE_WIDGET_KEY_BASENAMES
+)
+
 with st.sidebar:
     st.title('Time Patterns')
-    st.divider()
+
     if st.session_state['time_pattern_ids']:
         for id in st.session_state['time_pattern_ids']:
             is_saved = st.session_state[pwk('pattern_is_saved', id)]
@@ -145,8 +155,6 @@ with st.sidebar:
             ),
             unsafe_allow_html=True
         )
-
-    st.divider()
 
     st.button(
         'Create new',

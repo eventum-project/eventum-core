@@ -1,7 +1,7 @@
 import os
 from dataclasses import asdict
 from datetime import datetime
-from typing import Callable, MutableMapping, Optional
+from typing import Callable, Iterable, MutableMapping, Optional
 
 from yaml import YAMLError
 
@@ -9,6 +9,24 @@ import eventum.studio.models as models
 from eventum.utils.fs import (TIME_PATTERNS_DIR, save_object_as_yaml,
                               validate_yaml_filename, load_object_from_yaml)
 from dacite import from_dict, DaciteError
+
+
+def restore_state(
+    session_state: MutableMapping,
+    skip_for: Optional[Iterable[str]] = None
+):
+    """Streamlit workaround to keep state across pages."""
+    skip_for = skip_for or ()
+
+    for k, v in session_state.items():
+        skip = False
+        for item in skip_for:
+            if item in k:
+                skip = True
+                break
+
+        if not skip:
+            session_state[k] = v
 
 
 def initialize(session_state: MutableMapping) -> None:
