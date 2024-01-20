@@ -1,12 +1,15 @@
 import streamlit as st
 
 
-default_notifier = st.toast
-
-
 def null_notifier(body, **kwargs):
     pass
 
 
 def logger_notifier(body, **kwargs):
     raise NotImplementedError
+
+
+streamlit_toast_notifier = st.toast
+
+
+default_notifier = streamlit_toast_notifier
