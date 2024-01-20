@@ -1,12 +1,11 @@
 
+from abc import ABC, abstractmethod
 from typing import MutableMapping, Optional
 
 import streamlit as st
 
 from eventum.studio.key_management import (ContextualSessionState,
                                            WidgetKeysContext)
-
-from abc import ABC, abstractmethod
 
 
 class BaseComponent(ABC):
@@ -16,18 +15,23 @@ class BaseComponent(ABC):
         self,
         session_state: MutableMapping = st.session_state,
         id: int = 1,
-        widget_keys_context: Optional[WidgetKeysContext] = None
+        widget_keys_context: Optional[WidgetKeysContext] = None,
+        props: Optional[dict] = None
     ) -> None:
         if widget_keys_context is None:
             self._wk = WidgetKeysContext()
         else:
             self._wk = widget_keys_context
 
+        if props is None:
+            self._props = dict()
+        else:
+            self._props = props
+
         self._wk.register_component(self.__class__.__name__, id)
-
         self._session_state = ContextualSessionState(session_state, self._wk)
-        self._init_session_wrapper()
 
+        self._init_session_wrapper()
         self._show()
 
     def _init_session_wrapper(self):
