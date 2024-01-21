@@ -7,6 +7,10 @@ from eventum.studio.components.time_pattern_adjuster import TimePatternAdjuster
 from eventum.studio.key_management import WidgetKeysContext
 
 
+class TimePatternAdjustersListOverflowError(Exception):
+    """Exception for indicating overflows in TimePatternAdjustersList."""
+
+
 class TimePatternAdjustersList(BaseComponent):
     """List of time pattern adjusters."""
 
@@ -23,32 +27,58 @@ class TimePatternAdjustersList(BaseComponent):
         self._check_time_pattern_colors()
         super().__init__(session_state, id, widget_keys_context, props)
 
-    def _init_session(self):
+    def _init_state(self):
         self._session_state['time_pattern_id_counter'] = 1
+        self._session_state['time_patterns_counter'] = 0
         self._session_state['time_pattern_ids'] = []
         self._session_state['available_colors'] = set(
             TimePatternAdjustersList._TIME_PATTERN_COLORS
         )
+        self._session_state['given_colors'] = dict()
+
+    def _release_state(self):
+        del self._session_state['time_pattern_id_counter']
+        del self._session_state['time_patterns_counter']
+        del self._session_state['time_pattern_ids']
+        del self._session_state['available_colors']
+        del self._session_state['given_colors']
+
+        super()._release_state()
 
     def _show(self):
         st.title('Time Patterns')
         for id in self._session_state['time_pattern_ids']:
-            TimePatternAdjuster(id=id, widget_keys_context=self._wk)
+            TimePatternAdjuster(
+                id=id,
+                widget_keys_context=self._wk,
+                props={
+                    'delete_callback': (
+                        lambda callback, id=id: self.delete(id, callback)
+                    )
+                }
+            )
 
-    def _release_session(self):
-        del self._session_state['time_pattern_id_counter']
-        del self._session_state['time_pattern_ids']
-        del self._session_state['available_colors']
-
-        super()._release_session()
-
-    def add(self, mutate_state_callback: Callable[[int], None]) -> None:
+    def add(
+        self,
+        mutate_state_callback: Callable[[int, str, str], None]
+    ) -> None:
         """Add time pattern adjuster element to list."""
+        cls = TimePatternAdjustersList
+        if self._session_state['time_patterns_counter'] == cls._MAX_LIST_SIZE:
+            raise TimePatternAdjustersListOverflowError(
+                f'Max size ({cls._MAX_LIST_SIZE}) of list is exceeded'
+            )
+
         id = self._session_state['time_pattern_id_counter']
         self._session_state['time_pattern_ids'].append(id)
         self._session_state['time_pattern_id_counter'] += 1
 
-        mutate_state_callback(id)
+        label = f'Time pattern {id}'
+
+        color = self._session_state['available_colors'].pop()
+        self._session_state['given_colors'][id] = color
+
+        mutate_state_callback(id, label, color)
 
     def delete(
         self,
@@ -56,9 +86,12 @@ class TimePatternAdjustersList(BaseComponent):
         mutate_state_callback: Callable[[int], None]
     ) -> None:
         """Delete specified time pattern adjuster from list."""
-        self._session_state['time_pattern_ids'].remove(id)
-
         mutate_state_callback(id)
+
+        self._session_state['time_pattern_ids'].remove(id)
+        self._session_state['available_colors'].add(
+            self._session_state['given_colors'].pop(id)
+        )
 
     @classmethod
     def _check_time_pattern_colors(cls) -> None:
