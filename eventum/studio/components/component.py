@@ -31,10 +31,10 @@ class BaseComponent(ABC):
         self._wk.register_component(self.__class__.__name__, id)
         self._session_state = ContextualSessionState(session_state, self._wk)
 
-        self._init_session_wrapper()
+        self.__init_session_wrapper()
         self._show()
 
-    def _init_session_wrapper(self):
+    def __init_session_wrapper(self):
         """Check whether the session is initilized and call
         intialization in case it's not.
         """
@@ -50,5 +50,9 @@ class BaseComponent(ABC):
 
     @abstractmethod
     def _show(self):
-        """Present widgets layout."""
+        """Present component structure."""
         ...
+
+    def _release_session(self) -> None:
+        """Delete items from session state added on initialization."""
+        del self._session_state['initialized']
