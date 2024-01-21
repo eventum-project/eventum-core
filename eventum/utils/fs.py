@@ -42,16 +42,15 @@ def save_object_as_yaml(data: Any, filepath) -> None:
 def validate_yaml_filename(filename: str) -> tuple[bool, str]:
     """Check if provided filename is in format <basename>.[yml|yaml]
     where basename consists only of ascii letters, digits and
-    underscores.
+    underscores. Raise `ValueError` on validation failure.
     """
     filename, ext = os.path.splitext(filename)
 
     restricted_symbols = set(filename) - set(ascii_letters + digits + '_')
     if restricted_symbols:
-        return (False, ('Only **letters**, **digits** and **underscore**'
-                        'are allowed in file basename'))
+        raise ValueError(
+            'Only letters, digits and underscore are allowed in file basename'
+        )
 
     if ext not in ['.yml', '.yaml']:
-        return (False, 'Only **yml** and **yaml** extensions are allowed')
-
-    return (True, 'ok')
+        raise ValueError('Only yml and yaml extensions are allowed')
