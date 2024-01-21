@@ -32,7 +32,6 @@ class BaseComponent(ABC):
         self._session_state = ContextualSessionState(session_state, self._wk)
 
         self.__init_state_wrapper()
-        self._show()
 
     def __init_state_wrapper(self):
         """Check whether the session is initilized and call
@@ -47,11 +46,11 @@ class BaseComponent(ABC):
         """Perform state initialization."""
         ...
 
-    def _release_state(self) -> None:
+    def release_state(self) -> None:
         """Delete items from session state added on initialization."""
         del self._session_state['initialized']
 
     @abstractmethod
-    def _show(self):
+    def show(self):
         """Present component structure."""
         ...
