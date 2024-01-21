@@ -45,5 +45,8 @@ class ContextualSessionState:
     def __setitem__(self, __key: Any, __value: Any) -> None:
         self._session_state[self._wk(__key)] = __value
 
+    def __delitem__(self, __key: Any) -> None:
+        del self._session_state[self._wk(__key)]
+
     def __contains__(self, __key: object) -> bool:
         return self._wk(__key) in self._session_state
