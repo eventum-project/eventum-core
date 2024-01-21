@@ -53,8 +53,8 @@ class BaseComponent(ABC):
         provided_keys = self._props.keys()
         if not set(expected_keys).issubset(provided_keys):
             raise ComponentPropsError(
-                f'Expected [{expected_keys}] props to show component '
-                f'but provided props are [{provided_keys}]'
+                f'Expected {list(expected_keys)} props to init component '
+                f'session but provided props are {list(provided_keys)}'
             )
 
         self._init_state()
@@ -74,8 +74,8 @@ class BaseComponent(ABC):
         provided_keys = self._props.keys()
         if not set(expected_keys).issubset(provided_keys):
             raise ComponentPropsError(
-                f'Expected [{expected_keys}] props to show component '
-                f'but provided props are [{provided_keys}]'
+                f'Expected {list(expected_keys)} props to show component '
+                f'but provided props are {list(provided_keys)}'
             )
 
         self._show()
