@@ -42,7 +42,7 @@ class TimePatternAdjustersList(BaseComponent):
 
         super()._release_session()
 
-    def add(self, mutate_state_callback: Callable[[int]]) -> None:
+    def add(self, mutate_state_callback: Callable[[int], None]) -> None:
         """Add time pattern adjuster element to list."""
         id = self._session_state['time_pattern_id_counter']
         self._session_state['time_pattern_ids'].append(id)
@@ -50,7 +50,11 @@ class TimePatternAdjustersList(BaseComponent):
 
         mutate_state_callback(id)
 
-    def delete(self, id: int, mutate_state_callback: Callable[[int]]) -> None:
+    def delete(
+        self,
+        id: int,
+        mutate_state_callback: Callable[[int], None]
+    ) -> None:
         """Delete specified time pattern adjuster from list."""
         self._session_state['time_pattern_ids'].remove(id)
 
