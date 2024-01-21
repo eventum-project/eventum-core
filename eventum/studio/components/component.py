@@ -1,5 +1,6 @@
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from typing import MutableMapping, Optional
 
 import streamlit as st
@@ -8,8 +9,16 @@ from eventum.studio.key_management import (ContextualSessionState,
                                            WidgetKeysContext)
 
 
+class ComponentPropsError(Exception):
+    """Exception indicating that the properties passed to the component
+    do not correspond to the expected set of elements.
+    """
+
+
 class BaseComponent(ABC):
     """Base class for creating session isolated components."""
+    _STATE_INITIALIZATION_PROPS = {}
+    _SHOW_PROPS = {}
 
     def __init__(
         self,
@@ -21,7 +30,7 @@ class BaseComponent(ABC):
         if widget_keys_context is None:
             self._wk = WidgetKeysContext()
         else:
-            self._wk = widget_keys_context
+            self._wk = deepcopy(widget_keys_context)
 
         if props is None:
             self._props = dict()
@@ -39,6 +48,15 @@ class BaseComponent(ABC):
         """
         if 'initialized' in self._session_state:
             return
+
+        expected_keys = self._STATE_INITIALIZATION_PROPS.keys()
+        provided_keys = self._props.keys()
+        if not set(expected_keys).issubset(provided_keys):
+            raise ComponentPropsError(
+                f'Expected [{expected_keys}] props to show component '
+                f'but provided props are [{provided_keys}]'
+            )
+
         self._init_state()
         self._session_state['initialized'] = True
 
@@ -50,7 +68,19 @@ class BaseComponent(ABC):
         """Delete items from session state added on initialization."""
         del self._session_state['initialized']
 
+    def show(self) -> None:
+        """Present component structure."""
+        expected_keys = self._SHOW_PROPS.keys()
+        provided_keys = self._props.keys()
+        if not set(expected_keys).issubset(provided_keys):
+            raise ComponentPropsError(
+                f'Expected [{expected_keys}] props to show component '
+                f'but provided props are [{provided_keys}]'
+            )
+
+        self._show()
+
     @abstractmethod
-    def show(self):
+    def _show(self) -> None:
         """Present component structure."""
         ...
