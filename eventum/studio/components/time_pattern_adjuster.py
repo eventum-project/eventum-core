@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 from dataclasses import asdict
-from typing import Callable
+from typing import Callable, Optional
 
 import streamlit as st
 from yaml import YAMLError
@@ -14,6 +14,44 @@ from eventum.utils.fs import (TIME_PATTERNS_DIR, save_object_as_yaml,
 
 
 class TimePatternAdjuster(BaseComponent):
+    _STATE_INITIALIZATION_PROPS = {
+        'initial_state': Optional[models.TimePatternConfig],
+        'pattern_filename': Optional[str],
+        'color': str
+    }
+    _SHOW_PROPS = {
+        'delete_callback': Callable
+    }
+
+    def _init_state(self) -> None:
+        ss = self._session_state
+        init = self._props['initial_state']
+
+        if init is None:
+            saved = False
+            init = TimePatternAdjuster.get_default_configuration()
+        else:
+            saved = True
+
+        ss['pattern_label'] = init.label
+        ss['pattern_color'] = self._props['color']
+        ss['is_saved'] = saved
+
+        if saved:
+            ss['pattern_filename'] = self._props['pattern_filename']
+
+        ss['oscillator_interval'] = init.oscillator.interval
+        ss['oscillator_interval_unit'] = init.oscillator.unit
+        ss['oscillator_start_timestamp'] = init.oscillator.start
+        ss['oscillator_end_timestamp'] = init.oscillator.end
+
+        ss['multiplier_ratio'] = init.multiplier.ratio
+
+        ss['randomizer_deviation'] = init.randomizer.deviation
+        ss['randomizer_direction'] = init.randomizer.direction
+
+        ss['spreader_function'] = init.spreader.function
+
     def _show_manage_section(self) -> None:
         st.header("General")
         st.text_input("Label", key=self._wk("pattern_label"))
@@ -40,11 +78,7 @@ class TimePatternAdjuster(BaseComponent):
         st.button(
             "Delete",
             key=self._wk("delete_pattern"),
-            on_click=(
-                lambda: self._props['delete_callback'](
-                    callback=self._release_state
-                )
-            ),
+            on_click=lambda: self._props['delete_callback'](),
             use_container_width=True,
             type="primary",
         )
