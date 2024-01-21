@@ -1,10 +1,11 @@
-from typing import Callable, MutableMapping, Optional
+from typing import MutableMapping, Optional
 
 import streamlit as st
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.components.time_pattern_adjuster import TimePatternAdjuster
 
 from eventum.studio.key_management import WidgetKeysContext
+import eventum.studio.models as models
 
 
 class TimePatternAdjustersListOverflowError(Exception):
@@ -36,14 +37,14 @@ class TimePatternAdjustersList(BaseComponent):
         )
         self._session_state['given_colors'] = dict()
 
-    def _release_state(self):
+    def release_state(self):
         del self._session_state['time_pattern_id_counter']
         del self._session_state['time_patterns_counter']
         del self._session_state['time_pattern_ids']
         del self._session_state['available_colors']
         del self._session_state['given_colors']
 
-        super()._release_state()
+        super().release_state()
 
     def _show(self):
         st.title('Time Patterns')
@@ -53,42 +54,49 @@ class TimePatternAdjustersList(BaseComponent):
                 widget_keys_context=self._wk,
                 props={
                     'delete_callback': (
-                        lambda callback, id=id: self.delete(id, callback)
+                        lambda id=id: self.delete(id)
                     )
                 }
-            )
+            )._show()
 
     def add(
         self,
-        mutate_state_callback: Callable[[int, str, str], None]
+        initial_state: Optional[models.TimePatternConfig] = None,
+        pattern_filename: Optional[str] = None
     ) -> None:
         """Add time pattern adjuster element to list."""
-        cls = TimePatternAdjustersList
-        if self._session_state['time_patterns_counter'] == cls._MAX_LIST_SIZE:
+        if self._session_state['time_patterns_counter'] == self._MAX_LIST_SIZE:
             raise TimePatternAdjustersListOverflowError(
-                f'Max size ({cls._MAX_LIST_SIZE}) of list is exceeded'
+                f'Max size ({self._MAX_LIST_SIZE}) of list is exceeded'
             )
 
         id = self._session_state['time_pattern_id_counter']
         self._session_state['time_pattern_ids'].append(id)
         self._session_state['time_pattern_id_counter'] += 1
-
-        label = f'Time pattern {id}'
+        self._session_state['time_patterns_counter'] += 1
 
         color = self._session_state['available_colors'].pop()
         self._session_state['given_colors'][id] = color
 
-        mutate_state_callback(id, label, color)
+        TimePatternAdjuster(
+            id=id,
+            widget_keys_context=self._wk,
+            props={
+                'initial_state': initial_state,
+                'pattern_filename': pattern_filename,
+                'color': color
+            }
+        )
 
-    def delete(
-        self,
-        id: int,
-        mutate_state_callback: Callable[[int], None]
-    ) -> None:
+    def delete(self, id: int) -> None:
         """Delete specified time pattern adjuster from list."""
-        mutate_state_callback(id)
+        TimePatternAdjuster(
+            id=id,
+            widget_keys_context=self._wk
+        ).release_state()
 
         self._session_state['time_pattern_ids'].remove(id)
+        self._session_state['time_patterns_counter'] -= 1
         self._session_state['available_colors'].add(
             self._session_state['given_colors'].pop(id)
         )
