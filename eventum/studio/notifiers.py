@@ -19,21 +19,21 @@ class NotificationColor(Enum):
 def null_notifier(
     message: str,
     level: NotificationLevel = NotificationLevel.INFO,
-):
+) -> None:
     pass
 
 
 def logger_notifier(
     message: str,
     level: NotificationLevel = NotificationLevel.INFO,
-):
+) -> None:
     raise NotImplementedError
 
 
 def streamlit_toast_notifier(
     message: str,
     level: NotificationLevel = NotificationLevel.INFO,
-):
+) -> None:
     match level:
         case NotificationLevel.SUCCESS:
             fmt_msg = f':{NotificationColor.SUCCESS.value}[{message}]'
@@ -44,7 +44,7 @@ def streamlit_toast_notifier(
         case _:
             fmt_msg = message
 
-    return lambda: st.toast(fmt_msg)
+    st.toast(fmt_msg)
 
 
 default_notifier = streamlit_toast_notifier
