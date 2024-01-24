@@ -1,11 +1,15 @@
-from typing import MutableMapping, Optional
+from typing import Callable, MutableMapping, Optional
 
 import streamlit as st
+
+import eventum.studio.models as models
+from eventum.catalog.manage import (CatalogReadError,
+                                    get_timepattern_filenames,
+                                    load_timepattern)
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.components.time_pattern_adjuster import TimePatternAdjuster
-
 from eventum.studio.key_management import WidgetKeysContext
-import eventum.studio.models as models
+from eventum.studio.notifiers import NotificationLevel, default_notifier
 
 
 class TimePatternAdjustersListOverflowError(Exception):
@@ -46,6 +50,39 @@ class TimePatternAdjustersList(BaseComponent):
 
         super().release_state()
 
+    def _show_manage_buttons(self):
+        is_max_len = len(
+            self._session_state['time_pattern_ids']
+        ) >= self._MAX_LIST_SIZE
+
+        st.button(
+            'Create new',
+            disabled=is_max_len,
+            on_click=lambda: self.add(),
+            use_container_width=True
+        )
+        col1, col2 = st.columns([7, 3])
+
+        col1.selectbox(
+            'Time patterns',
+            options=get_timepattern_filenames(),
+            key=self._wk('pattern_selected_for_load'),
+            label_visibility='collapsed'
+        )
+
+        col2.button(
+            'Load',
+            disabled=(
+                is_max_len
+                or not self._session_state['pattern_selected_for_load']
+            ),
+            on_click=lambda: self._load_time_pattern(),
+            use_container_width=True,
+        )
+
+        if is_max_len:
+            st.write('*:grey[Maximum number of patterns]*')
+
     def _show(self):
         st.title('Time Patterns')
         for id in self._session_state['time_pattern_ids']:
@@ -58,6 +95,8 @@ class TimePatternAdjustersList(BaseComponent):
                     )
                 }
             )._show()
+        st.divider()
+        self._show_manage_buttons()
 
     def add(
         self,
@@ -87,6 +126,20 @@ class TimePatternAdjustersList(BaseComponent):
                 'color': color
             }
         )
+
+    def _load_time_pattern(
+        self,
+        notify_callback: Callable[
+            [str, NotificationLevel], None
+        ] = default_notifier
+    ) -> models.TimePatternConfig:
+        """Load selected time pattern from catalog."""
+        try:
+            return load_timepattern(
+                self._session_state['pattern_selected_for_load']
+            )
+        except CatalogReadError as e:
+            notify_callback(str(e), NotificationLevel.ERROR)
 
     def delete(self, id: int) -> None:
         """Delete specified time pattern adjuster from list."""
