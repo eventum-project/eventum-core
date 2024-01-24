@@ -49,34 +49,34 @@ class TimePatternAdjuster(BaseComponent):
         ss['spreader_function'] = init.spreader.function
 
     def _show_manage_section(self) -> None:
-        st.header("General")
-        st.text_input("Label", key=self._wk("pattern_label"))
+        st.header('General')
+        st.text_input('Label', key=self._wk('pattern_label'))
         st.text_input(
-            "File name",
-            key=self._wk("pattern_filename"),
-            disabled=self._wk("is_saved") is True,
+            'File name',
+            key=self._wk('pattern_filename'),
+            disabled=self._wk('is_saved') is True
         )
 
-        if self._session_state["is_saved"]:
+        if self._session_state['is_saved']:
             st.button(
-                "Update",
-                key=self._wk("update_pattern"),
+                'Update',
+                key=self._wk('update_pattern'),
                 on_click=lambda: self.save(overwrite=True),
                 use_container_width=True,
             )
         else:
             st.button(
-                "Save",
-                key=self._wk("save_pattern"),
+                'Save',
+                key=self._wk('save_pattern'),
                 on_click=lambda: self.save(),
                 use_container_width=True,
             )
         st.button(
-            "Delete",
-            key=self._wk("delete_pattern"),
+            'Delete',
+            key=self._wk('delete_pattern'),
             on_click=lambda: self._props['delete_callback'](),
             use_container_width=True,
-            type="primary",
+            type='primary',
         )
 
     def _show_oscillator_section(self) -> None:
@@ -140,10 +140,10 @@ class TimePatternAdjuster(BaseComponent):
         )
 
     def _show(self):
-        label = self._session_state["pattern_label"]
-        color = self._session_state["pattern_color"]
+        label = self._session_state['pattern_label']
+        color = self._session_state['pattern_color']
 
-        with st.expander(f":{color}[{label}]"):
+        with st.expander(f':{color}[{label}]'):
             self._show_manage_section()
             st.divider()
             self._show_oscillator_section()
@@ -168,11 +168,11 @@ class TimePatternAdjuster(BaseComponent):
                 overwrite=overwrite
             )
         except CatalogUpdateError as e:
-            notify_callback(str(e), NotificationLevel.ERROR)
+            notify_callback(f'Failed to save: {e}', NotificationLevel.ERROR)
             return
 
-        self._session_state['pattern_is_saved'] = True
-        notify_callback('Saved in library', NotificationLevel.SUCCESS)
+        self._session_state['is_saved'] = True
+        notify_callback('Saved in catalog', NotificationLevel.SUCCESS)
 
     def get_current_configuration(self) -> models.TimePatternConfig:
         """Build TimePatternConfig from current input widgets values

@@ -37,11 +37,16 @@ def save_object_as_yaml(data: Any, filepath) -> None:
         yaml.dump(data, f)
 
 
-def validate_yaml_filename(filename: str) -> tuple[bool, str]:
+def validate_yaml_filename(filename: str) -> None:
     """Check if provided filename is in format <basename>.[yml|yaml]
     where basename consists only of ascii letters, digits and
     underscores. Raise `ValueError` on validation failure.
     """
+    if not filename:
+        raise ValueError(
+            'File name cannot be empty'
+        )
+
     filename, ext = os.path.splitext(filename)
 
     restricted_symbols = set(filename) - set(ascii_letters + digits + '_')
