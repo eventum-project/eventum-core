@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Callable, Optional
 
 import streamlit as st
-from eventum.catalog.manage import save_timepattern, CatalogUpdateError
+from eventum.catalog.manage import save_time_pattern, CatalogUpdateError
 
 import eventum.studio.models as models
 from eventum.studio.components.component import BaseComponent
@@ -162,7 +162,7 @@ class TimePatternAdjuster(BaseComponent):
         ] = default_notifier
     ):
         try:
-            save_timepattern(
+            save_time_pattern(
                 pattern_config=self.get_current_configuration(),
                 filename=self._session_state['pattern_filename'],
                 overwrite=overwrite
@@ -173,6 +173,19 @@ class TimePatternAdjuster(BaseComponent):
 
         self._session_state['is_saved'] = True
         notify_callback('Saved in catalog', NotificationLevel.SUCCESS)
+
+    def is_saved(self) -> bool:
+        """Get status whether the time pattern is saved in catalog."""
+        return self._session_state['is_saved']
+
+    def get_saved_filename(self) -> Optional[str]:
+        """Get filename of time pattern if it is saved. If pattern is not
+        saved then `None` will be returned.
+        """
+        if self._session_state['is_saved']:
+            return self._session_state['pattern_filename']
+        else:
+            return None
 
     def get_current_configuration(self) -> models.TimePatternConfig:
         """Build TimePatternConfig from current input widgets values

@@ -4,8 +4,8 @@ import streamlit as st
 
 import eventum.studio.models as models
 from eventum.catalog.manage import (CatalogReadError,
-                                    get_timepattern_filenames,
-                                    load_timepattern)
+                                    get_time_pattern_filenames,
+                                    load_time_pattern)
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.components.time_pattern_adjuster import TimePatternAdjuster
 from eventum.studio.key_management import WidgetKeysContext
@@ -40,6 +40,7 @@ class TimePatternAdjustersList(BaseComponent):
             TimePatternAdjustersList._TIME_PATTERN_COLORS
         )
         self._session_state['given_colors'] = dict()
+        self._session_state['loaded_timepattern_filenames'] = set()
 
     def release_state(self):
         del self._session_state['time_pattern_id_counter']
@@ -47,6 +48,7 @@ class TimePatternAdjustersList(BaseComponent):
         del self._session_state['time_pattern_ids']
         del self._session_state['available_colors']
         del self._session_state['given_colors']
+        del self._session_state['loaded_timepattern_filenames']
 
         super().release_state()
 
@@ -65,7 +67,7 @@ class TimePatternAdjustersList(BaseComponent):
 
         selected_pattern = col1.selectbox(
             'Time patterns',
-            options=get_timepattern_filenames(),
+            options=get_time_pattern_filenames(),
             key=self._wk('pattern_selected_for_load'),
             label_visibility='collapsed'
         )
@@ -76,10 +78,7 @@ class TimePatternAdjustersList(BaseComponent):
                 is_max_len
                 or not selected_pattern
             ),
-            on_click=lambda: self.add(
-                initial_state=self._load_time_pattern(),
-                pattern_filename=selected_pattern
-            ),
+            on_click=lambda: self.load_time_pattern(filename=selected_pattern),
             use_container_width=True,
         )
 
@@ -130,27 +129,44 @@ class TimePatternAdjustersList(BaseComponent):
             }
         )
 
-    def _load_time_pattern(
+    def load_time_pattern(
         self,
+        filename: str,
         notify_callback: Callable[
             [str, NotificationLevel], None
         ] = default_notifier
     ) -> models.TimePatternConfig:
-        """Load selected time pattern from catalog."""
-        try:
-            return load_timepattern(
-                self._session_state['pattern_selected_for_load']
+        """Load selected time pattern from catalog"""
+        if filename in self._session_state['loaded_timepattern_filenames']:
+            notify_callback(
+                'Time pattern is already loaded',
+                NotificationLevel.WARNING
             )
+            return
+
+        try:
+            time_pattern = load_time_pattern(filename)
         except CatalogReadError as e:
-            print('error here')
             notify_callback(str(e), NotificationLevel.ERROR)
+            return
+
+        self.add(
+            initial_state=time_pattern,
+            pattern_filename=self._session_state['pattern_selected_for_load']
+        )
+        self._session_state['loaded_timepattern_filenames'].add(filename)
 
     def delete(self, id: int) -> None:
         """Delete specified time pattern adjuster from list."""
-        TimePatternAdjuster(
+        time_pattern = TimePatternAdjuster(
             id=id,
             widget_keys_context=self._wk
-        ).release_state()
+        )
+        if time_pattern.is_saved():
+            self._session_state['loaded_timepattern_filenames'].remove(
+                time_pattern.get_saved_filename()
+            )
+        time_pattern.release_state()
 
         self._session_state['time_pattern_ids'].remove(id)
         self._session_state['time_patterns_counter'] -= 1

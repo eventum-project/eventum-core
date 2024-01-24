@@ -12,7 +12,7 @@ class NotificationLevel(Enum):
 class NotificationColor(Enum):
     SUCCESS = 'green'
     INFO = 'default'
-    WARNING = 'yellow'
+    WARNING = 'orange'
     ERROR = 'red'
 
 
