@@ -11,8 +11,6 @@ PROJECT_DIR = os.path.realpath(
         '../../'
     )
 )
-LIBRARY_DIR = os.path.realpath(os.path.join(PROJECT_DIR, 'library'))
-TIME_PATTERNS_DIR = os.path.join(LIBRARY_DIR, 'time_patterns')
 
 
 def resolve_path(path: str) -> str:
