@@ -28,17 +28,17 @@ class CatalogReadError(CatalogError):
     """Exception for errors related with reading content."""
 
 
-def get_timepattern_filenames() -> list[str]:
-    """Get all filenames of currently existing timepatterns in catalog."""
+def get_time_pattern_filenames() -> list[str]:
+    """Get all filenames of currently existing time patterns in catalog."""
     return glob(pathname='*.y*ml', root_dir=TIME_PATTERNS_DIR)
 
 
-def save_timepattern(
+def save_time_pattern(
     pattern_config: TimePatternConfig,
     filename: str,
     overwrite: bool = False
 ):
-    """Save timepattern in catalog. Raise `CatalogUpdateError` on failure."""
+    """Save time pattern in catalog. Raise `CatalogUpdateError` on failure."""
     try:
         validate_yaml_filename(filename)
     except ValueError as e:
@@ -46,7 +46,7 @@ def save_timepattern(
 
     filepath = os.path.join(TIME_PATTERNS_DIR, filename)
     if overwrite is False and os.path.exists(filepath):
-        raise CatalogUpdateError('Time patter already exists in catalog')
+        raise CatalogUpdateError('Time pattern already exists in catalog')
 
     try:
         save_object_as_yaml(
@@ -57,7 +57,7 @@ def save_timepattern(
         raise CatalogUpdateError(str(e)) from e
 
 
-def load_timepattern(filename: str) -> TimePatternConfig:
+def load_time_pattern(filename: str) -> TimePatternConfig:
     """Load specified time pattern from catalog and return its
     dataclass representation. Raise `CatalogReadError` on failure.
     """
