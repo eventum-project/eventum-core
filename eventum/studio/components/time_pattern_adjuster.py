@@ -54,7 +54,7 @@ class TimePatternAdjuster(BaseComponent):
         st.text_input(
             'File name',
             key=self._wk('pattern_filename'),
-            disabled=self._wk('is_saved') is True
+            disabled=self._session_state['is_saved']
         )
 
         if self._session_state['is_saved']:
