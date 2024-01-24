@@ -1,16 +1,12 @@
 from datetime import datetime
-import os
-from dataclasses import asdict
 from typing import Callable, Optional
 
 import streamlit as st
-from yaml import YAMLError
+from eventum.catalog.manage import save_timepattern, CatalogUpdateError
 
 import eventum.studio.models as models
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
-from eventum.utils.fs import (TIME_PATTERNS_DIR, save_object_as_yaml,
-                              validate_yaml_filename)
 
 
 class TimePatternAdjuster(BaseComponent):
@@ -165,27 +161,13 @@ class TimePatternAdjuster(BaseComponent):
             [str, NotificationLevel], None
         ] = default_notifier
     ):
-        filename = self._session_state['pattern_filename']
         try:
-            validate_yaml_filename(filename)
-        except ValueError as e:
-            notify_callback(str(e), NotificationLevel.ERROR)
-            return
-
-        filepath = os.path.join(TIME_PATTERNS_DIR, filename)
-        if overwrite is False and os.path.exists(filepath):
-            notify_callback(
-                'File already exists in library',
-                NotificationLevel.ERROR
+            save_timepattern(
+                pattern_config=self.get_current_configuration(),
+                filename=self._session_state['pattern_filename'],
+                overwrite=overwrite
             )
-            return
-
-        try:
-            save_object_as_yaml(
-                data=asdict(self.get_current_configuration()),
-                filepath=filepath
-            )
-        except (OSError, YAMLError) as e:
+        except CatalogUpdateError as e:
             notify_callback(str(e), NotificationLevel.ERROR)
             return
 
