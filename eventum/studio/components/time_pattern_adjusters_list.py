@@ -63,7 +63,7 @@ class TimePatternAdjustersList(BaseComponent):
         )
         col1, col2 = st.columns([7, 3])
 
-        col1.selectbox(
+        selected_pattern = col1.selectbox(
             'Time patterns',
             options=get_timepattern_filenames(),
             key=self._wk('pattern_selected_for_load'),
@@ -74,9 +74,12 @@ class TimePatternAdjustersList(BaseComponent):
             'Load',
             disabled=(
                 is_max_len
-                or not self._session_state['pattern_selected_for_load']
+                or not selected_pattern
             ),
-            on_click=lambda: self._load_time_pattern(),
+            on_click=lambda: self.add(
+                initial_state=self._load_time_pattern(),
+                pattern_filename=selected_pattern
+            ),
             use_container_width=True,
         )
 
@@ -139,6 +142,7 @@ class TimePatternAdjustersList(BaseComponent):
                 self._session_state['pattern_selected_for_load']
             )
         except CatalogReadError as e:
+            print('error here')
             notify_callback(str(e), NotificationLevel.ERROR)
 
     def delete(self, id: int) -> None:
