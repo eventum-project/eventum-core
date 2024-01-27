@@ -16,6 +16,7 @@ class TimePatternAdjuster(BaseComponent):
         'color': str
     }
     _SHOW_PROPS = {
+        'save_callback': Callable[[str], None],
         'delete_callback': Callable
     }
 
@@ -170,6 +171,8 @@ class TimePatternAdjuster(BaseComponent):
         except RepositoryUpdateError as e:
             notify_callback(f'Failed to save: {e}', NotificationLevel.ERROR)
             return
+
+        self._props['save_callback'](self._session_state['pattern_filename'])
 
         self._session_state['is_saved'] = True
         notify_callback('Saved in repository', NotificationLevel.SUCCESS)

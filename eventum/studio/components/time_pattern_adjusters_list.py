@@ -82,6 +82,11 @@ class TimePatternAdjustersList(BaseComponent):
                 id=id,
                 widget_keys_context=self._wk,
                 props={
+                    'save_callback': (
+                        lambda filename: self._session_state[
+                            'loaded_timepattern_filenames'
+                        ].add(filename)
+                    ),
                     'delete_callback': (
                         lambda id=id: self.delete(id)
                     )
