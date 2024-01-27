@@ -18,14 +18,14 @@ class WidgetKeysContext():
     ) -> str:
         return self._SEPARATOR.join(self._component_stack + [widget_key])
 
-    def check_key(self, key: str) -> bool:
+    def __contains__(self, __key: str) -> bool:
         """Check if widget key belongs to context."""
-        *_, id = key.rsplit(self._SEPARATOR, maxsplit=1)
+        *_, id = __key.rsplit(self._SEPARATOR, maxsplit=1)
 
         if not id:
             return False
 
-        return self.__call__(id) == key
+        return self.__call__(id) == __key
 
     def register_component(self, component_name: str, component_id: int):
         """Add component to context stack."""
@@ -60,5 +60,5 @@ class ContextualSessionState:
 
     def delete_context_elements(self) -> None:
         for key in self._session_state.keys():
-            if self._wk.check_key(key):
+            if key in self._wk:
                 del self._session_state[key]
