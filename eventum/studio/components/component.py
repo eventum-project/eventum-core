@@ -65,8 +65,9 @@ class BaseComponent(ABC):
         ...
 
     def release_state(self) -> None:
-        """Delete items from session state added on initialization."""
-        del self._session_state['initialized']
+        """Delete items from session state added on initialization or used
+        as widget keys in `_show` method."""
+        self._session_state.delete_context_elements()
 
     def show(self) -> None:
         """Present component structure."""

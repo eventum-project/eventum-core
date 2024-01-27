@@ -42,16 +42,6 @@ class TimePatternAdjustersList(BaseComponent):
         self._session_state['given_colors'] = dict()
         self._session_state['loaded_timepattern_filenames'] = set()
 
-    def release_state(self):
-        del self._session_state['time_pattern_id_counter']
-        del self._session_state['time_patterns_counter']
-        del self._session_state['time_pattern_ids']
-        del self._session_state['available_colors']
-        del self._session_state['given_colors']
-        del self._session_state['loaded_timepattern_filenames']
-
-        super().release_state()
-
     def _show_manage_buttons(self):
         is_max_len = len(
             self._session_state['time_pattern_ids']
