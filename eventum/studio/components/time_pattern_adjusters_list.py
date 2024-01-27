@@ -92,6 +92,15 @@ class TimePatternAdjustersList(BaseComponent):
                     )
                 }
             )._show()
+        if not self._session_state['time_pattern_ids']:
+            st.markdown(
+                (
+                    '<div style="text-align: center; color: grey;">'
+                    'No time patterns. Create or load one.'
+                    '</div>'
+                ),
+                unsafe_allow_html=True
+            )
         st.divider()
         self._show_manage_buttons()
 
