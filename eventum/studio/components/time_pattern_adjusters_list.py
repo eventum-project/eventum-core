@@ -3,9 +3,9 @@ from typing import Callable, MutableMapping, Optional
 import streamlit as st
 
 import eventum.studio.models as models
-from eventum.catalog.manage import (CatalogReadError,
-                                    get_time_pattern_filenames,
-                                    load_time_pattern)
+from eventum.repository.manage import (RepositoryReadError,
+                                       get_time_pattern_filenames,
+                                       load_time_pattern)
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.components.time_pattern_adjuster import TimePatternAdjuster
 from eventum.studio.key_management import WidgetKeysContext
@@ -136,7 +136,7 @@ class TimePatternAdjustersList(BaseComponent):
             [str, NotificationLevel], None
         ] = default_notifier
     ) -> models.TimePatternConfig:
-        """Load selected time pattern from catalog"""
+        """Load selected time pattern from repository"""
         if filename in self._session_state['loaded_timepattern_filenames']:
             notify_callback(
                 'Time pattern is already loaded',
@@ -146,7 +146,7 @@ class TimePatternAdjustersList(BaseComponent):
 
         try:
             time_pattern = load_time_pattern(filename)
-        except CatalogReadError as e:
+        except RepositoryReadError as e:
             notify_callback(str(e), NotificationLevel.ERROR)
             return
 

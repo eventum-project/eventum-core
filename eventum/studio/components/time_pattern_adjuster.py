@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Callable, Optional
 
 import streamlit as st
-from eventum.catalog.manage import save_time_pattern, CatalogUpdateError
+from eventum.repository.manage import save_time_pattern, RepositoryUpdateError
 
 import eventum.studio.models as models
 from eventum.studio.components.component import BaseComponent
@@ -167,15 +167,15 @@ class TimePatternAdjuster(BaseComponent):
                 filename=self._session_state['pattern_filename'],
                 overwrite=overwrite
             )
-        except CatalogUpdateError as e:
+        except RepositoryUpdateError as e:
             notify_callback(f'Failed to save: {e}', NotificationLevel.ERROR)
             return
 
         self._session_state['is_saved'] = True
-        notify_callback('Saved in catalog', NotificationLevel.SUCCESS)
+        notify_callback('Saved in repository', NotificationLevel.SUCCESS)
 
     def is_saved(self) -> bool:
-        """Get status whether the time pattern is saved in catalog."""
+        """Get status whether the time pattern is saved in repository."""
         return self._session_state['is_saved']
 
     def get_saved_filename(self) -> Optional[str]:

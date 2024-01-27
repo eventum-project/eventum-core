@@ -14,22 +14,22 @@ LIBRARY_DIR = os.path.dirname(os.path.abspath(__file__))
 TIME_PATTERNS_DIR = os.path.join(LIBRARY_DIR, 'time_patterns')
 
 
-class CatalogError(Exception):
-    """Base exception for all catalog manipulation errors."""
+class RepositoryError(Exception):
+    """Base exception for all content repository manipulation errors."""
 
 
-class CatalogUpdateError(CatalogError):
+class RepositoryUpdateError(RepositoryError):
     """Exception for errors related with creation, changing
     or deleting content.
     """
 
 
-class CatalogReadError(CatalogError):
+class RepositoryReadError(RepositoryError):
     """Exception for errors related with reading content."""
 
 
 def get_time_pattern_filenames() -> list[str]:
-    """Get all filenames of currently existing time patterns in catalog."""
+    """Get all filenames of currently existing time patterns in repository."""
     return glob(pathname='*.y*ml', root_dir=TIME_PATTERNS_DIR)
 
 
@@ -38,15 +38,19 @@ def save_time_pattern(
     filename: str,
     overwrite: bool = False
 ):
-    """Save time pattern in catalog. Raise `CatalogUpdateError` on failure."""
+    """Save time pattern in repository. Raise `RepositoryUpdateError`
+    on failure.
+    """
     try:
         validate_yaml_filename(filename)
     except ValueError as e:
-        raise CatalogUpdateError(str(e)) from e
+        raise RepositoryUpdateError(str(e)) from e
 
     filepath = os.path.join(TIME_PATTERNS_DIR, filename)
     if overwrite is False and os.path.exists(filepath):
-        raise CatalogUpdateError('Time pattern already exists in catalog')
+        raise RepositoryUpdateError(
+            'Time pattern already exists in repository'
+            )
 
     try:
         save_object_as_yaml(
@@ -54,19 +58,19 @@ def save_time_pattern(
             filepath=filepath
         )
     except (OSError, YAMLError) as e:
-        raise CatalogUpdateError(str(e)) from e
+        raise RepositoryUpdateError(str(e)) from e
 
 
 def load_time_pattern(filename: str) -> TimePatternConfig:
-    """Load specified time pattern from catalog and return its
-    dataclass representation. Raise `CatalogReadError` on failure.
+    """Load specified time pattern from repository and return its
+    dataclass representation. Raise `RepositoryReadError` on failure.
     """
     try:
         data = load_object_from_yaml(
             os.path.join(TIME_PATTERNS_DIR, filename)
         )
     except (OSError, YAMLError) as e:
-        raise CatalogReadError(str(e)) from e
+        raise RepositoryReadError(str(e)) from e
 
     try:
         return from_dict(
@@ -74,4 +78,4 @@ def load_time_pattern(filename: str) -> TimePatternConfig:
             data=data
         )
     except DaciteError as e:
-        raise CatalogReadError(str(e)) from e
+        raise RepositoryReadError(str(e)) from e
