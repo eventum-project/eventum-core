@@ -5,8 +5,8 @@ from typing import MutableMapping, Optional
 
 import streamlit as st
 
-from eventum.studio.key_management import (ContextualSessionState,
-                                           WidgetKeysContext)
+from eventum.studio.widget_management import (ContextualSessionState,
+                                              WidgetKeysContext)
 
 
 class ComponentPropsError(Exception):
