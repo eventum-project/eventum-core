@@ -1,7 +1,7 @@
 input:
   patterns:
-    - test
-    - test2
+    - test.yaml
+    - test2.yaml
   timestamps:
     - "2024-02-15T12:00:00.000Z"
     - "2024-02-16T12:00:00.000Z"
@@ -9,6 +9,8 @@ input:
   cron:
     expression: "*/5 * * * *"
     count: 3
+  sample:
+    count: 100
 
 event:
   params: { }
@@ -35,6 +37,7 @@ event:
   subprocesses:
     - abnormal_activity:
         config: example2.yaml
+        detach: true
 
 output:
   opensearch:
