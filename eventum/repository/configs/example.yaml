@@ -1,0 +1,44 @@
+input:
+  patterns:
+    - test
+    - test2
+  timestamps:
+    - "2024-02-15T12:00:00.000Z"
+    - "2024-02-16T12:00:00.000Z"
+    - "2024-02-17T12:00:00.000Z"
+  cron:
+    expression: "*/5 * * * *"
+    count: 3
+
+event:
+  params: { }
+
+  samples:
+    - users:
+        type: csv
+        header: true
+        separator: ","
+        source: user.csv
+    - hosts:
+        type: items
+        source:
+          - host1
+          - host2
+  
+  mode: all | any | chance | spin
+  templates:
+    - windows4624:
+        chance: 9
+    - windows4625:
+        chance: 1
+
+  subprocesses:
+    - abnormal_activity:
+        config: example2.yaml
+
+output:
+  opensearch:
+    host: localhost
+    port: 9200
+    user: admin
+    password: "{{password}}"
