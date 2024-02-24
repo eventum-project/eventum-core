@@ -16,28 +16,30 @@ event:
   params: { }
 
   samples:
-    - users:
-        type: csv
-        header: true
-        separator: ","
-        source: user.csv
-    - hosts:
-        type: items
-        source:
-          - host1
-          - host2
+    users:
+      type: csv
+      header: true
+      separator: ","
+      source: user.csv
+    hosts:
+      type: items
+      source:
+        - host1
+        - host2
   
   mode: all | any | chance | spin
   templates:
-    - windows4624:
-        chance: 9
-    - windows4625:
-        chance: 1
+    windows4624:
+      codec: json
+      chance: 9
+    windows4625:
+      codec: json
+      chance: 1
 
   subprocesses:
-    - abnormal_activity:
-        config: example2.yaml
-        detach: true
+    abnormal_activity:
+      config: example2.yaml
+      detach: true
 
 output:
   opensearch:
