@@ -25,8 +25,8 @@ class SampleInputConfig(BaseModel):
 
 
 class SampleType(StrEnum):
-    csv = 'csv'
-    items = 'items'
+    CSV = 'csv'
+    ITEMS = 'items'
 
 
 class CSVSampleConfig(BaseModel):
@@ -42,15 +42,15 @@ class ItemsSampleConfig(BaseModel):
 
 
 class TemplatePickingMode(StrEnum):
-    all = 'all'
-    any = 'any'
-    chance = 'chance'
-    spin = 'spin'
+    ALL = 'all'
+    ANY = 'any'
+    CHANCE = 'chance'
+    SPIN = 'spin'
 
 
 class TemplateCodecs(StrEnum):
-    json = 'json'
-    plain = 'plain'
+    JSON = 'json'
+    PLAIN = 'plain'
 
 
 class TemplateConfig(BaseModel):
@@ -73,7 +73,7 @@ class EventConfig(BaseModel):
     @root_validator
     def validate_templates_parameters(cls, values: Dict[str, Any]):
         for template in values['templates'].values():
-            if values['mode'] == TemplatePickingMode.chance:
+            if values['mode'] == TemplatePickingMode.CHANCE:
                 if template.chance is None:
                     raise ValueError(
                         'Parameter "chance" must be set for specified template'
@@ -88,8 +88,8 @@ class EventConfig(BaseModel):
 
 
 class OutputType(StrEnum):
-    stdout = 'stdout'
-    file = 'file'
+    STDOUT = 'stdout'
+    FILE = 'file'
 
 
 class StdOutOutputConfig(BaseModel):
