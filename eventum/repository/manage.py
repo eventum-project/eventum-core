@@ -6,7 +6,7 @@ from dacite import DaciteError, from_dict
 from yaml import YAMLError
 from eventum.core import models
 
-from eventum.core.models.time_pattern import TimePatternConfig
+from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.utils.fs import (load_object_from_yaml, save_object_as_yaml,
                               validate_yaml_filename)
 

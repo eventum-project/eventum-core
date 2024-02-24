@@ -2,7 +2,7 @@ from typing import Callable, MutableMapping, Optional
 
 import streamlit as st
 
-import eventum.core.models.time_pattern as models
+import eventum.core.models.time_pattern_config as models
 from eventum.repository.manage import (RepositoryReadError,
                                        get_time_pattern_filenames,
                                        load_time_pattern)
