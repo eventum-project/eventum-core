@@ -1,9 +1,10 @@
 from typing import Callable, Optional
 
+from pydantic import ValidationError
 import streamlit as st
-from eventum.repository.manage import save_time_pattern, RepositoryUpdateError
 
 import eventum.core.models.time_pattern_config as models
+from eventum.repository.manage import save_time_pattern, RepositoryUpdateError
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 
@@ -94,11 +95,11 @@ class TimePatternAdjuster(BaseComponent):
         )
         col1, col2 = st.columns(2)
         col1.text_input(
-            'Start timestamp',
+            'Start time',
             key=self._wk('oscillator_start_timestamp'),
         )
         col2.text_input(
-            'End timestamp',
+            'End time',
             key=self._wk('oscillator_end_timestamp'),
         )
 
@@ -167,6 +168,12 @@ class TimePatternAdjuster(BaseComponent):
                 filename=self._session_state['pattern_filename'],
                 overwrite=overwrite
             )
+        except ValidationError as e:
+            notify_callback(
+                f'Field validation fail for "{e.title}"',
+                NotificationLevel.ERROR
+            )
+            return
         except RepositoryUpdateError as e:
             notify_callback(f'Failed to save: {e}', NotificationLevel.ERROR)
             return
