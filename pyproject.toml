@@ -26,5 +26,5 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-eventum = "eventum.cli.main:main"
-eventum-studio = "eventum.studio.main:main"
+eventum = "eventum.cli.__main__:main"
+eventum-studio = "eventum.studio.__main__:main"
