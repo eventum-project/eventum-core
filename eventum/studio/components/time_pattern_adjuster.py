@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Callable, Optional
 
 import streamlit as st
@@ -227,8 +226,8 @@ class TimePatternAdjuster(BaseComponent):
             oscillator=models.OscillatorConfig(
                 interval=1,
                 unit=models.TimeUnit.SECONDS.value,
-                start=datetime.now().replace(microsecond=0).isoformat(),
-                end=datetime.now().replace(microsecond=0).isoformat()
+                start='now',
+                end='never'
             ),
             multiplier=models.MultiplierConfig(ratio=1),
             randomizer=models.RandomizerConfig(
@@ -237,6 +236,6 @@ class TimePatternAdjuster(BaseComponent):
             ),
             spreader=models.SpreaderConfig(
                 function=models.DistributionFunction.LINEAR.value,
-                parameters=models.DistributionParameters()
+                parameters=dict()
             )
         )

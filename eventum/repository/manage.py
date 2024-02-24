@@ -1,10 +1,8 @@
 import os
-from dataclasses import asdict
 from glob import glob
-from dacite import DaciteError, from_dict
 
 from yaml import YAMLError
-from eventum.core import models
+from pydantic import ValidationError
 
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.utils.fs import (load_object_from_yaml, save_object_as_yaml,
@@ -54,7 +52,7 @@ def save_time_pattern(
 
     try:
         save_object_as_yaml(
-            data=asdict(pattern_config),
+            data=pattern_config.model_dump(mode='json'),
             filepath=filepath
         )
     except (OSError, YAMLError) as e:
@@ -63,7 +61,7 @@ def save_time_pattern(
 
 def load_time_pattern(filename: str) -> TimePatternConfig:
     """Load specified time pattern from repository and return its
-    dataclass representation. Raise `RepositoryReadError` on failure.
+    model representation. Raise `RepositoryReadError` on failure.
     """
     try:
         data = load_object_from_yaml(
@@ -73,9 +71,6 @@ def load_time_pattern(filename: str) -> TimePatternConfig:
         raise RepositoryReadError(str(e)) from e
 
     try:
-        return from_dict(
-            data_class=models.TimePatternConfig,
-            data=data
-        )
-    except DaciteError as e:
+        return TimePatternConfig.model_validate(data)
+    except ValidationError as e:
         raise RepositoryReadError(str(e)) from e

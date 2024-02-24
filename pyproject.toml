@@ -11,7 +11,6 @@ keywords = ["generator", "testing", "data"]
 [tool.poetry.dependencies]
 python = "^3.11"
 pyyaml = "^6.0.1"
-dacite = "^1.8.1"
 pydantic = "^2.6.2"
 
 
