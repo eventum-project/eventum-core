@@ -1,3 +1,4 @@
+import pytest
 from datetime import timedelta
 
 from eventum.utils.relative_time import parse_relative_time
@@ -23,3 +24,12 @@ def test_parse_relative_time():
     assert parse_relative_time('+15d-15h+30m-24s') == timedelta(
         days=15, hours=-15, minutes=30, seconds=-24
     )
+
+    with pytest.raises(ValueError):
+        parse_relative_time('16Days minus three hours')
+
+    with pytest.raises(ValueError):
+        parse_relative_time('16d-3j')
+
+    with pytest.raises(ValueError):
+        parse_relative_time('')

@@ -15,23 +15,24 @@ def parse_relative_time(expression: str) -> timedelta:
     Example expressions: '+1d+12h'; '1h+30m+10s'; '-3d-4h'; '1d-2h+30m';
     If expression cannot be properly parsed then `ValueError` is raised.
     """
-    pattern = r'([-+]?\d+)([dhms])'
-    matches = re.findall(pattern, expression)
+    if not expression:
+        raise ValueError('Empty expression is provided')
 
-    if not matches:
+    pattern = (
+        r'(?:(?P<days>[-+]?\d+)d)?'
+        r'(?:(?P<hours>[-+]?\d+)h)?'
+        r'(?:(?P<minutes>[-+]?\d+)m)?'
+        r'(?:(?P<seconds>[-+]?\d+)s)?'
+    )
+    match = re.match(pattern, expression)
+
+    if match.start() != 0 or match.end() != (len(expression)):
         raise ValueError('Failed to parse expression')
 
-    try:
-        kwargs = {
-            {
-                'd': 'days',
-                'h': 'hours',
-                'm': 'minutes',
-                's': 'seconds'
-            }[unit]: int(value) for value, unit in matches
+    return timedelta(
+        **{
+            unit: int(value)
+            for unit, value in match.groupdict().items()
+            if value is not None
         }
-    except KeyError as e:
-        raise ValueError(
-            f'Failed to parse expression due to unexpected unit {e}'
-        )
-    return timedelta(**kwargs)
+    )
