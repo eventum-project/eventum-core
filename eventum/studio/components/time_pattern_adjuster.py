@@ -4,7 +4,7 @@ from typing import Callable, Optional
 import streamlit as st
 from eventum.repository.manage import save_time_pattern, RepositoryUpdateError
 
-import eventum.studio.models as models
+import eventum.core.models as models
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 
