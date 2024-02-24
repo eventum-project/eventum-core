@@ -20,6 +20,7 @@ streamlit = "^1.28.1"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
+pytest = "^8.0.1"
 
 [build-system]
 requires = ["poetry-core"]
