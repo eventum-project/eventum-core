@@ -1,7 +1,7 @@
 from enum import StrEnum
-from typing import Any, Dict, TypeAlias
+from typing import TypeAlias
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 
 
 class InputType(StrEnum):
@@ -70,10 +70,10 @@ class EventConfig(BaseModel):
     templates: dict[str, TemplateConfig]
     subprocesses: dict[str, SubrocessConfig]
 
-    @root_validator
-    def validate_templates_parameters(cls, values: Dict[str, Any]):
-        for template in values['templates'].values():
-            if values['mode'] == TemplatePickingMode.CHANCE:
+    @model_validator(mode='after')
+    def validate_templates_parameters(self):
+        for template in self.templates.values():
+            if self.mode == TemplatePickingMode.CHANCE:
                 if template.chance is None:
                     raise ValueError(
                         'Parameter "chance" must be set for specified template'
@@ -110,7 +110,11 @@ OutputConfigs: TypeAlias = (
 )
 
 
+InputConfig: TypeAlias = dict[InputType, InputConfigs]
+OutputConfig: TypeAlias = dict[OutputType, OutputConfigs]
+
+
 class ApplicationConfig(BaseModel):
-    input: dict[InputType, InputConfigs]
+    input: InputConfig
     event: EventConfig
-    output: dict[OutputType, OutputConfigs]
+    output: OutputConfig
