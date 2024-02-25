@@ -5,10 +5,10 @@ from pydantic import BaseModel, model_validator
 
 
 class InputType(StrEnum):
-    patterns = 'patterns'
-    timestamps = 'timestamps'
-    cron = 'cron'
-    sample = 'sample'
+    PATTERNS = 'patterns'
+    TIMESTAMPS = 'timestamps'
+    CRON = 'cron'
+    SAMPLE = 'sample'
 
 
 PatternsInputConfig: TypeAlias = list[str]
@@ -100,21 +100,21 @@ class FileOutputConfig(BaseModel):
     path: str
 
 
-InputConfigs: TypeAlias = (
+InputConfig: TypeAlias = (
     PatternsInputConfig | TimestampsInputConfig
     | SampleInputConfig | CronInputConfig
 )
 
-OutputConfigs: TypeAlias = (
+OutputConfig: TypeAlias = (
     StdOutOutputConfig | FileOutputConfig
 )
 
 
-InputConfig: TypeAlias = dict[InputType, InputConfigs]
-OutputConfig: TypeAlias = dict[OutputType, OutputConfigs]
+InputConfigMapping: TypeAlias = dict[InputType, InputConfig]
+OutputConfigMapping: TypeAlias = dict[OutputType, OutputConfig]
 
 
 class ApplicationConfig(BaseModel):
-    input: InputConfig
+    input: InputConfigMapping
     event: EventConfig
-    output: OutputConfig
+    output: OutputConfigMapping

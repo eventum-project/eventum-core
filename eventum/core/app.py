@@ -5,11 +5,14 @@ from typing import NoReturn
 import psutil
 from eventum.core.defaults import get_default_settings
 from eventum.core.models.application_config import (ApplicationConfig,
-                                                    EventConfig, InputConfig,
-                                                    OutputConfig)
+                                                    InputConfigMapping,
+                                                    EventConfig,
+                                                    OutputConfigMapping,
+                                                    InputType)
 from eventum.core.models.runtime_settings import RuntimeSettings
 from eventum.core.models.time_mode import TimeMode
 from setproctitle import getproctitle, setproctitle
+import eventum.core.time_distribution as td
 
 
 class Application:
@@ -28,11 +31,40 @@ class Application:
         self._output_queue = Queue()
 
     @staticmethod
-    def _start_input_module(config: InputConfig, queue: Queue) -> NoReturn:
+    def _start_input_module(
+        config: InputConfigMapping,
+        queue: Queue,
+        time_mode: TimeMode
+    ) -> NoReturn:
         setproctitle(f'{getproctitle()} [input]')
 
-        while True:
-            queue.put(...)
+        input_type, input_config = config.popitem()
+
+        match input_type:
+            case InputType.PATTERNS:
+                distr = td.TimePatternPoolDistribution()
+            case InputType.TIMESTAMPS:
+                distr = td.ManualTimeDistribution()
+            case InputType.CRON:
+                distr = td.CronTimeDistribution()
+            case InputType.SAMPLE:
+                distr = td.SampleTimeDistribution()
+            case _:
+                raise NotImplementedError(
+                    'No distribution class registered '
+                    f'for input type "{input_type}"'
+                )
+
+        match time_mode:
+            case TimeMode.LIVE:
+                distr.live(on_event=lambda ts: queue.put(ts))
+            case TimeMode.SAMPLE:
+                distr.sample(on_event=lambda ts: queue.put(ts))
+            case _:
+                raise NotImplementedError(
+                    f'No distribution method registred for '
+                    f'time mode "{time_mode}"'
+                )
 
     @staticmethod
     def _start_event_module(
@@ -48,7 +80,10 @@ class Application:
             output_queue.put(...)
 
     @staticmethod
-    def _start_output_module(config: OutputConfig, queue: Queue) -> NoReturn:
+    def _start_output_module(
+        config: OutputConfigMapping,
+        queue: Queue
+    ) -> NoReturn:
         setproctitle(f'{getproctitle()} [output]')
 
         while True:
@@ -58,7 +93,7 @@ class Application:
 
         _proc_input = Process(
             target=self._start_input_module,
-            args=(self._config.input, self._input_queue)
+            args=(self._config.input, self._input_queue, self._time_mode)
         )
         _proc_event = Process(
             target=self._start_event_module,
