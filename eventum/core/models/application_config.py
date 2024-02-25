@@ -31,8 +31,8 @@ class SampleType(StrEnum):
 
 class CSVSampleConfig(BaseModel):
     type: SampleType
-    header: bool | None = False
-    separator: str | None = ','
+    header: bool
+    separator: str | None
     source: str
 
 

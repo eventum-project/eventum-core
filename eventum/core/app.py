@@ -3,15 +3,26 @@ from multiprocessing import Process, Queue
 from typing import NoReturn
 
 import psutil
+from eventum.core.defaults import get_default_settings
 from eventum.core.models.application_config import (ApplicationConfig,
                                                     EventConfig, InputConfig,
                                                     OutputConfig)
+from eventum.core.models.runtime_settings import RuntimeSettings
+from eventum.core.models.time_mode import TimeMode
 from setproctitle import getproctitle, setproctitle
 
 
 class Application:
-    def __init__(self, config: ApplicationConfig) -> None:
+    def __init__(
+        self,
+        config: ApplicationConfig,
+        time_mode: TimeMode,
+        settings: RuntimeSettings | None
+    ) -> None:
         self._config = config
+
+        self._time_mode = time_mode
+        self._settings = settings or get_default_settings()
 
         self._input_queue = Queue()
         self._output_queue = Queue()
