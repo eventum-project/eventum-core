@@ -9,10 +9,6 @@ from eventum.core.models.application_config import (ApplicationConfig,
 from setproctitle import getproctitle, setproctitle
 
 
-def _input_module(queue: Queue) -> ...:
-    ...
-
-
 class Application:
     def __init__(self, config: ApplicationConfig) -> None:
         self._config = config
@@ -74,6 +70,3 @@ class Application:
         _proc_input.join()
         _proc_event.join()
         _proc_output.join()
-
-
-Application(config=None).start()
