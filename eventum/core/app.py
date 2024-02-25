@@ -108,6 +108,8 @@ class Application:
         _proc_event.start()
         _proc_output.start()
 
+        # TODO while input is alive - to be alive. Otherwise, gracefully stop
+        # event and output proccesses and stop itself.
         _ = psutil.Process(os.getpid())
         setproctitle(f'{getproctitle()} [supervisor]')
 
