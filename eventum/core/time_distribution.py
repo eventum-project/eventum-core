@@ -7,7 +7,7 @@ class BaseDistribution(ABC):
     """Base class for all distributions."""
 
     @abstractmethod
-    def live(self, on_event: Callable[[str]]) -> None | NoReturn:
+    def live(self, on_event: Callable[[str], Any]) -> None | NoReturn:
         """Start simulation of distribution in live. Every time event
         is occured in distribution, the `on_triger` callable is called
         with current timestamp as `str` in ISO-8601 format as a single

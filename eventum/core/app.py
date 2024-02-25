@@ -8,7 +8,8 @@ from eventum.core.models.application_config import (ApplicationConfig,
                                                     InputConfigMapping,
                                                     EventConfig,
                                                     OutputConfigMapping,
-                                                    InputType)
+                                                    InputType,
+                                                    SampleInputConfig)
 from eventum.core.models.runtime_settings import RuntimeSettings
 from eventum.core.models.time_mode import TimeMode
 from setproctitle import getproctitle, setproctitle
@@ -20,7 +21,7 @@ class Application:
         self,
         config: ApplicationConfig,
         time_mode: TimeMode,
-        settings: RuntimeSettings | None
+        settings: RuntimeSettings | None = None
     ) -> None:
         self._config = config
 
@@ -48,7 +49,8 @@ class Application:
             case InputType.CRON:
                 distr = td.CronDistribution()
             case InputType.SAMPLE:
-                distr = td.SampleDistribution()
+                input_config: SampleInputConfig
+                distr = td.SampleDistribution(count=input_config.count)
             case _:
                 raise NotImplementedError(
                     'No distribution class registered '
