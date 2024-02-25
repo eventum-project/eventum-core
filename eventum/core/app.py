@@ -44,11 +44,11 @@ class Application:
             case InputType.PATTERNS:
                 distr = td.TimePatternPoolDistribution()
             case InputType.TIMESTAMPS:
-                distr = td.ManualTimeDistribution()
+                distr = td.ManualDistribution()
             case InputType.CRON:
-                distr = td.CronTimeDistribution()
+                distr = td.CronDistribution()
             case InputType.SAMPLE:
-                distr = td.SampleTimeDistribution()
+                distr = td.SampleDistribution()
             case _:
                 raise NotImplementedError(
                     'No distribution class registered '
