@@ -13,7 +13,10 @@ from eventum.core.models.application_config import (ApplicationConfig,
 from eventum.core.models.runtime_settings import RuntimeSettings
 from eventum.core.models.time_mode import TimeMode
 from setproctitle import getproctitle, setproctitle
-import eventum.core.time_distribution as td
+from eventum.core.plugins.input.sample import SampleInputPlugin
+from eventum.core.plugins.input.cron import CronInputPlugin
+from eventum.core.plugins.input.time_pattern import TimePatternPoolInputPlugin
+from eventum.core.plugins.input.time_sample import TimeSampleInputPlugin
 
 
 class Application:
@@ -43,30 +46,35 @@ class Application:
 
         match input_type:
             case InputType.PATTERNS:
-                distr = td.TimePatternPoolDistribution()
+                input = TimePatternPoolInputPlugin()
             case InputType.TIMESTAMPS:
-                distr = td.ManualDistribution()
+                input = TimeSampleInputPlugin()
             case InputType.CRON:
-                distr = td.CronDistribution()
+                input = CronInputPlugin()
             case InputType.SAMPLE:
                 input_config: SampleInputConfig
-                distr = td.SampleDistribution(count=input_config.count)
+                input = SampleInputPlugin(count=input_config.count)
             case _:
                 raise NotImplementedError(
                     'No distribution class registered '
                     f'for input type "{input_type}"'
                 )
 
-        match time_mode:
-            case TimeMode.LIVE:
-                distr.live(on_event=lambda ts: queue.put(ts))
-            case TimeMode.SAMPLE:
-                distr.sample(on_event=lambda ts: queue.put(ts))
-            case _:
-                raise NotImplementedError(
-                    f'No distribution method registred for '
-                    f'time mode "{time_mode}"'
-                )
+        try:
+            match time_mode:
+                case TimeMode.LIVE:
+                    input.live(on_event=lambda ts: queue.put(ts))
+                case TimeMode.SAMPLE:
+                    input.sample(on_event=lambda ts: queue.put(ts))
+                case _:
+                    raise NotImplementedError(
+                        f'No distribution method registred for '
+                        f'time mode "{time_mode}"'
+                    )
+        except AttributeError as e:
+            raise AttributeError(
+                f'Specified input plugin does not support "{time_mode}" mode'
+            ) from e
 
     @staticmethod
     def _start_event_module(
