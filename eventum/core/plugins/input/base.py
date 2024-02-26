@@ -10,7 +10,7 @@ class LiveInputPlugin(BaseInputPlugin):
     """Base class for all input plugin that can be used in live mode."""
 
     @abstractmethod
-    def live(self, on_event: Callable[[str], Any]) -> None | NoReturn:
+    def live(self, on_event: Callable[[str], Any]) -> NoReturn:
         """Start production of events in live. Every time event is
         occured in proccess, the `on_triger` callable is called with
         current timestamp as `str` in ISO-8601 format as a single
