@@ -16,7 +16,7 @@ from setproctitle import getproctitle, setproctitle
 from eventum.core.plugins.input.sample import SampleInputPlugin
 from eventum.core.plugins.input.cron import CronInputPlugin
 from eventum.core.plugins.input.time_pattern import TimePatternPoolInputPlugin
-from eventum.core.plugins.input.time_sample import TimestampsInputPlugin
+from eventum.core.plugins.input.timestamps import TimestampsInputPlugin
 
 
 class Application:
