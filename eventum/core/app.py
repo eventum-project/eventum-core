@@ -56,7 +56,7 @@ class Application:
                 input = SampleInputPlugin(count=input_config.count)
             case _:
                 raise NotImplementedError(
-                    'No distribution class registered '
+                    'No input plugin class registered '
                     f'for input type "{input_type}"'
                 )
 
@@ -68,7 +68,7 @@ class Application:
                     input.sample(on_event=lambda ts: queue.put(ts))
                 case _:
                     raise NotImplementedError(
-                        f'No distribution method registred for '
+                        f'No input plugin method registred for '
                         f'time mode "{time_mode}"'
                     )
         except AttributeError as e:

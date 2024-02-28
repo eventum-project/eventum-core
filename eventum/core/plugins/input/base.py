@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, NoReturn
 
 
+class InputPluginError(Exception):
+    """Base exception for all input plugin errors."""
+
+
 class BaseInputPlugin(ABC):
     """Base class for all input plugins."""
 
