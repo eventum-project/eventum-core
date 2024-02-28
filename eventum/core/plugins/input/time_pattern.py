@@ -36,17 +36,21 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         return self._config.multiplier.ratio
 
     def _get_random_delta_cycle(self) -> list[timedelta]:
-        """Helper for `_get_delta_cycle` implementing random distribution."""
+        """Helper for `_get_delta_cycle` implementing random
+        distribution.
+        """
         size = self._interval_size
         duration = self._interval_duration
 
         return list(np.sort(np.random.random(size)) * duration)
 
     def _get_delta_cycle(self) -> list[timedelta]:
-        """Compute list of time points in the distribution for one interval
-        where each point is expressed as time from beggining of the interval.
+        """Compute list of time points in the distribution for one
+        interval where each point is expressed as time from beggining
+        of the interval.
 
-        Method calls coresponding method implementing specific distribution.
+        Method calls coresponding method implementing specific
+        distribution.
         """
         distr_name = self._config.spreader.function.value.lower()
         attr_name = f'_get_{distr_name}_delta_cycle'
@@ -60,11 +64,12 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             ) from e
 
     def _get_interval(self, start: datetime) -> list[datetime]:
-        """Compute list of datetimes in the distribution for one interval
-        from `start` by using delta cycle."""
+        """Compute list of datetimes in the distribution for one
+        interval from `start` by using delta cycle.
+        """
         return [start + delta for delta in self._get_delta_cycle()]
 
-    def sample(self, on_event: Callable[[str], Any]) -> None:
+    def sample(self, on_event: Callable[[datetime], Any]) -> None:
         if (
             not isinstance(self._config.oscillator.start, datetime)
             or not isinstance(self._config.oscillator.end, datetime)
@@ -81,7 +86,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         while start < end:
             for timestamp in self._get_interval(start):
                 if timestamp < self._config.oscillator.end:
-                    on_event(timestamp.astimezone().isoformat())
+                    on_event(timestamp)
                 else:
                     break
 

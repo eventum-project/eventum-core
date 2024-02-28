@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 from typing import Any, Callable, NoReturn
 
@@ -7,8 +8,8 @@ from eventum.core.plugins.input.base import LiveInputPlugin
 
 
 class CronInputPlugin(LiveInputPlugin):
-    """Input plugin for generating events at times defined
-    by cron expression.
+    """Input plugin for generating events at times defined by cron
+    expression.
     """
 
     def __init__(self, expression: str, count: int) -> None:
@@ -19,7 +20,7 @@ class CronInputPlugin(LiveInputPlugin):
         self._expression = expression
         self._count = count
 
-    def live(self, on_event: Callable[[str], Any]) -> NoReturn:
+    def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
         entry = CronTab(self._expression)
 
         while True:
@@ -27,4 +28,4 @@ class CronInputPlugin(LiveInputPlugin):
             time.sleep(entry.next(default_utc=False))
 
             for _ in range(self._count):
-                on_event(timestamp.astimezone().isoformat())
+                on_event(timestamp)

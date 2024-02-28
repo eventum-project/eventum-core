@@ -13,11 +13,11 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
         self._timestamps = timestamps
         self._timestamps.sort()
 
-    def sample(self, on_event: Callable[[str], Any]) -> None:
+    def sample(self, on_event: Callable[[datetime], Any]) -> None:
         for timestamp in self._timestamps:
-            on_event(timestamp.astimezone().isoformat())
+            on_event(timestamp)
 
-    def live(self, on_event: Callable[[str], Any]) -> NoReturn:
+    def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
         for timestamp in self._timestamps:
             delta_seconds = (timestamp - datetime.now()).total_seconds()
 
@@ -26,4 +26,4 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
             time.sleep(delta_seconds)
 
-            on_event(timestamp.astimezone().isoformat())
+            on_event(timestamp)
