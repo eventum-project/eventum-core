@@ -40,7 +40,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         size = self._interval_size
         duration = self._interval_duration
 
-        return list(np.sort(np.random.random(size) * duration))
+        return list(np.sort(np.random.random(size)) * duration)
 
     def _get_delta_cycle(self) -> list[timedelta]:
         """Compute list of time points in the distribution for one interval
