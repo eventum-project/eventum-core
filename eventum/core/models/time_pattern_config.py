@@ -8,10 +8,10 @@ from eventum.utils.relative_time import parse_relative_time
 
 
 class TimeUnit(StrEnum):
-    SECONDS = 's'
-    MINUTES = 'm'
-    HOURS = 'h'
-    DAYS = 'd'
+    SECONDS = 'seconds'
+    MINUTES = 'minutes'
+    HOURS = 'hours'
+    DAYS = 'days'
 
 
 class DistributionFunction(StrEnum):

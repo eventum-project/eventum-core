@@ -82,7 +82,7 @@ class TimePatternAdjuster(BaseComponent):
 
     def _show_oscillator_section(self) -> None:
         st.header('Ocillator')
-        col1, col2 = st.columns([8, 2])
+        col1, col2 = st.columns([3, 7])
         col1.number_input(
             'Interval',
             step=1,
@@ -232,17 +232,17 @@ class TimePatternAdjuster(BaseComponent):
             label=label,
             oscillator=models.OscillatorConfig(
                 interval=1,
-                unit=models.TimeUnit.SECONDS.value,
+                unit=models.TimeUnit.SECONDS,
                 start='now',
                 end='never'
             ),
             multiplier=models.MultiplierConfig(ratio=1),
             randomizer=models.RandomizerConfig(
                 deviation=0,
-                direction=models.RandomizerDirection.MIXED.value
+                direction=models.RandomizerDirection.MIXED
             ),
             spreader=models.SpreaderConfig(
-                function=models.DistributionFunction.LINEAR.value,
+                function=models.DistributionFunction.LINEAR,
                 parameters=dict()
             )
         )
