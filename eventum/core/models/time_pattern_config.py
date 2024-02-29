@@ -92,9 +92,9 @@ class TriangularDistributionParameters(BaseModel):
 
     @field_validator('mode')
     def validate_mode(cls, v: Any):
-        if 0 < v < 1:
+        if 0 <= v <= 1:
             return v
-        raise ValueError('"mode" must be in (0; 1) range')
+        raise ValueError('"mode" must be in [0; 1] range')
 
     @field_validator('right')
     def validate_right(cls, v: Any):
@@ -104,10 +104,10 @@ class TriangularDistributionParameters(BaseModel):
 
     @model_validator(mode='after')
     def validate_points(self):
-        if self.left < self.mode < self.right:
+        if self.left <= self.mode <= self.right:
             return self
         raise ValueError(
-            'Values do not comply "left < mode < right" condition'
+            'Values do not comply "left <= mode <= right" condition'
         )
 
 
