@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from copy import copy
 from typing import Any, Callable, NoReturn
 
 import numpy as np
@@ -33,6 +32,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """Number of time points in interval. Each time the property
         is accessed the value can be different due to randomizer affect.
         """
+        # TODO randomizer affect
         return self._config.multiplier.ratio
 
     def _get_random_delta_cycle(self) -> list[timedelta]:
@@ -44,15 +44,23 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         return list(np.sort(np.random.random(size)) * duration)
 
+    def _get_beta_delta_cycle(self) -> list[timedelta]:
+        size = self._interval_size
+        duration = self._interval_duration
+        a = self._config.spreader.parameters.a
+        b = self._config.spreader.parameters.b
+
+        return list(np.sort(np.random.beta(a, b, size=size)) * duration)
+
     def _get_delta_cycle(self) -> list[timedelta]:
         """Compute list of time points in the distribution for one
-        interval where each point is expressed as time from beggining
+        interval where each point is expressed as time from beginning
         of the interval.
 
-        Method calls coresponding method implementing specific
+        Method calls corresponding method implementing specific
         distribution.
         """
-        distr_name = self._config.spreader.function.value.lower()
+        distr_name = self._config.spreader.distribution.value.lower()
         attr_name = f'_get_{distr_name}_delta_cycle'
 
         try:
@@ -79,7 +87,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 ' and end time in sample mode'
             )
 
-        start = copy(self._config.oscillator.start)
+        start = self._config.oscillator.start
         end = self._config.oscillator.end
         interval = self._interval_duration
 
@@ -98,3 +106,35 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
 class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
     ...
+
+
+# import eventum.core.models.time_pattern_config as models
+# from matplotlib import pyplot as plt
+
+# lst = []
+# TimePatternInputPlugin(
+#     config=models.TimePatternConfig(
+#             label='test',
+#             oscillator=models.OscillatorConfig(
+#                 interval=8,
+#                 unit=models.TimeUnit.HOURS,
+#                 start='2024-02-28T00:00:00+03:00',
+#                 end='2024-02-29T00:00:00+03:00'
+#             ),
+#             multiplier=models.MultiplierConfig(ratio=10000),
+#             randomizer=models.RandomizerConfig(
+#                 deviation=0,
+#                 direction=models.RandomizerDirection.MIXED
+#             ),
+#             spreader=models.SpreaderConfig(
+#                 distribution=models.Distribution.BETA,
+#                 parameters=models.BetaDistributionParameters(
+#                     a=5,
+#                     b=15
+#                 )
+#             )
+#         )
+# ).sample(lambda ts: lst.append(ts))
+
+# plt.hist(lst, bins=100)
+# plt.show()
