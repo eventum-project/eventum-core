@@ -15,11 +15,9 @@ class TimeUnit(StrEnum):
 
 
 class Distribution(StrEnum):
-    RANDOM = 'Random'
+    UNIFORM = 'Uniform'
     BETA = 'Beta'
     TRIANGULAR = 'Triangular'
-    LINEAR = 'Linear'
-    GAUSSIAN = 'Gaussian'
 
 
 class RandomizerDirection(StrEnum):

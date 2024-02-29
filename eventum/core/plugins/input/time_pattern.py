@@ -35,19 +35,15 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         # TODO randomizer affect
         return self._config.multiplier.ratio
 
-    def _get_random_delta_cycle(self) -> list[timedelta]:
-        """Helper for `_get_delta_cycle` implementing random
-        distribution.
-        """
+    def _get_uniform_cycle(self) -> list[timedelta]:
+        """Helper for `_get_cycle` implementing uniform distribution."""
         size = self._interval_size
         duration = self._interval_duration
 
-        return list(np.sort(np.random.random(size)) * duration)
+        return list(np.sort(np.random.uniform(0, 1, size)) * duration)
 
-    def _get_beta_delta_cycle(self) -> list[timedelta]:
-        """Helper for `_get_delta_cycle` implementing beta
-        distribution.
-        """
+    def _get_beta_cycle(self) -> list[timedelta]:
+        """Helper for `_get_cycle` implementing beta distribution."""
         size = self._interval_size
         duration = self._interval_duration
         a = self._config.spreader.parameters.a
@@ -55,10 +51,8 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         return list(np.sort(np.random.beta(a, b, size)) * duration)
 
-    def _get_triangular_delta_cycle(self) -> list[timedelta]:
-        """Helper for `_get_delta_cycle` implementing triangular
-        distribution.
-        """
+    def _get_triangular_cycle(self) -> list[timedelta]:
+        """Helper for `_get_cycle` implementing triangular distribution."""
         size = self._interval_size
         duration = self._interval_duration
 
@@ -70,7 +64,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             np.sort(np.random.triangular(left, mode, right, size)) * duration
         )
 
-    def _get_delta_cycle(self) -> list[timedelta]:
+    def _get_cycle(self) -> list[timedelta]:
         """Compute list of time points in the distribution for one
         interval where each point is expressed as time from beginning
         of the interval.
@@ -79,10 +73,10 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         distribution.
         """
         distr_name = self._config.spreader.distribution.value.lower()
-        attr_name = f'_get_{distr_name}_delta_cycle'
+        attr_name = f'_get_{distr_name}_cycle'
 
         try:
-            return TimePatternInputPlugin.__getattribute__(self, attr_name)()
+            return getattr(self, attr_name)()
         except AttributeError as e:
             raise NotImplementedError(
                 f'TimePatternInputPlugin does not implement {attr_name} method'
@@ -91,9 +85,9 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
     def _get_interval(self, start: datetime) -> list[datetime]:
         """Compute list of datetimes in the distribution for one
-        interval from `start` by using delta cycle.
+        interval from `start` by using cycle of deltas.
         """
-        return [start + delta for delta in self._get_delta_cycle()]
+        return [start + delta for delta in self._get_cycle()]
 
     def sample(self, on_event: Callable[[datetime], Any]) -> None:
         if (
@@ -124,36 +118,3 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
 class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
     ...
-
-
-# import eventum.core.models.time_pattern_config as models
-# from matplotlib import pyplot as plt
-
-# lst = []
-# TimePatternInputPlugin(
-#     config=models.TimePatternConfig(
-#             label='test',
-#             oscillator=models.OscillatorConfig(
-#                 interval=8,
-#                 unit=models.TimeUnit.HOURS,
-#                 start='2024-02-28T00:00:00+03:00',
-#                 end='2024-02-29T00:00:00+03:00'
-#             ),
-#             multiplier=models.MultiplierConfig(ratio=10000),
-#             randomizer=models.RandomizerConfig(
-#                 deviation=0,
-#                 direction=models.RandomizerDirection.MIXED
-#             ),
-#             spreader=models.SpreaderConfig(
-#                 distribution=models.Distribution.TRIANGULAR,
-#                 parameters=models.TriangularDistributionParameters(
-#                     left=0.6,
-#                     mode=0.7,
-#                     right=1
-#                 )
-#             )
-#         )
-# ).sample(lambda ts: lst.append(ts))
-
-# plt.hist(lst, bins=100)
-# plt.show()
