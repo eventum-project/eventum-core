@@ -43,8 +43,8 @@ class BaseComponent(ABC):
         self.__init_state_wrapper()
 
     def __init_state_wrapper(self):
-        """Check whether the session is initilized and call
-        intialization in case it's not.
+        """Check whether the session is initialized and call
+        initialization in case it's not.
         """
         if 'initialized' in self._session_state:
             return

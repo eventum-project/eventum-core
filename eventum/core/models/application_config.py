@@ -58,7 +58,7 @@ class TemplateConfig(BaseModel):
     chance: int | None
 
 
-class SubrocessConfig(BaseModel):
+class SubprocessConfig(BaseModel):
     config: str
     detach: bool
 
@@ -68,7 +68,7 @@ class EventConfig(BaseModel):
     samples: dict[str, ItemsSampleConfig | CSVSampleConfig]
     mode: TemplatePickingMode
     templates: dict[str, TemplateConfig]
-    subprocesses: dict[str, SubrocessConfig]
+    subprocesses: dict[str, SubprocessConfig]
 
     @model_validator(mode='after')
     def validate_templates_parameters(self):

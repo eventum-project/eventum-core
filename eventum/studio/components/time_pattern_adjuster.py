@@ -81,7 +81,7 @@ class TimePatternAdjuster(BaseComponent):
         )
 
     def _show_oscillator_section(self) -> None:
-        st.header('Ocillator')
+        st.header('Oscillator')
         col1, col2 = st.columns([3, 7])
         col1.number_input(
             'Interval',
