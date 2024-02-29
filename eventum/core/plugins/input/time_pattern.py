@@ -45,12 +45,30 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         return list(np.sort(np.random.random(size)) * duration)
 
     def _get_beta_delta_cycle(self) -> list[timedelta]:
+        """Helper for `_get_delta_cycle` implementing beta
+        distribution.
+        """
         size = self._interval_size
         duration = self._interval_duration
         a = self._config.spreader.parameters.a
         b = self._config.spreader.parameters.b
 
-        return list(np.sort(np.random.beta(a, b, size=size)) * duration)
+        return list(np.sort(np.random.beta(a, b, size)) * duration)
+
+    def _get_triangular_delta_cycle(self) -> list[timedelta]:
+        """Helper for `_get_delta_cycle` implementing triangular
+        distribution.
+        """
+        size = self._interval_size
+        duration = self._interval_duration
+
+        left = self._config.spreader.parameters.left
+        mode = self._config.spreader.parameters.mode
+        right = self._config.spreader.parameters.right
+
+        return list(
+            np.sort(np.random.triangular(left, mode, right, size)) * duration
+        )
 
     def _get_delta_cycle(self) -> list[timedelta]:
         """Compute list of time points in the distribution for one
@@ -127,10 +145,11 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
 #                 direction=models.RandomizerDirection.MIXED
 #             ),
 #             spreader=models.SpreaderConfig(
-#                 distribution=models.Distribution.BETA,
-#                 parameters=models.BetaDistributionParameters(
-#                     a=5,
-#                     b=15
+#                 distribution=models.Distribution.TRIANGULAR,
+#                 parameters=models.TriangularDistributionParameters(
+#                     left=0.6,
+#                     mode=0.7,
+#                     right=1
 #                 )
 #             )
 #         )

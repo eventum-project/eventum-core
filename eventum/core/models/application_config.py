@@ -71,7 +71,7 @@ class EventConfig(BaseModel):
     subprocesses: dict[str, SubprocessConfig]
 
     @model_validator(mode='after')
-    def validate_templates_parameters(self):
+    def validate_templates(self):
         for template in self.templates.values():
             if self.mode == TemplatePickingMode.CHANCE:
                 if template.chance is None:
@@ -85,6 +85,8 @@ class EventConfig(BaseModel):
                         'Parameter "chance" is not applicable for specified'
                         ' template picking mode'
                     )
+
+        return self
 
 
 class OutputType(StrEnum):
