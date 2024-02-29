@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, time
 from enum import StrEnum
-from typing import Annotated, Any
+from typing import Annotated, Any, TypeAlias
 
 from pydantic import BaseModel, BeforeValidator
 
@@ -14,9 +14,10 @@ class TimeUnit(StrEnum):
     DAYS = 'days'
 
 
-class DistributionFunction(StrEnum):
-    LINEAR = 'Linear'
+class Distribution(StrEnum):
     RANDOM = 'Random'
+    BETA = 'Beta'
+    LINEAR = 'Linear'
     GAUSSIAN = 'Gaussian'
 
 
@@ -60,9 +61,19 @@ class RandomizerConfig(BaseModel):
     direction: RandomizerDirection
 
 
+class BetaDistributionParameters(BaseModel):
+    a: float
+    b: float
+
+
+DistributionParameters: TypeAlias = (
+    BetaDistributionParameters | None
+)
+
+
 class SpreaderConfig(BaseModel):
-    function: DistributionFunction
-    parameters: dict = {}
+    distribution: Distribution
+    parameters: DistributionParameters
 
 
 class TimePatternConfig(BaseModel):

@@ -47,7 +47,7 @@ class TimePatternAdjuster(BaseComponent):
         ss['randomizer_deviation'] = init.randomizer.deviation
         ss['randomizer_direction'] = init.randomizer.direction
 
-        ss['spreader_function'] = init.spreader.function
+        ss['spreader_function'] = init.spreader.distribution
 
     def _show_manage_section(self) -> None:
         st.header('General')
@@ -134,7 +134,7 @@ class TimePatternAdjuster(BaseComponent):
             'Function',
             options=[
                 func.value
-                for func in models.DistributionFunction
+                for func in models.Distribution
             ],
             key=self._wk('spreader_function'),
             help='...'
@@ -218,8 +218,8 @@ class TimePatternAdjuster(BaseComponent):
                 direction=ss['randomizer_direction']
             ),
             spreader=models.SpreaderConfig(
-                function=ss['spreader_function'],
-                parameters=dict()   # TODO: think how to handle parameters
+                distribution=ss['spreader_function'],
+                parameters=None   # TODO: think how to handle parameters
             )
         )
 
@@ -242,7 +242,7 @@ class TimePatternAdjuster(BaseComponent):
                 direction=models.RandomizerDirection.MIXED
             ),
             spreader=models.SpreaderConfig(
-                function=models.DistributionFunction.LINEAR,
-                parameters=dict()
+                distribution=models.Distribution.RANDOM,
+                parameters=None
             )
         )
