@@ -16,8 +16,8 @@ class TimeUnit(StrEnum):
 
 class Distribution(StrEnum):
     UNIFORM = 'Uniform'
-    BETA = 'Beta'
     TRIANGULAR = 'Triangular'
+    BETA = 'Beta'
 
 
 class RandomizerDirection(StrEnum):
@@ -109,9 +109,35 @@ class TriangularDistributionParameters(BaseModel):
         )
 
 
+class UniformDistributionParameters(BaseModel):
+    low: float
+    hight: float
+
+    @field_validator('low')
+    def validate_low(cls, v: Any):
+        if 0 <= v < 1:
+            return v
+        raise ValueError('"low" must be in [0; 1) range')
+
+    @field_validator('hight')
+    def validate_hight(cls, v: Any):
+        if 0 < v <= 1:
+            return v
+        raise ValueError('"hight" must be in (0; 1] range')
+
+    @model_validator(mode='after')
+    def validate_points(self):
+        if self.low < self.hight:
+            return self
+        raise ValueError(
+            'Values do not comply "low < hight" condition'
+        )
+
+
 DistributionParameters: TypeAlias = (
-    BetaDistributionParameters |
+    UniformDistributionParameters |
     TriangularDistributionParameters |
+    BetaDistributionParameters |
     None
 )
 
@@ -119,6 +145,28 @@ DistributionParameters: TypeAlias = (
 class SpreaderConfig(BaseModel):
     distribution: Distribution
     parameters: DistributionParameters
+
+    @model_validator(mode='after')
+    def validate_parameters_model(self):
+        match self.distribution:
+            case Distribution.UNIFORM:
+                expected_params_model = UniformDistributionParameters
+            case Distribution.TRIANGULAR:
+                expected_params_model = TriangularDistributionParameters
+            case Distribution.BETA:
+                expected_params_model = BetaDistributionParameters
+            case distribution:
+                raise NotImplementedError(
+                    'No distribution parameters class registered '
+                    f'for "{distribution}" distribution'
+                )
+
+        if isinstance(self.parameters, expected_params_model):
+            return self
+
+        raise ValueError(
+            f'Improper parameters model for "{self.distribution}" distribution'
+        )
 
 
 class TimePatternConfig(BaseModel):
