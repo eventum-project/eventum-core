@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, NoReturn
 
 import numpy as np
-from eventum.core.models.time_pattern_config import TimePatternConfig
+from eventum.core.models.time_pattern_config import (TimePatternConfig,
+                                                     RandomizerDirection)
 from eventum.core.plugins.input.base import (LiveInputPlugin,
                                              SampleInputPlugin,
                                              InputPluginError)
@@ -19,6 +20,31 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
     def __init__(self, config: TimePatternConfig) -> None:
         self._config = config
+        self._randomizer_factors = self._get_randomizer_factors()
+
+    def _get_randomizer_factors(self, size: int = 1000) -> np.ndarray:
+        """Get sample of factors for multiply them on size for
+        randomizer effect.
+        """
+        match self._config.randomizer.direction:
+            case RandomizerDirection.DECREASE:
+                return np.random.uniform(
+                    low=(1 - self._config.randomizer.deviation / 100),
+                    high=1,
+                    size=size
+                )
+            case RandomizerDirection.INCREASE:
+                return np.random.uniform(
+                    low=1,
+                    high=(1 + self._config.randomizer.deviation / 100),
+                    size=size
+                )
+            case RandomizerDirection.MIXED:
+                return np.random.uniform(
+                    low=(1 - self._config.randomizer.deviation / 100),
+                    high=(1 + self._config.randomizer.deviation / 100),
+                    size=size
+                )
 
     @property
     def _interval_duration(self) -> timedelta:
@@ -30,17 +56,21 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     @property
     def _interval_size(self) -> int:
         """Number of time points in interval. Each time the property
-        is accessed the value can be different due to randomizer affect.
+        is accessed the value can be different due to randomizer effect.
         """
-        # TODO randomizer affect
-        return self._config.multiplier.ratio
+        return int(
+            self._config.multiplier.ratio
+            * np.random.choice(self._randomizer_factors)
+        )
 
     def _get_uniform_cycle(self) -> list[timedelta]:
         """Helper for `_get_cycle` implementing uniform distribution."""
         size = self._interval_size
         duration = self._interval_duration
+        low = self._config.spreader.parameters.low
+        high = self._config.spreader.parameters.high
 
-        return list(np.sort(np.random.uniform(0, 1, size)) * duration)
+        return list(np.sort(np.random.uniform(low, high, size)) * duration)
 
     def _get_beta_cycle(self) -> list[timedelta]:
         """Helper for `_get_cycle` implementing beta distribution."""

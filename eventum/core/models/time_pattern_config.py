@@ -111,7 +111,7 @@ class TriangularDistributionParameters(BaseModel):
 
 class UniformDistributionParameters(BaseModel):
     low: float
-    hight: float
+    high: float
 
     @field_validator('low')
     def validate_low(cls, v: Any):
@@ -119,18 +119,18 @@ class UniformDistributionParameters(BaseModel):
             return v
         raise ValueError('"low" must be in [0; 1) range')
 
-    @field_validator('hight')
-    def validate_hight(cls, v: Any):
+    @field_validator('high')
+    def validate_high(cls, v: Any):
         if 0 < v <= 1:
             return v
-        raise ValueError('"hight" must be in (0; 1] range')
+        raise ValueError('"high" must be in (0; 1] range')
 
     @model_validator(mode='after')
     def validate_points(self):
-        if self.low < self.hight:
+        if self.low < self.high:
             return self
         raise ValueError(
-            'Values do not comply "low < hight" condition'
+            'Values do not comply "low < high" condition'
         )
 
 
