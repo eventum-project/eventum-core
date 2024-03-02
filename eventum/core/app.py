@@ -3,33 +3,32 @@ from multiprocessing import Process, Queue
 from typing import NoReturn
 
 import psutil
-from eventum.core.defaults import get_default_settings
 from eventum.core.models.application_config import (ApplicationConfig,
-                                                    InputConfigMapping,
+                                                    CronInputConfig,
                                                     EventConfig,
-                                                    OutputConfigMapping,
+                                                    InputConfigMapping,
                                                     InputType,
-                                                    SampleInputConfig)
-from eventum.core.models.runtime_settings import RuntimeSettings
+                                                    OutputConfigMapping,
+                                                    PatternsInputConfig,
+                                                    SampleInputConfig,
+                                                    TimestampsInputConfig)
 from eventum.core.models.time_mode import TimeMode
-from setproctitle import getproctitle, setproctitle
-from eventum.core.plugins.input.sample import SampleInputPlugin
 from eventum.core.plugins.input.cron import CronInputPlugin
+from eventum.core.plugins.input.sample import SampleInputPlugin
 from eventum.core.plugins.input.time_pattern import TimePatternPoolInputPlugin
 from eventum.core.plugins.input.timestamps import TimestampsInputPlugin
+from setproctitle import getproctitle, setproctitle
 
 
 class Application:
     def __init__(
         self,
         config: ApplicationConfig,
-        time_mode: TimeMode,
-        settings: RuntimeSettings | None = None
+        time_mode: TimeMode
     ) -> None:
         self._config = config
 
         self._time_mode = time_mode
-        self._settings = settings or get_default_settings()
 
         self._input_queue = Queue()
         self._output_queue = Queue()
@@ -42,18 +41,26 @@ class Application:
     ) -> NoReturn:
         setproctitle(f'{getproctitle()} [input]')
 
-        input_type, input_config = config.popitem()
+        input_type, config = config.popitem()
 
         match input_type:
             case InputType.PATTERNS:
-                input = TimePatternPoolInputPlugin()
+                config: PatternsInputConfig
+                input = TimePatternPoolInputPlugin(...)
             case InputType.TIMESTAMPS:
-                input = TimestampsInputPlugin()
+                config: TimestampsInputConfig
+                input = TimestampsInputPlugin(
+                    timestamps=config
+                )
             case InputType.CRON:
-                input = CronInputPlugin()
+                config: CronInputConfig
+                input = CronInputPlugin(
+                    expression=config.expression,
+                    count=config.count
+                )
             case InputType.SAMPLE:
-                input_config: SampleInputConfig
-                input = SampleInputPlugin(count=input_config.count)
+                config: SampleInputConfig
+                input = SampleInputPlugin(count=config.count)
             case _:
                 raise NotImplementedError(
                     'No input plugin class registered '
@@ -68,7 +75,7 @@ class Application:
                     input.sample(on_event=lambda ts: queue.put(ts))
                 case _:
                     raise NotImplementedError(
-                        f'No input plugin method registred for '
+                        f'No input plugin method registered for '
                         f'time mode "{time_mode}"'
                     )
         except AttributeError as e:
@@ -119,7 +126,7 @@ class Application:
         _proc_output.start()
 
         # TODO while input is alive - to be alive. Otherwise, gracefully stop
-        # event and output proccesses and stop itself.
+        # event and output processes and stop itself.
         _ = psutil.Process(os.getpid())
         setproctitle(f'{getproctitle()} [supervisor]')
 
