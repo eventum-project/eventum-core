@@ -7,8 +7,8 @@ from eventum.core.plugins.input.base import SampleInputPlugin
 class SampleInputPlugin(SampleInputPlugin):
     """Input plugin for generating specified count of events. Use it
     when you only need to produce event facts and timestamps aren't
-    important. For all events timestamps are the same and has value of
-    moment when process was started.
+    important. For all events timestamps are the same and have a
+    symbolic value of time when sample generating process was started.
     """
 
     def __init__(self, count: int) -> None:
