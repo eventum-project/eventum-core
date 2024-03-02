@@ -1,9 +1,10 @@
 import time
-from typing import Any, Callable, NoReturn
 from datetime import datetime
+from typing import Any, Callable, NoReturn
 
-
+import eventum.core.settings as settings
 from eventum.core.plugins.input.base import LiveInputPlugin, SampleInputPlugin
+from eventum.utils.timeseries import get_future_slice
 
 
 class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
@@ -18,12 +19,10 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
             on_event(timestamp)
 
     def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
-        for timestamp in self._timestamps:
+        for timestamp in get_future_slice(self._timestamps, datetime.now()):
             delta_seconds = (timestamp - datetime.now()).total_seconds()
 
-            if delta_seconds < 0:
-                continue
-
-            time.sleep(delta_seconds)
+            if delta_seconds > settings.AHEAD_PUBLICATION_SECONDS:
+                time.sleep(delta_seconds)
 
             on_event(timestamp)
