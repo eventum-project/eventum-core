@@ -1,18 +1,51 @@
+import os
 from enum import StrEnum
-from typing import TypeAlias
+from typing import Annotated, Any, TypeAlias
+from datetime import datetime
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, BeforeValidator, model_validator
+from eventum.utils.fs import validate_yaml_filename
 
 
 class InputType(StrEnum):
-    PATTERNS = 'patterns'
     TIMESTAMPS = 'timestamps'
+    PATTERNS = 'patterns'
     CRON = 'cron'
     SAMPLE = 'sample'
 
 
-PatternsInputConfig: TypeAlias = list[str]
-TimestampsInputConfig: TypeAlias = list[str]
+def try_parse_datetime(obj: Any) -> Any | list[datetime]:
+    if isinstance(obj, list):
+        casted_list = []
+        for el in obj:
+            try:
+                casted_list.append(datetime.fromisoformat(el))
+            except (ValueError, TypeError):
+                return obj
+
+        return casted_list
+
+    return obj
+
+
+def validate_filenames(obj: Any) -> Any:
+    if isinstance(obj, list):
+        for el in obj:
+            if not isinstance(el, str):
+                return obj
+
+            validate_yaml_filename(os.path.basename(el))
+
+    return obj
+
+
+TimestampsInputConfig = Annotated[
+    list[datetime], BeforeValidator(try_parse_datetime)
+]
+
+PatternsInputConfig = Annotated[
+    list[str], BeforeValidator(validate_filenames)
+]
 
 
 class CronInputConfig(BaseModel):
@@ -55,7 +88,7 @@ class TemplateCodecs(StrEnum):
 
 class TemplateConfig(BaseModel):
     codec: TemplateCodecs
-    chance: int | None
+    chance: float | None = None
 
 
 class SubprocessConfig(BaseModel):
@@ -103,7 +136,7 @@ class FileOutputConfig(BaseModel):
 
 
 InputConfig: TypeAlias = (
-    PatternsInputConfig | TimestampsInputConfig
+    TimestampsInputConfig | PatternsInputConfig
     | SampleInputConfig | CronInputConfig
 )
 
