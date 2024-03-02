@@ -3,9 +3,11 @@
 # Minimal time for input plugin to go sleep waiting for next event.
 # The higher the value, the more values from the future (equal to the
 # parameter value) will be generated in advance.
-# The influence of the parameter appears with an intense flow of events
-# (thousands or millions per second).
-SLEEP_MIN_SECONDS = 0.1
+# Сan be considered as batch size. E.g setting parameter to 10 seconds
+# will cause to publishing events every 10 seconds from the next 10
+# seconds interval. This parameter does not affect the timestamps
+# passed to callback at all.
+AHEAD_PUBLICATION_SECONDS = 0.1
 
 
 # ========== Output parameters section ==========
