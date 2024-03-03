@@ -56,7 +56,7 @@ class MultiplierConfig(BaseModel):
 
 
 class RandomizerConfig(BaseModel):
-    deviation: int
+    deviation: float
     direction: RandomizerDirection
 
 
