@@ -1,13 +1,16 @@
-from datetime import datetime, timedelta, time, date
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from datetime import date, datetime, time, timedelta
+from time import sleep
 from typing import Any, Callable, NoReturn
 
 import numpy as np
-from eventum.core.models.time_pattern_config import (TimePatternConfig,
-                                                     RandomizerDirection,
-                                                     TimeKeyword)
-from eventum.core.plugins.input.base import (LiveInputPlugin,
-                                             SampleInputPlugin,
-                                             InputPluginError)
+from eventum.core import settings
+from eventum.core.models.time_pattern_config import (RandomizerDirection,
+                                                     TimeKeyword,
+                                                     TimePatternConfig)
+from eventum.core.plugins.input.base import (InputPluginError, LiveInputPlugin,
+                                             SampleInputPlugin)
+from eventum.utils.timeseries import get_future_slice
 
 
 class TimePatternInputPluginError(InputPluginError):
@@ -30,20 +33,20 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         match self._config.randomizer.direction:
             case RandomizerDirection.DECREASE:
                 return np.random.uniform(
-                    low=(1 - self._config.randomizer.deviation / 100),
+                    low=(1 - self._config.randomizer.deviation),
                     high=1,
                     size=size
                 )
             case RandomizerDirection.INCREASE:
                 return np.random.uniform(
                     low=1,
-                    high=(1 + self._config.randomizer.deviation / 100),
+                    high=(1 + self._config.randomizer.deviation),
                     size=size
                 )
             case RandomizerDirection.MIXED:
                 return np.random.uniform(
-                    low=(1 - self._config.randomizer.deviation / 100),
-                    high=(1 + self._config.randomizer.deviation / 100),
+                    low=(1 - self._config.randomizer.deviation),
+                    high=(1 + self._config.randomizer.deviation),
                     size=size
                 )
 
@@ -133,26 +136,25 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """
 
         match self._config.oscillator.start:
-            case datetime(val):
+            case datetime() as val:
                 start = val
-            case timedelta(val):
+            case timedelta() as val:
                 start = datetime.now() + val
-            case time(val):
+            case time() as val:
                 start = datetime.combine(date.today(), val)
             case TimeKeyword.NOW:
                 start = datetime.now()
-            case TimeKeyword.NEVER:
+            case TimeKeyword.NEVER as val:
                 raise TimePatternInputPluginError(
-                    'Value of "start" cannot be '
-                    f'"{self._config.oscillator.start}"'
+                    f'Value of "start" cannot be "{val}"'
                 )
 
         match self._config.oscillator.end:
-            case datetime(val):
+            case datetime() as val:
                 end = val
-            case timedelta(val):
+            case timedelta() as val:
                 end = datetime.now() + val
-            case time(val):
+            case time() as val:
                 end = datetime.combine(date.today(), val)
             case TimeKeyword.NOW:
                 end = datetime.now()
@@ -179,7 +181,51 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             start += self._period_duration
 
     def live(self, on_event: Callable[[str], Any]) -> NoReturn:
-        ...
+        start, end = self._get_normalized_interval_bounds()
+        now = datetime.now()
+
+        if end <= now:
+            return
+
+        if start < now:
+            skip_periods = (now - start) // self._period_duration
+            start += self._period_duration * skip_periods
+            timestamps = self._get_period_timeseries(start)
+            timestamps = get_future_slice(timestamps=timestamps, now=now)
+        else:
+            timestamps = self._get_period_timeseries(start)
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            while start < end:
+                start += self._period_duration
+
+                # compute next period during publishing current period
+                task = pool.submit(lambda: self._get_period_timeseries(start))
+
+                for timestamp in timestamps:
+                    if timestamp >= end:
+                        break
+
+                    wait_seconds = (timestamp - datetime.now()).total_seconds()
+
+                    if wait_seconds > settings.AHEAD_PUBLICATION_SECONDS:
+                        sleep(wait_seconds)
+
+                    on_event(timestamp)
+
+                wait_period_seconds = (start - datetime.now()).total_seconds()
+
+                if wait_period_seconds > 0:
+                    timeout = wait_period_seconds
+                else:
+                    timeout = 0
+
+                try:
+                    timestamps = task.result(timeout=timeout)
+                except TimeoutError:
+                    raise InputPluginError(
+                        'Not enough time to build next distribution in time'
+                    )
 
 
 class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
