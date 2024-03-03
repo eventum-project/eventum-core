@@ -37,8 +37,8 @@ class TimePatternAdjuster(BaseComponent):
         if saved:
             ss['pattern_filename'] = self._props['pattern_filename']
 
-        ss['oscillator_interval'] = init.oscillator.interval
-        ss['oscillator_interval_unit'] = init.oscillator.unit
+        ss['oscillator_period'] = init.oscillator.period
+        ss['oscillator_period_unit'] = init.oscillator.unit
         ss['oscillator_start_timestamp'] = init.oscillator.start
         ss['oscillator_end_timestamp'] = init.oscillator.end
 
@@ -84,14 +84,14 @@ class TimePatternAdjuster(BaseComponent):
         st.header('Oscillator')
         col1, col2 = st.columns([3, 7])
         col1.number_input(
-            'Interval',
+            'Period',
             step=1,
-            key=self._wk('oscillator_interval')
+            key=self._wk('oscillator_period')
         )
         col2.selectbox(
             'Unit',
             options=[unit.value for unit in models.TimeUnit],
-            key=self._wk('oscillator_interval_unit')
+            key=self._wk('oscillator_period_unit')
         )
         col1, col2 = st.columns(2)
         col1.text_input(
@@ -205,8 +205,8 @@ class TimePatternAdjuster(BaseComponent):
         return models.TimePatternConfig(
             label=ss['pattern_label'],
             oscillator=models.OscillatorConfig(
-                interval=ss['oscillator_interval'],
-                unit=ss['oscillator_interval_unit'],
+                period=ss['oscillator_period'],
+                unit=ss['oscillator_period_unit'],
                 start=ss['oscillator_start_timestamp'],
                 end=ss['oscillator_end_timestamp']
             ),
@@ -231,7 +231,7 @@ class TimePatternAdjuster(BaseComponent):
         return models.TimePatternConfig(
             label=label,
             oscillator=models.OscillatorConfig(
-                interval=1,
+                period=1,
                 unit=models.TimeUnit.SECONDS,
                 start='now',
                 end='never'

@@ -15,7 +15,7 @@ class CronInputPlugin(LiveInputPlugin):
     def __init__(self, expression: str, count: int) -> None:
         """Parameters:
         `expression` - cron expression;
-        `count` - number of events to generate for each interval.
+        `count` - number of events to generate for each period.
         """
         self._expression = expression
         self._count = count

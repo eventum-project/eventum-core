@@ -45,7 +45,7 @@ RelativeTime = Annotated[timedelta, BeforeValidator(try_parse_relative_time)]
 
 
 class OscillatorConfig(BaseModel):
-    interval: int
+    period: int
     unit: TimeUnit
     start: time | datetime | TimeKeyword | RelativeTime
     end: time | datetime | TimeKeyword | RelativeTime
