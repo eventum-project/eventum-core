@@ -17,9 +17,13 @@ class TimePatternInputPluginError(InputPluginError):
     """Exception for TimePatternInputPlugin errors."""
 
 
+class EndTimeReaching(Exception):
+    """Exception to designate that end of live interval is reached."""
+
+
 class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
-    """Input plugin for generating events with consistent pattern
-    of distribution in time.
+    """Input plugin for generating events with consistent pattern of
+    distribution in time.
     """
 
     def __init__(self, config: TimePatternConfig) -> None:
@@ -181,6 +185,21 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             start += self._period_duration
 
     def live(self, on_event: Callable[[str], Any]) -> NoReturn:
+        def publish_period_thread(timestamps: list[datetime]) -> None:
+            for timestamp in timestamps:
+                if timestamp >= end:
+                    raise EndTimeReaching
+
+                wait_seconds = (timestamp - datetime.now()).total_seconds()
+
+                if wait_seconds > settings.AHEAD_PUBLICATION_SECONDS >= 0.0:
+                    sleep(wait_seconds)
+
+                on_event(timestamp)
+
+        def prepare_period_thread(start: datetime) -> list[datetime]:
+            return self._get_period_timeseries(start)
+
         start, end = self._get_normalized_interval_bounds()
         now = datetime.now()
 
@@ -190,42 +209,93 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         if start < now:
             skip_periods = (now - start) // self._period_duration
             start += self._period_duration * skip_periods
-            timestamps = self._get_period_timeseries(start)
+
+        # We use pool executor here to raise if timeout exceeded.
+        # It's allow to avoid user to wait long preprocessing of the
+        # first period that actually cannot be preprocessed again in
+        # next iterations in time.
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            prepare_task = pool.submit(prepare_period_thread, start)
+
+            try:
+                timestamps = prepare_task.result(
+                    timeout=self._period_duration.total_seconds()
+                )
+            except TimeoutError:
+                raise InputPluginError(
+                    'Not enough time to build distribution in time, '
+                    'change parameters to decrease EPS'
+                )
+
+        now = datetime.now()
+        if start < now:
             timestamps = get_future_slice(timestamps=timestamps, now=now)
-        else:
-            timestamps = self._get_period_timeseries(start)
 
         with ThreadPoolExecutor(max_workers=2) as pool:
             while start < end:
-                start += self._period_duration
+                next_start = start + self._period_duration
 
-                # compute next period during publishing current period
-                task = pool.submit(lambda: self._get_period_timeseries(start))
+                prepare_task = pool.submit(prepare_period_thread, next_start)
+                publish_task = pool.submit(publish_period_thread, timestamps)
 
-                for timestamp in timestamps:
-                    if timestamp >= end:
-                        break
+                # Sync current moment with start of current period due
+                # to `publish_task` could return result beforehand under
+                # influence of `AHEAD_PUBLICATION_SECONDS` setting
+                now = datetime.now()
+                if now < start:
+                    sleep((start - now).total_seconds())
 
-                    wait_seconds = (timestamp - datetime.now()).total_seconds()
+                try:
+                    publish_task.result(
+                        timeout=self._period_duration.total_seconds()
+                    )
+                except TimeoutError:
+                    raise TimePatternInputPluginError(
+                        'Not enough time to publish events in time, '
+                        'change parameters to decrease EPS'
+                    )
+                except EndTimeReaching:
+                    try:
+                        # we don't care next period as live execution is done
+                        prepare_task.result(timeout=0)
+                    except TimeoutError:
+                        pass
+                    finally:
+                        return
 
-                    if wait_seconds > settings.AHEAD_PUBLICATION_SECONDS:
-                        sleep(wait_seconds)
-
-                    on_event(timestamp)
-
-                wait_period_seconds = (start - datetime.now()).total_seconds()
-
-                if wait_period_seconds > 0:
-                    timeout = wait_period_seconds
+                now = datetime.now()
+                if now < next_start:
+                    timeout = (next_start - now).total_seconds()
                 else:
                     timeout = 0
 
                 try:
-                    timestamps = task.result(timeout=timeout)
+                    timestamps = prepare_task.result(timeout=timeout)
                 except TimeoutError:
                     raise InputPluginError(
-                        'Not enough time to build next distribution in time'
+                        'Not enough time to build next distribution in time, '
+                        'change parameters to decrease EPS'
                     )
+
+                start += self._period_duration
+
+    def get_avg_eps(self) -> float:
+        avg_count = self._config.multiplier.ratio
+        seconds = self._period_duration.total_seconds()
+        return avg_count / seconds
+
+    def get_max_eps(self) -> float:
+        match self._config.randomizer.direction:
+            case RandomizerDirection.INCREASE:
+                max_count = (
+                    self._config.multiplier.ratio
+                    * self._config.randomizer.deviation
+                )
+            case _:
+                max_count = self._config.multiplier.ratio
+
+        seconds = self._period_duration.total_seconds()
+        return max_count / seconds
 
 
 class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):

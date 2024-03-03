@@ -22,7 +22,7 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
         for timestamp in get_future_slice(self._timestamps, datetime.now()):
             wait_seconds = (timestamp - datetime.now()).total_seconds()
 
-            if wait_seconds > settings.AHEAD_PUBLICATION_SECONDS:
+            if wait_seconds > settings.AHEAD_PUBLICATION_SECONDS >= 0:
                 time.sleep(wait_seconds)
 
             on_event(timestamp)

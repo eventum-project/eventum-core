@@ -9,7 +9,7 @@
 # passed to callback at all.
 # Parameter is only actual in live mode and ignored for cron input
 # plugin.
-AHEAD_PUBLICATION_SECONDS = 0.1
+AHEAD_PUBLICATION_SECONDS = 0.01
 
 # ========== Output parameters section ==========
 
