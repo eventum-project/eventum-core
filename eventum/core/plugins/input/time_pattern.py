@@ -167,15 +167,6 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         return (start, end)
 
     def sample(self, on_event: Callable[[datetime], Any]) -> None:
-        if (
-            not isinstance(self._config.oscillator.start, datetime)
-            or not isinstance(self._config.oscillator.end, datetime)
-        ):
-            raise TimePatternInputPluginError(
-                'Only timestamps are allowed to specify for start'
-                ' and end time in sample mode'
-            )
-
         start, end = self._get_normalized_interval_bounds()
 
         while start < end:
