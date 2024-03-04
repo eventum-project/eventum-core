@@ -11,6 +11,12 @@
 # plugin.
 AHEAD_PUBLICATION_SECONDS = 0.01
 
+# Ratio to multiply required EPS to run TimePatternInputPlugin in live
+# mode. This parameter serves as compensation for the error of value of
+# the actual EPS obtained as a result of performance test.
+REQUIRED_EPS_RESERVE_RATIO = 1.15
+
+
 # ========== Output parameters section ==========
 
 # Minimal size of output queue with rendered events to perform flush.
