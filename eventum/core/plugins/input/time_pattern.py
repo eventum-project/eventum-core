@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from concurrent.futures import ThreadPoolExecutor, TimeoutError, Future
 from datetime import date, datetime, time, timedelta
 from time import sleep, perf_counter
 from typing import Any, Callable, Iterable, NoReturn
@@ -292,6 +292,10 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
 
 class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
+    """Input plugin for combining multiple `TimePatternInputPlugin`
+    instances.
+    """
+
     def __init__(self, configs: Iterable[TimePatternConfig]) -> None:
         self._configs = configs
         self._size = len(self._configs)
@@ -302,14 +306,13 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
         self._time_patterns = [
             TimePatternInputPlugin(config) for config in self._configs
         ]
-        self._queues = [
-            Queue() for _ in range(self._size)
-        ]
 
     def sample(self, on_event: Callable[[datetime], Any]) -> None:
         with ThreadPoolExecutor(max_workers=self._size) as pool:
-            tasks = []
-            for pattern, queue in zip(self._time_patterns, self._queues):
+            tasks: list[Future] = []
+            queues = [Queue() for _ in range(self._size)]
+
+            for pattern, queue in zip(self._time_patterns, queues):
                 tasks.append(
                     pool.submit(
                         pattern.sample,
