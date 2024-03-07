@@ -12,6 +12,7 @@ from eventum.core.models.time_pattern_config import (RandomizerDirection,
 from eventum.core.plugins.input.base import (InputPluginError, LiveInputPlugin,
                                              SampleInputPlugin)
 from eventum.utils.timeseries import get_future_slice
+from heapq import merge
 
 
 class TimePatternInputPluginError(InputPluginError):
@@ -185,7 +186,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         while start < end:
             for timestamp in self._get_period_timeseries(start):
-                if timestamp < self._config.oscillator.end:
+                if timestamp < end:
                     on_event(timestamp)
                 else:
                     break
@@ -308,14 +309,95 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
         ]
 
     def sample(self, on_event: Callable[[datetime], Any]) -> None:
-        with ThreadPoolExecutor(max_workers=self._size) as pool:
-            tasks: list[Future] = []
-            queues = [Queue() for _ in range(self._size)]
+        samples = []
 
-            for pattern, queue in zip(self._time_patterns, queues):
-                tasks.append(
-                    pool.submit(
-                        pattern.sample,
-                        lambda ts: queue.put(ts)
-                    )
-                )
+        for pattern in self._time_patterns:
+            sample = []
+            pattern.sample(on_event=lambda ts: sample.append(ts))
+            samples.append(sample)
+
+        for ts in merge(*samples):
+            on_event(ts)
+
+    def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
+        pass
+
+
+# import eventum.core.models.time_pattern_config as models
+# from matplotlib import pyplot as plt
+
+# lst = []
+# TimePatternPoolInputPlugin(
+#     configs=[
+#         models.TimePatternConfig(
+#             label='test',
+#             oscillator=models.OscillatorConfig(
+#                 period=2,
+#                 unit=models.TimeUnit.SECONDS,
+#                 start='22:27:00',
+#                 end='22:27:05'
+#             ),
+#             multiplier=models.MultiplierConfig(ratio=10000),
+#             randomizer=models.RandomizerConfig(
+#                 deviation=0,
+#                 direction=models.RandomizerDirection.MIXED
+#             ),
+#             spreader=models.SpreaderConfig(
+#                 distribution=models.Distribution.BETA,
+#                 parameters=models.BetaDistributionParameters(
+#                     a=3,
+#                     b=3,
+#                 )
+#             )
+#         ),
+#         models.TimePatternConfig(
+#             label='test',
+#             oscillator=models.OscillatorConfig(
+#                 period=5,
+#                 unit=models.TimeUnit.SECONDS,
+#                 start='22:27:00',
+#                 end='22:27:05'
+#             ),
+#             multiplier=models.MultiplierConfig(ratio=100000),
+#             randomizer=models.RandomizerConfig(
+#                 deviation=0,
+#                 direction=models.RandomizerDirection.MIXED
+#             ),
+#             spreader=models.SpreaderConfig(
+#                 distribution=models.Distribution.TRIANGULAR,
+#                 parameters=models.TriangularDistributionParameters(
+#                     left=0.0,
+#                     mode=1,
+#                     right=1
+#                 )
+#             )
+#         ),
+#         models.TimePatternConfig(
+#             label='test',
+#             oscillator=models.OscillatorConfig(
+#                 period=1,
+#                 unit=models.TimeUnit.SECONDS,
+#                 start='22:27:00.800',
+#                 end='22:27:02'
+#             ),
+#             multiplier=models.MultiplierConfig(ratio=2000),
+#             randomizer=models.RandomizerConfig(
+#                 deviation=0,
+#                 direction=models.RandomizerDirection.MIXED
+#             ),
+#             spreader=models.SpreaderConfig(
+#                 distribution=models.Distribution.TRIANGULAR,
+#                 parameters=models.TriangularDistributionParameters(
+#                     left=0.4,
+#                     mode=0.5,
+#                     right=0.6
+#                 )
+#             )
+#         )
+#     ]
+# ).sample(lambda ts: lst.append(ts))
+
+# print(len(lst))
+
+# plt.hist(lst, bins=100)
+# plt.show()
