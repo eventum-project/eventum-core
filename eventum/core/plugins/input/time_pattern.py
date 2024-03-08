@@ -67,7 +67,6 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                     f'"{direction}"'
                 )
 
-
     @property
     def _period_duration(self) -> timedelta:
         """Get duration of one period."""
