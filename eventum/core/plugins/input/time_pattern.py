@@ -21,7 +21,9 @@ class TimePatternInputPluginError(InputPluginError):
 
 
 class EndTimeReaching(Exception):
-    """Exception to designate that end of live interval is reached."""
+    """Internal `TimePatternInputPlugin` exception to designate that
+    end of live interval is reached.
+    """
 
 
 class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
