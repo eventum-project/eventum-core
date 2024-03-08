@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
-from typing import Any, Callable, Iterable, NoReturn
+from typing import Any, Callable, Iterable, NoReturn, assert_never
 
 import numpy as np
 from eventum.core import settings
@@ -62,10 +62,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                     size=size
                 )
             case direction:
-                raise NotImplementedError(
-                    'Failed to initialize randomizer: unknown direction ',
-                    f'"{direction}"'
-                )
+                assert_never(direction)
 
     @property
     def _period_duration(self) -> timedelta:
@@ -170,9 +167,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                     f'Value of "start" cannot be "{val}"'
                 )
             case val:
-                raise NotImplementedError(
-                    f'Failed to normalize start time "{val}"'
-                )
+                assert_never(val)
 
         match self._config.oscillator.end:
             case datetime() as val:
@@ -186,9 +181,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case TimeKeyword.NEVER:
                 end = datetime(year=9999, month=12, day=31)
             case val:
-                raise NotImplementedError(
-                    f'Failed to normalize end time "{val}"'
-                )
+                raise NotImplementedError(val)
 
         if start >= end:
             raise TimePatternInputPluginError(

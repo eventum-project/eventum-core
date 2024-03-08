@@ -39,8 +39,8 @@ def parse_relative_time(expression: str) -> timedelta:
             sign = 1
         case '-':
             sign = -1
-        case _:
-            assert_never()
+        case val:
+            assert_never(val)
 
     return timedelta(
         **{

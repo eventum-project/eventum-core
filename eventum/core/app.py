@@ -1,6 +1,6 @@
 import os
 from multiprocessing import Process, Queue
-from typing import NoReturn
+from typing import NoReturn, assert_never
 
 import psutil
 from eventum.core.models.application_config import (ApplicationConfig,
@@ -68,10 +68,7 @@ class Application:
                 config: SampleInputConfig
                 input = SampleInputPlugin(count=config.count)
             case _:
-                raise NotImplementedError(
-                    'No input plugin class registered '
-                    f'for input type "{input_type}"'
-                )
+                assert_never(input_type)
 
         try:
             match time_mode:
@@ -80,10 +77,7 @@ class Application:
                 case TimeMode.SAMPLE:
                     input.sample(on_event=lambda ts: queue.put(ts))
                 case _:
-                    raise NotImplementedError(
-                        f'No input plugin method registered for '
-                        f'time mode "{time_mode}"'
-                    )
+                    assert_never(time_mode)
         except AttributeError as e:
             raise AttributeError(
                 f'Specified input plugin does not support "{time_mode}" mode'

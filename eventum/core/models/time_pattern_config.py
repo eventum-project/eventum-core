@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 from enum import StrEnum
-from typing import Annotated, Any, TypeAlias
+from typing import Annotated, Any, TypeAlias, assert_never
 
 from eventum.utils.relative_time import parse_relative_time
 from pydantic import (BaseModel, BeforeValidator, field_validator,
@@ -156,15 +156,12 @@ class SpreaderConfig(BaseModel):
             case Distribution.BETA:
                 expected_params_model = BetaDistributionParameters
             case distribution:
-                raise NotImplementedError(
-                    'No distribution parameters class registered '
-                    f'for "{distribution}" distribution'
-                )
+                assert_never(distribution)
 
         if isinstance(self.parameters, expected_params_model):
             return self
 
-        raise ValueError(
+        raise TypeError(
             f'Improper parameters model for "{self.distribution}" distribution'
         )
 
