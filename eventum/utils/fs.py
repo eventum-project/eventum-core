@@ -60,7 +60,12 @@ def validate_yaml_filename(filename: str) -> None:
         raise ValueError('Only yml and yaml extensions are allowed')
 
 
-def load_sample_from_csv(filepath: str) -> list[tuple[str]]:
+def load_sample_from_csv(
+    filepath: str,
+    delimiter: str = ','
+) -> list[tuple[str]]:
     """Load csv file and return its content as object."""
     with open(resolve_path(filepath)) as f:
-        return [tuple(row) for row in csv.reader(f) if row]
+        return [
+            tuple(row) for row in csv.reader(f, delimiter=delimiter) if row
+        ]
