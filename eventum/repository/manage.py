@@ -1,15 +1,15 @@
 import os
 from glob import glob
 
-from yaml import YAMLError
-from pydantic import ValidationError
-
 from eventum.core.models.time_pattern_config import TimePatternConfig
-from eventum.utils.fs import (load_object_from_yaml, save_object_as_yaml,
-                              validate_yaml_filename)
+from eventum.utils.fs import (load_object_from_yaml, load_sample_from_csv,
+                              save_object_as_yaml, validate_yaml_filename)
+from pydantic import ValidationError
+from yaml import YAMLError
 
 REPOSITORY_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TIME_PATTERNS_DIR = os.path.join(REPOSITORY_BASE_DIR, 'time_patterns')
+CSV_SAMPLES_DIR = os.path.join(REPOSITORY_BASE_DIR, 'samples')
 
 
 class RepositoryError(Exception):
@@ -48,7 +48,7 @@ def save_time_pattern(
     if overwrite is False and os.path.exists(filepath):
         raise RepositoryUpdateError(
             'Time pattern already exists in repository'
-            )
+        )
 
     try:
         save_object_as_yaml(
@@ -73,4 +73,17 @@ def load_time_pattern(filename: str) -> TimePatternConfig:
     try:
         return TimePatternConfig.model_validate(data)
     except ValidationError as e:
+        raise RepositoryReadError(str(e)) from e
+
+
+def load_csv_sample(filename: str, delimiter: str = ',') -> list[tuple[str]]:
+    """Load specified csv sample from repository and return it as list
+    of tuples. Raise `RepositoryReadError` on failure.
+    """
+    try:
+        load_sample_from_csv(
+            filepath=os.path.join(CSV_SAMPLES_DIR, filename),
+            delimiter=delimiter
+        )
+    except OSError as e:
         raise RepositoryReadError(str(e)) from e

@@ -64,7 +64,7 @@ def load_sample_from_csv(
     filepath: str,
     delimiter: str = ','
 ) -> list[tuple[str]]:
-    """Load csv file and return its content as object."""
+    """Load specified csv file as list of tuples."""
     with open(resolve_path(filepath)) as f:
         return [
             tuple(row) for row in csv.reader(f, delimiter=delimiter) if row
