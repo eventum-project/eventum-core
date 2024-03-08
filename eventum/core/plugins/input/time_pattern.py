@@ -181,7 +181,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case TimeKeyword.NEVER:
                 end = datetime(year=9999, month=12, day=31)
             case val:
-                raise NotImplementedError(val)
+                assert_never(val)
 
         if start >= end:
             raise TimePatternInputPluginError(
