@@ -19,7 +19,7 @@ event:
     users:
       type: csv
       header: true
-      separator: ","
+      delimiter: ","
       source: user.csv
     hosts:
       type: items
