@@ -8,8 +8,8 @@ from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.utils.fs import (load_object_from_yaml, save_object_as_yaml,
                               validate_yaml_filename)
 
-LIBRARY_DIR = os.path.dirname(os.path.abspath(__file__))
-TIME_PATTERNS_DIR = os.path.join(LIBRARY_DIR, 'time_patterns')
+REPOSITORY_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TIME_PATTERNS_DIR = os.path.join(REPOSITORY_BASE_DIR, 'time_patterns')
 
 
 class RepositoryError(Exception):
