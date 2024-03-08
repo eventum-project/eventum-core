@@ -1,9 +1,10 @@
-from concurrent.futures import ThreadPoolExecutor, TimeoutError, Future
-from datetime import date, datetime, time, timedelta
 import sys
-from time import sleep, perf_counter
+from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError
+from datetime import date, datetime, time, timedelta
+from heapq import merge
+from queue import Empty, Queue
+from time import perf_counter, sleep
 from typing import Any, Callable, Iterable, NoReturn
-from queue import Queue, Empty
 
 import numpy as np
 from eventum.core import settings
@@ -13,7 +14,6 @@ from eventum.core.models.time_pattern_config import (RandomizerDirection,
 from eventum.core.plugins.input.base import (InputPluginError, LiveInputPlugin,
                                              SampleInputPlugin)
 from eventum.utils.timeseries import get_future_slice
-from heapq import merge
 
 
 class TimePatternInputPluginError(InputPluginError):
