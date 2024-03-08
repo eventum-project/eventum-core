@@ -61,6 +61,12 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                     high=(1 + self._config.randomizer.deviation),
                     size=size
                 )
+            case direction:
+                raise NotImplementedError(
+                    'Failed to initialize randomizer: unknown direction ',
+                    f'"{direction}"'
+                )
+
 
     @property
     def _period_duration(self) -> timedelta:
@@ -164,6 +170,10 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 raise TimePatternInputPluginError(
                     f'Value of "start" cannot be "{val}"'
                 )
+            case val:
+                raise NotImplementedError(
+                    f'Failed to normalize start time "{val}"'
+                )
 
         match self._config.oscillator.end:
             case datetime() as val:
@@ -176,6 +186,10 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 end = now
             case TimeKeyword.NEVER:
                 end = datetime(year=9999, month=12, day=31)
+            case val:
+                raise NotImplementedError(
+                    f'Failed to normalize end time "{val}"'
+                )
 
         if start >= end:
             raise TimePatternInputPluginError(

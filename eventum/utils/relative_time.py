@@ -1,5 +1,6 @@
 import re
 from datetime import timedelta
+from typing import assert_never
 
 
 def parse_relative_time(expression: str) -> timedelta:
@@ -38,6 +39,8 @@ def parse_relative_time(expression: str) -> timedelta:
             sign = 1
         case '-':
             sign = -1
+        case _:
+            assert_never()
 
     return timedelta(
         **{
