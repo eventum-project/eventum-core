@@ -1,8 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor, TimeoutError, Future
 from datetime import date, datetime, time, timedelta
+import sys
 from time import sleep, perf_counter
 from typing import Any, Callable, Iterable, NoReturn
-from queue import Queue
+from queue import Queue, Empty
 
 import numpy as np
 from eventum.core import settings
@@ -320,84 +321,39 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
             on_event(ts)
 
     def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
-        pass
+        queues: list[Queue] = []
+        tasks: list[Future] = []
 
+        with ThreadPoolExecutor(max_workers=self._size) as pool:
+            for pattern in self._time_patterns:
+                queue = Queue(maxsize=-1)
+                tasks.append(pool.submit(pattern.live, queue.put_nowait))
+                queues.append(queue)
 
-# import eventum.core.models.time_pattern_config as models
-# from matplotlib import pyplot as plt
+            while tasks:
+                latest_timestamp = datetime.now()
+                overhead_seconds = sys.getswitchinterval() * self._size
+                sleep(settings.AHEAD_PUBLICATION_SECONDS + overhead_seconds)
 
-# lst = []
-# TimePatternPoolInputPlugin(
-#     configs=[
-#         models.TimePatternConfig(
-#             label='test',
-#             oscillator=models.OscillatorConfig(
-#                 period=2,
-#                 unit=models.TimeUnit.SECONDS,
-#                 start='22:27:00',
-#                 end='22:27:05'
-#             ),
-#             multiplier=models.MultiplierConfig(ratio=10000),
-#             randomizer=models.RandomizerConfig(
-#                 deviation=0,
-#                 direction=models.RandomizerDirection.MIXED
-#             ),
-#             spreader=models.SpreaderConfig(
-#                 distribution=models.Distribution.BETA,
-#                 parameters=models.BetaDistributionParameters(
-#                     a=3,
-#                     b=3,
-#                 )
-#             )
-#         ),
-#         models.TimePatternConfig(
-#             label='test',
-#             oscillator=models.OscillatorConfig(
-#                 period=5,
-#                 unit=models.TimeUnit.SECONDS,
-#                 start='22:27:00',
-#                 end='22:27:05'
-#             ),
-#             multiplier=models.MultiplierConfig(ratio=100000),
-#             randomizer=models.RandomizerConfig(
-#                 deviation=0,
-#                 direction=models.RandomizerDirection.MIXED
-#             ),
-#             spreader=models.SpreaderConfig(
-#                 distribution=models.Distribution.TRIANGULAR,
-#                 parameters=models.TriangularDistributionParameters(
-#                     left=0.0,
-#                     mode=1,
-#                     right=1
-#                 )
-#             )
-#         ),
-#         models.TimePatternConfig(
-#             label='test',
-#             oscillator=models.OscillatorConfig(
-#                 period=1,
-#                 unit=models.TimeUnit.SECONDS,
-#                 start='22:27:00.800',
-#                 end='22:27:02'
-#             ),
-#             multiplier=models.MultiplierConfig(ratio=2000),
-#             randomizer=models.RandomizerConfig(
-#                 deviation=0,
-#                 direction=models.RandomizerDirection.MIXED
-#             ),
-#             spreader=models.SpreaderConfig(
-#                 distribution=models.Distribution.TRIANGULAR,
-#                 parameters=models.TriangularDistributionParameters(
-#                     left=0.4,
-#                     mode=0.5,
-#                     right=0.6
-#                 )
-#             )
-#         )
-#     ]
-# ).sample(lambda ts: lst.append(ts))
+                batches = []
+                for queue in queues:
+                    batch = []
 
-# print(len(lst))
+                    while True:
+                        try:
+                            timestamp = queue.get_nowait()
+                            batch.append(timestamp)
+                            if timestamp >= latest_timestamp:
+                                break
+                        except Empty:
+                            break
 
-# plt.hist(lst, bins=100)
-# plt.show()
+                    batches.append(batch)
+
+                for ts in merge(*batches):
+                    on_event(ts)
+
+                for i, (task, queue) in enumerate(zip(tasks, queues)):
+                    if task.done() and queue.empty():
+                        tasks.pop(i)
+                        queues.pop(i)
