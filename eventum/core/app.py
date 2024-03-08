@@ -17,6 +17,7 @@ from eventum.core.plugins.input.cron import CronInputPlugin
 from eventum.core.plugins.input.sample import SampleInputPlugin
 from eventum.core.plugins.input.time_pattern import TimePatternPoolInputPlugin
 from eventum.core.plugins.input.timestamps import TimestampsInputPlugin
+from eventum.repository.manage import load_time_pattern
 from setproctitle import getproctitle, setproctitle
 
 
@@ -46,7 +47,12 @@ class Application:
         match input_type:
             case InputType.PATTERNS:
                 config: PatternsInputConfig
-                input = TimePatternPoolInputPlugin(...)
+
+                configs = []
+                for path in config:
+                    configs.append(load_time_pattern(path))
+
+                input = TimePatternPoolInputPlugin(configs)
             case InputType.TIMESTAMPS:
                 config: TimestampsInputConfig
                 input = TimestampsInputPlugin(
