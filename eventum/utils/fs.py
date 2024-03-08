@@ -1,3 +1,4 @@
+import csv
 import os
 from string import ascii_letters, digits
 from typing import Any
@@ -57,3 +58,9 @@ def validate_yaml_filename(filename: str) -> None:
 
     if ext not in ['.yml', '.yaml']:
         raise ValueError('Only yml and yaml extensions are allowed')
+
+
+def load_sample_from_csv(filepath: str) -> list[tuple[str]]:
+    """Load csv file and return its content as object."""
+    with open(resolve_path(filepath)) as f:
+        return [tuple(row) for row in csv.reader(f) if row]
