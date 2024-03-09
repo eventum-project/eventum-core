@@ -30,10 +30,10 @@ event:
   mode: all | any | chance | spin
   templates:
     windows4624:
-      codec: json
+      template: windows4624.json.j2
       chance: 9
     windows4625:
-      codec: json
+      template: windows4625.json.j2
       chance: 1
 
   subprocesses:

@@ -81,13 +81,8 @@ class TemplatePickingMode(StrEnum):
     SPIN = 'spin'
 
 
-class TemplateCodecs(StrEnum):
-    JSON = 'json'
-    PLAIN = 'plain'
-
-
 class TemplateConfig(BaseModel):
-    codec: TemplateCodecs
+    template: str
     chance: float | None = None
 
 
