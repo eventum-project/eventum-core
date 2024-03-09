@@ -89,7 +89,6 @@ class TemplateConfig(BaseModel):
 
 class SubprocessConfig(BaseModel):
     config: str
-    detach: bool
 
 
 class JinjaEventConfig(BaseModel):

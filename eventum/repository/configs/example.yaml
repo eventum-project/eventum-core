@@ -39,7 +39,6 @@ event:
   subprocesses:
     abnormal_activity:
       config: example2.yaml
-      detach: true
 
 output:
   opensearch:
