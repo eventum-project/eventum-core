@@ -1,6 +1,8 @@
 import os
 from glob import glob
 
+from jinja2 import Environment, FileSystemLoader
+
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.utils.fs import (load_object_from_yaml, load_sample_from_csv,
                               save_object_as_yaml, validate_yaml_filename)
@@ -10,6 +12,7 @@ from yaml import YAMLError
 REPOSITORY_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TIME_PATTERNS_DIR = os.path.join(REPOSITORY_BASE_DIR, 'time_patterns')
 CSV_SAMPLES_DIR = os.path.join(REPOSITORY_BASE_DIR, 'samples')
+EVENT_TEMPLATES_DIR = os.path.join(REPOSITORY_BASE_DIR, 'templates')
 
 
 class RepositoryError(Exception):
@@ -87,3 +90,13 @@ def load_csv_sample(filename: str, delimiter: str = ',') -> list[tuple[str]]:
         )
     except OSError as e:
         raise RepositoryReadError(str(e)) from e
+
+
+def get_templates_environment() -> Environment:
+    """Get basic jinja `Environment` instance with adjuster loader."""
+    return Environment(
+        loader=FileSystemLoader(
+            searchpath=EVENT_TEMPLATES_DIR
+        ),
+        autoescape=False
+    )
