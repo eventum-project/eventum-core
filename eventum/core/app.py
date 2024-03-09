@@ -5,7 +5,7 @@ from typing import NoReturn, assert_never
 import psutil
 from eventum.core.models.application_config import (ApplicationConfig,
                                                     CronInputConfig,
-                                                    EventConfig,
+                                                    JinjaEventConfig,
                                                     InputConfigMapping,
                                                     InputType,
                                                     OutputConfigMapping,
@@ -85,7 +85,7 @@ class Application:
 
     @staticmethod
     def _start_event_module(
-        config: EventConfig,
+        config: JinjaEventConfig,
         input_queue: Queue,
         output_queue: Queue
     ) -> NoReturn:
