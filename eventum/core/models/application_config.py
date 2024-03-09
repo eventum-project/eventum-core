@@ -1,10 +1,11 @@
 import os
+from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, TypeAlias
-from datetime import datetime
 
-from pydantic import BaseModel, BeforeValidator, model_validator
 from eventum.utils.fs import validate_yaml_filename
+from pydantic import (BaseModel, BeforeValidator, field_validator,
+                      model_validator)
 
 
 class InputType(StrEnum):
@@ -91,7 +92,7 @@ class SubprocessConfig(BaseModel):
     detach: bool
 
 
-class EventConfig(BaseModel):
+class JinjaEventConfig(BaseModel):
     params: dict
     samples: dict[str, ItemsSampleConfig | CSVSampleConfig]
     mode: TemplatePickingMode
@@ -146,5 +147,23 @@ OutputConfigMapping: TypeAlias = dict[OutputType, OutputConfig]
 
 class ApplicationConfig(BaseModel):
     input: InputConfigMapping
-    event: EventConfig
+    event: JinjaEventConfig
     output: OutputConfigMapping
+
+    @field_validator('input')
+    def validate_input(cls, v: Any):
+        if len(v) != 1:
+            raise ValueError(
+                f'Only one input must be adjusted but you have {len(v)}'
+            )
+
+        return v
+
+    @field_validator('output')
+    def validate_output(cls, v: Any):
+        if len(v) == 0:
+            raise ValueError(
+                'At least one output must be adjusted'
+            )
+
+        return v
