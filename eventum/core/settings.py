@@ -7,8 +7,8 @@
 # will cause to publishing events every 10 seconds from the next 10
 # seconds interval. This parameter does not affect the timestamps
 # passed to callback at all.
-# Parameter is only actual in live mode and ignored for cron input
-# plugin.
+# Parameter is only actual in live mode for timestamps and patterns
+# input plugins.
 AHEAD_PUBLICATION_SECONDS = 0.01
 
 # Ratio to multiply required EPS to run TimePatternInputPlugin in live
