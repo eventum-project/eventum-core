@@ -41,6 +41,8 @@ event:
       config: example2.yaml
 
 output:
+  stdout:
+    format: json-lines
   opensearch:
     host: localhost
     port: 9200
