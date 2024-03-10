@@ -122,12 +122,18 @@ class OutputType(StrEnum):
     FILE = 'file'
 
 
+class OutputFormat(StrEnum):
+    ORIGINAL = 'original'
+    JSON_LINES = 'json-lines'
+
+
 class StdOutOutputConfig(BaseModel):
-    pass
+    format: OutputFormat = OutputFormat.ORIGINAL
 
 
 class FileOutputConfig(BaseModel):
     path: str
+    format: OutputFormat = OutputFormat.ORIGINAL
 
 
 InputConfig: TypeAlias = (
