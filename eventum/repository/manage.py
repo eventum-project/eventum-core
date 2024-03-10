@@ -84,7 +84,7 @@ def load_csv_sample(filename: str, delimiter: str = ',') -> list[tuple[str]]:
     of tuples. Raise `RepositoryReadError` on failure.
     """
     try:
-        load_sample_from_csv(
+        return load_sample_from_csv(
             filepath=os.path.join(CSV_SAMPLES_DIR, filename),
             delimiter=delimiter
         )

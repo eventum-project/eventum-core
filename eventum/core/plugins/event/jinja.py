@@ -103,6 +103,7 @@ class JinjaEventPlugin(BaseEventPlugin):
         self._env.globals['params'] = self._config.params
         self._env.globals['samples'] = self._samples
 
+        self._env.globals['subprocesses'] = dict()
         for name, subproc_conf in self._config.subprocesses.items():
             self._env.globals['subprocesses'][name] = Subprocess(
                 config=subproc_conf.config
