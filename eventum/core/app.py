@@ -1,22 +1,28 @@
 import os
+import time
 from multiprocessing import Process, Queue
 from typing import NoReturn, assert_never
 
 import psutil
+from eventum.core import settings
 from eventum.core.models.application_config import (ApplicationConfig,
                                                     CronInputConfig,
-                                                    JinjaEventConfig,
                                                     InputConfigMapping,
                                                     InputType,
+                                                    JinjaEventConfig,
                                                     OutputConfigMapping,
+                                                    OutputType,
                                                     PatternsInputConfig,
                                                     SampleInputConfig,
                                                     TimestampsInputConfig)
 from eventum.core.models.time_mode import TimeMode
+from eventum.core.plugins.event.jinja import JinjaEventPlugin
 from eventum.core.plugins.input.cron import CronInputPlugin
 from eventum.core.plugins.input.sample import SampleInputPlugin
 from eventum.core.plugins.input.time_pattern import TimePatternPoolInputPlugin
 from eventum.core.plugins.input.timestamps import TimestampsInputPlugin
+from eventum.core.plugins.output.base import BaseOutputPlugin
+from eventum.core.plugins.output.stdout import StdoutOutputPlugin
 from eventum.repository.manage import load_time_pattern
 from setproctitle import getproctitle, setproctitle
 
@@ -36,46 +42,46 @@ class Application:
 
     @staticmethod
     def _start_input_module(
-        config: InputConfigMapping,
+        input_conf: InputConfigMapping,
         queue: Queue,
         time_mode: TimeMode
     ) -> NoReturn:
         setproctitle(f'{getproctitle()} [input]')
 
-        input_type, config = config.popitem()
+        input_type, input_conf = input_conf.popitem()
 
         match input_type:
             case InputType.PATTERNS:
-                config: PatternsInputConfig
+                input_conf: PatternsInputConfig
 
                 configs = []
-                for path in config:
+                for path in input_conf:
                     configs.append(load_time_pattern(path))
 
-                input = TimePatternPoolInputPlugin(configs)
+                input_plugin = TimePatternPoolInputPlugin(configs)
             case InputType.TIMESTAMPS:
-                config: TimestampsInputConfig
-                input = TimestampsInputPlugin(
-                    timestamps=config
+                input_conf: TimestampsInputConfig
+                input_plugin = TimestampsInputPlugin(
+                    timestamps=input_conf
                 )
             case InputType.CRON:
-                config: CronInputConfig
-                input = CronInputPlugin(
-                    expression=config.expression,
-                    count=config.count
+                input_conf: CronInputConfig
+                input_plugin = CronInputPlugin(
+                    expression=input_conf.expression,
+                    count=input_conf.count
                 )
             case InputType.SAMPLE:
-                config: SampleInputConfig
-                input = SampleInputPlugin(count=config.count)
+                input_conf: SampleInputConfig
+                input_plugin = SampleInputPlugin(count=input_conf.count)
             case _:
                 assert_never(input_type)
 
         try:
             match time_mode:
                 case TimeMode.LIVE:
-                    input.live(on_event=lambda ts: queue.put(ts))
+                    input_plugin.live(on_event=lambda ts: queue.put(ts))
                 case TimeMode.SAMPLE:
-                    input.sample(on_event=lambda ts: queue.put(ts))
+                    input_plugin.sample(on_event=lambda ts: queue.put(ts))
                 case _:
                     assert_never(time_mode)
         except AttributeError as e:
@@ -91,10 +97,14 @@ class Application:
     ) -> NoReturn:
         setproctitle(f'{getproctitle()} [event]')
 
+        event_plugin = JinjaEventPlugin(config)
+
         while True:
-            _ = input_queue.get()
-            ...
-            output_queue.put(...)
+            timestamp = input_queue.get()
+            event_plugin.produce(
+                callback=lambda event: output_queue.put(event),
+                timestamp=timestamp
+            )
 
     @staticmethod
     def _start_output_module(
@@ -103,8 +113,30 @@ class Application:
     ) -> NoReturn:
         setproctitle(f'{getproctitle()} [output]')
 
+        output_plugins: list[BaseOutputPlugin] = []
+
+        for output, output_conf in config.items():
+            match output:
+                case OutputType.STDOUT:
+                    output_plugins.append(
+                        StdoutOutputPlugin(
+                            format=output_conf.format
+                        )
+                    )
+                case OutputType.FILE:
+                    ...
+                case val:
+                    assert_never(val)
+
         while True:
-            _ = queue.get(...)
+            if queue.qsize() < settings.FLUSH_AFTER_SIZE:
+                time.sleep(settings.FLUSH_AFTER_SECONDS)
+
+            events = [queue.get() for _ in range(queue.qsize())]
+
+            if events:
+                for plugin in output_plugins:
+                    plugin.write_many(events)
 
     def start(self) -> NoReturn:
 
@@ -125,12 +157,11 @@ class Application:
         _proc_event.start()
         _proc_output.start()
 
+        setproctitle(f'{getproctitle()} [supervisor]')
+
         # TODO while input is alive - to be alive. Otherwise, gracefully stop
         # event and output processes and stop itself.
         _ = psutil.Process(os.getpid())
-        setproctitle(f'{getproctitle()} [supervisor]')
-
-        ...
 
         _proc_input.join()
         _proc_event.join()
