@@ -19,8 +19,14 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
             on_event(timestamp)
 
     def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
-        for timestamp in get_future_slice(self._timestamps, datetime.now()):
-            wait_seconds = (timestamp - datetime.now()).total_seconds()
+        future_timestamps = get_future_slice(
+            timestamps=self._timestamps,
+            now=datetime.now().astimezone()
+        )
+        for timestamp in future_timestamps:
+            wait_seconds = (
+                timestamp - datetime.now().astimezone()
+            ).total_seconds()
 
             if wait_seconds > settings.AHEAD_PUBLICATION_SECONDS >= 0:
                 time.sleep(wait_seconds)
