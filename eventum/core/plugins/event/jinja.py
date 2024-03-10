@@ -9,7 +9,7 @@ from eventum.core.plugins.event.base import BaseEventPlugin, EventPluginError
 from eventum.core.settings import JINJA_ENABLED_EXTENSIONS
 from eventum.repository.manage import (get_templates_environment,
                                        load_csv_sample)
-from jinja2 import Template, TemplateNotFound
+from jinja2 import Template, TemplateNotFound, TemplateError
 
 
 class JinjaEventPluginError(EventPluginError):
@@ -166,5 +166,9 @@ class JinjaEventPlugin(BaseEventPlugin):
 
         for template in picked:
             state = self._template_states[template.name]
-            content = template.render(locals=state, **kwargs)
+            try:
+                content = template.render(locals=state, **kwargs)
+            except TemplateError:
+                return
+
             callback(content)
