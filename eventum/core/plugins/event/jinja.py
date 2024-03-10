@@ -1,11 +1,12 @@
 import random
-from typing import Callable, Iterator, assert_never
+from typing import Any, Callable, Iterator, assert_never
 
 from eventum.core.models.application_config import (CSVSampleConfig,
                                                     JinjaEventConfig,
                                                     ItemsSampleConfig,
                                                     TemplatePickingMode)
 from eventum.core.plugins.event.base import BaseEventPlugin, EventPluginError
+from eventum.core.settings import JINJA_ENABLED_EXTENSIONS
 from eventum.repository.manage import (get_templates_environment,
                                        load_csv_sample)
 from jinja2 import Template, TemplateNotFound
@@ -29,6 +30,24 @@ class Subprocess:
         raise NotImplementedError
 
 
+class State:
+    def __init__(self) -> None:
+        self._state = dict()
+
+    def set(self, key: str, value: Any) -> None:
+        """Set variable value to state."""
+        self._state[key] = value
+
+    def get(self, key: str, default: Any | None = None) -> Any:
+        """Get variable value from state. If state does not contain
+        value with specified `key` then `default` value is returned.
+        """
+        try:
+            return self._state[key]
+        except KeyError:
+            return default
+
+
 class JinjaEventPlugin(BaseEventPlugin):
     """Event plugin for producing event using Jinja template engine."""
 
@@ -36,11 +55,12 @@ class JinjaEventPlugin(BaseEventPlugin):
         self._config = config
 
         self._env = get_templates_environment()
+        self._initialize_environment()
 
-        self._samples = self._load_samples()
         self._templates = self._load_templates()
-        self._set_environment_globals()
-
+        self._template_states = {
+            template.name: State() for template in self._templates
+        }
         self._spinning_template_index = self._get_spinning_template_index()
 
     def _load_samples(self) -> dict[str, list]:
@@ -98,10 +118,14 @@ class JinjaEventPlugin(BaseEventPlugin):
 
         return chances
 
-    def _set_environment_globals(self) -> None:
-        """Set globally available resources to templates environment."""
+    def _initialize_environment(self) -> None:
+        """Set parameters to templates environment."""
         self._env.globals['params'] = self._config.params
-        self._env.globals['samples'] = self._samples
+        self._env.globals['samples'] = self._load_samples()
+        self._env.globals['shared'] = State()
+
+        for ext in JINJA_ENABLED_EXTENSIONS:
+            self._env.add_extension(ext)
 
         self._env.globals['subprocesses'] = dict()
         for name, subproc_conf in self._config.subprocesses.items():
@@ -141,5 +165,6 @@ class JinjaEventPlugin(BaseEventPlugin):
             picked = [picked]
 
         for template in picked:
-            content = template.render(**kwargs)
+            state = self._template_states[template.name]
+            content = template.render(locals=state, **kwargs)
             callback(content)

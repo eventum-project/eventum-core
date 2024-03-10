@@ -22,6 +22,12 @@ REQUIRED_EPS_RESERVE_RATIO = 1.15
 # The name of variable in template with original event timestamp.
 TIMESTAMP_FIELD_NAME = 'timestamp'
 
+# Extensions that will be loaded to Jinja Environment
+JINJA_ENABLED_EXTENSIONS = [
+    'jinja2.ext.do'
+]
+
+
 # ========== Output parameters section ==========
 
 # Minimal size of output queue with rendered events to perform flush.
