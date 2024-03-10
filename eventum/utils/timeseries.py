@@ -16,4 +16,4 @@ def get_future_slice(
         else:
             right = middle - 1
 
-    return timestamps[left:-1]
+    return timestamps[left:]
