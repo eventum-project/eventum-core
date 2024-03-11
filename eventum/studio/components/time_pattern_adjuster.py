@@ -4,7 +4,7 @@ from pydantic import ValidationError
 import streamlit as st
 
 import eventum.core.models.time_pattern_config as models
-from eventum.repository.manage import save_time_pattern, RepositoryUpdateError
+from eventum.repository.manage import save_time_pattern, ContentUpdateError
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 
@@ -165,7 +165,7 @@ class TimePatternAdjuster(BaseComponent):
         try:
             save_time_pattern(
                 pattern_config=self.get_current_configuration(),
-                filename=self._session_state['pattern_filename'],
+                path=self._session_state['pattern_filename'],
                 overwrite=overwrite
             )
         except ValidationError as e:
@@ -174,7 +174,7 @@ class TimePatternAdjuster(BaseComponent):
                 NotificationLevel.ERROR
             )
             return
-        except RepositoryUpdateError as e:
+        except ContentUpdateError as e:
             notify_callback(f'Failed to save: {e}', NotificationLevel.ERROR)
             return
 
@@ -242,7 +242,7 @@ class TimePatternAdjuster(BaseComponent):
                 direction=models.RandomizerDirection.MIXED
             ),
             spreader=models.SpreaderConfig(
-                distribution=models.Distribution.RANDOM,
+                distribution=models.Distribution.UNIFORM,
                 parameters=None
             )
         )

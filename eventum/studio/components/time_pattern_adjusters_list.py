@@ -3,7 +3,7 @@ from typing import Callable, MutableMapping, Optional
 import streamlit as st
 
 import eventum.core.models.time_pattern_config as models
-from eventum.repository.manage import (RepositoryReadError,
+from eventum.repository.manage import (ContentReadError,
                                        get_time_pattern_filenames,
                                        load_time_pattern)
 from eventum.studio.components.component import BaseComponent
@@ -150,7 +150,7 @@ class TimePatternAdjustersList(BaseComponent):
 
         try:
             time_pattern = load_time_pattern(filename)
-        except RepositoryReadError as e:
+        except ContentReadError as e:
             notify_callback(str(e), NotificationLevel.ERROR)
             return
 
