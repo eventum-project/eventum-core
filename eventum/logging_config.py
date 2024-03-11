@@ -9,6 +9,7 @@ STUDIO_LOG_PATH = os.path.join(LOGS_DIR, 'studio.log')
 CLI_LOG_PATH = os.path.join(LOGS_DIR, 'cli.log')
 REPOSITORY_LOG_PATH = os.path.join(LOGS_DIR, 'repository.log')
 
+MiB = 1048576
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -27,7 +28,7 @@ LOGGING_CONFIG = {
             'formatter': 'standard',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': CORE_LOG_PATH,
-            'maxBytes': 1024,
+            'maxBytes': 1 * MiB,
             'backupCount': 3
         },
         'studio': {
@@ -35,7 +36,7 @@ LOGGING_CONFIG = {
             'formatter': 'standard',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': STUDIO_LOG_PATH,
-            'maxBytes': 1024,
+            'maxBytes': 1 * MiB,
             'backupCount': 3
         },
         'cli': {
@@ -43,7 +44,7 @@ LOGGING_CONFIG = {
             'formatter': 'standard',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': CLI_LOG_PATH,
-            'maxBytes': 1024,
+            'maxBytes': 1 * MiB,
             'backupCount': 3
         },
         'repository': {
@@ -51,7 +52,7 @@ LOGGING_CONFIG = {
             'formatter': 'standard',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': REPOSITORY_LOG_PATH,
-            'maxBytes': 1024,
+            'maxBytes': 1 * MiB,
             'backupCount': 3
         },
     },
