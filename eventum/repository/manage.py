@@ -51,7 +51,7 @@ def save_time_pattern(
     """Save time pattern in specified path. If path is relative then it
     is saved in repository. Raise `ContentUpdateError` on failure.
     """
-    if not os.path.isabs():
+    if not os.path.isabs(path):
         path = os.path.join(TIME_PATTERNS_DIR, path)
 
     _, filename = os.path.split(path)
@@ -80,7 +80,7 @@ def load_time_pattern(path: str) -> TimePatternConfig:
     If path is relative then it is loaded from repository. Raise
     `ContentReadError` on failure.
     """
-    if not os.path.isabs():
+    if not os.path.isabs(path):
         path = os.path.join(TIME_PATTERNS_DIR, path)
 
     try:
@@ -99,7 +99,7 @@ def load_csv_sample(path: str, delimiter: str = ',') -> list[tuple[str]]:
     path is relative then it is loaded from repository. Raise
     `ContentReadError` on failure.
     """
-    if not os.path.isabs():
+    if not os.path.isabs(path):
         path = os.path.join(CSV_SAMPLES_DIR, path)
 
     try:
@@ -116,7 +116,7 @@ def load_app_config(path: str) -> ApplicationConfig:
     representation. If path is relative then it is loaded from
     repository. Raise `ContentReadError` on failure.
     """
-    if not os.path.isabs():
+    if not os.path.isabs(path):
         path = os.path.join(APPLICATION_CONFIGS_DIR, path)
 
     try:
