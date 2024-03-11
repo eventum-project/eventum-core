@@ -38,9 +38,11 @@ class StdoutOutputPlugin(BaseOutputPlugin):
 
         for event in events:
             try:
-                fmt_events.append(self._format_event(event))
-            except FormatError:
-                pass
+                fmt_event = self._format_event(event)
+            except FormatError as e:
+                continue
+
+            fmt_events.append(fmt_event)
 
         sys.stdout.writelines(fmt_events)
         sys.stdout.write(os.linesep)

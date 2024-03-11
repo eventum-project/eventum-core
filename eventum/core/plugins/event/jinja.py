@@ -74,7 +74,7 @@ class JinjaEventPlugin(BaseEventPlugin):
                     samples[sample_name] = value.source
                 case CSVSampleConfig():
                     sample = load_csv_sample(
-                        filename=value.source,
+                        path=value.source,
                         delimiter=value.delimiter
                     )
                     if value.header:
@@ -168,7 +168,7 @@ class JinjaEventPlugin(BaseEventPlugin):
             state = self._template_states[template.name]
             try:
                 content = template.render(locals=state, **kwargs)
-            except TemplateError:
-                return
+            except TemplateError as e:
+                continue
 
             callback(content)
