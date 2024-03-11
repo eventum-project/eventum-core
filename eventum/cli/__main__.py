@@ -1,4 +1,13 @@
+import os
 import argparse
+import logging
+
+import eventum.logging_config
+from eventum.repository.manage import load_app_config, ContentReadError
+
+
+eventum.logging_config.apply()
+logger = logging.getLogger(__name__)
 
 
 def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
@@ -18,14 +27,31 @@ def main() -> None:
         epilog="Repository: https://github.com/rnv812/Eventum",
     )
 
-    # TODO adjust logger
-
     _initialize_argparser(argparser)
 
-    _ = argparser.parse_args()
+    args = argparser.parse_args()
 
-    # TODO Implement creating app object and starting it
-    raise NotImplementedError
+    logger.info(f'Resolving location of config file "{args.config}"')
+
+    if os.path.isabs(args.config):
+        config_path = args.config
+    else:
+        config_path = os.path.join(
+            os.path.abspath(os.getcwd()), args.config
+        )
+
+        if not os.path.exists(config_path):
+            logger.info(
+                'Config file not found from current location and '
+                'will be read from repository'
+            )
+            config_path = args.config
+
+    try:
+        app_config = load_app_config(config_path)
+    except ContentReadError as e:
+        logger.error(f'Failed to read config file: {e}')
+        exit(1)
 
 
 if __name__ == '__main__':
