@@ -2,6 +2,7 @@ import os
 from glob import glob
 
 from jinja2 import Environment, FileSystemLoader
+from eventum.core.models.application_config import ApplicationConfig
 
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.utils.fs import (load_object_from_yaml, load_sample_from_csv,
@@ -13,87 +14,124 @@ REPOSITORY_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TIME_PATTERNS_DIR = os.path.join(REPOSITORY_BASE_DIR, 'time_patterns')
 CSV_SAMPLES_DIR = os.path.join(REPOSITORY_BASE_DIR, 'samples')
 EVENT_TEMPLATES_DIR = os.path.join(REPOSITORY_BASE_DIR, 'templates')
+APPLICATION_CONFIGS_DIR = os.path.join(REPOSITORY_BASE_DIR, 'configs')
 
 
-class RepositoryError(Exception):
-    """Base exception for all content repository manipulation errors."""
+class ContentManagementError(Exception):
+    """Base exception for all content manipulation errors."""
 
 
-class RepositoryUpdateError(RepositoryError):
+class ContentUpdateError(ContentManagementError):
     """Exception for errors related with creation, changing
     or deleting content.
     """
 
 
-class RepositoryReadError(RepositoryError):
+class ContentReadError(ContentManagementError):
     """Exception for errors related with reading content."""
 
 
 def get_time_pattern_filenames() -> list[str]:
-    """Get all filenames of currently existing time patterns in repository."""
-    return glob(pathname='*.y*ml', root_dir=TIME_PATTERNS_DIR)
+    """Get all relative paths of currently existing time patterns in
+    repository. Paths are relative to time patterns directory in
+    repository.
+    """
+    return glob(
+        pathname='**/*.y*ml',
+        root_dir=TIME_PATTERNS_DIR,
+        recursive=True
+    )
 
 
 def save_time_pattern(
     pattern_config: TimePatternConfig,
-    filename: str,
+    path: str,
     overwrite: bool = False
 ):
-    """Save time pattern in repository. Raise `RepositoryUpdateError`
-    on failure.
+    """Save time pattern in specified path. If path is relative then it
+    is saved in repository. Raise `ContentUpdateError` on failure.
     """
+    if not os.path.isabs():
+        path = os.path.join(TIME_PATTERNS_DIR, path)
+
+    _, filename = os.path.split(path)
+
     try:
         validate_yaml_filename(filename)
     except ValueError as e:
-        raise RepositoryUpdateError(str(e)) from e
+        raise ContentUpdateError(str(e)) from e
 
-    filepath = os.path.join(TIME_PATTERNS_DIR, filename)
-    if overwrite is False and os.path.exists(filepath):
-        raise RepositoryUpdateError(
-            'Time pattern already exists in repository'
+    if overwrite is False and os.path.exists(path):
+        raise ContentUpdateError(
+            'Time pattern already exists in specified location'
         )
 
     try:
         save_object_as_yaml(
             data=pattern_config.model_dump(mode='json'),
-            filepath=filepath
+            filepath=path
         )
     except (OSError, YAMLError) as e:
-        raise RepositoryUpdateError(str(e)) from e
+        raise ContentUpdateError(str(e)) from e
 
 
-def load_time_pattern(filename: str) -> TimePatternConfig:
-    """Load specified time pattern from repository and return its
-    model representation. Raise `RepositoryReadError` on failure.
+def load_time_pattern(path: str) -> TimePatternConfig:
+    """Load specified time pattern and return its model representation.
+    If path is relative then it is loaded from repository. Raise
+    `ContentReadError` on failure.
     """
+    if not os.path.isabs():
+        path = os.path.join(TIME_PATTERNS_DIR, path)
+
     try:
-        data = load_object_from_yaml(
-            os.path.join(TIME_PATTERNS_DIR, filename)
-        )
+        data = load_object_from_yaml(path)
     except (OSError, YAMLError) as e:
-        raise RepositoryReadError(str(e)) from e
+        raise ContentReadError(str(e)) from e
 
     try:
         return TimePatternConfig.model_validate(data)
     except ValidationError as e:
-        raise RepositoryReadError(str(e)) from e
+        raise ContentReadError(str(e)) from e
 
 
-def load_csv_sample(filename: str, delimiter: str = ',') -> list[tuple[str]]:
-    """Load specified csv sample from repository and return it as list
-    of tuples. Raise `RepositoryReadError` on failure.
+def load_csv_sample(path: str, delimiter: str = ',') -> list[tuple[str]]:
+    """Load specified csv sample and return it as list of tuples. If
+    path is relative then it is loaded from repository. Raise
+    `ContentReadError` on failure.
     """
+    if not os.path.isabs():
+        path = os.path.join(CSV_SAMPLES_DIR, path)
+
     try:
         return load_sample_from_csv(
-            filepath=os.path.join(CSV_SAMPLES_DIR, filename),
+            filepath=path,
             delimiter=delimiter
         )
     except OSError as e:
-        raise RepositoryReadError(str(e)) from e
+        raise ContentReadError(str(e)) from e
+
+
+def load_app_config(path: str) -> ApplicationConfig:
+    """Load specified application config and return its model
+    representation. If path is relative then it is loaded from
+    repository. Raise `ContentReadError` on failure.
+    """
+    if not os.path.isabs():
+        path = os.path.join(APPLICATION_CONFIGS_DIR, path)
+
+    try:
+        data = load_object_from_yaml(path)
+    except (OSError, YAMLError) as e:
+        raise ContentReadError(str(e)) from e
+
+    try:
+        return ApplicationConfig.model_validate(data)
+    except ValidationError as e:
+        raise ContentReadError(str(e)) from e
 
 
 def get_templates_environment() -> Environment:
-    """Get basic jinja `Environment` instance with adjuster loader."""
+    """Get basic jinja `Environment` instance with adjusted loader."""
     return Environment(
         loader=FileSystemLoader(
             searchpath=EVENT_TEMPLATES_DIR
