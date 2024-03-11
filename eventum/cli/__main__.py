@@ -31,6 +31,7 @@ def main() -> None:
 
     args = argparser.parse_args()
 
+    logger.info('Eventum CLI has started')
     logger.info(f'Resolving location of config file "{args.config}"')
 
     if os.path.isabs(args.config):
