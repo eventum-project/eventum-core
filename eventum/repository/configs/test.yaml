@@ -1,0 +1,24 @@
+input:
+  patterns:
+    - "test.yml"
+
+event:
+  params: { }
+  
+  samples:
+    hosts:
+      type: items
+      source:
+        - host1
+        - host2
+  
+  mode: all
+  templates:
+    windows4624:
+      template: test.json.jinja
+  
+  subprocesses: { }
+
+output:
+  stdout:
+    format: json-lines
