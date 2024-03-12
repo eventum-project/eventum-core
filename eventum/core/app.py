@@ -1,6 +1,6 @@
 import os
-import time
-from multiprocessing import Process, Queue
+from time import perf_counter, sleep
+from multiprocessing import Process, Queue, Event
 from typing import NoReturn, assert_never
 
 import psutil
@@ -25,6 +25,12 @@ from eventum.core.plugins.output.base import BaseOutputPlugin
 from eventum.core.plugins.output.stdout import StdoutOutputPlugin
 from eventum.repository.manage import load_time_pattern
 from setproctitle import getproctitle, setproctitle
+import eventum.logging_config
+import logging
+
+
+eventum.logging_config.apply()
+logger = logging.getLogger(__name__)
 
 
 class Application:
@@ -38,13 +44,21 @@ class Application:
         self._time_mode = time_mode
 
         self._input_queue = Queue()
+        self._is_input_queue_awaited = Event()
+        self._is_input_queue_awaited.set()
+
         self._output_queue = Queue()
+        self._is_output_queue_awaited = Event()
+        self._is_output_queue_awaited.set()
+
+        self._is_input_done = Event()
 
     @staticmethod
     def _start_input_module(
         input_conf: InputConfigMapping,
+        time_mode: TimeMode,
         queue: Queue,
-        time_mode: TimeMode
+        is_done: Event  # type: ignore
     ) -> NoReturn:
         setproctitle(f'{getproctitle()} [input]')
 
@@ -89,17 +103,20 @@ class Application:
                 f'Specified input plugin does not support "{time_mode}" mode'
             ) from e
 
+        is_done.set()
+
     @staticmethod
     def _start_event_module(
         config: JinjaEventConfig,
         input_queue: Queue,
-        output_queue: Queue
+        output_queue: Queue,
+        is_incoming_awaited: Event  # type: ignore
     ) -> NoReturn:
         setproctitle(f'{getproctitle()} [event]')
 
         event_plugin = JinjaEventPlugin(config)
 
-        while True:
+        while is_incoming_awaited.is_set():
             timestamp = input_queue.get()
             event_plugin.produce(
                 callback=lambda event: output_queue.put(event),
@@ -109,7 +126,8 @@ class Application:
     @staticmethod
     def _start_output_module(
         config: OutputConfigMapping,
-        queue: Queue
+        queue: Queue,
+        is_incoming_awaited: Event  # type: ignore
     ) -> NoReturn:
         setproctitle(f'{getproctitle()} [output]')
 
@@ -128,9 +146,13 @@ class Application:
                 case val:
                     assert_never(val)
 
-        while True:
-            if queue.qsize() < settings.FLUSH_AFTER_SIZE:
-                time.sleep(settings.FLUSH_AFTER_SECONDS)
+        while is_incoming_awaited.is_set():
+            start = perf_counter()
+            while (
+                queue.qsize() < settings.FLUSH_AFTER_SIZE
+                and (perf_counter() - start) < settings.FLUSH_AFTER_SECONDS
+            ):
+                sleep(max(0.01, settings.FLUSH_AFTER_SECONDS * 0.1))
 
             events = [queue.get() for _ in range(queue.qsize())]
 
@@ -142,15 +164,29 @@ class Application:
 
         _proc_input = Process(
             target=self._start_input_module,
-            args=(self._config.input, self._input_queue, self._time_mode)
+            args=(
+                self._config.input,
+                self._time_mode,
+                self._input_queue,
+                self._is_input_done
+            )
         )
         _proc_event = Process(
             target=self._start_event_module,
-            args=(self._config.event, self._input_queue, self._output_queue)
+            args=(
+                self._config.event,
+                self._input_queue,
+                self._output_queue,
+                self._is_input_queue_awaited
+            )
         )
         _proc_output = Process(
             target=self._start_output_module,
-            args=(self._config.output, self._output_queue)
+            args=(
+                self._config.output,
+                self._output_queue,
+                self._is_output_queue_awaited
+            )
         )
 
         _proc_input.start()
@@ -159,10 +195,41 @@ class Application:
 
         setproctitle(f'{getproctitle()} [supervisor]')
 
-        # TODO while input is alive - to be alive. Otherwise, gracefully stop
-        # event and output processes and stop itself.
         _ = psutil.Process(os.getpid())
 
-        _proc_input.join()
-        _proc_event.join()
-        _proc_output.join()
+        while True:
+            if not _proc_output.is_alive():
+                logger.critical('Output subprocess terminated unexpectedly')
+                _proc_input.terminate()
+                _proc_event.terminate()
+                break
+
+            if not _proc_event.is_alive():
+                logger.critical('Event subprocess terminated unexpectedly')
+                _proc_input.terminate()
+                _proc_output.terminate()
+                break
+
+            if not _proc_input.is_alive():
+                if self._is_input_done.is_set():
+                    logger.info('Input module completed successfully')
+
+                    logger.info('Waiting input queue to empty')
+                    while not self._input_queue.empty():
+                        sleep(0.1)
+                    self._is_input_queue_awaited.clear()
+
+                    logger.info('Waiting output queue to empty')
+                    while not self._output_queue.empty():
+                        sleep(0.1)
+                    self._is_output_queue_awaited.clear()
+                else:
+                    logger.critical('Input subprocess terminated unexpectedly')
+                    _proc_event.terminate()
+                    _proc_output.terminate()
+
+                break
+
+            sleep(0.1)
+
+        logger.info('Stopping application')
