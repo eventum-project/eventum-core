@@ -1,6 +1,8 @@
 import os
 import argparse
 import logging
+from eventum.core.app import Application
+from eventum.core.models.time_mode import TimeMode
 
 import eventum.logging_config
 from eventum.repository.manage import load_app_config, ContentReadError
@@ -17,6 +19,12 @@ def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
         '-c', '--config',
         required=True,
         help='Configuration file'
+    )
+    argparser.add_argument(
+        '-t', '--time-mode',
+        required=True,
+        choices=[str(elem) for elem in TimeMode],
+        help='Time mode'
     )
 
 
@@ -53,6 +61,17 @@ def main() -> None:
     except ContentReadError as e:
         logger.error(f'Failed to read config file: {e}')
         exit(1)
+
+    logger.info(
+        f'Starting application with loaded config in {args.time_mode} mode'
+    )
+
+    app = Application(
+        config=app_config,
+        time_mode=TimeMode(args.time_mode)
+    )
+
+    app.start()
 
 
 if __name__ == '__main__':
