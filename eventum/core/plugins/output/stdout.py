@@ -25,12 +25,11 @@ class StdoutOutputPlugin(BaseOutputPlugin):
 
     def write(self, event: str) -> None:
         try:
-            fmt_content = self._format_event(event)
+            fmt_content = self._format_event(event) + os.linesep
         except FormatError:
             return
 
         sys.stdout.write(fmt_content)
-        sys.stdout.write(os.linesep)
         sys.stdout.flush()
 
     def write_many(self, events: list[str]) -> None:
@@ -38,12 +37,11 @@ class StdoutOutputPlugin(BaseOutputPlugin):
 
         for event in events:
             try:
-                fmt_event = self._format_event(event)
+                fmt_event = self._format_event(event) + os.linesep
             except FormatError as e:
                 continue
 
             fmt_events.append(fmt_event)
 
         sys.stdout.writelines(fmt_events)
-        sys.stdout.write(os.linesep)
         sys.stdout.flush()
