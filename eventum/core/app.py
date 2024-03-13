@@ -1,5 +1,6 @@
 import logging
 import os
+from queue import Empty
 import signal
 from multiprocessing import Event, Process, Queue
 from time import perf_counter, sleep
@@ -159,7 +160,13 @@ class Application:
         event_plugin = JinjaEventPlugin(config)
 
         while is_incoming_awaited.is_set():
-            timestamp = input_queue.get()
+            try:
+                # we need timeout here to avoid deadlock
+                # when `is_incoming_awaited` is cleared after `get()` call
+                timestamp = input_queue.get(timeout=1)
+            except Empty:
+                continue
+
             event_plugin.produce(
                 callback=lambda event: output_queue.put(event),
                 timestamp=timestamp
