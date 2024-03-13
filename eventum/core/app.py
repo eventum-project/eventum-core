@@ -1,8 +1,10 @@
+import logging
 import os
+from multiprocessing import Event, Process, Queue
 from time import perf_counter, sleep
-from multiprocessing import Process, Queue, Event
 from typing import NoReturn, assert_never
 
+import eventum.logging_config
 import psutil
 from eventum.core import settings
 from eventum.core.models.application_config import (ApplicationConfig,
@@ -25,9 +27,6 @@ from eventum.core.plugins.output.base import BaseOutputPlugin
 from eventum.core.plugins.output.stdout import StdoutOutputPlugin
 from eventum.repository.manage import load_time_pattern
 from setproctitle import getproctitle, setproctitle
-import eventum.logging_config
-import logging
-
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)
