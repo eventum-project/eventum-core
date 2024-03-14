@@ -106,31 +106,34 @@ class Application:
     ) -> NoReturn:
         input_type, input_conf = input_conf.popitem()
 
-        match input_type:
-            case InputType.PATTERNS:
-                input_conf: PatternsInputConfig
+        try:
+            match input_type:
+                case InputType.PATTERNS:
+                    input_conf: PatternsInputConfig
 
-                configs = []
-                for path in input_conf:
-                    configs.append(load_time_pattern(path))
+                    configs = []
+                    for path in input_conf:
+                        configs.append(load_time_pattern(path))
 
-                input_plugin = TimePatternPoolInputPlugin(configs)
-            case InputType.TIMESTAMPS:
-                input_conf: TimestampsInputConfig
-                input_plugin = TimestampsInputPlugin(
-                    timestamps=input_conf
-                )
-            case InputType.CRON:
-                input_conf: CronInputConfig
-                input_plugin = CronInputPlugin(
-                    expression=input_conf.expression,
-                    count=input_conf.count
-                )
-            case InputType.SAMPLE:
-                input_conf: SampleInputConfig
-                input_plugin = SampleInputPlugin(count=input_conf.count)
-            case _:
-                assert_never(input_type)
+                    input_plugin = TimePatternPoolInputPlugin(configs)
+                case InputType.TIMESTAMPS:
+                    input_conf: TimestampsInputConfig
+                    input_plugin = TimestampsInputPlugin(
+                        timestamps=input_conf
+                    )
+                case InputType.CRON:
+                    input_conf: CronInputConfig
+                    input_plugin = CronInputPlugin(
+                        expression=input_conf.expression,
+                        count=input_conf.count
+                    )
+                case InputType.SAMPLE:
+                    input_conf: SampleInputConfig
+                    input_plugin = SampleInputPlugin(count=input_conf.count)
+                case _:
+                    assert_never(input_type)
+        except Exception as e:
+            logger.error(f'Failed to initialize input plugin: {e}')
 
         try:
             match time_mode:
@@ -140,10 +143,16 @@ class Application:
                     input_plugin.sample(on_event=lambda ts: queue.put(ts))
                 case _:
                     assert_never(time_mode)
-        except AttributeError as e:
-            raise AttributeError(
+        except AttributeError:
+            logger.error(
                 f'Specified input plugin does not support "{time_mode}" mode'
-            ) from e
+            )
+            exit(1)
+        except Exception as e:
+            logger.critical(
+                f'Error occurred during input plugin execution: {e}'
+            )
+            exit(1)
 
         is_done.set()
 
@@ -207,11 +216,11 @@ class Application:
                     plugin.write_many(events)
 
     def start(self) -> NoReturn:
+        logger.info('Application is started')
+
         self._proc_input.start()
         self._proc_event.start()
         self._proc_output.start()
-
-        logger.info('Application is started')
 
         setproctitle(f'{getproctitle()} [main]')
 
@@ -222,14 +231,20 @@ class Application:
 
         while True:
             if not self._proc_output.is_alive():
-                logger.critical('Output subprocess terminated unexpectedly')
+                logger.critical(
+                    'Output subprocess terminated unexpectedly '
+                    'or some error occurred'
+                )
                 self._proc_input.terminate()
                 self._proc_event.terminate()
                 exit_code = 1
                 break
 
             if not self._proc_event.is_alive():
-                logger.critical('Event subprocess terminated unexpectedly')
+                logger.critical(
+                    'Event subprocess terminated unexpectedly '
+                    'or some error occurred'
+                )
                 self._proc_input.terminate()
                 self._proc_output.terminate()
                 exit_code = 1
@@ -251,7 +266,10 @@ class Application:
 
                     exit_code = 0
                 else:
-                    logger.critical('Input subprocess terminated unexpectedly')
+                    logger.critical(
+                        'Input subprocess terminated unexpectedly '
+                        'or some error occurred'
+                    )
                     self._proc_event.terminate()
                     self._proc_output.terminate()
                     exit_code = 1
