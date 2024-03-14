@@ -29,7 +29,7 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': True,
     'handlers': {
         'stderr': {
-            'level': 'ERROR',
+            'level': 'WARNING',
             'formatter': 'stderr-formatter',
             'class': 'logging.StreamHandler',
             'stream': 'ext://sys.stderr'
