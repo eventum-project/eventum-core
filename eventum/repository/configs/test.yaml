@@ -1,6 +1,9 @@
 input:
   patterns:
     - "test.yml"
+  # cron:
+  #   expression: "* * * * *"
+  #   count: 1
 
 event:
   params: { }
@@ -12,11 +15,15 @@ event:
         - host1
         - host2
   
-  mode: all
+  mode: chance
   templates:
     windows4624:
       template: test.json.jinja
-  
+      chance: 1
+    windows4625:
+      template: test.json.jinja
+      chance: 2
+
   subprocesses: { }
 
 output:
