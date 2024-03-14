@@ -5,6 +5,8 @@ from multiprocessing import Event, Process, Queue
 from time import perf_counter, sleep
 from typing import Callable, NoReturn, assert_never
 
+from eventum.core.plugins.event.base import EventPluginError
+from eventum.core.plugins.input.base import InputPluginError
 import eventum.logging_config
 from eventum.core import settings
 from eventum.core.models.application_config import (ApplicationConfig,
@@ -23,7 +25,8 @@ from eventum.core.plugins.input.cron import CronInputPlugin
 from eventum.core.plugins.input.sample import SampleInputPlugin
 from eventum.core.plugins.input.time_pattern import TimePatternPoolInputPlugin
 from eventum.core.plugins.input.timestamps import TimestampsInputPlugin
-from eventum.core.plugins.output.base import BaseOutputPlugin
+from eventum.core.plugins.output.base import (BaseOutputPlugin,
+                                              OutputPluginError)
 from eventum.core.plugins.output.stdout import StdoutOutputPlugin
 from eventum.repository.manage import ContentReadError, load_time_pattern
 from setproctitle import getproctitle, setproctitle
@@ -32,7 +35,7 @@ eventum.logging_config.apply()
 logger = logging.getLogger(__name__)
 
 
-def _module_subprocess(module_name: str) -> Callable:
+def subprocess(module_name: str) -> Callable:
     def decorator(f: Callable):
         def wrapper(*args, **kwargs):
             setproctitle(f'{getproctitle()} [{module_name}]')
@@ -63,14 +66,14 @@ class Application:
         self._is_input_queue_awaited = Event()
         self._is_input_queue_awaited.set()
 
-        self._output_queue = Queue()
-        self._is_output_queue_awaited = Event()
-        self._is_output_queue_awaited.set()
+        self._event_queue = Queue()
+        self._is_event_queue_awaited = Event()
+        self._is_event_queue_awaited.set()
 
         self._is_input_done = Event()
 
         self._proc_input = Process(
-            target=self._start_input_module,
+            target=self._start_input_subprocess,
             args=(
                 self._config.input,
                 self._time_mode,
@@ -79,32 +82,34 @@ class Application:
             )
         )
         self._proc_event = Process(
-            target=self._start_event_module,
+            target=self._start_event_subprocess,
             args=(
                 self._config.event,
                 self._input_queue,
-                self._output_queue,
+                self._event_queue,
                 self._is_input_queue_awaited
             )
         )
         self._proc_output = Process(
-            target=self._start_output_module,
+            target=self._start_output_subprocess,
             args=(
                 self._config.output,
-                self._output_queue,
-                self._is_output_queue_awaited
+                self._event_queue,
+                self._is_event_queue_awaited
             )
         )
 
     @staticmethod
-    @_module_subprocess('input')
-    def _start_input_module(
+    @subprocess('input')
+    def _start_input_subprocess(
         input_conf: InputConfigMapping,
         time_mode: TimeMode,
         queue: Queue,
         is_done: Event  # type: ignore
     ) -> NoReturn:
         input_type, input_conf = input_conf.popitem()
+
+        logger.info(f'Initializing "{input_type}" input plugin')
 
         try:
             match input_type:
@@ -142,6 +147,9 @@ class Application:
             logger.error(f'Failed to initialize input plugin: {e}')
             exit(1)
 
+        logger.info('Input plugin is successfully initialized')
+        logger.info(f'Starting input plugin in {time_mode} mode')
+
         try:
             match time_mode:
                 case TimeMode.LIVE:
@@ -155,23 +163,34 @@ class Application:
                 f'Specified input plugin does not support "{time_mode}" mode'
             )
             exit(1)
-        except Exception as e:
-            logger.critical(
+        except (InputPluginError, Exception) as e:
+            logger.error(
                 f'Error occurred during input plugin execution: {e}'
             )
             exit(1)
 
         is_done.set()
 
+        logger.info('Stopping input plugin')
+
     @staticmethod
-    @_module_subprocess('event')
-    def _start_event_module(
+    @subprocess('event')
+    def _start_event_subprocess(
         config: JinjaEventConfig,
         input_queue: Queue,
-        output_queue: Queue,
+        event_queue: Queue,
         is_incoming_awaited: Event  # type: ignore
     ) -> NoReturn:
-        event_plugin = JinjaEventPlugin(config)
+        logger.info('Initializing event plugin')
+
+        try:
+            event_plugin = JinjaEventPlugin(config)
+        except (EventPluginError, Exception) as e:
+            logger.error(f'Failed to initialize event plugin: {e}')
+            exit(1)
+
+        logger.info('Event plugin is successfully initialized')
+        logger.info('Starting event plugin for listening input queue')
 
         while is_incoming_awaited.is_set():
             try:
@@ -181,32 +200,49 @@ class Application:
             except Empty:
                 continue
 
-            event_plugin.produce(
-                callback=lambda event: output_queue.put(event),
-                timestamp=timestamp
-            )
+            try:
+                event_plugin.produce(
+                    callback=lambda event: event_queue.put(event),
+                    timestamp=timestamp
+                )
+            except (EventPluginError, Exception) as e:
+                logger.error(f'Failed to produce event: {e}')
+                exit(1)
+
+        logger.info('Stopping event plugin')
 
     @staticmethod
-    @_module_subprocess('output')
-    def _start_output_module(
+    @subprocess('output')
+    def _start_output_subprocess(
         config: OutputConfigMapping,
         queue: Queue,
         is_incoming_awaited: Event  # type: ignore
     ) -> NoReturn:
         output_plugins: list[BaseOutputPlugin] = []
 
-        for output, output_conf in config.items():
-            match output:
-                case OutputType.STDOUT:
-                    output_plugins.append(
-                        StdoutOutputPlugin(
-                            format=output_conf.format
+        plugins_list_fmt = ", ".join([plugin for plugin in config.keys()])
+
+        logger.info(f'Initializing [{plugins_list_fmt}] output plugins')
+
+        try:
+            for output, output_conf in config.items():
+                match output:
+                    case OutputType.STDOUT:
+                        output_plugins.append(
+                            StdoutOutputPlugin(
+                                format=output_conf.format
+                            )
                         )
-                    )
-                case OutputType.FILE:
-                    ...
-                case val:
-                    assert_never(val)
+                    case OutputType.FILE:
+                        ...
+                    case val:
+                        assert_never(val)
+        except Exception as e:
+            logger.error(f'Failed to initialize output plugin: {e}')
+            exit(1)
+
+        logger.info('Output plugins are successfully initialized')
+        logger.info('Starting output plugins for listening event queue')
 
         while is_incoming_awaited.is_set():
             start = perf_counter()
@@ -220,7 +256,12 @@ class Application:
 
             if events:
                 for plugin in output_plugins:
-                    plugin.write_many(events)
+                    try:
+                        plugin.write_many(events)
+                    except OutputPluginError as e:
+                        logger.error(f'Failed to write events to output: {e}')
+
+        logger.info('Stopping output plugins')
 
     def start(self) -> NoReturn:
         logger.info('Application is started')
@@ -239,7 +280,7 @@ class Application:
         while True:
             if not self._proc_output.is_alive():
                 logger.critical(
-                    'Output subprocess terminated unexpectedly '
+                    'Output plugins subprocess terminated unexpectedly '
                     'or some error occurred'
                 )
                 self._proc_input.terminate()
@@ -249,7 +290,7 @@ class Application:
 
             if not self._proc_event.is_alive():
                 logger.critical(
-                    'Event subprocess terminated unexpectedly '
+                    'Event plugin subprocess terminated unexpectedly '
                     'or some error occurred'
                 )
                 self._proc_input.terminate()
@@ -259,7 +300,7 @@ class Application:
 
             if not self._proc_input.is_alive():
                 if self._is_input_done.is_set():
-                    logger.info('Input module completed successfully')
+                    logger.info('Input subprocess completed successfully')
 
                     logger.info('Waiting input queue to empty')
                     while not self._input_queue.empty():
@@ -267,9 +308,9 @@ class Application:
                     self._is_input_queue_awaited.clear()
 
                     logger.info('Waiting output queue to empty')
-                    while not self._output_queue.empty():
+                    while not self._event_queue.empty():
                         sleep(0.1)
-                    self._is_output_queue_awaited.clear()
+                    self._is_event_queue_awaited.clear()
 
                     exit_code = 0
                 else:
