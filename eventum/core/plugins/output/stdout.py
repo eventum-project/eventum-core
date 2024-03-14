@@ -1,35 +1,27 @@
-import json
+import logging
 import os
 import sys
-from typing import assert_never
 
+import eventum.logging_config
 from eventum.core.models.application_config import OutputFormat
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError)
+
+eventum.logging_config.apply()
+logger = logging.getLogger(__name__)
 
 
 class StdoutOutputPlugin(BaseOutputPlugin):
     def __init__(self, format: OutputFormat) -> None:
         self._format = format
 
-    def _format_event(self, event: str) -> str:
-        match self._format:
-            case OutputFormat.ORIGINAL:
-                return event
-            case OutputFormat.JSON_LINES:
-                try:
-                    return json.dumps(json.loads(event), ensure_ascii=False)
-                except Exception:
-                    raise FormatError('Failed to format event')
-            case val:
-                assert_never(val)
-
     def write(self, event: str) -> None:
         try:
-            fmt_content = self._format_event(event) + os.linesep
+            fmt_event = self._format_event(self._format, event)
+            fmt_event += os.linesep
         except FormatError:
             return
 
-        sys.stdout.write(fmt_content)
+        sys.stdout.write(fmt_event)
         sys.stdout.flush()
 
     def write_many(self, events: list[str]) -> None:
@@ -37,8 +29,10 @@ class StdoutOutputPlugin(BaseOutputPlugin):
 
         for event in events:
             try:
-                fmt_event = self._format_event(event) + os.linesep
+                fmt_event = self._format_event(self._format, event)
+                fmt_event += os.linesep
             except FormatError as e:
+                logger.warn(f'Failed to format event: {e}')
                 continue
 
             fmt_events.append(fmt_event)
