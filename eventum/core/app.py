@@ -1,5 +1,4 @@
 import logging
-import os
 from queue import Empty
 import signal
 from multiprocessing import Event, Process, Queue
@@ -7,7 +6,6 @@ from time import perf_counter, sleep
 from typing import Callable, NoReturn, assert_never
 
 import eventum.logging_config
-import psutil
 from eventum.core import settings
 from eventum.core.models.application_config import (ApplicationConfig,
                                                     CronInputConfig,
@@ -216,7 +214,6 @@ class Application:
         logger.info('Application is started')
 
         setproctitle(f'{getproctitle()} [main]')
-        _ = psutil.Process(os.getpid())
 
         signal.signal(signal.SIGINT, self._handle_termination)
         signal.signal(signal.SIGTERM, self._handle_termination)
