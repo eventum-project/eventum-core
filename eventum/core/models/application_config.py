@@ -138,7 +138,7 @@ class FileOutputConfig(BaseModel):
 
 InputConfig: TypeAlias = (
     TimestampsInputConfig | PatternsInputConfig
-    | SampleInputConfig | CronInputConfig
+    | CronInputConfig | SampleInputConfig
 )
 
 OutputConfig: TypeAlias = (

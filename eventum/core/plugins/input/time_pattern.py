@@ -311,7 +311,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
         self._size = len(self._configs)
 
         if self._size == 0:
-            raise ValueError('Cannot create pool with no configs')
+            raise ValueError('Cannot create pool from empty list of configs')
 
         self._time_patterns = [
             TimePatternInputPlugin(config) for config in self._configs

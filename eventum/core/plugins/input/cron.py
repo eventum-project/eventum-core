@@ -17,15 +17,16 @@ class CronInputPlugin(LiveInputPlugin):
         `expression` - cron expression;
         `count` - number of events to generate for each period.
         """
-        self._expression = expression
+        self._entry = CronTab(expression)
         self._count = count
 
     def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
-        entry = CronTab(self._expression)
-
         while True:
-            timestamp = entry.next(default_utc=False, return_datetime=True)
-            time.sleep(entry.next(default_utc=False))
+            timestamp = self._entry.next(
+                default_utc=False,
+                return_datetime=True
+            )
+            time.sleep(self._entry.next(default_utc=False))
 
             for _ in range(self._count):
                 on_event(timestamp)

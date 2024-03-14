@@ -25,7 +25,7 @@ from eventum.core.plugins.input.time_pattern import TimePatternPoolInputPlugin
 from eventum.core.plugins.input.timestamps import TimestampsInputPlugin
 from eventum.core.plugins.output.base import BaseOutputPlugin
 from eventum.core.plugins.output.stdout import StdoutOutputPlugin
-from eventum.repository.manage import load_time_pattern
+from eventum.repository.manage import ContentReadError, load_time_pattern
 from setproctitle import getproctitle, setproctitle
 
 eventum.logging_config.apply()
@@ -110,12 +110,9 @@ class Application:
             match input_type:
                 case InputType.PATTERNS:
                     input_conf: PatternsInputConfig
-
-                    configs = []
-                    for path in input_conf:
-                        configs.append(load_time_pattern(path))
-
-                    input_plugin = TimePatternPoolInputPlugin(configs)
+                    input_plugin = TimePatternPoolInputPlugin(
+                        [load_time_pattern(path) for path in input_conf]
+                    )
                 case InputType.TIMESTAMPS:
                     input_conf: TimestampsInputConfig
                     input_plugin = TimestampsInputPlugin(
@@ -132,8 +129,18 @@ class Application:
                     input_plugin = SampleInputPlugin(count=input_conf.count)
                 case _:
                     assert_never(input_type)
+        except ContentReadError as e:
+            logger.error(f'Failed to load content for input plugin: {e}')
+            exit(1)
+        except ValueError as e:
+            logger.error(
+                'Failed to initialize input plugin due to improper value '
+                f'of parameter: {e}'
+            )
+            exit(1)
         except Exception as e:
             logger.error(f'Failed to initialize input plugin: {e}')
+            exit(1)
 
         try:
             match time_mode:
