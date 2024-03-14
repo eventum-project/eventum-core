@@ -14,42 +14,53 @@ MiB = 1048576
 LOGGING_CONFIG = {
     'version': 1,
     'formatters': {
-        'standard': {
+        'file-formatter': {
             'format': (
                 '%(asctime)s %(name)s [%(process)d] '
                 '%(levelname)s: %(message)s'
             )
         },
+        'stderr-formatter': {
+            'format': (
+                '%(name)s: %(message)s'
+            )
+        },
     },
     'disable_existing_loggers': True,
     'handlers': {
-        'core': {
+        'stderr': {
+            'level': 'ERROR',
+            'formatter': 'stderr-formatter',
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://sys.stderr'
+        },
+        'core-log': {
             'level': 'INFO',
-            'formatter': 'standard',
+            'formatter': 'file-formatter',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': CORE_LOG_PATH,
             'maxBytes': 1 * MiB,
             'backupCount': 3
         },
-        'studio': {
+        'studio-log': {
             'level': 'INFO',
-            'formatter': 'standard',
+            'formatter': 'file-formatter',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': STUDIO_LOG_PATH,
             'maxBytes': 1 * MiB,
             'backupCount': 3
         },
-        'cli': {
+        'cli-log': {
             'level': 'INFO',
-            'formatter': 'standard',
+            'formatter': 'file-formatter',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': CLI_LOG_PATH,
             'maxBytes': 1 * MiB,
             'backupCount': 3
         },
-        'repository': {
+        'repository-log': {
             'level': 'INFO',
-            'formatter': 'standard',
+            'formatter': 'file-formatter',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': REPOSITORY_LOG_PATH,
             'maxBytes': 1 * MiB,
@@ -58,19 +69,19 @@ LOGGING_CONFIG = {
     },
     'loggers': {
         'eventum.core': {
-            'handlers': ['core'],
+            'handlers': ['core-log', 'stderr'],
             'level': 'INFO',
         },
         'eventum.studio': {
-            'handlers': ['studio'],
+            'handlers': ['studio-log', 'stderr'],
             'level': 'INFO',
         },
         'eventum.cli': {
-            'handlers': ['cli'],
+            'handlers': ['cli-log', 'stderr'],
             'level': 'INFO',
         },
         'eventum.repository': {
-            'handlers': ['repository'],
+            'handlers': ['repository-log', 'stderr'],
             'level': 'INFO',
         },
     }
