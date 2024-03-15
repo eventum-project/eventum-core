@@ -3,7 +3,7 @@ import signal
 from multiprocessing import Event, Process, Queue
 from queue import Empty
 from time import perf_counter, sleep
-from typing import Callable, NoReturn, assert_never
+from typing import Callable, assert_never
 
 from setproctitle import getproctitle, setproctitle
 
@@ -110,7 +110,7 @@ class Application:
         time_mode: TimeMode,
         queue: Queue,
         is_done: Event  # type: ignore
-    ) -> NoReturn:
+    ) -> None:
         input_type, input_conf = input_conf.popitem()
 
         logger.info(f'Initializing "{input_type}" input plugin')
@@ -188,7 +188,7 @@ class Application:
         input_queue: Queue,
         event_queue: Queue,
         is_incoming_awaited: Event  # type: ignore
-    ) -> NoReturn:
+    ) -> None:
         logger.info('Initializing event plugin')
 
         try:
@@ -235,7 +235,7 @@ class Application:
         config: OutputConfigMapping,
         queue: Queue,
         is_incoming_awaited: Event  # type: ignore
-    ) -> NoReturn:
+    ) -> None:
         output_plugins: list[BaseOutputPlugin] = []
 
         plugins_list_fmt = ", ".join(
@@ -295,7 +295,7 @@ class Application:
 
         logger.info('Stopping output plugins')
 
-    def start(self) -> NoReturn:
+    def start(self) -> None:
         logger.info('Application is started')
 
         self._proc_input.start()

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Callable, NoReturn
+from typing import Any, Callable
 
 
 class InputPluginError(Exception):
@@ -23,7 +23,7 @@ class LiveInputPlugin(BaseInputPlugin):
     """Base class for all input plugin that can be used in live mode."""
 
     @abstractmethod
-    def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
+    def live(self, on_event: Callable[[datetime], Any]) -> None:
         """Start production of events in live. Every time event is
         occurred in process, the `on_event` callable is called with
         current timestamp as a single parameter. If process has no end

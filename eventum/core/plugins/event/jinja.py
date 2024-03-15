@@ -33,7 +33,7 @@ class Subprocess:
 
 class State:
     def __init__(self) -> None:
-        self._state = dict()
+        self._state: dict[str, Any] = dict()
 
     def set(self, key: str, value: Any) -> None:
         """Set variable value to state."""
@@ -64,7 +64,7 @@ class JinjaEventPlugin(BaseEventPlugin):
         }
         self._spinning_template_index = self._get_spinning_template_index()
 
-    def _load_samples(self) -> dict[str, list]:
+    def _load_samples(self) -> dict[str, list[str] | list[tuple[str, ...]]]:
         """Load samples specified in config."""
 
         samples = dict()

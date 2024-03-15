@@ -6,7 +6,7 @@ STUDIO_ENTRYPOINT = os.path.join(BASE_PATH, '01_Time_distribution.py')
 
 def main() -> None:
     """Execute command to run streamlit app."""
-    return os.system(f'streamlit run {STUDIO_ENTRYPOINT}')
+    os.system(f'streamlit run {STUDIO_ENTRYPOINT}')
 
 
 if __name__ == '__main__':

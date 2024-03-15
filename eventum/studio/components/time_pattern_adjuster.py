@@ -233,8 +233,8 @@ class TimePatternAdjuster(BaseComponent):
             oscillator=models.OscillatorConfig(
                 period=1,
                 unit=models.TimeUnit.SECONDS,
-                start='now',
-                end='never'
+                start=models.TimeKeyword.NOW,
+                end=models.TimeKeyword.NEVER
             ),
             multiplier=models.MultiplierConfig(ratio=1),
             randomizer=models.RandomizerConfig(

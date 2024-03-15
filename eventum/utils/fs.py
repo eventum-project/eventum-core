@@ -63,7 +63,7 @@ def validate_yaml_filename(filename: str) -> None:
 def load_sample_from_csv(
     filepath: str,
     delimiter: str = ','
-) -> list[tuple[str]]:
+) -> list[tuple[str, ...]]:
     """Load specified csv file as list of tuples."""
     with open(resolve_path(filepath)) as f:
         return [

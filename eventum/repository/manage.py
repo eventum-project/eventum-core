@@ -94,7 +94,7 @@ def load_time_pattern(path: str) -> TimePatternConfig:
         raise ContentReadError(str(e)) from e
 
 
-def load_csv_sample(path: str, delimiter: str = ',') -> list[tuple[str]]:
+def load_csv_sample(path: str, delimiter: str = ',') -> list[tuple[str, ...]]:
     """Load specified csv sample and return it as list of tuples. If
     path is relative then it is loaded from repository. Raise
     `ContentReadError` on failure.

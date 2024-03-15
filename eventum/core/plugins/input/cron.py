@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import Any, Callable, NoReturn
+from typing import Any, Callable
 
 from crontab import CronTab
 
@@ -26,7 +26,7 @@ class CronInputPlugin(LiveInputPlugin):
             )
         self._count = count
 
-    def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
+    def live(self, on_event: Callable[[datetime], Any]) -> None:
         while True:
             timestamp = self._entry.next(
                 default_utc=False,

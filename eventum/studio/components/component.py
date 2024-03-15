@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import MutableMapping, Optional
+from typing import Any, MutableMapping, Optional
 
 import streamlit as st
 
@@ -17,8 +17,8 @@ class ComponentPropsError(Exception):
 
 class BaseComponent(ABC):
     """Base class for creating session isolated components."""
-    _STATE_INITIALIZATION_PROPS = {}
-    _SHOW_PROPS = {}
+    _STATE_INITIALIZATION_PROPS: dict[str, Any] = {}
+    _SHOW_PROPS: dict[str, Any] = {}
 
     def __init__(
         self,

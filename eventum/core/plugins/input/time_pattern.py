@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
-from typing import Any, Callable, Iterable, NoReturn, assert_never
+from typing import Any, Callable, Iterable, assert_never
 
 import numpy as np
 
@@ -66,9 +66,10 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     @property
     def _period_duration(self) -> timedelta:
         """Get duration of one period."""
-        return timedelta(
-            **{self._config.oscillator.unit: self._config.oscillator.period}
-        )
+        key = self._config.oscillator.unit.value
+        value = self._config.oscillator.period
+
+        return timedelta(**{key: value})
 
     @property
     def _period_size(self) -> int:
@@ -201,7 +202,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
             start += self._period_duration
 
-    def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
+    def live(self, on_event: Callable[[datetime], Any]) -> None:
         # TODO check lag and raise warning (e.g detected 5 seconds delay ...)
         def publish_period_thread(timestamps: list[datetime]) -> None:
             now = datetime.now()
@@ -329,7 +330,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
         for ts in merge(*samples):
             on_event(ts)
 
-    def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:
+    def live(self, on_event: Callable[[datetime], Any]) -> None:
         queues: list[Queue] = []
         tasks: list[Future] = []
 

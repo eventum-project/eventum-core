@@ -139,7 +139,7 @@ class TimePatternAdjustersList(BaseComponent):
         notify_callback: Callable[
             [str, NotificationLevel], None
         ] = default_notifier
-    ) -> models.TimePatternConfig:
+    ) -> None:
         """Load selected time pattern from repository"""
         if filename in self._session_state['loaded_timepattern_filenames']:
             notify_callback(

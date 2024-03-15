@@ -10,7 +10,7 @@ class WidgetKeysContext():
     def __init__(
         self,
     ) -> None:
-        self._component_stack = []
+        self._component_stack: list[str] = []
 
     def __call__(
         self,
@@ -55,7 +55,7 @@ class ContextualSessionState:
     def __delitem__(self, __key: Any) -> None:
         del self._session_state[self._wk(__key)]
 
-    def __contains__(self, __key: object) -> bool:
+    def __contains__(self, __key: str) -> bool:
         return self._wk(__key) in self._session_state
 
     def delete_context_elements(self) -> None:

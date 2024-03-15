@@ -28,7 +28,7 @@ def parse_relative_time(expression: str) -> timedelta:
     )
     match = re.match(pattern, expression)
 
-    if match.start() != 0 or match.end() != (len(expression)):
+    if match is None or match.start() != 0 or match.end() != (len(expression)):
         raise ValueError('Failed to parse expression')
 
     groups = match.groupdict()
