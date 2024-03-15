@@ -106,12 +106,12 @@ class Application:
     @staticmethod
     @subprocess('input')
     def _start_input_subprocess(
-        input_conf: InputConfigMapping,
+        config: InputConfigMapping,
         time_mode: TimeMode,
         queue: Queue,
         is_done: Event  # type: ignore
     ) -> None:
-        input_type, input_conf = input_conf.popitem()
+        input_type, input_conf = config.popitem()
 
         logger.info(f'Initializing "{input_type}" input plugin')
 

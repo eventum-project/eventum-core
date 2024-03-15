@@ -28,6 +28,7 @@ streamlit = "^1.28.1"
 isort = "^5.12.0"
 pytest = "^8.0.1"
 matplotlib = "^3.8.3"
+pyright = "^1.1.354"
 
 [build-system]
 requires = ["poetry-core"]
