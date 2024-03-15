@@ -17,7 +17,7 @@ AHEAD_PUBLICATION_SECONDS = 0.01
 REQUIRED_EPS_RESERVE_RATIO = 1.15
 
 
-# ========== Input parameters section ==========
+# ========== Event parameters section ==========
 
 # The name of variable in template with original event timestamp.
 TIMESTAMP_FIELD_NAME = 'timestamp'
