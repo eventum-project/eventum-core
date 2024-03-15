@@ -8,8 +8,8 @@ from eventum.repository.manage import (ContentReadError,
                                        load_time_pattern)
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.components.time_pattern_adjuster import TimePatternAdjuster
-from eventum.studio.widget_management import WidgetKeysContext
 from eventum.studio.notifiers import NotificationLevel, default_notifier
+from eventum.studio.widget_management import WidgetKeysContext
 
 
 class TimePatternAdjustersListOverflowError(Exception):

@@ -1,12 +1,11 @@
-import os
 import argparse
 import logging
-from eventum.core.app import Application
-from eventum.core.models.time_mode import TimeMode
+import os
 
 import eventum.logging_config
-from eventum.repository.manage import load_app_config, ContentReadError
-
+from eventum.core.app import Application
+from eventum.core.models.time_mode import TimeMode
+from eventum.repository.manage import ContentReadError, load_app_config
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)

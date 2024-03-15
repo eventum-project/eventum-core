@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import json
+from abc import ABC, abstractmethod
 from typing import assert_never
 
 from eventum.core.models.application_config import OutputFormat

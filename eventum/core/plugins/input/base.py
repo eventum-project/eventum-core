@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, NoReturn
 from datetime import datetime
+from typing import Any, Callable, NoReturn
 
 
 class InputPluginError(Exception):

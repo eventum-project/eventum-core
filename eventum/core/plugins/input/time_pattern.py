@@ -7,6 +7,7 @@ from time import perf_counter, sleep
 from typing import Any, Callable, Iterable, NoReturn, assert_never
 
 import numpy as np
+
 from eventum.core import settings
 from eventum.core.models.time_pattern_config import (RandomizerDirection,
                                                      TimeKeyword,

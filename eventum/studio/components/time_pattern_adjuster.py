@@ -1,10 +1,10 @@
 from typing import Callable, Optional
 
-from pydantic import ValidationError
 import streamlit as st
+from pydantic import ValidationError
 
 import eventum.core.models.time_pattern_config as models
-from eventum.repository.manage import save_time_pattern, ContentUpdateError
+from eventum.repository.manage import ContentUpdateError, save_time_pattern
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 

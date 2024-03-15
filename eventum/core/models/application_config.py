@@ -3,9 +3,10 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, TypeAlias
 
-from eventum.utils.fs import validate_yaml_filename
 from pydantic import (BaseModel, BeforeValidator, field_validator,
                       model_validator)
+
+from eventum.utils.fs import validate_yaml_filename
 
 
 class InputType(StrEnum):

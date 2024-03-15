@@ -1,5 +1,6 @@
-import streamlit as st
 from enum import Enum
+
+import streamlit as st
 
 
 class NotificationLevel(Enum):

@@ -5,6 +5,8 @@ from queue import Empty
 from time import perf_counter, sleep
 from typing import Callable, NoReturn, assert_never
 
+from setproctitle import getproctitle, setproctitle
+
 import eventum.logging_config
 from eventum.core import settings
 from eventum.core.models.application_config import (ApplicationConfig,
@@ -32,7 +34,6 @@ from eventum.core.plugins.output.base import (BaseOutputPlugin,
                                               OutputPluginRuntimeError)
 from eventum.core.plugins.output.stdout import StdoutOutputPlugin
 from eventum.repository.manage import ContentReadError, load_time_pattern
-from setproctitle import getproctitle, setproctitle
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)

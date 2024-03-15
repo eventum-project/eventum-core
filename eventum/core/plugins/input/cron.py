@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any, Callable, NoReturn
 
 from crontab import CronTab
+
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              LiveInputPlugin)
 
