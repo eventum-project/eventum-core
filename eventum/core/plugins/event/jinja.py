@@ -1,22 +1,19 @@
 import random
 from typing import Any, Callable, Iterator, assert_never
 
-from jinja2 import (Template, TemplateError, TemplateNotFound,
-                    TemplateRuntimeError, TemplateSyntaxError)
-
 from eventum.core.models.application_config import (CSVSampleConfig,
                                                     ItemsSampleConfig,
                                                     JinjaEventConfig,
                                                     TemplatePickingMode)
-from eventum.core.plugins.event.base import BaseEventPlugin, EventPluginError
+from eventum.core.plugins.event.base import (BaseEventPlugin,
+                                             EventPluginConfigurationError,
+                                             EventPluginRuntimeError)
 from eventum.core.settings import JINJA_ENABLED_EXTENSIONS
 from eventum.repository.manage import (ContentReadError,
                                        get_templates_environment,
                                        load_csv_sample)
-
-
-class JinjaEventPluginError(EventPluginError):
-    """Exception for `JinjaEventPlugin` errors."""
+from jinja2 import (Template, TemplateError, TemplateNotFound,
+                    TemplateRuntimeError, TemplateSyntaxError)
 
 
 class Subprocess:
@@ -82,7 +79,7 @@ class JinjaEventPlugin(BaseEventPlugin):
                             delimiter=value.delimiter
                         )
                     except ContentReadError as e:
-                        raise JinjaEventPluginError(
+                        raise EventPluginConfigurationError(
                             f'Failed to load sample: {e}'
                         ) from e
 
@@ -106,15 +103,15 @@ class JinjaEventPlugin(BaseEventPlugin):
                     self._env.get_template(template_conf.template)
                 )
             except TemplateNotFound as e:
-                raise JinjaEventPluginError(
+                raise EventPluginConfigurationError(
                     f'Failed to load template: {e}'
                 ) from e
             except TemplateSyntaxError as e:
-                raise JinjaEventPluginError(
+                raise EventPluginConfigurationError(
                     f'Bad syntax in template "{template_conf.template}": {e}'
                 ) from e
             except TemplateError as e:
-                raise JinjaEventPluginError(
+                raise EventPluginConfigurationError(
                     f'Error in "{template_conf.template}" template: {e}'
                 ) from e
 
@@ -123,7 +120,7 @@ class JinjaEventPlugin(BaseEventPlugin):
     def _get_template_chances(self) -> list[float]:
         """Get list with chances to pick template in `chance` mode."""
         if self._config.mode != TemplatePickingMode.CHANCE:
-            raise JinjaEventPluginError(
+            raise EventPluginRuntimeError(
                 'Template chances can only be used in '
                 f'"{TemplatePickingMode.CHANCE}" picking mode'
             )
@@ -186,7 +183,7 @@ class JinjaEventPlugin(BaseEventPlugin):
             try:
                 content = template.render(locals=state, **kwargs)
             except TemplateRuntimeError as e:
-                raise JinjaEventPluginError(
+                raise EventPluginRuntimeError(
                     f'Failed to render template: {e}'
                 ) from e
 
