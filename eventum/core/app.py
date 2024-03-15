@@ -151,7 +151,6 @@ class Application:
             exit(1)
 
         logger.info('Input plugin is successfully initialized')
-        logger.info(f'Starting input plugin in {time_mode} mode')
 
         try:
             match time_mode:
@@ -204,7 +203,6 @@ class Application:
             exit(1)
 
         logger.info('Event plugin is successfully initialized')
-        logger.info('Starting event plugin for listening input queue')
 
         while is_incoming_awaited.is_set():
             try:
@@ -239,7 +237,9 @@ class Application:
     ) -> NoReturn:
         output_plugins: list[BaseOutputPlugin] = []
 
-        plugins_list_fmt = ", ".join([plugin for plugin in config.keys()])
+        plugins_list_fmt = ", ".join(
+            [f'"{plugin}"' for plugin in config.keys()]
+        )
 
         logger.info(f'Initializing [{plugins_list_fmt}] output plugins')
 
@@ -269,7 +269,6 @@ class Application:
                 exit(1)
 
         logger.info('Output plugins are successfully initialized')
-        logger.info('Starting output plugins for listening event queue')
 
         while is_incoming_awaited.is_set():
             start = perf_counter()
