@@ -9,7 +9,15 @@ class OutputPluginError(Exception):
     """Base exception for all output plugin errors."""
 
 
-class FormatError(OutputPluginError):
+class OutputPluginConfigurationError(OutputPluginError):
+    """Exception for output plugin configuration errors."""
+
+
+class OutputPluginRuntimeError(OutputPluginError):
+    """Exception for output plugin runtime errors."""
+
+
+class FormatError(OutputPluginRuntimeError):
     """Exception for formatting errors."""
 
 
@@ -36,5 +44,5 @@ class BaseOutputPlugin(ABC):
 
     @abstractmethod
     def write_many(self, events: list[str]) -> None:
-        """Write many events to output stream in optimized way."""
+        """Write events to output stream."""
         ...

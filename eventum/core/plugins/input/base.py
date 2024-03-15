@@ -7,6 +7,14 @@ class InputPluginError(Exception):
     """Base exception for all input plugin errors."""
 
 
+class InputPluginConfigurationError(InputPluginError):
+    """Exception for input plugin configuration errors."""
+
+
+class InputPluginRuntimeError(InputPluginError):
+    """Exception for input plugin runtime errors."""
+
+
 class BaseInputPlugin(ABC):
     """Base class for all input plugins."""
 

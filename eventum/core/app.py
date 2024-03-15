@@ -1,12 +1,10 @@
 import logging
-from queue import Empty
 import signal
 from multiprocessing import Event, Process, Queue
+from queue import Empty
 from time import perf_counter, sleep
 from typing import Callable, NoReturn, assert_never
 
-from eventum.core.plugins.event.base import EventPluginError
-from eventum.core.plugins.input.base import InputPluginError
 import eventum.logging_config
 from eventum.core import settings
 from eventum.core.models.application_config import (ApplicationConfig,
@@ -20,13 +18,18 @@ from eventum.core.models.application_config import (ApplicationConfig,
                                                     SampleInputConfig,
                                                     TimestampsInputConfig)
 from eventum.core.models.time_mode import TimeMode
+from eventum.core.plugins.event.base import (EventPluginConfigurationError,
+                                             EventPluginRuntimeError)
 from eventum.core.plugins.event.jinja import JinjaEventPlugin
+from eventum.core.plugins.input.base import (InputPluginConfigurationError,
+                                             InputPluginRuntimeError)
 from eventum.core.plugins.input.cron import CronInputPlugin
 from eventum.core.plugins.input.sample import SampleInputPlugin
 from eventum.core.plugins.input.time_pattern import TimePatternPoolInputPlugin
 from eventum.core.plugins.input.timestamps import TimestampsInputPlugin
 from eventum.core.plugins.output.base import (BaseOutputPlugin,
-                                              OutputPluginError)
+                                              OutputPluginConfigurationError,
+                                              OutputPluginRuntimeError)
 from eventum.core.plugins.output.stdout import StdoutOutputPlugin
 from eventum.repository.manage import ContentReadError, load_time_pattern
 from setproctitle import getproctitle, setproctitle
@@ -137,14 +140,14 @@ class Application:
         except ContentReadError as e:
             logger.error(f'Failed to load content for input plugin: {e}')
             exit(1)
-        except ValueError as e:
-            logger.error(
-                'Failed to initialize input plugin due to improper value '
-                f'of parameter: {e}'
-            )
+        except InputPluginConfigurationError as e:
+            logger.error(f'Failed to initialize input plugin: {e}')
             exit(1)
         except Exception as e:
-            logger.error(f'Failed to initialize input plugin: {e}')
+            logger.error(
+                'Unexpected error occurred during initializing '
+                f'input plugin: {e}'
+            )
             exit(1)
 
         logger.info('Input plugin is successfully initialized')
@@ -163,9 +166,14 @@ class Application:
                 f'Specified input plugin does not support "{time_mode}" mode'
             )
             exit(1)
-        except (InputPluginError, Exception) as e:
+        except InputPluginRuntimeError as e:
             logger.error(
                 f'Error occurred during input plugin execution: {e}'
+            )
+            exit(1)
+        except Exception as e:
+            logger.error(
+                f'Unexpected error occurred during input plugin execution: {e}'
             )
             exit(1)
 
@@ -185,8 +193,14 @@ class Application:
 
         try:
             event_plugin = JinjaEventPlugin(config)
-        except (EventPluginError, Exception) as e:
+        except EventPluginConfigurationError as e:
             logger.error(f'Failed to initialize event plugin: {e}')
+            exit(1)
+        except Exception as e:
+            logger.error(
+                f'Unexpected error occurred during initializing '
+                f'event plugin: {e}'
+            )
             exit(1)
 
         logger.info('Event plugin is successfully initialized')
@@ -205,8 +219,13 @@ class Application:
                     callback=lambda event: event_queue.put(event),
                     timestamp=timestamp
                 )
-            except (EventPluginError, Exception) as e:
+            except EventPluginRuntimeError as e:
                 logger.error(f'Failed to produce event: {e}')
+                exit(1)
+            except Exception as e:
+                logger.error(
+                    f'Unexpected error occurred during producing event: {e}'
+                )
                 exit(1)
 
         logger.info('Stopping event plugin')
@@ -224,8 +243,8 @@ class Application:
 
         logger.info(f'Initializing [{plugins_list_fmt}] output plugins')
 
-        try:
-            for output, output_conf in config.items():
+        for output, output_conf in config.items():
+            try:
                 match output:
                     case OutputType.STDOUT:
                         output_plugins.append(
@@ -237,9 +256,17 @@ class Application:
                         ...
                     case val:
                         assert_never(val)
-        except Exception as e:
-            logger.error(f'Failed to initialize output plugin: {e}')
-            exit(1)
+            except OutputPluginConfigurationError as e:
+                logger.error(
+                    f'Failed to initialize "{output}" output plugin: {e}'
+                )
+                exit(1)
+            except Exception as e:
+                logger.error(
+                    'Unexpected error occurred during initializing '
+                    f'"{output}" output plugin: {e}'
+                )
+                exit(1)
 
         logger.info('Output plugins are successfully initialized')
         logger.info('Starting output plugins for listening event queue')
@@ -257,9 +284,14 @@ class Application:
             if events:
                 for plugin in output_plugins:
                     try:
-                        plugin.write_many(events)
-                    except OutputPluginError as e:
-                        logger.error(f'Failed to write events to output: {e}')
+                        if len(events) == 1:
+                            plugin.write(events[0])
+                        elif len(events) > 1:
+                            plugin.write_many(events)
+                    except OutputPluginRuntimeError as e:
+                        logger.error(
+                            f'Failed to write events to output: {e}'
+                        )
 
         logger.info('Stopping output plugins')
 
