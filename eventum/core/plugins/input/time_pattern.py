@@ -11,13 +11,11 @@ from eventum.core import settings
 from eventum.core.models.time_pattern_config import (RandomizerDirection,
                                                      TimeKeyword,
                                                      TimePatternConfig)
-from eventum.core.plugins.input.base import (InputPluginError, LiveInputPlugin,
+from eventum.core.plugins.input.base import (InputPluginConfigurationError,
+                                             InputPluginRuntimeError,
+                                             LiveInputPlugin,
                                              SampleInputPlugin)
 from eventum.utils.timeseries import get_future_slice
-
-
-class TimePatternInputPluginError(InputPluginError):
-    """Exception for TimePatternInputPlugin errors."""
 
 
 class EndTimeReaching(Exception):
@@ -163,7 +161,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case TimeKeyword.NOW:
                 start = now
             case TimeKeyword.NEVER as val:
-                raise TimePatternInputPluginError(
+                raise InputPluginConfigurationError(
                     f'Value of "start" cannot be "{val}"'
                 )
             case val:
@@ -184,7 +182,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 assert_never(val)
 
         if start >= end:
-            raise TimePatternInputPluginError(
+            raise InputPluginConfigurationError(
                 '"start" time must be earlier than "end" time'
             )
 
@@ -226,7 +224,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         required_eps = self._get_required_eps()
 
         if actual_eps < required_eps:
-            raise InputPluginError(
+            raise InputPluginRuntimeError(
                 'Not enough performance to produce distributions in time: '
                 f'actual EPS is {round(actual_eps)} but {round(required_eps)} '
                 'is required'
@@ -311,7 +309,9 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
         self._size = len(self._configs)
 
         if self._size == 0:
-            raise ValueError('Cannot create pool from empty list of configs')
+            raise InputPluginConfigurationError(
+                'Cannot create pool from empty list of configs'
+            )
 
         self._time_patterns = [
             TimePatternInputPlugin(config) for config in self._configs

@@ -1,10 +1,10 @@
-from datetime import datetime
 import time
+from datetime import datetime
 from typing import Any, Callable, NoReturn
 
 from crontab import CronTab
-
-from eventum.core.plugins.input.base import LiveInputPlugin
+from eventum.core.plugins.input.base import (InputPluginConfigurationError,
+                                             LiveInputPlugin)
 
 
 class CronInputPlugin(LiveInputPlugin):
@@ -17,7 +17,12 @@ class CronInputPlugin(LiveInputPlugin):
         `expression` - cron expression;
         `count` - number of events to generate for each period.
         """
-        self._entry = CronTab(expression)
+        try:
+            self._entry = CronTab(expression)
+        except ValueError as e:
+            raise InputPluginConfigurationError(
+                f'Failed to parse cron expression: {e}'
+            )
         self._count = count
 
     def live(self, on_event: Callable[[datetime], Any]) -> NoReturn:

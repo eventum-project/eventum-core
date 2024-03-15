@@ -4,7 +4,7 @@ import sys
 
 import eventum.logging_config
 from eventum.core.models.application_config import OutputFormat
-from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError)
+from eventum.core.plugins.output.base import BaseOutputPlugin, FormatError
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)
@@ -18,7 +18,8 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         try:
             fmt_event = self._format_event(self._format, event)
             fmt_event += os.linesep
-        except FormatError:
+        except FormatError as e:
+            logger.warn(f'Failed to format event: {e}')
             return
 
         sys.stdout.write(fmt_event)
