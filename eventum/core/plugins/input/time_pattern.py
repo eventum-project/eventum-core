@@ -161,7 +161,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case TimeKeyword.NOW:
                 start = now
             case TimeKeyword.NEVER as val:
-                raise InputPluginConfigurationError(
+                raise InputPluginRuntimeError(
                     f'Value of "start" cannot be "{val}"'
                 )
             case val:
@@ -182,7 +182,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 assert_never(val)
 
         if start >= end:
-            raise InputPluginConfigurationError(
+            raise InputPluginRuntimeError(
                 '"start" time must be earlier than "end" time'
             )
 
@@ -363,5 +363,6 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
                 for i, (task, queue) in enumerate(zip(tasks, queues)):
                     if task.done() and queue.empty():
-                        tasks.pop(i)
+                        # get result is necessary to propagate exceptions
+                        tasks.pop(i).result()
                         queues.pop(i)
