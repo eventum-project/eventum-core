@@ -28,7 +28,9 @@ streamlit = "^1.28.1"
 isort = "^5.12.0"
 pytest = "^8.0.1"
 matplotlib = "^3.8.3"
-pyright = "^1.1.354"
+mypy = "^1.9.0"
+types-python-crontab = "^3.0.0.20240106"
+types-pyyaml = "^6.0.12.20240311"
 
 [build-system]
 requires = ["poetry-core"]

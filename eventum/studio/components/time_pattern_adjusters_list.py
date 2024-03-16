@@ -68,7 +68,9 @@ class TimePatternAdjustersList(BaseComponent):
                 is_max_len
                 or not selected_pattern
             ),
-            on_click=lambda: self.load_time_pattern(filename=selected_pattern),
+            on_click=lambda: self.load_time_pattern(
+                filename=selected_pattern   # type: ignore
+            ),
             use_container_width=True,
         )
 

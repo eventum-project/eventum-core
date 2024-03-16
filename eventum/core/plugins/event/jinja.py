@@ -67,7 +67,7 @@ class JinjaEventPlugin(BaseEventPlugin):
     def _load_samples(self) -> dict[str, list[str] | list[tuple[str, ...]]]:
         """Load samples specified in config."""
 
-        samples = dict()
+        samples: dict[str, list[str] | list[tuple[str, ...]]] = dict()
 
         for sample_name, value in self._config.samples.items():
             match value:
@@ -126,10 +126,10 @@ class JinjaEventPlugin(BaseEventPlugin):
                 f'"{TemplatePickingMode.CHANCE}" picking mode'
             )
 
-        chances = []
+        chances: list[float] = []
 
-        for _, template_conf in self._config.templates.items():
-            chances.append(template_conf.chance)
+        for template_conf in self._config.templates.values():
+            chances.append(template_conf.chance)    # type: ignore
 
         return chances
 
@@ -142,11 +142,12 @@ class JinjaEventPlugin(BaseEventPlugin):
         for ext in JINJA_ENABLED_EXTENSIONS:
             self._env.add_extension(ext)
 
-        self._env.globals['subprocesses'] = dict()
-        for name, subproc_conf in self._config.subprocesses.items():
-            self._env.globals['subprocesses'][name] = Subprocess(
-                config=subproc_conf.config
-            )
+        subprocesses: dict[str, Subprocess] = {
+            name: Subprocess(config=subproc_conf.config)
+            for name, subproc_conf in self._config.subprocesses.items()
+        }
+
+        self._env.globals['subprocesses'] = subprocesses
 
     def _get_spinning_template_index(self) -> Iterator[int]:
         while True:

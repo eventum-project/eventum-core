@@ -32,6 +32,7 @@ def parse_relative_time(expression: str) -> timedelta:
         raise ValueError('Failed to parse expression')
 
     groups = match.groupdict()
+
     match groups.pop('sign'):
         case None:
             sign = 1
@@ -39,8 +40,8 @@ def parse_relative_time(expression: str) -> timedelta:
             sign = 1
         case '-':
             sign = -1
-        case val:
-            assert_never(val)
+        case char:
+            assert_never(char)  # type: ignore
 
     return timedelta(
         **{

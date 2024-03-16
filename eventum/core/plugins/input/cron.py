@@ -28,11 +28,11 @@ class CronInputPlugin(LiveInputPlugin):
 
     def live(self, on_event: Callable[[datetime], Any]) -> None:
         while True:
-            timestamp = self._entry.next(
+            timestamp = self._entry.next(   # type: ignore
                 default_utc=False,
                 return_datetime=True
             )
-            time.sleep(self._entry.next(default_utc=False))
+            time.sleep(self._entry.next(default_utc=False))     # type: ignore
 
             for _ in range(self._count):
                 on_event(timestamp)

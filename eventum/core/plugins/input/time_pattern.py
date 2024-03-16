@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
-from typing import Any, Callable, Iterable, assert_never
+from typing import Any, Callable, Sequence, assert_never
 
 import numpy as np
 
@@ -90,10 +90,13 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """
         size = self._period_size
         duration = self._period_duration
-        low = self._config.spreader.parameters.low
-        high = self._config.spreader.parameters.high
+        low = self._config.spreader.parameters.low      # type: ignore
+        high = self._config.spreader.parameters.high    # type: ignore
 
-        return list(np.sort(np.random.uniform(low, high, size)) * duration)
+        return list(
+            np.sort(np.random.uniform(low, high, size))
+            * duration  # type: ignore
+        )
 
     def _get_beta_distribution(self) -> list[timedelta]:
         """Helper for `_get_distribution` implementing beta
@@ -101,10 +104,13 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """
         size = self._period_size
         duration = self._period_duration
-        a = self._config.spreader.parameters.a
-        b = self._config.spreader.parameters.b
+        a = self._config.spreader.parameters.a  # type: ignore
+        b = self._config.spreader.parameters.b  # type: ignore
 
-        return list(np.sort(np.random.beta(a, b, size)) * duration)
+        return list(
+            np.sort(np.random.beta(a, b, size))
+            * duration  # type: ignore
+        )
 
     def _get_triangular_distribution(self) -> list[timedelta]:
         """Helper for `_get_distribution` implementing triangular
@@ -113,12 +119,13 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         size = self._period_size
         duration = self._period_duration
 
-        left = self._config.spreader.parameters.left
-        mode = self._config.spreader.parameters.mode
-        right = self._config.spreader.parameters.right
+        left = self._config.spreader.parameters.left    # type: ignore
+        mode = self._config.spreader.parameters.mode    # type: ignore
+        right = self._config.spreader.parameters.right  # type: ignore
 
         return list(
-            np.sort(np.random.triangular(left, mode, right, size)) * duration
+            np.sort(np.random.triangular(left, mode, right, size))
+            * duration  # type: ignore
         )
 
     def _get_distribution(self) -> list[timedelta]:
@@ -306,9 +313,9 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
     instances.
     """
 
-    def __init__(self, configs: Iterable[TimePatternConfig]) -> None:
+    def __init__(self, configs: Sequence[TimePatternConfig]) -> None:
         self._configs = configs
-        self._size = len(self._configs)
+        self._size = len(configs)
 
         if self._size == 0:
             raise InputPluginConfigurationError(
@@ -336,7 +343,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         with ThreadPoolExecutor(max_workers=self._size) as pool:
             for pattern in self._time_patterns:
-                queue = Queue(maxsize=-1)
+                queue: Queue = Queue(maxsize=-1)
                 tasks.append(pool.submit(pattern.live, queue.put_nowait))
                 queues.append(queue)
 

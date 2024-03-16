@@ -10,15 +10,11 @@ from setproctitle import getproctitle, setproctitle
 import eventum.logging_config
 from eventum.core import settings
 from eventum.core.models.application_config import (ApplicationConfig,
-                                                    CronInputConfig,
                                                     InputConfigMapping,
                                                     InputType,
                                                     JinjaEventConfig,
                                                     OutputConfigMapping,
-                                                    OutputType,
-                                                    PatternsInputConfig,
-                                                    SampleInputConfig,
-                                                    TimestampsInputConfig)
+                                                    OutputType)
 from eventum.core.models.time_mode import TimeMode
 from eventum.core.plugins.event.base import (EventPluginConfigurationError,
                                              EventPluginRuntimeError)
@@ -66,11 +62,11 @@ class Application:
 
         self._time_mode = time_mode
 
-        self._input_queue = Queue()
+        self._input_queue = Queue()     # type: ignore
         self._is_input_queue_awaited = Event()
         self._is_input_queue_awaited.set()
 
-        self._event_queue = Queue()
+        self._event_queue = Queue()     # type: ignore
         self._is_event_queue_awaited = Event()
         self._is_event_queue_awaited.set()
 
@@ -118,26 +114,27 @@ class Application:
         try:
             match input_type:
                 case InputType.PATTERNS:
-                    input_conf: PatternsInputConfig
                     input_plugin = TimePatternPoolInputPlugin(
-                        [load_time_pattern(path) for path in input_conf]
+                        [
+                            load_time_pattern(path)         # type: ignore
+                            for path in input_conf
+                        ]
                     )
                 case InputType.TIMESTAMPS:
-                    input_conf: TimestampsInputConfig
                     input_plugin = TimestampsInputPlugin(
-                        timestamps=input_conf
+                        timestamps=input_conf               # type: ignore
                     )
                 case InputType.CRON:
-                    input_conf: CronInputConfig
                     input_plugin = CronInputPlugin(
-                        expression=input_conf.expression,
-                        count=input_conf.count
+                        expression=input_conf.expression,   # type: ignore
+                        count=input_conf.count              # type: ignore
                     )
                 case InputType.SAMPLE:
-                    input_conf: SampleInputConfig
-                    input_plugin = SampleInputPlugin(count=input_conf.count)
-                case _:
-                    assert_never(input_type)
+                    input_plugin = SampleInputPlugin(
+                        count=input_conf.count              # type: ignore
+                    )
+                case value:
+                    assert_never(value)
         except ContentReadError as e:
             logger.error(f'Failed to load content for input plugin: {e}')
             exit(1)
@@ -177,7 +174,7 @@ class Application:
             )
             exit(1)
 
-        is_done.set()
+        is_done.set()   # type: ignore
 
         logger.info('Stopping input plugin')
 
@@ -205,7 +202,7 @@ class Application:
 
         logger.info('Event plugin is successfully initialized')
 
-        while is_incoming_awaited.is_set():
+        while is_incoming_awaited.is_set():     # type: ignore
             try:
                 # we need timeout here to avoid deadlock
                 # when `is_incoming_awaited` is cleared after `get()` call
@@ -271,7 +268,7 @@ class Application:
 
         logger.info('Output plugins are successfully initialized')
 
-        while is_incoming_awaited.is_set():
+        while is_incoming_awaited.is_set():     # type: ignore
             start = perf_counter()
             while (
                 queue.qsize() < settings.FLUSH_AFTER_SIZE
