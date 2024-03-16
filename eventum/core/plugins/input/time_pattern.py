@@ -104,8 +104,8 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """
         size = self._period_size
         duration = self._period_duration
-        a = self._config.spreader.parameters.a  # type: ignore
-        b = self._config.spreader.parameters.b  # type: ignore
+        a = self._config.spreader.parameters.a          # type: ignore
+        b = self._config.spreader.parameters.b          # type: ignore
 
         return list(
             np.sort(np.random.beta(a, b, size))
