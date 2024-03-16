@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class StdoutOutputPlugin(BaseOutputPlugin):
+    """Output plugin for writing events to stdout."""
+
     def __init__(self, format: OutputFormat) -> None:
         self._format = format
 
@@ -20,7 +22,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
             fmt_event += os.linesep
         except FormatError as e:
             logger.warning(
-                f'Failed to format event: {e}'
+                f'Failed to format event to "{self._format}" format: {e}'
                 f'{os.linesep}'
                 'Original unformatted event: '
                 f'{os.linesep}'
@@ -40,7 +42,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
                 fmt_event += os.linesep
             except FormatError as e:
                 logger.warning(
-                    f'Failed to format event: {e}'
+                    f'Failed to format event to "{self._format}" format: {e}'
                     f'{os.linesep}'
                     'Original unformatted event: '
                     f'{os.linesep}'

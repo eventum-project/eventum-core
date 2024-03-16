@@ -27,5 +27,6 @@ event:
   subprocesses: { }
 
 output:
-  stdout:
+  file:
+    path: /home/nikita/test.log
     format: json-lines

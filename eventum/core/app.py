@@ -1,6 +1,6 @@
-from datetime import datetime
 import logging
 import signal
+from datetime import datetime
 from multiprocessing import Event, Process, Queue
 from multiprocessing.synchronize import Event as EventClass
 from queue import Empty
@@ -30,6 +30,7 @@ from eventum.core.plugins.input.timestamps import TimestampsInputPlugin
 from eventum.core.plugins.output.base import (BaseOutputPlugin,
                                               OutputPluginConfigurationError,
                                               OutputPluginRuntimeError)
+from eventum.core.plugins.output.file import FileOutputPlugin
 from eventum.core.plugins.output.stdout import StdoutOutputPlugin
 from eventum.repository.manage import ContentReadError, load_time_pattern
 
@@ -235,13 +236,13 @@ class Application:
         queue: Queue,
         is_incoming_awaited: EventClass
     ) -> None:
-        output_plugins: list[BaseOutputPlugin] = []
-
         plugins_list_fmt = ", ".join(
             [f'"{plugin}"' for plugin in config.keys()]
         )
 
         logger.info(f'Initializing [{plugins_list_fmt}] output plugins')
+
+        output_plugins: list[BaseOutputPlugin] = []
 
         for output, output_conf in config.items():
             try:
@@ -253,7 +254,12 @@ class Application:
                             )
                         )
                     case OutputType.FILE:
-                        ...
+                        output_plugins.append(
+                            FileOutputPlugin(
+                                filepath=output_conf.path,  # type: ignore
+                                format=output_conf.format,
+                            )
+                        )
                     case val:
                         assert_never(val)
             except OutputPluginConfigurationError as e:

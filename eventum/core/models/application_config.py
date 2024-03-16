@@ -124,7 +124,7 @@ InputConfig: TypeAlias = (
 )
 
 OutputConfig: TypeAlias = (
-    StdOutOutputConfig | FileOutputConfig
+    FileOutputConfig | StdOutOutputConfig
 )
 
 
