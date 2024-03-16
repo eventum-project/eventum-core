@@ -19,7 +19,13 @@ class StdoutOutputPlugin(BaseOutputPlugin):
             fmt_event = self._format_event(self._format, event)
             fmt_event += os.linesep
         except FormatError as e:
-            logger.warn(f'Failed to format event: {e}')
+            logger.warning(
+                f'Failed to format event: {e}'
+                f'{os.linesep}'
+                'Original unformatted event: '
+                f'{os.linesep}'
+                f'{event}'
+            )
             return
 
         sys.stdout.write(fmt_event)
@@ -33,7 +39,13 @@ class StdoutOutputPlugin(BaseOutputPlugin):
                 fmt_event = self._format_event(self._format, event)
                 fmt_event += os.linesep
             except FormatError as e:
-                logger.warn(f'Failed to format event: {e}')
+                logger.warning(
+                    f'Failed to format event: {e}'
+                    f'{os.linesep}'
+                    'Original unformatted event: '
+                    f'{os.linesep}'
+                    f'{event}'
+                )
                 continue
 
             fmt_events.append(fmt_event)
