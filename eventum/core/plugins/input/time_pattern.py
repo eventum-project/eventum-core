@@ -188,7 +188,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case TimeKeyword.NEVER:
                 # extra one day is needed to
                 # safely call `astimezone` afterwards
-                end = datetime(year=9999, month=12, day=30)
+                end = datetime(year=9999, month=12, day=31)
             case val:
                 assert_never(val)
 
