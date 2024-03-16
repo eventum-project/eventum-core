@@ -190,6 +190,9 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case val:
                 assert_never(val)
 
+        start = start.astimezone()
+        end = end.astimezone()
+
         if start >= end:
             raise InputPluginRuntimeError(
                 '"start" time must be earlier than "end" time'
@@ -212,7 +215,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     def live(self, on_event: Callable[[datetime], Any]) -> None:
         # TODO check lag and raise warning (e.g detected 5 seconds delay ...)
         def publish_period_thread(timestamps: list[datetime]) -> None:
-            now = datetime.now()
+            now = datetime.now().astimezone()
 
             for timestamp in timestamps:
                 if timestamp >= end:
@@ -222,7 +225,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
                 if wait_seconds > settings.AHEAD_PUBLICATION_SECONDS >= 0.0:
                     sleep(wait_seconds)
-                    now = datetime.now()
+                    now = datetime.now().astimezone()
 
                 on_event(timestamp)
 
@@ -240,7 +243,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             )
 
         start, end = self._get_normalized_interval_bounds()
-        now = datetime.now()
+        now = datetime.now().astimezone()
 
         if now >= end:
             return
@@ -251,7 +254,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         timestamps = self._get_period_timeseries(start)
 
-        now = datetime.now()
+        now = datetime.now().astimezone()
         if start < now:
             timestamps = get_future_slice(timestamps=timestamps, now=now)
 
@@ -296,7 +299,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
     def _test_actual_eps(self) -> float:
         self._performance_testing = True
-        now = datetime.now()
+        now = datetime.now().astimezone()
 
         start = perf_counter()
         self._get_period_timeseries(start=now)
@@ -348,7 +351,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 queues.append(queue)
 
             while tasks:
-                latest_timestamp = datetime.now()
+                latest_timestamp = datetime.now().astimezone()
                 overhead_seconds = sys.getswitchinterval() * self._size
                 sleep(settings.AHEAD_PUBLICATION_SECONDS + overhead_seconds)
 

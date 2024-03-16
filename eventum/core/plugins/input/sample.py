@@ -16,7 +16,7 @@ class SampleInputPlugin(BaseSampleInputPlugin):
         self._count = count
 
     def sample(self, on_event: Callable[[datetime], Any]) -> None:
-        timestamp = datetime.now()
+        timestamp = datetime.now().astimezone()
 
         for _ in range(self._count):
             on_event(timestamp)
