@@ -1,6 +1,8 @@
+from datetime import datetime
 import logging
 import signal
 from multiprocessing import Event, Process, Queue
+from multiprocessing.synchronize import Event as EventClass
 from queue import Empty
 from time import perf_counter, sleep
 from typing import Callable, assert_never
@@ -62,11 +64,11 @@ class Application:
 
         self._time_mode = time_mode
 
-        self._input_queue = Queue()     # type: ignore
+        self._input_queue: Queue[datetime] = Queue()
         self._is_input_queue_awaited = Event()
         self._is_input_queue_awaited.set()
 
-        self._event_queue = Queue()     # type: ignore
+        self._event_queue: Queue[str] = Queue()
         self._is_event_queue_awaited = Event()
         self._is_event_queue_awaited.set()
 
@@ -105,7 +107,7 @@ class Application:
         config: InputConfigMapping,
         time_mode: TimeMode,
         queue: Queue,
-        is_done: Event  # type: ignore
+        is_done: EventClass
     ) -> None:
         input_type, input_conf = config.popitem()
 
@@ -174,7 +176,7 @@ class Application:
             )
             exit(1)
 
-        is_done.set()   # type: ignore
+        is_done.set()
 
         logger.info('Stopping input plugin')
 
@@ -184,7 +186,7 @@ class Application:
         config: JinjaEventConfig,
         input_queue: Queue,
         event_queue: Queue,
-        is_incoming_awaited: Event  # type: ignore
+        is_incoming_awaited: EventClass
     ) -> None:
         logger.info('Initializing event plugin')
 
@@ -202,7 +204,7 @@ class Application:
 
         logger.info('Event plugin is successfully initialized')
 
-        while is_incoming_awaited.is_set():     # type: ignore
+        while is_incoming_awaited.is_set():
             try:
                 # we need timeout here to avoid deadlock
                 # when `is_incoming_awaited` is cleared after `get()` call
@@ -231,7 +233,7 @@ class Application:
     def _start_output_subprocess(
         config: OutputConfigMapping,
         queue: Queue,
-        is_incoming_awaited: Event  # type: ignore
+        is_incoming_awaited: EventClass
     ) -> None:
         output_plugins: list[BaseOutputPlugin] = []
 
@@ -268,7 +270,7 @@ class Application:
 
         logger.info('Output plugins are successfully initialized')
 
-        while is_incoming_awaited.is_set():     # type: ignore
+        while is_incoming_awaited.is_set():
             start = perf_counter()
             while (
                 queue.qsize() < settings.FLUSH_AFTER_SIZE

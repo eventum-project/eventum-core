@@ -3,8 +3,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, TypeAlias
 
-from pydantic import (BaseModel, BeforeValidator, field_validator,
-                      model_validator)
+from pydantic import (BaseModel, BeforeValidator, field_validator)
 
 from eventum.utils.fs import validate_yaml_filename
 
@@ -85,7 +84,7 @@ class TemplatePickingMode(StrEnum):
 
 class TemplateConfig(BaseModel):
     template: str
-    chance: float | None = None
+    chance: float = 1.0
 
 
 class SubprocessConfig(BaseModel):
@@ -98,24 +97,6 @@ class JinjaEventConfig(BaseModel):
     mode: TemplatePickingMode
     templates: dict[str, TemplateConfig]
     subprocesses: dict[str, SubprocessConfig]
-
-    @model_validator(mode='after')
-    def validate_templates(self):
-        for template in self.templates.values():
-            if self.mode == TemplatePickingMode.CHANCE:
-                if template.chance is None:
-                    raise ValueError(
-                        'Parameter "chance" must be set for specified template'
-                        ' picking mode'
-                    )
-            else:
-                if template.chance is not None:
-                    raise ValueError(
-                        'Parameter "chance" is not applicable for specified'
-                        ' template picking mode'
-                    )
-
-        return self
 
 
 class OutputType(StrEnum):

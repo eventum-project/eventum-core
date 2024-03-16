@@ -98,7 +98,7 @@ class JinjaEventPlugin(BaseEventPlugin):
 
         templates = []
 
-        for _, template_conf in self._config.templates.items():
+        for template_conf in self._config.templates.values():
             try:
                 templates.append(
                     self._env.get_template(template_conf.template)
@@ -117,21 +117,6 @@ class JinjaEventPlugin(BaseEventPlugin):
                 ) from e
 
         return templates
-
-    def _get_template_chances(self) -> list[float]:
-        """Get list with chances to pick template in `chance` mode."""
-        if self._config.mode != TemplatePickingMode.CHANCE:
-            raise EventPluginRuntimeError(
-                'Template chances can only be used in '
-                f'"{TemplatePickingMode.CHANCE}" picking mode'
-            )
-
-        chances: list[float] = []
-
-        for template_conf in self._config.templates.values():
-            chances.append(template_conf.chance)    # type: ignore
-
-        return chances
 
     def _initialize_environment(self) -> None:
         """Set parameters to templates environment."""
@@ -164,7 +149,10 @@ class JinjaEventPlugin(BaseEventPlugin):
             case TemplatePickingMode.CHANCE:
                 return random.choices(
                     population=self._templates,
-                    weights=self._get_template_chances(),
+                    weights=[
+                        template_conf.chance
+                        for template_conf in self._config.templates.values()
+                    ],
                     k=1
                 )[0]
             case TemplatePickingMode.SPIN:
