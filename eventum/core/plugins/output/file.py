@@ -74,6 +74,6 @@ class FileOutputPlugin(BaseOutputPlugin):
 
         try:
             with open(self._filepath, 'a', encoding='utf-8') as f:
-                f.writelines(fmt_event)
+                f.writelines(fmt_events)
         except OSError as e:
             logger.error(f'Failed to write events to file: {e}')
