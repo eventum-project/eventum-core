@@ -160,7 +160,7 @@ class JinjaEventPlugin(BaseEventPlugin):
             case val:
                 assert_never(val)
 
-    def produce(self, **kwargs) -> str:
+    def produce(self, **kwargs) -> list[str]:
         """Produce event with passing specified `kwargs` to template
         and return rendering result.
         """
@@ -168,11 +168,18 @@ class JinjaEventPlugin(BaseEventPlugin):
         if not isinstance(picked, list):
             picked = [picked]
 
+        rendered = []
         for template in picked:
-            state = self._template_states[template.name]
             try:
-                return template.render(locals=state, **kwargs)
+                rendered.append(
+                    template.render(
+                        locals=self._template_states[template.name],
+                        **kwargs
+                    )
+                )
             except TemplateRuntimeError as e:
                 raise EventPluginRuntimeError(
                     f'Failed to render template: {e}'
                 ) from e
+
+        return rendered

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
 
 class EventPluginError(Exception):
@@ -18,6 +17,6 @@ class BaseEventPlugin(ABC):
     """Base class for all event plugins."""
 
     @abstractmethod
-    def produce(self, **kwargs) -> Any:
+    def produce(self, **kwargs) -> list[str]:
         """Produce events with specified parameters and return it."""
         ...
