@@ -14,19 +14,24 @@ event:
       source:
         - host1
         - host2
+        - host3
+        - host4
+        - host5
+        - host6
+        - host7
   
-  mode: chance
+  mode: all
   templates:
     windows4624:
-      template: test.json.jinja
+      template: host_cpu.json.jinja
       chance: 1
-    windows4625:
-      template: test.json.jinja
-      chance: 2
+    # windows4625:
+    #   template: host_mem.json.jinja
+    #   chance: 1
 
   subprocesses: { }
 
 output:
   file:
-    path: /home/nikita/test.log
+    path: /home/nikita/log.log
     format: json-lines
