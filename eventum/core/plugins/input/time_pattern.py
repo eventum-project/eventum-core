@@ -208,7 +208,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         while start < end:
             for timestamp in self._get_period_timeseries(start):
-                if timestamp < end:
+                if timestamp <= end:
                     on_event(timestamp)
                 else:
                     break
