@@ -1,6 +1,7 @@
 import sys
 from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError
 from datetime import date, datetime, time, timedelta
+from enum import IntEnum
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
@@ -25,6 +26,14 @@ class EndTimeReaching(Exception):
     """
 
 
+class PeriodMode(IntEnum):
+    """Modes for controlling `_period_size` behavior in
+    TimePatternInputPlugin instances.
+    """
+    USUAL = 0
+    PERFORMANCE_TEST = 1
+
+
 class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     """Input plugin for generating events with consistent pattern of
     distribution in time.
@@ -36,7 +45,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     def __init__(self, config: TimePatternConfig) -> None:
         self._config = config
         self._randomizer_factors = self._get_randomizer_factors()
-        self._performance_testing = False
+        self._period_mode = PeriodMode.USUAL
 
     def _get_randomizer_factors(self, size: int = 1000) -> np.ndarray:
         """Get sample of factors for multiply them on size for
@@ -77,13 +86,16 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """Number of time points in period. Each time the property
         is accessed the value can be different due to randomizer effect.
         """
-        if self._performance_testing:
-            return self._PERFORMANCE_TEST_SAMPLE_SIZE
-        else:
-            return int(
-                self._config.multiplier.ratio
-                * np.random.choice(self._randomizer_factors)
-            )
+        match self._period_mode:
+            case PeriodMode.PERFORMANCE_TEST:
+                return self._PERFORMANCE_TEST_SAMPLE_SIZE
+            case PeriodMode.USUAL:
+                return int(
+                    self._config.multiplier.ratio
+                    * np.random.choice(self._randomizer_factors)
+                )
+            case val:
+                assert_never(val)
 
     def _get_uniform_distribution(self) -> list[timedelta]:
         """Helper for `_get_distribution` implementing uniform
@@ -155,11 +167,15 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """
         return [start + delta for delta in self._get_distribution()]
 
-    def _get_normalized_interval_bounds(self) -> tuple[datetime, datetime]:
+    def _get_normalized_interval_bounds(
+        self,
+        allow_never_end: bool = True
+    ) -> tuple[datetime, datetime]:
         """Get absolute timestamps converting relative time (timedelta),
         keywords or only time component.
         """
         now = datetime.now()
+        never = datetime(year=9999, month=12, day=31)
 
         match self._config.oscillator.start:
             case datetime() as val:
@@ -187,11 +203,14 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case TimeKeyword.NOW:
                 end = now
             case TimeKeyword.NEVER:
-                # extra one day is needed to
-                # safely call `astimezone` afterwards
-                end = datetime(year=9999, month=12, day=31)
+                end = never
             case val:
                 assert_never(val)
+
+        if end is never and not allow_never_end:
+            raise InputPluginRuntimeError(
+                f'Value of "end" cannot be "{end}"'
+            )
 
         start = start.astimezone()
         end = end.astimezone()
@@ -204,7 +223,9 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         return (start, end)
 
     def sample(self, on_event: Callable[[datetime], Any]) -> None:
-        start, end = self._get_normalized_interval_bounds()
+        start, end = self._get_normalized_interval_bounds(
+            allow_never_end=False
+        )
 
         while start < end:
             for timestamp in self._get_period_timeseries(start):
@@ -282,11 +303,6 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
                 start += self._period_duration
 
-    def get_avg_eps(self) -> float:
-        avg_count = self._config.multiplier.ratio
-        seconds = self._period_duration.total_seconds()
-        return avg_count / seconds
-
     def _get_required_eps(self) -> float:
         match self._config.randomizer.direction:
             case RandomizerDirection.INCREASE:
@@ -301,7 +317,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         return max_count / seconds * self._REQUIRED_EPS_RESERVE_RATIO
 
     def _test_actual_eps(self) -> float:
-        self._performance_testing = True
+        self._period_mode = PeriodMode.PERFORMANCE_TEST
         now = datetime.now().astimezone()
 
         start = perf_counter()
@@ -309,7 +325,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         end = perf_counter()
 
         seconds = end - start
-        self._performance_testing = False
+        self._period_mode = PeriodMode.USUAL
 
         return self._PERFORMANCE_TEST_SAMPLE_SIZE / seconds
 
@@ -378,6 +394,6 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
                 for i, (task, queue) in enumerate(zip(tasks, queues)):
                     if task.done() and queue.empty():
-                        # get result is necessary to propagate exceptions
+                        # get result to propagate exceptions
                         tasks.pop(i).result()
                         queues.pop(i)
