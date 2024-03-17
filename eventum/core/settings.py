@@ -1,4 +1,4 @@
-# ========== Input parameters section ==========
+# ========== Input parameters ==========
 
 # Precision (in seconds) of publishing events in time.
 # This parameter does not affect the timestamps value but affect how
@@ -8,7 +8,7 @@
 TIME_PRECISION = 0.01
 
 
-# ========== Event parameters section ==========
+# ========== Event parameters ==========
 
 # The name of variable in template with original event timestamp.
 TIMESTAMP_FIELD_NAME = 'timestamp'
@@ -19,10 +19,12 @@ JINJA_ENABLED_EXTENSIONS = [
 ]
 
 
-# ========== Output parameters section ==========
+# ========== Queues batching ==========
 
-# Minimal size of output queue with rendered events to perform flush.
-FLUSH_AFTER_SIZE = 1000
+# Batch size / timeout (in seconds) for events rendering.
+RENDER_AFTER_SIZE = 1000
+RENDER_AFTER_TIMEOUT = 1.0
 
-# Timeout after which output queue with rendered events is flushed.
-FLUSH_AFTER_SECONDS = 1.0
+# Batch size / timeout (in seconds) for output events.
+OUTPUT_AFTER_SIZE = 1000
+OUTPUT_AFTER_TIMEOUT = 1.0
