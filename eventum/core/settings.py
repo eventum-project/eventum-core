@@ -19,10 +19,10 @@ JINJA_ENABLED_EXTENSIONS = [
 ]
 
 
-# ========== Queues batching ==========
+# ========== Queues batching parameters ==========
 
 # Batch size / timeout (in seconds) for events rendering.
-RENDER_AFTER_SIZE = 1000
+RENDER_AFTER_SIZE = 1000000
 RENDER_AFTER_TIMEOUT = 1.0
 
 # Batch size / timeout (in seconds) for output events.

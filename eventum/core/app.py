@@ -3,7 +3,6 @@ import signal
 from datetime import datetime
 from multiprocessing import Event, Process, Queue
 from multiprocessing.synchronize import Event as EventClass
-from queue import Empty
 from time import perf_counter, sleep
 from typing import Callable, assert_never
 
@@ -56,6 +55,10 @@ def subprocess(module_name: str) -> Callable:
 
 
 class Application:
+    """Main class to execute application."""
+
+    _IDLE_SLEEP_SECONDS = 0.01
+
     def __init__(
         self,
         config: ApplicationConfig,
@@ -156,9 +159,17 @@ class Application:
         try:
             match time_mode:
                 case TimeMode.LIVE:
-                    input_plugin.live(on_event=lambda ts: queue.put(ts))
+                    input_plugin.live(
+                        on_event=lambda ts: queue.put(
+                            ts.isoformat()                  # type: ignore
+                        )
+                    )
                 case TimeMode.SAMPLE:
-                    input_plugin.sample(on_event=lambda ts: queue.put(ts))
+                    input_plugin.sample(
+                        on_event=lambda ts: queue.put(
+                            ts.isoformat()                  # type: ignore
+                        )
+                    )
                 case _:
                     assert_never(time_mode)
         except AttributeError:
@@ -206,18 +217,28 @@ class Application:
         logger.info('Event plugin is successfully initialized')
 
         while is_incoming_awaited.is_set():
-            try:
-                # we need timeout here to avoid deadlock
-                # when `is_incoming_awaited` is cleared after `get()` call
-                timestamp = input_queue.get(timeout=1)
-            except Empty:
+            start = perf_counter()
+            while (
+                input_queue.qsize() < settings.RENDER_AFTER_SIZE
+                and (perf_counter() - start) < settings.RENDER_AFTER_TIMEOUT
+            ):
+                sleep(Application._IDLE_SLEEP_SECONDS)
+
+            batch_size = min(input_queue.qsize(), settings.RENDER_AFTER_SIZE)
+
+            if not batch_size:
                 continue
 
+            timestamps = [
+                input_queue.get() for _ in range(batch_size)
+            ]
+
             try:
-                event_plugin.produce(
-                    callback=lambda event: event_queue.put(event),
-                    timestamp=timestamp
-                )
+                events = []
+                for timestamp in timestamps:
+                    events.extend(
+                        event_plugin.render(timestamp=timestamp)
+                    )
             except EventPluginRuntimeError as e:
                 logger.error(f'Failed to produce event: {e}')
                 exit(1)
@@ -226,6 +247,9 @@ class Application:
                     f'Unexpected error occurred during producing event: {e}'
                 )
                 exit(1)
+
+            for event in events:
+                event_queue.put(event)
 
         logger.info('Stopping event plugin')
 
@@ -279,12 +303,17 @@ class Application:
         while is_incoming_awaited.is_set():
             start = perf_counter()
             while (
-                queue.qsize() < settings.FLUSH_AFTER_SIZE
-                and (perf_counter() - start) < settings.FLUSH_AFTER_SECONDS
+                queue.qsize() < settings.OUTPUT_AFTER_SIZE
+                and (perf_counter() - start) < settings.OUTPUT_AFTER_TIMEOUT
             ):
-                sleep(max(0.01, settings.FLUSH_AFTER_SECONDS * 0.1))
+                sleep(Application._IDLE_SLEEP_SECONDS)
 
-            events = [queue.get() for _ in range(queue.qsize())]
+            batch_size = min(queue.qsize(), settings.OUTPUT_AFTER_SIZE)
+
+            if not batch_size:
+                continue
+
+            events = [queue.get() for _ in range(batch_size)]
 
             if events:
                 for plugin in output_plugins:
@@ -337,17 +366,17 @@ class Application:
 
             if not self._proc_input.is_alive():
                 if self._is_input_done.is_set():
-                    logger.info('Input subprocess completed successfully')
-
                     logger.info('Waiting input queue to empty')
                     while not self._input_queue.empty():
-                        sleep(0.1)
+                        sleep(Application._IDLE_SLEEP_SECONDS)
                     self._is_input_queue_awaited.clear()
+                    self._proc_event.join()
 
                     logger.info('Waiting output queue to empty')
                     while not self._event_queue.empty():
-                        sleep(0.1)
+                        sleep(Application._IDLE_SLEEP_SECONDS)
                     self._is_event_queue_awaited.clear()
+                    self._proc_output.join()
 
                     exit_code = 0
                 else:
@@ -361,7 +390,7 @@ class Application:
 
                 break
 
-            sleep(0.1)
+            sleep(Application._IDLE_SLEEP_SECONDS)
 
         logger.info('Application is stopped')
         exit(exit_code)
