@@ -1,5 +1,5 @@
 import random
-from typing import Any, Callable, Iterator, assert_never
+from typing import Any, Iterator, assert_never
 
 from jinja2 import (Template, TemplateError, TemplateNotFound,
                     TemplateRuntimeError, TemplateSyntaxError)
@@ -160,9 +160,9 @@ class JinjaEventPlugin(BaseEventPlugin):
             case val:
                 assert_never(val)
 
-    def produce(self, callback: Callable[[str], None], **kwargs) -> None:
+    def produce(self, **kwargs) -> str:
         """Produce event with passing specified `kwargs` to template
-        and execute callback with result.
+        and return rendering result.
         """
         picked = self._pick_template()
         if not isinstance(picked, list):
@@ -171,10 +171,8 @@ class JinjaEventPlugin(BaseEventPlugin):
         for template in picked:
             state = self._template_states[template.name]
             try:
-                content = template.render(locals=state, **kwargs)
+                return template.render(locals=state, **kwargs)
             except TemplateRuntimeError as e:
                 raise EventPluginRuntimeError(
                     f'Failed to render template: {e}'
                 ) from e
-
-            callback(content)

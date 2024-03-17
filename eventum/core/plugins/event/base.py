@@ -18,6 +18,6 @@ class BaseEventPlugin(ABC):
     """Base class for all event plugins."""
 
     @abstractmethod
-    def produce(self, *args, **kwargs) -> Any:
+    def produce(self, **kwargs) -> Any:
         """Produce events with specified parameters and return it."""
         ...
