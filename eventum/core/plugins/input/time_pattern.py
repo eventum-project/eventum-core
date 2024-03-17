@@ -209,7 +209,8 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         if end is never and not allow_never_end:
             raise InputPluginRuntimeError(
-                f'Value of "end" cannot be "{end}"'
+                f'Value of "end" - "{TimeKeyword.NEVER}" is disallowed '
+                'in current conditions'
             )
 
         start = start.astimezone()
