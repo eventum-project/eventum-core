@@ -95,7 +95,6 @@ class JinjaEventPlugin(BaseEventPlugin):
 
     def _load_templates(self) -> list[Template]:
         """Load templates specified in config."""
-
         templates = []
 
         for template_conf in self._config.templates.values():
@@ -120,6 +119,7 @@ class JinjaEventPlugin(BaseEventPlugin):
 
     def _initialize_environment(self) -> None:
         """Set parameters to templates environment."""
+
         self._env.globals['params'] = self._config.params
         self._env.globals['samples'] = self._load_samples()
         self._env.globals['shared'] = State()
@@ -135,12 +135,15 @@ class JinjaEventPlugin(BaseEventPlugin):
         self._env.globals['subprocesses'] = subprocesses
 
     def _get_spinning_template_index(self) -> Iterator[int]:
+        """Get generator for "spin" picking mode."""
+
         while True:
             for i, _ in enumerate((self._templates)):
                 yield i
 
     def _pick_template(self) -> Template | list[Template]:
         """Pick template(s) depending on picking mode."""
+
         match self._config.mode:
             case TemplatePickingMode.ALL:
                 return self._templates
@@ -160,9 +163,9 @@ class JinjaEventPlugin(BaseEventPlugin):
             case val:
                 assert_never(val)
 
-    def produce(self, **kwargs) -> list[str]:
-        """Produce event with passing specified `kwargs` to template
-        and return rendering result.
+    def render(self, **kwargs) -> list[str]:
+        """Render event with passing specified `kwargs` to template
+        and return result.
         """
         picked = self._pick_template()
         if not isinstance(picked, list):
