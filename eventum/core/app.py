@@ -1,11 +1,12 @@
 import logging
 import signal
-from datetime import datetime
-from multiprocessing import Event, Process, Queue
+from multiprocessing import Event, Process, Queue, Value
+from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
 from time import perf_counter, sleep
 from typing import Callable, assert_never
 
+from alive_progress import alive_bar
 from setproctitle import getproctitle, setproctitle
 
 import eventum.logging_config
@@ -68,7 +69,7 @@ class Application:
 
         self._time_mode = time_mode
 
-        self._input_queue: Queue[datetime] = Queue()
+        self._input_queue: Queue[str] = Queue()
         self._is_input_queue_awaited = Event()
         self._is_input_queue_awaited.set()
 
@@ -76,6 +77,12 @@ class Application:
         self._is_event_queue_awaited = Event()
         self._is_event_queue_awaited.set()
 
+        # `_total_events` should keep 0 if it's hard to predict actual value
+        self._total_events: SynchronizedBase = Value('Q', 0)
+        self._processed_events: SynchronizedBase = Value('Q', 0)
+
+        # `_total_events` is adjusted as long as input is initialized
+        self._is_input_initialized = Event()
         self._is_input_done = Event()
 
         self._proc_input = Process(
@@ -84,7 +91,9 @@ class Application:
                 self._config.input,
                 self._time_mode,
                 self._input_queue,
-                self._is_input_done
+                self._is_input_initialized,
+                self._is_input_done,
+                self._total_events,
             )
         )
         self._proc_event = Process(
@@ -101,7 +110,8 @@ class Application:
             args=(
                 self._config.output,
                 self._event_queue,
-                self._is_event_queue_awaited
+                self._is_event_queue_awaited,
+                self._processed_events
             )
         )
 
@@ -111,7 +121,9 @@ class Application:
         config: InputConfigMapping,
         time_mode: TimeMode,
         queue: Queue,
-        is_done: EventClass
+        is_initialized: EventClass,
+        is_done: EventClass,
+        total_events: SynchronizedBase,
     ) -> None:
         input_type, input_conf = config.popitem()
 
@@ -130,6 +142,7 @@ class Application:
                     input_plugin = TimestampsInputPlugin(
                         timestamps=input_conf               # type: ignore
                     )
+                    total_events.value = len(input_conf)
                 case InputType.CRON:
                     input_plugin = CronInputPlugin(
                         expression=input_conf.expression,   # type: ignore
@@ -139,6 +152,7 @@ class Application:
                     input_plugin = SampleInputPlugin(
                         count=input_conf.count              # type: ignore
                     )
+                    total_events.value = input_conf.count
                 case value:
                     assert_never(value)
         except ContentReadError as e:
@@ -154,6 +168,7 @@ class Application:
             )
             exit(1)
 
+        is_initialized.set()
         logger.info('Input plugin is successfully initialized')
 
         try:
@@ -258,7 +273,8 @@ class Application:
     def _start_output_subprocess(
         config: OutputConfigMapping,
         queue: Queue,
-        is_incoming_awaited: EventClass
+        is_incoming_awaited: EventClass,
+        processed_events_feedback: SynchronizedBase
     ) -> None:
         plugins_list_fmt = ", ".join(
             [f'"{plugin}"' for plugin in config.keys()]
@@ -327,6 +343,8 @@ class Application:
                             f'Failed to write events to output: {e}'
                         )
 
+                processed_events_feedback.value += len(events)
+
         logger.info('Stopping output plugins')
 
     def start(self) -> None:
@@ -341,56 +359,78 @@ class Application:
         signal.signal(signal.SIGINT, self._handle_termination)
         signal.signal(signal.SIGTERM, self._handle_termination)
 
-        exit_code = 0
+        self._is_input_initialized.wait()
 
-        while True:
-            if not self._proc_output.is_alive():
-                logger.critical(
-                    'Output plugins subprocess terminated unexpectedly '
-                    'or some error occurred'
-                )
-                self._proc_input.terminate()
-                self._proc_event.terminate()
-                exit_code = 1
-                break
+        with alive_bar(self._total_events.value) as bar:
+            bar.title('Generating input timestamps')
 
-            if not self._proc_event.is_alive():
-                logger.critical(
-                    'Event plugin subprocess terminated unexpectedly '
-                    'or some error occurred'
-                )
-                self._proc_input.terminate()
-                self._proc_output.terminate()
-                exit_code = 1
-                break
+            is_running = True
+            exit_code = 0
 
-            if not self._proc_input.is_alive():
-                if self._is_input_done.is_set():
-                    logger.info('Waiting input queue to empty')
-                    while not self._input_queue.empty():
-                        sleep(Application._IDLE_SLEEP_SECONDS)
-                    self._is_input_queue_awaited.clear()
-                    self._proc_event.join()
+            last_processed_count = 0
 
-                    logger.info('Waiting output queue to empty')
-                    while not self._event_queue.empty():
-                        sleep(Application._IDLE_SLEEP_SECONDS)
-                    self._is_event_queue_awaited.clear()
-                    self._proc_output.join()
+            while is_running:
+                if last_processed_count > 0:
+                    bar.title('Rendering and outputting events')
 
-                    exit_code = 0
-                else:
+                processed = self._processed_events.value - last_processed_count
+                for _ in range(processed):
+                    bar()
+                    last_processed_count = self._processed_events.value
+
+                if not self._proc_output.is_alive():
                     logger.critical(
-                        'Input subprocess terminated unexpectedly '
+                        'Output plugins subprocess terminated unexpectedly '
                         'or some error occurred'
                     )
+                    self._proc_input.terminate()
                     self._proc_event.terminate()
+                    exit_code = 1
+                    is_running = False
+                    continue
+
+                if not self._proc_event.is_alive():
+                    logger.critical(
+                        'Event plugin subprocess terminated unexpectedly '
+                        'or some error occurred'
+                    )
+                    self._proc_input.terminate()
                     self._proc_output.terminate()
                     exit_code = 1
+                    is_running = False
+                    continue
 
-                break
+                if not self._proc_input.is_alive():
+                    if self._is_input_done.is_set():
+                        logger.info('Waiting input queue to empty')
+                        if self._input_queue.empty():
+                            self._is_input_queue_awaited.clear()
+                            self._proc_event.join()
+                        else:
+                            continue
 
-            sleep(Application._IDLE_SLEEP_SECONDS)
+                        logger.info('Waiting output queue to empty')
+                        if self._event_queue.empty():
+                            self._is_event_queue_awaited.clear()
+                            self._proc_output.join()
+                        else:
+                            continue
+
+                        is_running = False
+                        exit_code = 0
+                        continue
+                    else:
+                        logger.critical(
+                            'Input subprocess terminated unexpectedly '
+                            'or some error occurred'
+                        )
+                        self._proc_event.terminate()
+                        self._proc_output.terminate()
+                        exit_code = 1
+                        is_running = False
+                        continue
+
+                sleep(Application._IDLE_SLEEP_SECONDS)
 
         logger.info('Application is stopped')
         exit(exit_code)
