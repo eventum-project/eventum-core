@@ -3,6 +3,7 @@ import signal
 from multiprocessing import Event, Process, Queue, Value
 from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
+import sys
 from time import perf_counter, sleep
 from typing import Callable, assert_never
 
@@ -361,7 +362,11 @@ class Application:
 
         self._is_input_initialized.wait()
 
-        with alive_bar(self._total_events.value) as bar:
+        with alive_bar(
+            self._total_events.value,
+            enrich_print=False,
+            file=sys.stderr
+        ) as bar:
             bar.title('Generating input timestamps')
 
             is_running = True
@@ -386,8 +391,7 @@ class Application:
                     self._proc_input.terminate()
                     self._proc_event.terminate()
                     exit_code = 1
-                    is_running = False
-                    continue
+                    break
 
                 if not self._proc_event.is_alive():
                     logger.critical(
@@ -397,28 +401,23 @@ class Application:
                     self._proc_input.terminate()
                     self._proc_output.terminate()
                     exit_code = 1
-                    is_running = False
-                    continue
+                    break
 
                 if not self._proc_input.is_alive():
                     if self._is_input_done.is_set():
-                        logger.info('Waiting input queue to empty')
-                        if self._input_queue.empty():
+                        if (
+                            self._input_queue.empty()
+                            and self._event_queue.empty()
+                        ):
+                            logger.info('Queues are empty')
                             self._is_input_queue_awaited.clear()
                             self._proc_event.join()
-                        else:
-                            continue
 
-                        logger.info('Waiting output queue to empty')
-                        if self._event_queue.empty():
                             self._is_event_queue_awaited.clear()
                             self._proc_output.join()
+                            break
                         else:
                             continue
-
-                        is_running = False
-                        exit_code = 0
-                        continue
                     else:
                         logger.critical(
                             'Input subprocess terminated unexpectedly '
@@ -427,8 +426,7 @@ class Application:
                         self._proc_event.terminate()
                         self._proc_output.terminate()
                         exit_code = 1
-                        is_running = False
-                        continue
+                        break
 
                 sleep(Application._IDLE_SLEEP_SECONDS)
 
