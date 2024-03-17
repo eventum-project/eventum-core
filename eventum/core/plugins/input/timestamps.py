@@ -28,7 +28,7 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 timestamp - datetime.now().astimezone()
             ).total_seconds()
 
-            if wait_seconds > settings.AHEAD_PUBLICATION_SECONDS >= 0:
+            if wait_seconds > settings.TIME_PRECISION >= 0:
                 time.sleep(wait_seconds)
 
             on_event(timestamp)

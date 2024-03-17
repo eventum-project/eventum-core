@@ -31,6 +31,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     """
 
     _PERFORMANCE_TEST_SAMPLE_SIZE = 100000
+    _REQUIRED_EPS_RESERVE_RATIO = 1.15
 
     def __init__(self, config: TimePatternConfig) -> None:
         self._config = config
@@ -225,7 +226,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
                 wait_seconds = (timestamp - now).total_seconds()
 
-                if wait_seconds > settings.AHEAD_PUBLICATION_SECONDS >= 0.0:
+                if wait_seconds > settings.TIME_PRECISION >= 0.0:
                     sleep(wait_seconds)
                     now = datetime.now().astimezone()
 
@@ -297,7 +298,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 max_count = self._config.multiplier.ratio
 
         seconds = self._period_duration.total_seconds()
-        return max_count / seconds * settings.REQUIRED_EPS_RESERVE_RATIO
+        return max_count / seconds * self._REQUIRED_EPS_RESERVE_RATIO
 
     def _test_actual_eps(self) -> float:
         self._performance_testing = True
@@ -355,7 +356,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
             while tasks:
                 latest_timestamp = datetime.now().astimezone()
                 overhead_seconds = sys.getswitchinterval() * self._size
-                sleep(settings.AHEAD_PUBLICATION_SECONDS + overhead_seconds)
+                sleep(settings.TIME_PRECISION + overhead_seconds)
 
                 batches = []
                 for queue in queues:
