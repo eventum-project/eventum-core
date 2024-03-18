@@ -26,6 +26,7 @@ class BaseOutputPlugin(ABC):
 
     @staticmethod
     def _format_event(format: OutputFormat, event: str) -> str:
+        """Format `event` to specified `format`"""
         try:
             match format:
                 case OutputFormat.ORIGINAL:
