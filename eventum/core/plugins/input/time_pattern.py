@@ -1,7 +1,6 @@
 import sys
 from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError
 from datetime import date, datetime, time, timedelta
-from enum import IntEnum
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
@@ -10,7 +9,8 @@ from typing import Any, Callable, Sequence, assert_never
 import numpy as np
 
 from eventum.core import settings
-from eventum.core.models.time_pattern_config import (RandomizerDirection,
+from eventum.core.models.time_pattern_config import (Distribution,
+                                                     RandomizerDirection,
                                                      TimeKeyword,
                                                      TimePatternConfig)
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
@@ -26,14 +26,6 @@ class EndTimeReaching(Exception):
     """
 
 
-class PeriodMode(IntEnum):
-    """Modes for controlling `_period_size` behavior in
-    TimePatternInputPlugin instances.
-    """
-    USUAL = 0
-    PERFORMANCE_TEST = 1
-
-
 class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     """Input plugin for generating events with consistent pattern of
     distribution in time.
@@ -45,7 +37,6 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     def __init__(self, config: TimePatternConfig) -> None:
         self._config = config
         self._randomizer_factors = self._get_randomizer_factors()
-        self._period_mode = PeriodMode.USUAL
 
     def _get_randomizer_factors(self, size: int = 1000) -> np.ndarray:
         """Get sample of factors for multiply them on size for
@@ -86,86 +77,47 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """Number of time points in period. Each time the property
         is accessed the value can be different due to randomizer effect.
         """
-        match self._period_mode:
-            case PeriodMode.PERFORMANCE_TEST:
-                return self._PERFORMANCE_TEST_SAMPLE_SIZE
-            case PeriodMode.USUAL:
-                return int(
-                    self._config.multiplier.ratio
-                    * np.random.choice(self._randomizer_factors)
-                )
-            case val:
-                assert_never(val)
-
-    def _get_uniform_distribution(self) -> list[timedelta]:
-        """Helper for `_get_distribution` implementing uniform
-        distribution.
-        """
-        size = self._period_size
-        duration = self._period_duration
-        low = self._config.spreader.parameters.low      # type: ignore
-        high = self._config.spreader.parameters.high    # type: ignore
-
-        return list(
-            np.sort(np.random.uniform(low, high, size))
-            * duration  # type: ignore
+        return int(
+            self._config.multiplier.ratio
+            * np.random.choice(self._randomizer_factors)
         )
 
-    def _get_beta_distribution(self) -> list[timedelta]:
-        """Helper for `_get_distribution` implementing beta
-        distribution.
-        """
-        size = self._period_size
-        duration = self._period_duration
-        a = self._config.spreader.parameters.a          # type: ignore
-        b = self._config.spreader.parameters.b          # type: ignore
-
-        return list(
-            np.sort(np.random.beta(a, b, size))
-            * duration  # type: ignore
-        )
-
-    def _get_triangular_distribution(self) -> list[timedelta]:
-        """Helper for `_get_distribution` implementing triangular
-        distribution.
-        """
-        size = self._period_size
-        duration = self._period_duration
-
-        left = self._config.spreader.parameters.left    # type: ignore
-        mode = self._config.spreader.parameters.mode    # type: ignore
-        right = self._config.spreader.parameters.right  # type: ignore
-
-        return list(
-            np.sort(np.random.triangular(left, mode, right, size))
-            * duration  # type: ignore
-        )
-
-    def _get_distribution(self) -> list[timedelta]:
+    def _get_distribution(self, size, duration) -> list[timedelta]:
         """Compute list of time points in the distribution for one
         period where each point is expressed as time from the beginning
         of the period.
-
-        Method calls corresponding method implementing specific
-        distribution.
         """
-        distr_name = self._config.spreader.distribution.value.lower()
-        attr_name = f'_get_{distr_name}_distribution'
+        match self._config.spreader.distribution:
+            case Distribution.UNIFORM:
+                low = self._config.spreader.parameters.low      # type: ignore
+                high = self._config.spreader.parameters.high    # type: ignore
+                array = np.sort(np.random.uniform(low, high, size))
+            case Distribution.TRIANGULAR:
+                left = self._config.spreader.parameters.left    # type: ignore
+                mode = self._config.spreader.parameters.mode    # type: ignore
+                right = self._config.spreader.parameters.right  # type: ignore
+                array = np.sort(np.random.triangular(left, mode, right, size))
+            case Distribution.BETA:
+                a = self._config.spreader.parameters.a          # type: ignore
+                b = self._config.spreader.parameters.b          # type: ignore
+                array = np.sort(np.random.beta(a, b, size))
+            case val:
+                assert_never(val)
 
-        try:
-            return getattr(self, attr_name)()
-        except AttributeError as e:
-            raise NotImplementedError(
-                f'TimePatternInputPlugin does not implement {attr_name} method'
-                f' for {distr_name} distribution'
-            ) from e
+        return list(array * duration)   # type: ignore
 
-    def _get_period_timeseries(self, start: datetime) -> list[datetime]:
+    def _get_period_timeseries(
+        self,
+        start: datetime,
+        size: int,
+        duration: timedelta
+    ) -> list[datetime]:
         """Compute list of datetimes in the distribution for one
-        period from `start` by using `_get_distribution` - the
-        distribution of timedeltas.
+        period from `start` with specified `duration` and `size`.
         """
-        return [start + delta for delta in self._get_distribution()]
+        return [
+            start + delta for delta in self._get_distribution(size, duration)
+        ]
 
     def _get_normalized_interval_bounds(
         self,
@@ -229,7 +181,11 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         )
 
         while start < end:
-            for timestamp in self._get_period_timeseries(start):
+            for timestamp in self._get_period_timeseries(
+                start=start,
+                size=self._period_size,
+                duration=self._period_duration
+            ):
                 if timestamp <= end:
                     on_event(timestamp)
                 else:
@@ -255,7 +211,11 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 on_event(timestamp)
 
         def prepare_period_thread(start: datetime) -> list[datetime]:
-            return self._get_period_timeseries(start)
+            return self._get_period_timeseries(
+                start=start,
+                size=self._period_size,
+                duration=self._period_duration
+            )
 
         actual_eps = self._test_actual_eps()
         required_eps = self._get_required_eps()
@@ -277,7 +237,11 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             skip_periods = (now - start) // self._period_duration
             start += self._period_duration * skip_periods
 
-        timestamps = self._get_period_timeseries(start)
+        timestamps = self._get_period_timeseries(
+            start=start,
+            size=self._period_size,
+            duration=self._period_duration
+        )
 
         now = datetime.now().astimezone()
         if start < now:
@@ -305,6 +269,8 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 start += self._period_duration
 
     def _get_required_eps(self) -> float:
+        """Get required eps for performance check."""
+
         match self._config.randomizer.direction:
             case RandomizerDirection.INCREASE:
                 max_count = (
@@ -318,15 +284,15 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         return max_count / seconds * self._REQUIRED_EPS_RESERVE_RATIO
 
     def _test_actual_eps(self) -> float:
-        self._period_mode = PeriodMode.PERFORMANCE_TEST
-        now = datetime.now().astimezone()
+        """Compute actual eps for performance check."""
 
         start = perf_counter()
-        self._get_period_timeseries(start=now)
-        end = perf_counter()
-
-        seconds = end - start
-        self._period_mode = PeriodMode.USUAL
+        self._get_period_timeseries(
+            start=datetime.now().astimezone(),
+            size=self._PERFORMANCE_TEST_SAMPLE_SIZE,
+            duration=self._period_duration
+        )
+        seconds = perf_counter() - start
 
         return self._PERFORMANCE_TEST_SAMPLE_SIZE / seconds
 
@@ -361,13 +327,18 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
             on_event(ts)
 
     def live(self, on_event: Callable[[datetime], Any]) -> None:
-        queues: list[Queue] = []
+        queues: list[Queue[str]] = []
         tasks: list[Future] = []
 
         with ThreadPoolExecutor(max_workers=self._size) as pool:
             for pattern in self._time_patterns:
-                queue: Queue = Queue(maxsize=-1)
-                tasks.append(pool.submit(pattern.live, queue.put_nowait))
+                queue: Queue[str] = Queue(maxsize=-1)
+                tasks.append(
+                    pool.submit(
+                        pattern.live,
+                        lambda ts: queue.put(ts.isoformat())
+                    )
+                )
                 queues.append(queue)
 
             while tasks:
@@ -381,9 +352,9 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
                     while True:
                         try:
-                            timestamp = queue.get_nowait()
-                            batch.append(timestamp)
-                            if timestamp >= latest_timestamp:
+                            ts = queue.get_nowait()
+                            batch.append(ts)
+                            if datetime.fromisoformat(ts) >= latest_timestamp:
                                 break
                         except Empty:
                             break
