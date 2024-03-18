@@ -334,17 +334,14 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
             on_event(ts)
 
     def live(self, on_event: Callable[[datetime], Any]) -> None:
-        queues: list[Queue[str]] = []
+        queues: list[Queue[datetime]] = []
         tasks: list[Future] = []
 
         with ThreadPoolExecutor(max_workers=self._size) as pool:
             for pattern in self._time_patterns:
-                queue: Queue[str] = Queue(maxsize=-1)
+                queue: Queue[datetime] = Queue(maxsize=-1)
                 tasks.append(
-                    pool.submit(
-                        pattern.live,
-                        lambda ts: queue.put(ts.isoformat())
-                    )
+                    pool.submit(pattern.live, queue.put)
                 )
                 queues.append(queue)
 
@@ -359,17 +356,17 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
                     while True:
                         try:
-                            ts = queue.get_nowait()
-                            batch.append(ts)
-                            if datetime.fromisoformat(ts) >= latest_timestamp:
+                            timestamp = queue.get_nowait()
+                            batch.append(timestamp)
+                            if timestamp >= latest_timestamp:
                                 break
                         except Empty:
                             break
 
                     batches.append(batch)
 
-                for ts in merge(*batches):
-                    on_event(ts)
+                for timestamp in merge(*batches):
+                    on_event(timestamp)
 
                 for i, (task, queue) in enumerate(zip(tasks, queues)):
                     if task.done() and queue.empty():
