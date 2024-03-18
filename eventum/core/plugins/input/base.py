@@ -15,6 +15,12 @@ class InputPluginRuntimeError(InputPluginError):
     """Exception for input plugin runtime errors."""
 
 
+class PerformanceError(InputPluginRuntimeError):
+    """Exception for input plugin errors related with insufficient
+    performance.
+    """
+
+
 class BaseInputPlugin(ABC):
     """Base class for all input plugins."""
 

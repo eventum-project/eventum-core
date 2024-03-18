@@ -15,7 +15,7 @@ from eventum.core.models.time_pattern_config import (Distribution,
                                                      TimePatternConfig)
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              InputPluginRuntimeError,
-                                             LiveInputPlugin,
+                                             LiveInputPlugin, PerformanceError,
                                              SampleInputPlugin)
 from eventum.utils.timeseries import get_future_slice
 
@@ -36,9 +36,9 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
     def __init__(self, config: TimePatternConfig) -> None:
         self._config = config
-        self._randomizer_factors = self._get_randomizer_factors()
+        self._randomizer_factors = self._generate_randomizer_factors()
 
-    def _get_randomizer_factors(self, size: int = 1000) -> np.ndarray:
+    def _generate_randomizer_factors(self, size: int = 1000) -> np.ndarray:
         """Get sample of factors for multiply them on size for
         randomizer effect.
         """
@@ -175,99 +175,6 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         return (start, end)
 
-    def sample(self, on_event: Callable[[datetime], Any]) -> None:
-        start, end = self._get_normalized_interval_bounds(
-            allow_never_end=False
-        )
-
-        while start < end:
-            for timestamp in self._get_period_timeseries(
-                start=start,
-                size=self._period_size,
-                duration=self._period_duration
-            ):
-                if timestamp <= end:
-                    on_event(timestamp)
-                else:
-                    break
-
-            start += self._period_duration
-
-    def live(self, on_event: Callable[[datetime], Any]) -> None:
-        # TODO check lag and raise warning (e.g detected 5 seconds delay ...)
-        def publish_period_thread(timestamps: list[datetime]) -> None:
-            now = datetime.now().astimezone()
-
-            for timestamp in timestamps:
-                if timestamp >= end:
-                    raise EndTimeReaching
-
-                wait_seconds = (timestamp - now).total_seconds()
-
-                if wait_seconds > settings.TIME_PRECISION >= 0.0:
-                    sleep(wait_seconds)
-                    now = datetime.now().astimezone()
-
-                on_event(timestamp)
-
-        def prepare_period_thread(start: datetime) -> list[datetime]:
-            return self._get_period_timeseries(
-                start=start,
-                size=self._period_size,
-                duration=self._period_duration
-            )
-
-        actual_eps = self._test_actual_eps()
-        required_eps = self._get_required_eps()
-
-        if actual_eps < required_eps:
-            raise InputPluginRuntimeError(
-                'Not enough performance to produce distributions in time: '
-                f'actual EPS is {round(actual_eps)} but {round(required_eps)} '
-                'is required'
-            )
-
-        start, end = self._get_normalized_interval_bounds()
-        now = datetime.now().astimezone()
-
-        if now >= end:
-            return
-
-        if now > start:
-            skip_periods = (now - start) // self._period_duration
-            start += self._period_duration * skip_periods
-
-        timestamps = self._get_period_timeseries(
-            start=start,
-            size=self._period_size,
-            duration=self._period_duration
-        )
-
-        now = datetime.now().astimezone()
-        if start < now:
-            timestamps = get_future_slice(timestamps=timestamps, now=now)
-
-        with ThreadPoolExecutor(max_workers=2) as pool:
-            while start < end:
-                next_start = start + self._period_duration
-
-                prepare_task = pool.submit(prepare_period_thread, next_start)
-                publish_task = pool.submit(publish_period_thread, timestamps)
-
-                try:
-                    publish_task.result()
-                except EndTimeReaching:
-                    try:
-                        prepare_task.result(timeout=0)
-                    except TimeoutError:
-                        pass
-                    finally:
-                        return
-
-                timestamps = prepare_task.result()
-
-                start += self._period_duration
-
     def _get_required_eps(self) -> float:
         """Get required eps for performance check."""
 
@@ -295,6 +202,106 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         seconds = perf_counter() - start
 
         return self._PERFORMANCE_TEST_SAMPLE_SIZE / seconds
+
+    def _check_performance(self) -> None:
+        """Check if actual performance is enough to run plugin in live
+        mode. If it's not `PerformanceError` is raised.
+        """
+        actual_eps = self._test_actual_eps()
+        required_eps = self._get_required_eps()
+
+        if actual_eps < required_eps:
+            raise PerformanceError(
+                'Not enough performance to produce distributions in time: '
+                f'actual EPS is {round(actual_eps)} but {round(required_eps)} '
+                'is required'
+            )
+
+    def sample(self, on_event: Callable[[datetime], Any]) -> None:
+        start, end = self._get_normalized_interval_bounds(
+            allow_never_end=False
+        )
+
+        while start < end:
+            for timestamp in self._get_period_timeseries(
+                start=start,
+                size=self._period_size,
+                duration=self._period_duration
+            ):
+                if timestamp <= end:
+                    on_event(timestamp)
+                else:
+                    break
+
+            start += self._period_duration
+
+    def live(self, on_event: Callable[[datetime], Any]) -> None:
+        self._check_performance()
+
+        start, end = self._get_normalized_interval_bounds()
+
+        now = datetime.now().astimezone()
+        if now >= end:
+            return
+
+        if now > start:
+            skip_periods = (now - start) // self._period_duration
+            start += self._period_duration * skip_periods
+
+        timestamps = self._get_period_timeseries(
+            start=start,
+            size=self._period_size,
+            duration=self._period_duration
+        )
+
+        now = datetime.now().astimezone()
+        if start < now:
+            timestamps = get_future_slice(timestamps=timestamps, now=now)
+
+        # thread worker definitions
+
+        def publish_period_thread(timestamps: list[datetime]) -> None:
+            now = datetime.now().astimezone()
+
+            for timestamp in timestamps:
+                if timestamp >= end:
+                    raise EndTimeReaching
+
+                wait_seconds = (timestamp - now).total_seconds()
+
+                if wait_seconds > settings.TIME_PRECISION >= 0.0:
+                    sleep(wait_seconds)
+                    now = datetime.now().astimezone()
+
+                on_event(timestamp)
+
+        def prepare_period_thread(start: datetime) -> list[datetime]:
+            return self._get_period_timeseries(
+                start=start,
+                size=self._period_size,
+                duration=self._period_duration
+            )
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            while start < end:
+                next_start = start + self._period_duration
+
+                prepare_task = pool.submit(prepare_period_thread, next_start)
+                publish_task = pool.submit(publish_period_thread, timestamps)
+
+                try:
+                    publish_task.result()
+                except EndTimeReaching:
+                    try:
+                        prepare_task.result(timeout=0)
+                    except TimeoutError:
+                        pass
+                    finally:
+                        return
+
+                timestamps = prepare_task.result()
+
+                start += self._period_duration
 
 
 class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
