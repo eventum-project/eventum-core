@@ -2,10 +2,10 @@ label: New pattern
 oscillator:
   period: 1
   unit: seconds
-  start: +5s
-  end: +6s
+  start: now
+  end: never
 multiplier:
-  ratio: 1000000
+  ratio: 1000
 randomizer:
   deviation: 0
   direction: Mixed
