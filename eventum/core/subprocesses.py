@@ -121,13 +121,13 @@ def start_input_subprocess(
             case TimeMode.LIVE:
                 input_plugin.live(
                     on_event=lambda ts: queue.put(
-                        ts.isoformat()                  # type: ignore
+                        ts.isoformat()          # type: ignore
                     )
                 )
             case TimeMode.SAMPLE:
                 input_plugin.sample(
                     on_event=lambda ts: queue.put(
-                        ts.isoformat()                  # type: ignore
+                        ts.isoformat()          # type: ignore
                     )
                 )
             case _:
@@ -300,7 +300,7 @@ def start_output_subprocess(
                         f'Failed to write events to output: {e}'
                     )
 
-            processed_events.value += len(events)
+            processed_events.value += len(events)  # type: ignore
 
     logger.info('Stopping output plugins')
     _terminate_subprocess(is_done, 0)

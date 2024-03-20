@@ -8,7 +8,7 @@ from multiprocessing.synchronize import Event as EventClass
 from time import sleep
 from typing import NoReturn
 
-from alive_progress import alive_bar
+from alive_progress import alive_bar    # type: ignore
 from setproctitle import getproctitle, setproctitle
 
 import eventum.logging_config
@@ -91,16 +91,16 @@ class Application:
         signal.signal(
             signal.SIGINT,
             lambda signal, frame: (
-                logger.info('SIGINT is received'),
-                logger.info('Application is stopped'),
+                logger.info('SIGINT is received'),      # type: ignore
+                logger.info('Application is stopped'),  # type: ignore
                 self._terminate_application_on_crash()
             )
         )
         signal.signal(
             signal.SIGTERM,
             lambda signal, frame: (
-                logger.info('SIGTERM is received'),
-                logger.info('Application is stopped'),
+                logger.info('SIGTERM is received'),     # type: ignore
+                logger.info('Application is stopped'),  # type: ignore
                 self._terminate_application_on_crash()
             )
         )
@@ -126,7 +126,9 @@ class Application:
                 if last_processed_count > 0:
                     bar.title('Processing events')
 
-                current_processed_count = self._processed_events.value
+                current_processed_count = (
+                    self._processed_events.value    # type: ignore
+                )
                 processed = current_processed_count - last_processed_count
 
                 for _ in range(processed):
