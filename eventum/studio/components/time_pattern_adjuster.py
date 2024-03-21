@@ -47,7 +47,7 @@ class TimePatternAdjuster(BaseComponent):
         ss['randomizer_deviation'] = init.randomizer.deviation
         ss['randomizer_direction'] = init.randomizer.direction
 
-        ss['spreader_function'] = init.spreader.distribution
+        ss['spreader_distribution'] = init.spreader.distribution
 
     def _show_manage_section(self) -> None:
         st.header('General')
@@ -131,12 +131,12 @@ class TimePatternAdjuster(BaseComponent):
     def _show_spreader_section(self) -> None:
         st.header('Spreader')
         st.selectbox(
-            'Function',
+            'Distribution',
             options=[
                 func.value
                 for func in models.Distribution
             ],
-            key=self._wk('spreader_function'),
+            key=self._wk('spreader_distribution'),
             help='...'
         )
 
@@ -218,7 +218,7 @@ class TimePatternAdjuster(BaseComponent):
                 direction=ss['randomizer_direction']
             ),
             spreader=models.SpreaderConfig(
-                distribution=ss['spreader_function'],
+                distribution=ss['spreader_distribution'],
                 parameters=None   # TODO: think how to handle parameters
             )
         )
@@ -243,6 +243,9 @@ class TimePatternAdjuster(BaseComponent):
             ),
             spreader=models.SpreaderConfig(
                 distribution=models.Distribution.UNIFORM,
-                parameters=None
+                parameters=models.UniformDistributionParameters(
+                    low=0,
+                    high=1
+                )
             )
         )
