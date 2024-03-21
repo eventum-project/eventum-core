@@ -27,15 +27,11 @@ class BaseComponent(ABC):
         widget_keys_context: Optional[WidgetKeysContext] = None,
         props: Optional[dict] = None
     ) -> None:
-        if widget_keys_context is None:
-            self._wk = WidgetKeysContext()
-        else:
-            self._wk = deepcopy(widget_keys_context)
-
-        if props is None:
-            self._props = dict()
-        else:
-            self._props = props
+        self._wk = (
+            deepcopy(widget_keys_context)
+            if widget_keys_context else WidgetKeysContext()
+        )
+        self._props = props or dict()
 
         self._wk.register_component(self.__class__.__name__, id)
         self._session_state = ContextualSessionState(session_state, self._wk)
