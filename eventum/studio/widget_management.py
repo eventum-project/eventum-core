@@ -1,4 +1,7 @@
 from typing import Any, MutableMapping
+from uuid import uuid4
+
+EPHEMERAL_PREFIX = '~'
 
 
 class WidgetKeysContext():
@@ -32,6 +35,12 @@ class WidgetKeysContext():
         self._component_stack.append(
             f'{component_name}{self._ID_PREFIX}{component_id}'
         )
+
+    @staticmethod
+    def get_ephemeral() -> str:
+        """Get globally unique ephemeral key. Used for immutable
+        widgets such as button."""
+        return EPHEMERAL_PREFIX + str(uuid4())
 
 
 class ContextualSessionState:

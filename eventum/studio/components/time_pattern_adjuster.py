@@ -1,12 +1,11 @@
 from typing import Callable, Optional
 
-import streamlit as st
-from pydantic import ValidationError
-
 import eventum.core.models.time_pattern_config as models
+import streamlit as st
 from eventum.repository.manage import ContentUpdateError, save_time_pattern
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
+from pydantic import ValidationError
 
 
 class TimePatternAdjuster(BaseComponent):
@@ -61,20 +60,20 @@ class TimePatternAdjuster(BaseComponent):
         if self._session_state['is_saved']:
             st.button(
                 'Update',
-                key=self._wk('update_pattern'),
+                key=self._wk.get_ephemeral(),
                 on_click=lambda: self.save(overwrite=True),
                 use_container_width=True,
             )
         else:
             st.button(
                 'Save',
-                key=self._wk('save_pattern'),
+                key=self._wk.get_ephemeral(),
                 on_click=lambda: self.save(),
                 use_container_width=True,
             )
         st.button(
             'Delete',
-            key=self._wk('delete_pattern'),
+            key=self._wk.get_ephemeral(),
             on_click=lambda: self._props['delete_callback'](),
             use_container_width=True,
             type='primary',

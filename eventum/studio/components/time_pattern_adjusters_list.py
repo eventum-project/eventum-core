@@ -1,8 +1,7 @@
 from typing import Callable, MutableMapping, Optional
 
-import streamlit as st
-
 import eventum.core.models.time_pattern_config as models
+import streamlit as st
 from eventum.repository.manage import (ContentReadError,
                                        get_time_pattern_filenames,
                                        load_time_pattern)
@@ -49,6 +48,7 @@ class TimePatternAdjustersList(BaseComponent):
 
         st.button(
             'Create new',
+            key=self._wk.get_ephemeral(),
             disabled=is_max_len,
             on_click=lambda: self.add(),
             use_container_width=True
@@ -64,6 +64,7 @@ class TimePatternAdjustersList(BaseComponent):
 
         col2.button(
             'Load',
+            key=self._wk.get_ephemeral(),
             disabled=(
                 is_max_len
                 or not selected_pattern
