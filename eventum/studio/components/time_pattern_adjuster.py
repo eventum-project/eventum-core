@@ -38,8 +38,8 @@ class TimePatternAdjuster(BaseComponent):
 
         ss['oscillator_period'] = init.oscillator.period
         ss['oscillator_period_unit'] = init.oscillator.unit
-        ss['oscillator_start_timestamp'] = init.oscillator.start
-        ss['oscillator_end_timestamp'] = init.oscillator.end
+        ss['oscillator_start_timestamp'] = str(init.oscillator.start)
+        ss['oscillator_end_timestamp'] = str(init.oscillator.end)
 
         ss['multiplier_ratio'] = init.multiplier.ratio
 
