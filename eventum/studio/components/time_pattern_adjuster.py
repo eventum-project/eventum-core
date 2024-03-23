@@ -81,8 +81,8 @@ class TimePatternAdjuster(BaseComponent):
                     parameters.mode, parameters.right
                 )
             case models.Distribution.BETA:
-                ss['spreader_parameter_a'] = parameters.a
-                ss['spreader_parameter_b'] = parameters.b
+                ss['spreader_beta_distr_a'] = parameters.a
+                ss['spreader_beta_distr_b'] = parameters.b
             case val:
                 assert_never(val)
 
@@ -108,8 +108,8 @@ class TimePatternAdjuster(BaseComponent):
                 )
             case models.Distribution.BETA:
                 return models.BetaDistributionParameters(
-                    a=ss['spreader_parameter_a'],
-                    b=ss['spreader_parameter_b']
+                    a=ss['spreader_beta_distr_a'],
+                    b=ss['spreader_beta_distr_b']
                 )
             case val:
                 assert_never(val)
