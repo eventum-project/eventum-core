@@ -1,5 +1,7 @@
 from typing import Callable, MutableMapping, Optional
 
+from pydantic import ValidationError
+
 import eventum.core.models.time_pattern_config as models
 import streamlit as st
 from eventum.repository.manage import (ContentReadError,
@@ -180,6 +182,24 @@ class TimePatternAdjustersList(BaseComponent):
         self._session_state['available_colors'].add(
             self._session_state['given_colors'].pop(id)
         )
+
+    def get_pattern_configs(self) -> list[models.TimePatternConfig]:
+        """Get list of currently adjusted time pattern configs."""
+        configs = []
+        for id in self._session_state['time_pattern_ids']:
+            pattern = TimePatternAdjuster(id=id, widget_keys_context=self._wk)
+            try:
+                configs.append(pattern.get_current_configuration())
+            except ValidationError as e:
+                default_notifier(
+                    message=(
+                        f'Field validation fail for "{e.title}" '
+                        f'in time pattern with label "{pattern.label}'
+                    ),
+                    level=NotificationLevel.ERROR
+                )
+
+        return configs
 
     @classmethod
     def _check_time_pattern_colors(cls) -> None:

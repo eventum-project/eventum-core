@@ -295,6 +295,9 @@ class TimePatternAdjuster(BaseComponent):
             [str, NotificationLevel], None
         ] = default_notifier
     ):
+        """Save currently adjusted time pattern to repository as
+        configuration file.
+        """
         try:
             save_time_pattern(
                 pattern_config=self.get_current_configuration(),
@@ -328,6 +331,11 @@ class TimePatternAdjuster(BaseComponent):
             return self._session_state['pattern_filename']
         else:
             return None
+
+    @property
+    def label(self) -> str:
+        """Get current label of time pattern."""
+        return self._session_state['pattern_label']
 
     def get_current_configuration(self) -> models.TimePatternConfig:
         """Build TimePatternConfig from current input widgets values
