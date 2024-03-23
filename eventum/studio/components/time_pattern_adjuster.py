@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, assert_never
 
 import eventum.core.models.time_pattern_config as models
 import streamlit as st
@@ -47,6 +47,72 @@ class TimePatternAdjuster(BaseComponent):
         ss['randomizer_direction'] = init.randomizer.direction
 
         ss['spreader_distribution'] = init.spreader.distribution
+        self._set_distribution_parameters_in_state(init.spreader.parameters)
+
+    def _set_default_distribution_parameters_in_state(self) -> None:
+        ss = self._session_state
+
+        ss['spreader_uniform_distr_bounds'] = (0.0, 1.0)
+
+        ss['spreader_triangular_distr_last_changed'] = 'left'
+        ss['spreader_triangular_distr_left_bounds'] = (0.0, 0.5)
+        ss['spreader_triangular_distr_right_bounds'] = (0.5, 1.0)
+
+        ss['spreader_beta_distr_a'] = 1.0
+        ss['spreader_beta_distr_b'] = 1.0
+
+    def _set_distribution_parameters_in_state(
+        self,
+        parameters: models.DistributionParameters
+    ) -> None:
+        self._set_default_distribution_parameters_in_state()
+
+        ss = self._session_state
+        match ss['spreader_distribution']:
+            case models.Distribution.UNIFORM:
+                ss['spreader_uniform_distr_bounds'] = (
+                    parameters.low, parameters.high
+                )
+            case models.Distribution.TRIANGULAR:
+                ss['spreader_triangular_distr_left_bounds'] = (
+                    parameters.left, parameters.mode
+                )
+                ss['spreader_triangular_distr_right_bounds'] = (
+                    parameters.mode, parameters.right
+                )
+            case models.Distribution.BETA:
+                ss['spreader_parameter_a'] = parameters.a
+                ss['spreader_parameter_b'] = parameters.b
+            case val:
+                assert_never(val)
+
+    def _get_current_distribution_parameters(
+        self
+    ) -> models.DistributionParameters:
+        ss = self._session_state
+
+        match ss['spreader_distribution']:
+            case models.Distribution.UNIFORM:
+                low, high = ss['spreader_uniform_distr_bounds']
+                return models.UniformDistributionParameters(
+                    low=low,
+                    high=high
+                )
+            case models.Distribution.TRIANGULAR:
+                left, mode = ss['spreader_triangular_distr_left_bounds']
+                _, right = ss['spreader_triangular_distr_right_bounds']
+                return models.TriangularDistributionParameters(
+                    left=left,
+                    mode=mode,
+                    right=right
+                )
+            case models.Distribution.BETA:
+                return models.BetaDistributionParameters(
+                    a=ss['spreader_parameter_a'],
+                    b=ss['spreader_parameter_b']
+                )
+            case val:
+                assert_never(val)
 
     def _show_manage_section(self) -> None:
         st.header('General')
@@ -84,7 +150,8 @@ class TimePatternAdjuster(BaseComponent):
         col1, col2 = st.columns([3, 7])
         col1.number_input(
             'Period',
-            step=1,
+            step=1.0,
+            min_value=0.0,
             key=self._wk('oscillator_period')
         )
         col2.selectbox(
@@ -107,6 +174,7 @@ class TimePatternAdjuster(BaseComponent):
         st.number_input(
             'Ratio',
             step=1,
+            min_value=1,
             key=self._wk('multiplier_ratio')
         )
 
@@ -114,7 +182,9 @@ class TimePatternAdjuster(BaseComponent):
         st.header('Randomizer')
         st.number_input(
             'Deviation',
-            step=1,
+            min_value=0.0,
+            max_value=1.00,
+            step=0.05,
             key=self._wk('randomizer_deviation')
         )
         st.selectbox(
@@ -127,6 +197,69 @@ class TimePatternAdjuster(BaseComponent):
             help='...'
         )
 
+    def _show_spreader_parameters(self) -> None:
+        ss = self._session_state
+        match ss['spreader_distribution']:
+            case models.Distribution.UNIFORM:
+                st.slider(
+                    'Bounds',
+                    min_value=0.0,
+                    max_value=1.0,
+                    key=self._wk('spreader_uniform_distr_bounds')
+                )
+            case models.Distribution.TRIANGULAR:
+                left, mode_l = ss['spreader_triangular_distr_left_bounds']
+                mode_r, right = ss['spreader_triangular_distr_right_bounds']
+                mode = (
+                    mode_l
+                    if ss['spreader_triangular_distr_last_changed'] == 'left'
+                    else mode_r
+                )
+
+                ss['spreader_triangular_distr_left_bounds'] = (left, mode)
+                ss['spreader_triangular_distr_right_bounds'] = (mode, right)
+
+                st.slider(
+                    'Increasing bounds',
+                    min_value=0.0,
+                    max_value=1.0,
+                    key=self._wk('spreader_triangular_distr_left_bounds'),
+                    on_change=(
+                        lambda: ss.__setitem__(
+                            'spreader_triangular_distr_last_changed',
+                            'left'
+                        )
+                    )
+                )
+                st.slider(
+                    'Decreasing bounds',
+                    min_value=0.0,
+                    max_value=1.0,
+                    key=self._wk('spreader_triangular_distr_right_bounds'),
+                    on_change=(
+                        lambda: ss.__setitem__(
+                            'spreader_triangular_distr_last_changed',
+                            'right'
+                        )
+                    )
+                )
+            case models.Distribution.BETA:
+                col1, col2 = st.columns([1, 1])
+                col1.number_input(
+                    'A',
+                    min_value=0.0,
+                    step=0.1,
+                    key=self._wk('spreader_beta_distr_a')
+                )
+                col2.number_input(
+                    'B',
+                    min_value=0.0,
+                    step=0.1,
+                    key=self._wk('spreader_beta_distr_b')
+                )
+            case val:
+                assert_never(val)
+
     def _show_spreader_section(self) -> None:
         st.header('Spreader')
         st.selectbox(
@@ -138,6 +271,7 @@ class TimePatternAdjuster(BaseComponent):
             key=self._wk('spreader_distribution'),
             help='...'
         )
+        self._show_spreader_parameters()
 
     def _show(self):
         label = self._session_state['pattern_label']
@@ -218,7 +352,7 @@ class TimePatternAdjuster(BaseComponent):
             ),
             spreader=models.SpreaderConfig(
                 distribution=ss['spreader_distribution'],
-                parameters=None   # TODO: think how to handle parameters
+                parameters=self._get_current_distribution_parameters()
             )
         )
 
