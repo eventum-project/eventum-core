@@ -239,9 +239,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """The method is similar to usual `sample` but designed for
         interactivity needs. Parameter `periods_count` describes how
         many periods should be returned."""
-        start, end = self._get_normalized_interval_bounds(
-            allow_never_end=False
-        )
+        start, end = self._get_normalized_interval_bounds()
 
         timestamps = []
         count = 0
