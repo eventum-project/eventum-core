@@ -201,15 +201,6 @@ class TimePatternAdjustersList(BaseComponent):
 
         return configs
 
-    def get_pattern_labels(self) -> list[str]:
-        """Get list of current time pattern labels."""
-        labels = []
-        for id in self._session_state['time_pattern_ids']:
-            pattern = TimePatternAdjuster(id=id, widget_keys_context=self._wk)
-            labels.append(pattern.label)
-
-        return labels
-
     def get_pattern_colors(
         self,
         hex_format: bool = True
