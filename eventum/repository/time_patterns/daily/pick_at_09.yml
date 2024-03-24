@@ -1,0 +1,16 @@
+label: Daily pick at 9am
+multiplier:
+  ratio: 1000
+oscillator:
+  end: +4h
+  period: 24.0
+  start: 08:30:00
+  unit: hours
+randomizer:
+  deviation: 0.0
+  direction: Mixed
+spreader:
+  distribution: Beta
+  parameters:
+    a: 3.0
+    b: 100.0
