@@ -17,6 +17,7 @@ from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              InputPluginRuntimeError,
                                              LiveInputPlugin, PerformanceError,
                                              SampleInputPlugin)
+from eventum.utils.relative_time import parse_relative_time
 from eventum.utils.timeseries import get_future_slice
 
 
@@ -132,8 +133,6 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         match self._config.oscillator.start:
             case datetime() as val:
                 start = val
-            case timedelta() as val:
-                start = now + val
             case time() as val:
                 start = datetime.combine(date.today(), val)
             case TimeKeyword.NOW:
@@ -142,20 +141,22 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 raise InputPluginRuntimeError(
                     f'Value of "start" cannot be "{val}"'
                 )
+            case str() as val:
+                start = now + parse_relative_time(val)
             case val:
                 assert_never(val)
 
         match self._config.oscillator.end:
             case datetime() as val:
                 end = val
-            case timedelta() as val:
-                end = start + val
             case time() as val:
                 end = datetime.combine(date.today(), val)
             case TimeKeyword.NOW:
                 end = now
             case TimeKeyword.NEVER:
                 end = never
+            case str() as val:
+                end = start + parse_relative_time(val)
             case val:
                 assert_never(val)
 

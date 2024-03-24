@@ -1,8 +1,8 @@
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 from enum import StrEnum
 from typing import Annotated, Any, TypeAlias, assert_never
 
-from pydantic import (BaseModel, BeforeValidator, field_validator,
+from pydantic import (BaseModel, AfterValidator, field_validator,
                       model_validator)
 
 from eventum.utils.relative_time import parse_relative_time
@@ -32,17 +32,14 @@ class TimeKeyword(StrEnum):
     NEVER = 'never'
 
 
-def try_parse_relative_time(obj: Any) -> Any | timedelta:
+def check_relative_time(obj: Any) -> str:
     if isinstance(obj, str):
-        try:
-            return parse_relative_time(obj)
-        except ValueError:
-            return obj
+        parse_relative_time(obj)
 
     return obj
 
 
-RelativeTime = Annotated[timedelta, BeforeValidator(try_parse_relative_time)]
+RelativeTime = Annotated[str, AfterValidator(check_relative_time)]
 
 
 class OscillatorConfig(BaseModel):
