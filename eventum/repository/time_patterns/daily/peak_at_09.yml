@@ -1,10 +1,10 @@
-label: Daily pick at 9am
+label: Daily peak at 9am
 multiplier:
   ratio: 1000
 oscillator:
   end: +4h
   period: 24.0
-  start: '08:30:00'
+  start: 08:30:00
   unit: hours
 randomizer:
   deviation: 0.0

@@ -8,12 +8,19 @@ from eventum.studio.components.time_pattern_adjusters_list import \
 persist_state()
 
 st.set_page_config(
-    page_title="Eventum Studio",
+    page_title='Eventum Studio',
+    layout='wide',
+    initial_sidebar_state='expanded'
 )
 
 patterns_list = TimePatternAdjustersList()
 with st.sidebar:
     patterns_list.show()
+
+col1, col2 = st.columns([1, 1])
+bins_count = col1.radio('Bins count', [100, 1000, 10000], horizontal=True)
+
+st.divider()
 
 configs = patterns_list.get_pattern_configs()
 colors = patterns_list.get_pattern_colors()
@@ -24,11 +31,9 @@ for config, color in zip(configs, colors):
         go.Histogram(
             x=calculate_distribution(config),
             name=config.label,
-            nbinsx=100,
+            nbinsx=bins_count,
             marker_color=color
         )
     )
-
 fig.update_layout(barmode='stack')
-
 st.plotly_chart(fig, use_container_width=True)

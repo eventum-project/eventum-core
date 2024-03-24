@@ -1,4 +1,4 @@
-label: Daily pick at 18am
+label: Daily peak at 18am
 multiplier:
   ratio: 1000
 oscillator:
