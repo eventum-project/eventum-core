@@ -51,14 +51,30 @@ class OscillatorConfig(BaseModel):
     start: time | datetime | TimeKeyword | RelativeTime
     end: time | datetime | TimeKeyword | RelativeTime
 
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.period,
+                self.unit,
+                self.start,
+                self.end
+            )
+        )
+
 
 class MultiplierConfig(BaseModel):
     ratio: int
+
+    def __hash__(self) -> int:
+        return hash(self.ratio)
 
 
 class RandomizerConfig(BaseModel):
     deviation: float
     direction: RandomizerDirection
+
+    def __hash__(self) -> int:
+        return hash((self.deviation, self.direction))
 
 
 class BetaDistributionParameters(BaseModel):
@@ -76,6 +92,9 @@ class BetaDistributionParameters(BaseModel):
         if v >= 0:
             return v
         raise ValueError('"b" must be greater or equal to 0')
+
+    def __hash__(self) -> int:
+        return hash((self.a, self.b))
 
 
 class TriangularDistributionParameters(BaseModel):
@@ -109,6 +128,9 @@ class TriangularDistributionParameters(BaseModel):
             'Values do not comply "left <= mode <= right" condition'
         )
 
+    def __hash__(self) -> int:
+        return hash((self.left, self.mode, self.right))
+
 
 class UniformDistributionParameters(BaseModel):
     low: float
@@ -133,6 +155,9 @@ class UniformDistributionParameters(BaseModel):
         raise ValueError(
             'Values do not comply "low < high" condition'
         )
+
+    def __hash__(self) -> int:
+        return hash((self.low, self.high))
 
 
 DistributionParameters: TypeAlias = (
@@ -165,6 +190,9 @@ class SpreaderConfig(BaseModel):
         raise TypeError(
             f'Improper parameters model for "{self.distribution}" distribution'
         )
+
+    def __hash__(self) -> int:
+        return hash((self.distribution, self.parameters))
 
 
 class TimePatternConfig(BaseModel):
