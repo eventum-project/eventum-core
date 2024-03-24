@@ -26,10 +26,13 @@ configs = patterns_list.get_pattern_configs()
 colors = patterns_list.get_pattern_colors()
 
 fig = go.Figure()
+total_events = 0
 for config, color in zip(configs, colors):
+    sample = calculate_distribution(config)
+    total_events += len(sample)
     fig.add_trace(
         go.Histogram(
-            x=calculate_distribution(config),
+            x=sample,
             name=config.label,
             nbinsx=bins_count,
             marker_color=color
@@ -37,3 +40,5 @@ for config, color in zip(configs, colors):
     )
 fig.update_layout(barmode='stack')
 st.plotly_chart(fig, use_container_width=True)
+
+st.text(f'Total events: {total_events}')
