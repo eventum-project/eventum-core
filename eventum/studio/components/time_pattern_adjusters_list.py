@@ -201,6 +201,20 @@ class TimePatternAdjustersList(BaseComponent):
 
         return configs
 
+    def get_pattern_labels(self) -> list[models.TimePatternConfig]:
+        """Get list of current time pattern labels."""
+        labels = []
+        for id in self._session_state['time_pattern_ids']:
+            pattern = TimePatternAdjuster(id=id, widget_keys_context=self._wk)
+            labels.append(pattern.label)
+
+        return labels
+
+    def get_pattern_colors(self) -> list[models.TimePatternConfig]:
+        """Get list of current time pattern colors."""
+        colors: dict[int, str] = self._session_state['given_colors']
+        return [color for color in colors.values()]
+
     @classmethod
     def _check_time_pattern_colors(cls) -> None:
         """Check if number of unique time pattern colors is greater or equal
