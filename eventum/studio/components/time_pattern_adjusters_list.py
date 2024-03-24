@@ -201,7 +201,7 @@ class TimePatternAdjustersList(BaseComponent):
 
         return configs
 
-    def get_pattern_labels(self) -> list[models.TimePatternConfig]:
+    def get_pattern_labels(self) -> list[str]:
         """Get list of current time pattern labels."""
         labels = []
         for id in self._session_state['time_pattern_ids']:
@@ -210,10 +210,23 @@ class TimePatternAdjustersList(BaseComponent):
 
         return labels
 
-    def get_pattern_colors(self) -> list[models.TimePatternConfig]:
+    def get_pattern_colors(
+        self,
+        hex_format: bool = True
+    ) -> list[str]:
         """Get list of current time pattern colors."""
         colors: dict[int, str] = self._session_state['given_colors']
-        return [color for color in colors.values()]
+        if hex_format:
+            st_colors = {
+                'blue': '#60b4ff',
+                'green': '#3dd56d',
+                'orange': '#ffbd45',
+                'red': '#ff4b4b',
+                'violet': '#b27eff'
+            }
+            return [st_colors[color] for color in colors.values()]
+        else:
+            return [color for color in colors.values()]
 
     @classmethod
     def _check_time_pattern_colors(cls) -> None:

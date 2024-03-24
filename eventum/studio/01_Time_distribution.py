@@ -6,13 +6,6 @@ from eventum.studio.components.component import persist_state
 from eventum.studio.components.time_pattern_adjusters_list import \
     TimePatternAdjustersList
 
-STREAMLIT_COLORS = {
-    'blue': '#60b4ff',
-    'green': '#3dd56d',
-    'orange': '#ffbd45',
-    'red': '#ff4b4b',
-    'violet': '#b27eff'
-}
 
 persist_state()
 
@@ -37,7 +30,7 @@ for pattern, label, color in zip(patterns, labels, colors):
         go.Histogram(
             x=data,
             name=label,
-            marker_color=STREAMLIT_COLORS[color],
+            marker_color=color,
             nbinsx=100
         )
     )
