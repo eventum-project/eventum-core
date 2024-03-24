@@ -149,7 +149,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case datetime() as val:
                 end = val
             case timedelta() as val:
-                end = now + val
+                end = start + val
             case time() as val:
                 end = datetime.combine(date.today(), val)
             case TimeKeyword.NOW:
