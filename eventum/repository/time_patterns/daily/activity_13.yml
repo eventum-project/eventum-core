@@ -1,0 +1,17 @@
+label: Daily activity
+multiplier:
+  ratio: 10000
+oscillator:
+  end: +24h
+  period: 24.0
+  start: 00:00:00
+  unit: hours
+randomizer:
+  deviation: 0.0
+  direction: Mixed
+spreader:
+  distribution: Triangular
+  parameters:
+    left: 0.25
+    mode: 0.55
+    right: 0.85
