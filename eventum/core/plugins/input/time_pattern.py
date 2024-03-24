@@ -235,30 +235,6 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
             start += self._period_duration
 
-    def interactive_sample(self, periods_count: int) -> list[datetime]:
-        """The method is similar to usual `sample` but designed for
-        interactivity needs. Parameter `periods_count` describes how
-        many periods should be returned."""
-        start, end = self._get_normalized_interval_bounds()
-
-        timestamps = []
-        count = 0
-        while start < end and count < periods_count:
-            for timestamp in self._get_period_timeseries(
-                start=start,
-                size=self._period_size,
-                duration=self._period_duration
-            ):
-                if timestamp <= end:
-                    timestamps.append(timestamp)
-                else:
-                    break
-
-            start += self._period_duration
-            count += 1
-
-        return timestamps
-
     def live(self, on_event: Callable[[datetime], Any]) -> None:
         self._check_performance()
 

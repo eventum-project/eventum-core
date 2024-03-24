@@ -1,11 +1,12 @@
 import streamlit as st
 import plotly.graph_objects as go
 
+from eventum.core.plugins.input.base import InputPluginRuntimeError
 from eventum.core.plugins.input.time_pattern import TimePatternInputPlugin
 from eventum.studio.components.component import persist_state
 from eventum.studio.components.time_pattern_adjusters_list import \
     TimePatternAdjustersList
-
+from eventum.studio.notifiers import NotificationLevel, default_notifier
 
 persist_state()
 
@@ -25,7 +26,14 @@ patterns = [TimePatternInputPlugin(config) for config in configs]
 
 fig = go.Figure()
 for pattern, label, color in zip(patterns, labels, colors):
-    data = pattern.interactive_sample(periods_count=3)
+    data = []
+    try:
+        pattern.sample(lambda ts: data.append(ts))
+    except InputPluginRuntimeError as e:
+        default_notifier(
+            message=f'Pattern "{label}" is not visualized: {e}',
+            level=NotificationLevel.ERROR
+        )
     fig.add_trace(
         go.Histogram(
             x=data,
