@@ -38,8 +38,8 @@ class TimePatternAdjuster(BaseComponent):
 
         ss['oscillator_period'] = init.oscillator.period
         ss['oscillator_period_unit'] = init.oscillator.unit
-        ss['oscillator_start_timestamp'] = str(init.oscillator.start)
-        ss['oscillator_end_timestamp'] = str(init.oscillator.end)
+        ss['oscillator_start'] = str(init.oscillator.start)
+        ss['oscillator_end'] = str(init.oscillator.end)
 
         ss['multiplier_ratio'] = init.multiplier.ratio
 
@@ -162,11 +162,11 @@ class TimePatternAdjuster(BaseComponent):
         col1, col2 = st.columns(2)
         col1.text_input(
             'Start time',
-            key=self._wk('oscillator_start_timestamp'),
+            key=self._wk('oscillator_start'),
         )
         col2.text_input(
             'End time',
-            key=self._wk('oscillator_end_timestamp'),
+            key=self._wk('oscillator_end'),
         )
 
     def _show_multiplier_section(self) -> None:
@@ -348,8 +348,8 @@ class TimePatternAdjuster(BaseComponent):
             oscillator=models.OscillatorConfig(
                 period=ss['oscillator_period'],
                 unit=ss['oscillator_period_unit'],
-                start=ss['oscillator_start_timestamp'],
-                end=ss['oscillator_end_timestamp']
+                start=ss['oscillator_start'],
+                end=ss['oscillator_end']
             ),
             multiplier=models.MultiplierConfig(
                 ratio=ss['multiplier_ratio']
@@ -375,7 +375,7 @@ class TimePatternAdjuster(BaseComponent):
                 period=1,
                 unit=models.TimeUnit.SECONDS,
                 start=models.TimeKeyword.NOW,
-                end=models.TimeKeyword.NEVER
+                end='+1h'
             ),
             multiplier=models.MultiplierConfig(ratio=1),
             randomizer=models.RandomizerConfig(
