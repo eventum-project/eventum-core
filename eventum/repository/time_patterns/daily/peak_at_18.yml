@@ -1,4 +1,4 @@
-label: Daily peak at 18am
+label: Daily peak at 18:00
 multiplier:
   ratio: 1000
 oscillator:
