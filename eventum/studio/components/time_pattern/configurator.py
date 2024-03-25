@@ -73,18 +73,18 @@ class Configurator(BaseComponent):
         match ss['spreader_distribution']:
             case models.Distribution.UNIFORM:
                 ss['spreader_uniform_distr_bounds'] = (
-                    parameters.low, parameters.high
+                    parameters.low, parameters.high             # type: ignore
                 )
             case models.Distribution.TRIANGULAR:
                 ss['spreader_triangular_distr_left_bounds'] = (
-                    parameters.left, parameters.mode
+                    parameters.left, parameters.mode            # type: ignore
                 )
                 ss['spreader_triangular_distr_right_bounds'] = (
-                    parameters.mode, parameters.right
+                    parameters.mode, parameters.right           # type: ignore
                 )
             case models.Distribution.BETA:
-                ss['spreader_beta_distr_a'] = parameters.a
-                ss['spreader_beta_distr_b'] = parameters.b
+                ss['spreader_beta_distr_a'] = parameters.a      # type: ignore
+                ss['spreader_beta_distr_b'] = parameters.b      # type: ignore
             case val:
                 assert_never(val)
 

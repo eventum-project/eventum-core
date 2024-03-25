@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Iterable
 
-import plotly.graph_objects as go
+import plotly.graph_objects as go       # type: ignore
 import streamlit as st
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.core.plugins.input.base import InputPluginRuntimeError
