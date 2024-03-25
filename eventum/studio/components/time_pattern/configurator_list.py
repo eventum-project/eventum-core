@@ -1,24 +1,20 @@
 from typing import Callable, MutableMapping, Optional
 
-from pydantic import ValidationError
-
 import eventum.core.models.time_pattern_config as models
 import streamlit as st
 from eventum.repository.manage import (ContentReadError,
                                        get_time_pattern_filenames,
                                        load_time_pattern)
 from eventum.studio.components.component import BaseComponent
-from eventum.studio.components.time_pattern_adjuster import TimePatternAdjuster
+from eventum.studio.components.time_pattern.configurator import \
+    Configurator
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 from eventum.studio.widget_management import WidgetKeysContext
+from pydantic import ValidationError
 
 
-class TimePatternAdjustersListOverflowError(Exception):
-    """Exception for indicating overflows in TimePatternAdjustersList."""
-
-
-class TimePatternAdjustersList(BaseComponent):
-    """List of time pattern adjusters."""
+class ConfiguratorList(BaseComponent):
+    """Component for managing list of `Configurator`'s."""
 
     _TIME_PATTERN_COLORS = ('blue', 'green', 'orange', 'red', 'violet')
     _MAX_LIST_SIZE = 5
@@ -38,7 +34,7 @@ class TimePatternAdjustersList(BaseComponent):
         self._session_state['time_patterns_counter'] = 0
         self._session_state['time_pattern_ids'] = []
         self._session_state['available_colors'] = set(
-            TimePatternAdjustersList._TIME_PATTERN_COLORS
+            ConfiguratorList._TIME_PATTERN_COLORS
         )
         self._session_state['given_colors'] = dict()
         self._session_state['loaded_timepattern_filenames'] = set()
@@ -83,7 +79,7 @@ class TimePatternAdjustersList(BaseComponent):
     def _show(self):
         st.title('Time Patterns')
         for id in self._session_state['time_pattern_ids']:
-            TimePatternAdjuster(
+            Configurator(
                 id=id,
                 widget_keys_context=self._wk,
                 props={
@@ -116,7 +112,7 @@ class TimePatternAdjustersList(BaseComponent):
     ) -> None:
         """Add time pattern adjuster element to list."""
         if self._session_state['time_patterns_counter'] == self._MAX_LIST_SIZE:
-            raise TimePatternAdjustersListOverflowError(
+            raise ValueError(
                 f'Max size ({self._MAX_LIST_SIZE}) of list is exceeded'
             )
 
@@ -128,7 +124,7 @@ class TimePatternAdjustersList(BaseComponent):
         color = self._session_state['available_colors'].pop()
         self._session_state['given_colors'][id] = color
 
-        TimePatternAdjuster(
+        Configurator(
             id=id,
             widget_keys_context=self._wk,
             props={
@@ -167,7 +163,7 @@ class TimePatternAdjustersList(BaseComponent):
 
     def delete(self, id: int) -> None:
         """Delete specified time pattern adjuster from list."""
-        time_pattern = TimePatternAdjuster(
+        time_pattern = Configurator(
             id=id,
             widget_keys_context=self._wk
         )
@@ -187,7 +183,7 @@ class TimePatternAdjustersList(BaseComponent):
         """Get list of currently adjusted time pattern configs."""
         configs = []
         for id in self._session_state['time_pattern_ids']:
-            pattern = TimePatternAdjuster(id=id, widget_keys_context=self._wk)
+            pattern = Configurator(id=id, widget_keys_context=self._wk)
             try:
                 configs.append(pattern.get_current_configuration())
             except ValidationError as e:
