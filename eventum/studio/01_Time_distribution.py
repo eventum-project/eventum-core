@@ -7,6 +7,8 @@ from eventum.studio.components.time_pattern.configurator_list import \
     ConfiguratorList
 from eventum.studio.components.time_pattern.distribution_histogram import \
     DistributionHistogram
+from eventum.studio.components.time_pattern.downsampling_input import \
+    DownsamplingInput
 
 persist_state()
 
@@ -20,9 +22,17 @@ configs_list = ConfiguratorList()
 with st.sidebar:
     configs_list.show()
 
-col1, col2 = st.columns([1, 1])
-bins_count = col1.radio('Bins count', [100, 1000, 10000], horizontal=True)
-col2.markdown(
+col1, col2, col3 = st.columns([1, 1, 1])
+bins_count = col1.radio(
+    label='Bins count',
+    options=[100, 1000, 10000],
+    horizontal=True
+)
+
+with col2:
+    downsampling = DownsamplingInput().show()
+
+col3.markdown(
     '<div style="text-align: right">'
     f'Time zone: <code>{datetime.now().astimezone().tzinfo}</code>'
     '</div>',
