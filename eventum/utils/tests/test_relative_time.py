@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import pytest
 
-from eventum.utils.relative_time import parse_relative_time
+from eventum.utils.relative_time import parse_relative_time, validate_time_span
 
 
 def test_parse_relative_time():
@@ -34,3 +34,19 @@ def test_parse_relative_time():
 
     with pytest.raises(ValueError):
         parse_relative_time('')
+
+
+def test_validate_time_span():
+    assert validate_time_span('0s') is True
+    assert validate_time_span('1s') is True
+    assert validate_time_span('15m') is True
+    assert validate_time_span('12h') is True
+    assert validate_time_span('7d') is True
+    assert validate_time_span('120m') is True
+
+    assert validate_time_span('12') is False
+    assert validate_time_span('1M') is False
+    assert validate_time_span('6hour') is False
+    assert validate_time_span('-2m') is False
+    assert validate_time_span('14mh') is False
+    assert validate_time_span('s') is False

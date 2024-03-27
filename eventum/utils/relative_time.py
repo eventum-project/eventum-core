@@ -20,11 +20,11 @@ def parse_relative_time(expression: str) -> timedelta:
         raise ValueError('Empty expression is provided')
 
     pattern = (
-        r'(?P<sign>[-+])?'
+        r'^(?P<sign>[-+])?'
         r'(?:(?P<days>\d+)d)?'
         r'(?:(?P<hours>\d+)h)?'
         r'(?:(?P<minutes>\d+)m)?'
-        r'(?:(?P<seconds>\d+)s)?'
+        r'(?:(?P<seconds>\d+)s)?$'
     )
     match = re.match(pattern, expression)
 
@@ -50,3 +50,14 @@ def parse_relative_time(expression: str) -> timedelta:
             if value is not None
         }
     )
+
+
+def validate_time_span(expression: str) -> bool:
+    """Check whether the expression is valid representation of time
+    span. The expression should have the following format:
+
+    <expression> ::= <value><unit>
+    <value> ::= <integer>
+    <unit> ::= 'd' | 'h' | 'm' | 's'
+    """
+    return bool(re.match(r'^\d+[smhd]$', expression))
