@@ -20,7 +20,8 @@ class DownsamplingInput(BaseComponent):
             label='Downsampling',
             help=(
                 'Whether to downsample the original distribution '
-                'to optimize visualization speed'
+                'to optimize visualization speed. Recommended to be turned on '
+                'in large sized (>100,000) distributions.'
             ),
             key=self._wk('status'),
             options=['Off', 'On'],
