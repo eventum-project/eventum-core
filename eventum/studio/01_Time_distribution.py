@@ -1,4 +1,7 @@
+from datetime import datetime
+
 import streamlit as st
+
 from eventum.studio.components.component import persist_state
 from eventum.studio.components.time_pattern.configurator_list import \
     ConfiguratorList
@@ -19,6 +22,12 @@ with st.sidebar:
 
 col1, col2 = st.columns([1, 1])
 bins_count = col1.radio('Bins count', [100, 1000, 10000], horizontal=True)
+col2.markdown(
+    '<div style="text-align: right">'
+    f'Time zone: <code>{datetime.now().astimezone().tzinfo}</code>'
+    '</div>',
+    unsafe_allow_html=True
+)
 
 st.divider()
 
