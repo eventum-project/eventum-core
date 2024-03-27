@@ -18,6 +18,10 @@ class DownsamplingInput(BaseComponent):
 
         col1.radio(
             label='Downsampling',
+            help=(
+                'Whether to downsample the original distribution '
+                'to optimize visualization speed'
+            ),
             key=self._wk('status'),
             options=['Off', 'On'],
             horizontal=True
@@ -25,8 +29,12 @@ class DownsamplingInput(BaseComponent):
 
         col2.text_input(
             'Downsampling span',
-            key=self._wk('downsampling_span'),
             placeholder='expression',
+            help=(
+                'Factor of downsampling, expression should be like: '
+                '`1s`, `30m`, `12h`, `7d`, ... etc.'
+            ),
+            key=self._wk('downsampling_span'),
             disabled=self.get_status() is False,
             on_change=self._check_expression
         )

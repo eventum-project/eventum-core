@@ -25,6 +25,7 @@ with st.sidebar:
 col1, col2, col3 = st.columns([1, 1, 1])
 bins_count = col1.radio(
     label='Bins count',
+    help='Count of bins displayed in distribution histogram',
     options=[100, 1000, 10000],
     horizontal=True
 )
