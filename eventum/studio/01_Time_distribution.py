@@ -31,7 +31,8 @@ bins_count = col1.radio(
 )
 
 with col2:
-    downsampling = DownsamplingInput().show()
+    downsampling = DownsamplingInput()
+    downsampling.show()
 
 col3.markdown(
     '<div style="text-align: right">'
@@ -46,6 +47,8 @@ DistributionHistogram(
     props={
         'configs': configs_list.get_pattern_configs(),
         'colors': configs_list.get_pattern_colors(),
-        'bins_count': bins_count
+        'bins_count': bins_count,
+        'downsampling': downsampling.get_status(),
+        'downsampling_span': downsampling.get_span()
     }
 ).show()

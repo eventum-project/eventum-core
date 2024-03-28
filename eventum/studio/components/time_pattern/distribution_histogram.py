@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Iterable
 
+import pandas as pd
 import plotly.graph_objects as go       # type: ignore
 import streamlit as st
 from eventum.core.models.time_pattern_config import TimePatternConfig
@@ -27,7 +28,10 @@ def _hash_config(config: TimePatternConfig) -> int:
     persist=True,
     hash_funcs={TimePatternConfig: _hash_config}
 )
-def _calculate_distribution(config: TimePatternConfig) -> list[datetime]:
+def _calculate_sample(config: TimePatternConfig) -> list[datetime]:
+    """Calculate sample for specified `config`. If finite sample cannot
+    be calculated then empty list is returned and corresponding
+    notification is displayed."""
     pattern = TimePatternInputPlugin(config)
     try:
         data = []
@@ -50,36 +54,55 @@ class DistributionHistogram(BaseComponent):
     _SHOW_PROPS = {
         'configs': Iterable[TimePatternConfig],
         'colors': Iterable[str],
-        'bins_count': int
+        'bins_count': int,
+        'downsampling': bool,
+        'downsampling_span': str
     }
 
     def _show(self) -> None:
         configs: Iterable[TimePatternConfig] = self._props['configs']
         bins_count: int = self._props['bins_count']
         colors: Iterable[str] = self._props['colors']
+        downsampling: bool = self._props['downsampling']
+        downsampling_span: str = self._props['downsampling_span']
 
-        samples: list[list[datetime]] = []
+        series: list[pd.DataFrame] = []
         labels: list[str] = []
+        total_events = 0
 
         for config in configs:
-            sample = _calculate_distribution(config)
-            samples.append(sample)
+            sample = _calculate_sample(config)
+            ser = pd.Series(1, index=sample)
+            total_events += ser.size
+
+            if downsampling:
+                ser = ser.resample(rule=downsampling_span).sum()
+
+            series.append(ser)
             labels.append(config.label)
 
-        total_events = 0
         fig = go.Figure()
 
-        for sample, label, color in zip(samples, labels, colors):
+        for ser, label, color in zip(series, labels, colors):
             fig.add_trace(
                 go.Histogram(
-                    x=sample,
+                    x=ser.index,
+                    y=ser.values,
+                    histfunc='sum',
                     name=label,
                     nbinsx=bins_count,
                     marker_color=color
                 )
             )
-            total_events += len(sample)
 
         fig.update_layout(barmode='stack')
         st.plotly_chart(fig, use_container_width=True)
-        st.text(f'Total events: {total_events}')
+
+        col1, col2 = st.columns([8, 2])
+        col1.text(f'Total events: {total_events}')
+        col2.button(
+            'Update',
+            use_container_width=True,
+            key=self._wk.get_ephemeral(),
+            on_click=_calculate_sample.clear
+        )
