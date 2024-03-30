@@ -1,13 +1,12 @@
 import sys
 from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
 from typing import Any, Callable, Sequence, assert_never
 
 import numpy as np
-
 from eventum.core import settings
 from eventum.core.models.time_pattern_config import (Distribution,
                                                      RandomizerDirection,
@@ -17,6 +16,7 @@ from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              InputPluginRuntimeError,
                                              LiveInputPlugin, PerformanceError,
                                              SampleInputPlugin)
+from eventum.utils.numpy_time import timedelta_to_seconds, utcnow
 from eventum.utils.relative_time import parse_relative_time
 from eventum.utils.timeseries import get_future_slice
 
@@ -66,12 +66,19 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 assert_never(direction)
 
     @property
-    def _period_duration(self) -> timedelta:
+    def _period_duration(self) -> np.timedelta64:
         """Get duration of one period."""
-        key = self._config.oscillator.unit.value
+        unit = self._config.oscillator.unit.value
         value = self._config.oscillator.period
 
-        return timedelta(**{key: value})
+        unit_codes = {
+            'seconds': 's',
+            'minutes': 'm',
+            'hours': 'h',
+            'days': 'D'
+        }
+
+        return np.timedelta64(value, unit_codes[unit])
 
     @property
     def _period_size(self) -> int:
@@ -83,7 +90,11 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             * np.random.choice(self._randomizer_factors)
         )
 
-    def _get_distribution(self, size, duration) -> list[timedelta]:
+    def _get_distribution(
+        self,
+        size: int,
+        duration: np.timedelta64
+    ) -> np.ndarray[np.timedelta64]:
         """Compute list of time points in the distribution for one
         period where each point is expressed as time from the beginning
         of the period.
@@ -105,27 +116,25 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case val:
                 assert_never(val)
 
-        return list(array * duration)   # type: ignore
+        return array * duration
 
     def _get_period_timeseries(
         self,
-        start: datetime,
+        start: np.datetime64,
         size: int,
-        duration: timedelta
-    ) -> list[datetime]:
+        duration: np.timedelta64
+    ) -> np.ndarray[np.datetime64]:
         """Compute list of datetimes in the distribution for one
         period from `start` with specified `duration` and `size`.
         """
-        return [
-            start + delta for delta in self._get_distribution(size, duration)
-        ]
+        return self._get_distribution(size, duration) + start
 
     def _get_normalized_interval_bounds(
         self,
         allow_never_end: bool = True
-    ) -> tuple[datetime, datetime]:
-        """Get absolute timestamps converting relative time (timedelta),
-        keywords or only time component.
+    ) -> tuple[np.datetime64, np.datetime64]:
+        """Get absolute timestamps converting `start` and `end` values
+        from config.
         """
         now = datetime.now()
         never = datetime(year=9999, month=12, day=31)
@@ -174,7 +183,10 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 '"start" time must be earlier than "end" time'
             )
 
-        return (start, end)
+        return (
+            np.datetime64(start.replace(tzinfo=None)),
+            np.datetime64(end.replace(tzinfo=None))
+        )
 
     def _get_required_eps(self) -> float:
         """Get required eps for performance check."""
@@ -188,7 +200,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case _:
                 max_count = self._config.multiplier.ratio
 
-        seconds = self._period_duration.total_seconds()
+        seconds = timedelta_to_seconds(self._period_duration)
         return max_count / seconds * self._REQUIRED_EPS_RESERVE_RATIO
 
     def _test_actual_eps(self) -> float:
@@ -196,7 +208,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         start = perf_counter()
         self._get_period_timeseries(
-            start=datetime.now().astimezone(),
+            start=utcnow(),
             size=self._PERFORMANCE_TEST_SAMPLE_SIZE,
             duration=self._period_duration
         )
@@ -218,7 +230,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 'is required'
             )
 
-    def sample(self, on_event: Callable[[datetime], Any]) -> None:
+    def sample(self, on_event: Callable[[np.datetime64], Any]) -> None:
         start, end = self._get_normalized_interval_bounds(
             allow_never_end=False
         )
@@ -236,12 +248,37 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
             start += self._period_duration
 
+    def visualization_sample(self) -> np.ndarray[np.datetime64]:
+        start, end = self._get_normalized_interval_bounds(
+            allow_never_end=False
+        )
+        start, end = (
+            np.datetime64(start.replace(tzinfo=None).isoformat()),
+            np.datetime64(end.replace(tzinfo=None).isoformat()),
+        )
+
+        timestamps = []
+        while start < end:
+            for timestamp in self._get_period_timeseries(
+                start=start,
+                size=self._period_size,
+                duration=self._period_duration
+            ):
+                if timestamp <= end:
+                    timestamps.append(timestamp)
+                else:
+                    break
+
+            start += self._period_duration
+
+        return np.ndarray(timestamps)
+
     def live(self, on_event: Callable[[datetime], Any]) -> None:
         self._check_performance()
 
         start, end = self._get_normalized_interval_bounds()
 
-        now = datetime.now().astimezone()
+        now = utcnow()
         if now >= end:
             return
 
@@ -255,24 +292,26 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             duration=self._period_duration
         )
 
-        now = datetime.now().astimezone()
+        now = utcnow()
         if start < now:
             timestamps = get_future_slice(timestamps=timestamps, now=now)
 
         # thread worker definitions
 
-        def publish_period_thread(timestamps: list[datetime]) -> None:
-            now = datetime.now().astimezone()
+        def publish_period_thread(
+            timestamps: np.ndarray[np.datetime64]
+        ) -> None:
+            now = utcnow()
 
             for timestamp in timestamps:
                 if timestamp >= end:
                     raise EndTimeReaching
 
-                wait_seconds = (timestamp - now).total_seconds()
+                wait_seconds = timedelta_to_seconds(timestamp - now)
 
                 if wait_seconds > settings.TIME_PRECISION >= 0.0:
                     sleep(wait_seconds)
-                    now = datetime.now().astimezone()
+                    now = utcnow()
 
                 on_event(timestamp)
 
@@ -323,7 +362,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
             TimePatternInputPlugin(config) for config in self._configs
         ]
 
-    def sample(self, on_event: Callable[[datetime], Any]) -> None:
+    def sample(self, on_event: Callable[[np.datetime64], Any]) -> None:
         samples = []
 
         for pattern in self._time_patterns:
@@ -334,20 +373,20 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
         for ts in merge(*samples):
             on_event(ts)
 
-    def live(self, on_event: Callable[[datetime], Any]) -> None:
-        queues: list[Queue[datetime]] = []
+    def live(self, on_event: Callable[[np.datetime64], Any]) -> None:
+        queues: list[Queue[np.datetime64]] = []
         tasks: list[Future] = []
 
         with ThreadPoolExecutor(max_workers=self._size) as pool:
             for pattern in self._time_patterns:
-                queue: Queue[datetime] = Queue(maxsize=-1)
+                queue: Queue[np.datetime64] = Queue()
                 tasks.append(
                     pool.submit(pattern.live, queue.put)
                 )
                 queues.append(queue)
 
             while tasks:
-                latest_timestamp = datetime.now().astimezone()
+                latest_timestamp = utcnow()
                 overhead_seconds = sys.getswitchinterval() * self._size
                 sleep(settings.TIME_PRECISION + overhead_seconds)
 
