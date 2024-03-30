@@ -248,31 +248,6 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
             start += self._period_duration
 
-    def visualization_sample(self) -> np.ndarray[np.datetime64]:
-        start, end = self._get_normalized_interval_bounds(
-            allow_never_end=False
-        )
-        start, end = (
-            np.datetime64(start.replace(tzinfo=None).isoformat()),
-            np.datetime64(end.replace(tzinfo=None).isoformat()),
-        )
-
-        timestamps = []
-        while start < end:
-            for timestamp in self._get_period_timeseries(
-                start=start,
-                size=self._period_size,
-                duration=self._period_duration
-            ):
-                if timestamp <= end:
-                    timestamps.append(timestamp)
-                else:
-                    break
-
-            start += self._period_duration
-
-        return np.ndarray(timestamps)
-
     def live(self, on_event: Callable[[datetime], Any]) -> None:
         self._check_performance()
 
