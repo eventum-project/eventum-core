@@ -1,11 +1,10 @@
 import time
-from datetime import datetime
 from typing import Any, Callable
 
 from crontab import CronTab
-
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              LiveInputPlugin)
+from numpy import datetime64
 
 
 class CronInputPlugin(LiveInputPlugin):
@@ -26,13 +25,17 @@ class CronInputPlugin(LiveInputPlugin):
             )
         self._count = count
 
-    def live(self, on_event: Callable[[datetime], Any]) -> None:
+    def live(self, on_event: Callable[[datetime64], Any]) -> None:
         while True:
-            timestamp = self._entry.next(                       # type: ignore
-                default_utc=False,
-                return_datetime=True
+            timestamp = datetime64(
+                self._entry.next(                               # type: ignore
+                    default_utc=True,
+                    return_datetime=True
+                )
             )
-            time.sleep(self._entry.next(default_utc=False))     # type: ignore
+            wait_seconds = self._entry.next(default_utc=False)  # type: ignore
+            if wait_seconds > 0:
+                time.sleep(wait_seconds)
 
             for _ in range(self._count):
                 on_event(timestamp)
