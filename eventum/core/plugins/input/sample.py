@@ -1,8 +1,9 @@
-from datetime import datetime
 from typing import Any, Callable
 
 from eventum.core.plugins.input.base import \
     SampleInputPlugin as BaseSampleInputPlugin
+from eventum.utils.numpy_time import utcnow
+from numpy import datetime64
 
 
 class SampleInputPlugin(BaseSampleInputPlugin):
@@ -15,8 +16,8 @@ class SampleInputPlugin(BaseSampleInputPlugin):
     def __init__(self, count: int) -> None:
         self._count = count
 
-    def sample(self, on_event: Callable[[datetime], Any]) -> None:
-        timestamp = datetime.now().astimezone()
+    def sample(self, on_event: Callable[[datetime64], Any]) -> None:
+        timestamp = utcnow()
 
         for _ in range(self._count):
             on_event(timestamp)
