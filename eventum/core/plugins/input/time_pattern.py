@@ -1,6 +1,6 @@
 import sys
 from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
@@ -71,14 +71,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         unit = self._config.oscillator.unit.value
         value = int(self._config.oscillator.period)
 
-        unit_codes = {
-            'seconds': 's',
-            'minutes': 'm',
-            'hours': 'h',
-            'days': 'D'
-        }
-
-        return np.timedelta64(value, unit_codes[unit])
+        return np.timedelta64(timedelta(**{unit: value}))
 
     @property
     def _period_size(self) -> int:
