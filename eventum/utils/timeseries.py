@@ -1,10 +1,10 @@
-from datetime import datetime
+from numpy import datetime64, ndarray
 
 
 def get_future_slice(
-    timestamps: list[datetime],
-    now: datetime
-) -> list[datetime]:
+    timestamps: ndarray[datetime64],
+    now: datetime64
+) -> ndarray[datetime64]:
     """Get slice of timestamps after the `now` using binary search."""
     left = 0
     right = len(timestamps) - 1

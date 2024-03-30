@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
 from typing import Any, Callable
+
+from numpy import datetime64
 
 
 class InputPluginError(Exception):
@@ -29,7 +30,7 @@ class LiveInputPlugin(BaseInputPlugin):
     """Base class for all input plugin that can be used in live mode."""
 
     @abstractmethod
-    def live(self, on_event: Callable[[datetime], Any]) -> None:
+    def live(self, on_event: Callable[[datetime64], Any]) -> None:
         """Start production of events in live. Every time event is
         occurred in process, the `on_event` callable is called with
         current timestamp as a single parameter. If process has no end
@@ -43,7 +44,7 @@ class SampleInputPlugin(BaseInputPlugin):
     """Base class for all input plugin that can be used in sample mode."""
 
     @abstractmethod
-    def sample(self, on_event: Callable[[datetime], Any]) -> None:
+    def sample(self, on_event: Callable[[datetime64], Any]) -> None:
         """Start production of events as a sample. Every time event is
         occurred in process, the `on_event` callable is called with
         current timestamp as a single parameter. The process execution
