@@ -119,17 +119,9 @@ def start_input_subprocess(
     try:
         match time_mode:
             case TimeMode.LIVE:
-                input_plugin.live(
-                    on_event=lambda ts: queue.put(
-                        ts.isoformat()          # type: ignore
-                    )
-                )
+                input_plugin.live(on_event=queue.put)
             case TimeMode.SAMPLE:
-                input_plugin.sample(
-                    on_event=lambda ts: queue.put(
-                        ts.isoformat()          # type: ignore
-                    )
-                )
+                input_plugin.sample(on_event=queue.put)
             case _:
                 assert_never(time_mode)
     except AttributeError:

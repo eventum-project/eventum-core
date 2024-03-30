@@ -69,7 +69,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     def _period_duration(self) -> np.timedelta64:
         """Get duration of one period."""
         unit = self._config.oscillator.unit.value
-        value = self._config.oscillator.period
+        value = int(self._config.oscillator.period)
 
         unit_codes = {
             'seconds': 's',
