@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go  # type: ignore
 import streamlit as st
+from numpy.typing import NDArray
 
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.core.plugins.input.base import InputPluginRuntimeError
@@ -29,7 +30,7 @@ def _hash_config(config: TimePatternConfig) -> int:
     persist=True,
     hash_funcs={TimePatternConfig: _hash_config}
 )
-def _calculate_sample(config: TimePatternConfig) -> np.ndarray[np.datetime64]:
+def _calculate_sample(config: TimePatternConfig) -> NDArray[np.datetime64]:
     """Calculate sample for specified `config`. If finite sample cannot
     be calculated then empty list is returned and corresponding
     notification is displayed."""
@@ -104,5 +105,5 @@ class DistributionHistogram(BaseComponent):
             'Recalculate',
             use_container_width=True,
             key=self._wk.get_ephemeral(),
-            on_click=_calculate_sample.clear
+            on_click=_calculate_sample.clear    # type: ignore
         )

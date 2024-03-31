@@ -7,6 +7,7 @@ from time import perf_counter, sleep
 from typing import Any, Callable, Sequence, assert_never
 
 import numpy as np
+from numpy.typing import NDArray
 from eventum.core import settings
 from eventum.core.models.time_pattern_config import (Distribution,
                                                      RandomizerDirection,
@@ -39,7 +40,10 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         self._config = config
         self._randomizer_factors = self._generate_randomizer_factors()
 
-    def _generate_randomizer_factors(self, size: int = 1000) -> np.ndarray:
+    def _generate_randomizer_factors(
+        self,
+        size: int = 1000
+    ) -> NDArray[np.float64]:
         """Get sample of factors for multiply them on size for
         randomizer effect.
         """
@@ -87,7 +91,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         self,
         size: int,
         duration: np.timedelta64
-    ) -> np.ndarray[np.timedelta64]:
+    ) -> NDArray[np.timedelta64]:
         """Compute list of time points in the distribution for one
         period where each point is expressed as time from the beginning
         of the period.
@@ -116,7 +120,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         start: np.datetime64,
         size: int,
         duration: np.timedelta64
-    ) -> np.ndarray[np.datetime64]:
+    ) -> NDArray[np.datetime64]:
         """Compute list of datetimes in the distribution for one
         period from `start` with specified `duration` and `size`.
         """
@@ -194,7 +198,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 max_count = self._config.multiplier.ratio
 
         seconds = timedelta_to_seconds(self._period_duration)
-        return max_count / seconds * self._REQUIRED_EPS_RESERVE_RATIO
+        return float(max_count / seconds * self._REQUIRED_EPS_RESERVE_RATIO)
 
     def _test_actual_eps(self) -> float:
         """Compute actual eps for performance check."""
@@ -241,7 +245,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
             start += self._period_duration
 
-    def live(self, on_event: Callable[[datetime], Any]) -> None:
+    def live(self, on_event: Callable[[np.datetime64], Any]) -> None:
         self._check_performance()
 
         start, end = self._get_normalized_interval_bounds()
@@ -267,7 +271,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         # thread worker definitions
 
         def publish_period_thread(
-            timestamps: np.ndarray[np.datetime64]
+            timestamps: NDArray[np.datetime64]
         ) -> None:
             now = utcnow()
 
@@ -278,12 +282,14 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 wait_seconds = timedelta_to_seconds(timestamp - now)
 
                 if wait_seconds > settings.TIME_PRECISION >= 0.0:
-                    sleep(wait_seconds)
+                    sleep(wait_seconds)     # type: ignore
                     now = utcnow()
 
                 on_event(timestamp)
 
-        def prepare_period_thread(start: datetime) -> list[datetime]:
+        def prepare_period_thread(
+            start: np.datetime64
+        ) -> NDArray[np.datetime64]:
             return self._get_period_timeseries(
                 start=start,
                 size=self._period_size,

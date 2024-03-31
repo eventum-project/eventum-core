@@ -33,7 +33,7 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
             wait_seconds = timedelta_to_seconds(timestamp - now)
 
             if wait_seconds > settings.TIME_PRECISION >= 0:
-                time.sleep(wait_seconds)
+                time.sleep(wait_seconds)    # type: ignore
                 now = utcnow()
 
             on_event(timestamp)

@@ -2,6 +2,7 @@ from threading import Condition, RLock, Thread
 from typing import Any, Callable
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 class Batcher:
@@ -13,7 +14,7 @@ class Batcher:
         self,
         size: int,
         timeout: float,
-        callback: Callable[[np.ndarray[Any]], Any]
+        callback: Callable[[NDArray[Any]], Any]
     ) -> None:
         self._size = size
         self._timeout = timeout
