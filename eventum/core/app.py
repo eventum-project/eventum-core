@@ -105,6 +105,13 @@ class Application:
             )
         )
 
+    def _increment_progress(self, bar) -> None:
+        """Increment progress by newly processed events value."""
+        processed = self._processed_events.value - bar.current  # type: ignore
+
+        for _ in range(processed):
+            bar()
+
     def start(self, interactive: bool = True) -> None:
         logger.info('Application is started')
 
@@ -121,19 +128,10 @@ class Application:
         with alive_bar(0, enrich_print=False, file=bar_stream) as bar:
             bar.title('Awaiting events')
 
-            last_processed_count = 0
             while not self._is_output_done.is_set():
-                if last_processed_count > 0:
+                if bar.current > 0:
                     bar.title('Processing events')
-
-                current_processed_count = (
-                    self._processed_events.value    # type: ignore
-                )
-                processed = current_processed_count - last_processed_count
-
-                for _ in range(processed):
-                    bar()
-                    last_processed_count = current_processed_count
+                self._increment_progress(bar)
 
                 if (
                     not self._proc_input.is_alive()
@@ -173,6 +171,8 @@ class Application:
             self._proc_input.join()
             self._proc_event.join()
             self._proc_output.join()
+
+            self._increment_progress(bar)
 
             logger.info('Application is stopped')
             exit(0)
