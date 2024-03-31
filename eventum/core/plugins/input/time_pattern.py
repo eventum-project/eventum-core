@@ -1,13 +1,12 @@
 import sys
 from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError
-from datetime import date, datetime, time, timedelta, UTC
+from datetime import date, datetime, time, timedelta
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
 from typing import Any, Callable, Sequence, assert_never
 
 import numpy as np
-from numpy.typing import NDArray
 from eventum.core import settings
 from eventum.core.models.time_pattern_config import (Distribution,
                                                      RandomizerDirection,
@@ -17,9 +16,10 @@ from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              InputPluginRuntimeError,
                                              LiveInputPlugin, PerformanceError,
                                              SampleInputPlugin)
-from eventum.utils.numpy_time import timedelta_to_seconds, utcnow
+from eventum.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum.utils.relative_time import parse_relative_time
 from eventum.utils.timeseries import get_future_slice
+from numpy.typing import NDArray
 
 
 class EndTimeReaching(Exception):
@@ -172,8 +172,8 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 'in current conditions'
             )
 
-        start = start.astimezone(UTC)
-        end = end.astimezone(UTC)
+        start = start.astimezone(settings.TIMEZONE)
+        end = end.astimezone(settings.TIMEZONE)
 
         if start >= end:
             raise InputPluginRuntimeError(
@@ -205,7 +205,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         start = perf_counter()
         self._get_period_timeseries(
-            start=utcnow(),
+            start=get_now(),
             size=self._PERFORMANCE_TEST_SAMPLE_SIZE,
             duration=self._period_duration
         )
@@ -250,7 +250,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         start, end = self._get_normalized_interval_bounds()
 
-        now = utcnow()
+        now = get_now()
         if now >= end:
             return
 
@@ -264,7 +264,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             duration=self._period_duration
         )
 
-        now = utcnow()
+        now = get_now()
         if start < now:
             timestamps = get_future_slice(timestamps=timestamps, now=now)
 
@@ -273,7 +273,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         def publish_period_thread(
             timestamps: NDArray[np.datetime64]
         ) -> None:
-            now = utcnow()
+            now = get_now()
 
             for timestamp in timestamps:
                 if timestamp >= end:
@@ -283,7 +283,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
                 if wait_seconds > settings.TIME_PRECISION >= 0.0:
                     sleep(wait_seconds)     # type: ignore
-                    now = utcnow()
+                    now = get_now()
 
                 on_event(timestamp)
 
@@ -360,7 +360,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 queues.append(queue)
 
             while tasks:
-                latest_timestamp = utcnow()
+                latest_timestamp = get_now()
                 overhead_seconds = sys.getswitchinterval() * self._size
                 sleep(settings.TIME_PRECISION + overhead_seconds)
 

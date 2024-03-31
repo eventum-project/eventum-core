@@ -1,3 +1,5 @@
+from datetime import UTC
+
 # ========== Input parameters ==========
 
 # Precision (in seconds) of publishing events in time.
@@ -6,6 +8,9 @@
 # Parameter is only actual in live mode for timestamps and patterns
 # input plugins.
 TIME_PRECISION = 0.1
+
+# Time zone used in input plugins to generate timestamps.
+TIMEZONE = UTC
 
 
 # ========== Event parameters ==========

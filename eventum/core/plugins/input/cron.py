@@ -1,7 +1,9 @@
 import time
+from datetime import UTC
 from typing import Any, Callable
 
 from crontab import CronTab
+from eventum.core import settings
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              LiveInputPlugin)
 from numpy import datetime64
@@ -31,7 +33,9 @@ class CronInputPlugin(LiveInputPlugin):
                 self._entry.next(                               # type: ignore
                     default_utc=True,
                     return_datetime=True
-                )
+                ).replace(
+                    tzinfo=UTC
+                ).astimezone(settings.TIMEZONE).replace(tzinfo=None)
             )
             wait_seconds = self._entry.next(default_utc=False)  # type: ignore
             if wait_seconds > 0:

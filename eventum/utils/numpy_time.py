@@ -1,10 +1,12 @@
-from datetime import datetime, UTC
-from numpy import datetime64, timedelta64, float64
+from datetime import datetime
+
+from eventum.core import settings
+from numpy import datetime64, float64, timedelta64
 
 
-def utcnow() -> datetime64:
+def get_now() -> datetime64:
     """Get current time in UTC timezone."""
-    return datetime64(datetime.now(UTC).replace(tzinfo=None))
+    return datetime64(datetime.now(settings.TIMEZONE).replace(tzinfo=None))
 
 
 def timedelta_to_seconds(delta: timedelta64) -> float64:

@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 from eventum.core.plugins.input.base import \
     SampleInputPlugin as BaseSampleInputPlugin
-from eventum.utils.numpy_time import utcnow
+from eventum.utils.numpy_time import get_now
 from numpy import datetime64
 
 
@@ -17,7 +17,7 @@ class SampleInputPlugin(BaseSampleInputPlugin):
         self._count = count
 
     def sample(self, on_event: Callable[[datetime64], Any]) -> None:
-        timestamp = utcnow()
+        timestamp = get_now()
 
         for _ in range(self._count):
             on_event(timestamp)
