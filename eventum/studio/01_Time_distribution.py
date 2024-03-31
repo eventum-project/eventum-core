@@ -1,14 +1,13 @@
 from datetime import datetime
 
 import streamlit as st
-
+from eventum.core import settings
 from eventum.studio.components.component import persist_state
 from eventum.studio.components.time_pattern.configurator_list import \
     ConfiguratorList
 from eventum.studio.components.time_pattern.distribution_histogram import \
     DistributionHistogram
-from eventum.studio.components.time_pattern.downsampling_input import \
-    DownsamplingInput
+from eventum.studio.components.time_pattern.span_input import SpanInput
 
 persist_state()
 
@@ -22,21 +21,23 @@ configs_list = ConfiguratorList()
 with st.sidebar:
     configs_list.show()
 
-col1, col2, col3 = st.columns([1, 1, 1])
-bins_count = col1.radio(
-    label='Bins count',
-    help='Count of bins displayed in distribution histogram',
-    options=[100, 1000, 10000],
-    horizontal=True
+col1, col2 = st.columns([1, 1])
+
+
+with col1:
+    span = SpanInput()
+    span.show()
+
+col2.markdown(
+    '<div style="text-align: right">'
+    f'Local time zone: <code>{datetime.now().astimezone().tzinfo}</code>'
+    '</div>',
+    unsafe_allow_html=True
 )
 
-with col2:
-    downsampling = DownsamplingInput()
-    downsampling.show()
-
-col3.markdown(
+col2.markdown(
     '<div style="text-align: right">'
-    f'Time zone: <code>{datetime.now().astimezone().tzinfo}</code>'
+    f'Sample time zone: <code>{settings.TIMEZONE}</code>'
     '</div>',
     unsafe_allow_html=True
 )
@@ -47,8 +48,7 @@ DistributionHistogram(
     props={
         'configs': configs_list.get_pattern_configs(),
         'colors': configs_list.get_pattern_colors(),
-        'bins_count': bins_count,
-        'downsampling': downsampling.get_status(),
-        'downsampling_span': downsampling.get_span()
+        'use_custom_span': not span.is_auto(),
+        'span_expression': span.get_expression()
     }
 ).show()

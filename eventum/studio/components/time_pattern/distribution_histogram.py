@@ -5,8 +5,6 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go  # type: ignore
 import streamlit as st
-from numpy.typing import NDArray
-
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.core.plugins.input.base import InputPluginRuntimeError
 from eventum.core.plugins.input.time_pattern import TimePatternInputPlugin
@@ -14,6 +12,7 @@ from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 from eventum.utils.numpy_time import timedelta_to_seconds
 from eventum.utils.relative_time import parse_relative_time
+from numpy.typing import NDArray
 
 
 def _hash_config(config: TimePatternConfig) -> int:
@@ -54,7 +53,7 @@ def _calculate_sample(config: TimePatternConfig) -> NDArray[np.datetime64]:
 
 class DistributionHistogram(BaseComponent):
     """Component for visualizing time patterns distribution."""
-    _AUTO_SPAN_SAMPLE_SIZE = 100
+    _AUTO_SPAN_BINS_COUNT = 60
 
     _SHOW_PROPS = {
         'configs': Iterable[TimePatternConfig],
@@ -78,64 +77,53 @@ class DistributionHistogram(BaseComponent):
         else:
             auto_span = timedelta(
                 seconds=timedelta_to_seconds(
-                    (series[-1] - series[0]) / self._AUTO_SPAN_SAMPLE_SIZE
+                    (series.index[-1] - series.index[0])
+                    / self._AUTO_SPAN_BINS_COUNT
                 )
             )
             return series.resample(rule=auto_span).sum()
-
-    def _calculate_bins_count(self, timedelta: np.timedelta64) -> int:
-        """Calculate count of bins in histogram for sample with
-        specified `timedelta` range (from start to end) according to
-        span configuration.
-        """
-        use_custom_span: bool = self._props['use_custom_span']
-        span_expression: str = self._props['span_expression']
-
-        if use_custom_span:
-            return int(
-                np.ceil(timedelta / parse_relative_time(span_expression))
-            )
-        else:
-            return self._AUTO_SPAN_SAMPLE_SIZE
 
     def _show(self) -> None:
         configs: Iterable[TimePatternConfig] = self._props['configs']
         colors: Iterable[str] = self._props['colors']
 
-        series_list: list[pd.Series] = []
-        labels: list[str] = []
+        use_custom_span: bool = self._props['use_custom_span']
+        span_expression: str = self._props['span_expression']
+
+        traces: list[tuple[pd.Series, str, str]] = []
         total_events = 0
 
-        min_timestamp = np.datetime64('9999-12-31')
-        max_timestamp = np.datetime64('0000-01-01')
-
-        for config in configs:
+        for config, color in zip(configs, colors):
             series = pd.Series(1, index=_calculate_sample(config))
             total_events += series.size
 
-            series = self._resample_series(series)
+            if not series.empty:
+                series = self._resample_series(series)
 
-            min_timestamp = min(min_timestamp, series[0])
-            max_timestamp = max(max_timestamp, series[-1])
+                traces.append((series, config.label, color))
 
-            series_list.append(series)
-            labels.append(config.label)
-
-        bins_count = self._calculate_bins_count(
-            timedelta=(max_timestamp - min_timestamp)
-        )
+        if use_custom_span:
+            kwargs = {
+                'xbins': {
+                    'size': parse_relative_time(
+                        span_expression
+                    ).total_seconds() * 1000
+                }
+            }
+        else:
+            kwargs = {'nbinsx': self._AUTO_SPAN_BINS_COUNT}
 
         fig = go.Figure()
 
-        for series, label, color in zip(series_list, labels, colors):
+        for series, label, color in traces:
             fig.add_trace(
                 go.Histogram(
                     x=series.index,
                     y=series.values,
                     histfunc='sum',
                     name=label,
-                    nbinsx=bins_count,
-                    marker_color=color
+                    marker_color=color,
+                    **kwargs
                 )
             )
 

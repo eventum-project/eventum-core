@@ -375,11 +375,11 @@ class Configurator(BaseComponent):
             label=label,
             oscillator=models.OscillatorConfig(
                 period=1,
-                unit=models.TimeUnit.SECONDS,
+                unit=models.TimeUnit.HOURS,
                 start=models.TimeKeyword.NOW,
                 end='+1h'
             ),
-            multiplier=models.MultiplierConfig(ratio=1),
+            multiplier=models.MultiplierConfig(ratio=1000),
             randomizer=models.RandomizerConfig(
                 deviation=0,
                 direction=models.RandomizerDirection.MIXED

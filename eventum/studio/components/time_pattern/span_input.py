@@ -1,5 +1,4 @@
 import streamlit as st
-
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 from eventum.utils.relative_time import validate_time_span
@@ -9,8 +8,8 @@ class SpanInput(BaseComponent):
     """Span input component."""
 
     def _init_state(self) -> None:
-        self._session_state['span_expression'] = '1s'
-        self._session_state['previous_span_expression'] = '1s'
+        self._session_state['span_expression'] = '10m'
+        self._session_state['previous_span_expression'] = '10m'
         self._session_state['mode'] = 'Auto'
 
     def _show(self) -> None:
