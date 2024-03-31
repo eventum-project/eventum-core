@@ -16,6 +16,7 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
         self._timestamps = array(
             [
                 ts.astimezone(settings.TIMEZONE).replace(tzinfo=None)
+                if ts.tzinfo else ts.replace(tzinfo=None)
                 for ts in timestamps
             ],
             dtype='datetime64'
