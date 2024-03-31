@@ -93,12 +93,18 @@ class DistributionHistogram(BaseComponent):
         traces: list[tuple[pd.Series, str, str]] = []
         total_events = 0
 
+        min_timestamp = np.datetime64('9999-12-31')
+        max_timestamp = np.datetime64('0000-01-01')
+
         for config, color in zip(configs, colors):
             series = pd.Series(1, index=_calculate_sample(config))
             total_events += series.size
 
             if not series.empty:
                 series = self._resample_series(series)
+
+                min_timestamp = min(min_timestamp, series.index[0])
+                max_timestamp = max(max_timestamp, series.index[-1])
 
                 traces.append((series, config.label, color))
 
@@ -107,7 +113,9 @@ class DistributionHistogram(BaseComponent):
                 'xbins': {
                     'size': parse_relative_time(
                         span_expression
-                    ).total_seconds() * 1000
+                    ).total_seconds() * 1000,
+                    'start': min_timestamp,
+                    'end': max_timestamp,
                 }
             }
         else:
