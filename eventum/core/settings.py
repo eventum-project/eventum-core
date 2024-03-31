@@ -2,10 +2,10 @@
 
 # Precision (in seconds) of publishing events in time.
 # This parameter does not affect the timestamps value but affect how
-# often they are passed further - to event plugin.
+# often they are published by input plugin.
 # Parameter is only actual in live mode for timestamps and patterns
 # input plugins.
-TIME_PRECISION = 0.01
+TIME_PRECISION = 0.1
 
 
 # ========== Event parameters ==========
@@ -21,10 +21,11 @@ JINJA_ENABLED_EXTENSIONS = [
 
 # ========== Queues batching parameters ==========
 
-# Batch size / timeout (in seconds) for events rendering.
-RENDER_AFTER_SIZE = 1000000
-RENDER_AFTER_TIMEOUT = 1.0
+# Batch size / timeout (in seconds) for input-to-event plugins
+# communication.
+EVENTS_BATCH_SIZE = 1000000
+EVENTS_BATCH_TIMEOUT = 1.0
 
-# Batch size / timeout (in seconds) for output events.
-OUTPUT_AFTER_SIZE = 1000
-OUTPUT_AFTER_TIMEOUT = 1.0
+# Batch size / timeout (in seconds) for output plugins.
+OUTPUT_BATCH_SIZE = 10000
+OUTPUT_BATCH_TIMEOUT = 1.0

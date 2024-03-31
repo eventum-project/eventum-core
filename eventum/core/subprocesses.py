@@ -3,9 +3,9 @@ import signal
 from multiprocessing import Queue
 from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
-from time import perf_counter, sleep
 from typing import Callable, NoReturn, Optional, assert_never
 
+from eventum.core.batcher import Batcher
 import eventum.logging_config
 from eventum.core import settings
 from eventum.core.models.application_config import (InputConfigMapping,
@@ -57,11 +57,11 @@ def subprocess(module_name: str) -> Callable:
 def _terminate_subprocess(
     is_done: EventClass,
     exit_code: int = 0,
-    queue: Optional[Queue] = None
+    signal_queue: Optional[Queue] = None
 ) -> NoReturn:
     """Handle termination of subprocess."""
-    if queue is not None:
-        queue.put(None)
+    if signal_queue is not None:
+        signal_queue.put(None)
     is_done.set()
     exit(exit_code)
 
@@ -117,13 +117,18 @@ def start_input_subprocess(
     logger.info('Input plugin is successfully initialized')
 
     try:
-        match time_mode:
-            case TimeMode.LIVE:
-                input_plugin.live(on_event=queue.put)
-            case TimeMode.SAMPLE:
-                input_plugin.sample(on_event=queue.put)
-            case _:
-                assert_never(time_mode)
+        with Batcher(
+            size=settings.EVENTS_BATCH_SIZE,
+            timeout=settings.EVENTS_BATCH_TIMEOUT,
+            callback=queue.put
+        ) as batcher:
+            match time_mode:
+                case TimeMode.LIVE:
+                    input_plugin.live(on_event=batcher.add)
+                case TimeMode.SAMPLE:
+                    input_plugin.sample(on_event=batcher.add)
+                case _:
+                    assert_never(time_mode)
     except AttributeError:
         logger.error(
             f'Specified input plugin does not support "{time_mode}" mode'
@@ -169,32 +174,20 @@ def start_event_subprocess(
 
     is_running = True
     while is_running:
-        start = perf_counter()
-        while (
-            input_queue.qsize() < settings.RENDER_AFTER_SIZE
-            and (perf_counter() - start) < settings.RENDER_AFTER_TIMEOUT
-        ):
-            sleep(min(settings.RENDER_AFTER_TIMEOUT * 0.1, 0.01))
-
-        batch_size = min(input_queue.qsize(), settings.RENDER_AFTER_SIZE)
-
-        if not batch_size:
-            continue
-
-        timestamps = []
-        for _ in range(batch_size):
-            element = input_queue.get()
-            if element is None:
-                is_running = False
-                break
-            timestamps.append(element)
+        timestamps_batch = input_queue.get()
+        if timestamps_batch is None:
+            is_running = False
+            break
 
         try:
-            events = []
-            for timestamp in timestamps:
-                events.extend(
-                    event_plugin.render(timestamp=timestamp)
-                )
+            with Batcher(
+                size=settings.OUTPUT_BATCH_SIZE,
+                timeout=settings.OUTPUT_BATCH_TIMEOUT,
+                callback=event_queue.put
+            ) as batcher:
+                for timestamp in timestamps_batch:
+                    for event in event_plugin.render(timestamp=timestamp):
+                        batcher.add(event)
         except EventPluginRuntimeError as e:
             logger.error(f'Failed to produce event: {e}')
             _terminate_subprocess(is_done, 1, event_queue)
@@ -203,9 +196,6 @@ def start_event_subprocess(
                 f'Unexpected error occurred during producing event: {e}'
             )
             _terminate_subprocess(is_done, 1, event_queue)
-
-        for event in events:
-            event_queue.put(event)
 
     logger.info('Stopping event plugin')
     _terminate_subprocess(is_done, 0, event_queue)
@@ -260,39 +250,23 @@ def start_output_subprocess(
 
     is_running = True
     while is_running:
-        start = perf_counter()
-        while (
-            queue.qsize() < settings.OUTPUT_AFTER_SIZE
-            and (perf_counter() - start) < settings.OUTPUT_AFTER_TIMEOUT
-        ):
-            sleep(min(settings.OUTPUT_AFTER_TIMEOUT * 0.1, 0.01))
+        events_batch = queue.get()
+        if events_batch is None:
+            is_running = False
+            break
 
-        batch_size = min(queue.qsize(), settings.OUTPUT_AFTER_SIZE)
+        for plugin in output_plugins:
+            try:
+                if len(events_batch) == 1:
+                    plugin.write(events_batch[0])
+                elif len(events_batch) > 1:
+                    plugin.write_many(events_batch)
+            except OutputPluginRuntimeError as e:
+                logger.error(
+                    f'Failed to write events to output: {e}'
+                )
 
-        if not batch_size:
-            continue
-
-        events = []
-        for _ in range(batch_size):
-            element = queue.get()
-            if element is None:
-                is_running = False
-                break
-            events.append(element)
-
-        if events:
-            for plugin in output_plugins:
-                try:
-                    if len(events) == 1:
-                        plugin.write(events[0])
-                    elif len(events) > 1:
-                        plugin.write_many(events)
-                except OutputPluginRuntimeError as e:
-                    logger.error(
-                        f'Failed to write events to output: {e}'
-                    )
-
-            processed_events.value += len(events)  # type: ignore
+        processed_events.value += len(events_batch)  # type: ignore
 
     logger.info('Stopping output plugins')
     _terminate_subprocess(is_done, 0)

@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import assert_never
+from typing import Collection, assert_never
 
 from eventum.core.models.application_config import OutputFormat
 
@@ -44,6 +44,6 @@ class BaseOutputPlugin(ABC):
         ...
 
     @abstractmethod
-    def write_many(self, events: list[str]) -> None:
+    def write_many(self, events: Collection[str]) -> None:
         """Write events to output stream."""
         ...

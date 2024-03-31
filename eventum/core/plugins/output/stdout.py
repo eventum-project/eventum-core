@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from typing import Collection
 
 import eventum.logging_config
 from eventum.core.models.application_config import OutputFormat
@@ -33,7 +34,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         sys.stdout.write(fmt_event)
         sys.stdout.flush()
 
-    def write_many(self, events: list[str]) -> None:
+    def write_many(self, events: Collection[str]) -> None:
         fmt_events = []
 
         for event in events:
