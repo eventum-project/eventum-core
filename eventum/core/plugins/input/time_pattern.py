@@ -1,6 +1,6 @@
 import sys
 from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, UTC
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
@@ -168,8 +168,8 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 'in current conditions'
             )
 
-        start = start.astimezone()
-        end = end.astimezone()
+        start = start.astimezone(UTC)
+        end = end.astimezone(UTC)
 
         if start >= end:
             raise InputPluginRuntimeError(

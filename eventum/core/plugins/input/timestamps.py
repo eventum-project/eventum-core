@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Callable
 
 import eventum.core.settings as settings
@@ -14,7 +14,7 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
     def __init__(self, timestamps: list[datetime]) -> None:
         self._timestamps = array(
-            [ts.astimezone().replace(tzinfo=None) for ts in timestamps],
+            [ts.astimezone(UTC).replace(tzinfo=None) for ts in timestamps],
             dtype='datetime64'
         )
         self._timestamps.sort()
