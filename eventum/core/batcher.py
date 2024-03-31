@@ -1,5 +1,7 @@
 from threading import Condition, RLock, Thread
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
+
+import numpy as np
 
 
 class Batcher:
@@ -11,7 +13,7 @@ class Batcher:
         self,
         size: int,
         timeout: float,
-        callback: Callable[[Iterable[Any]], Any]
+        callback: Callable[[np.ndarray[Any]], Any]
     ) -> None:
         self._size = size
         self._timeout = timeout
@@ -75,7 +77,7 @@ class Batcher:
                 self._first_element_condition.notify_all()
 
         if complete_batch:
-            self._callback(complete_batch)
+            self._callback(np.array(complete_batch))
 
     def __enter__(self):
         return self
