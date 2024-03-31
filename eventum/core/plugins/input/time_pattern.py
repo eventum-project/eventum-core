@@ -1,6 +1,6 @@
 import sys
 from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError
-from datetime import date, datetime, time, timedelta
+from datetime import datetime, time, timedelta
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
@@ -133,14 +133,17 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         """Get absolute timestamps converting `start` and `end` values
         from config.
         """
-        now = datetime.now()
+        now = datetime.now(settings.TIMEZONE)
         never = datetime(year=9999, month=12, day=31)
 
         match self._config.oscillator.start:
             case datetime() as val:
-                start = val
+                if val.tzinfo:
+                    start = val.astimezone(settings.TIMEZONE)
+                else:
+                    start = val
             case time() as val:
-                start = datetime.combine(date.today(), val)
+                start = datetime.combine(now.today(), val)
             case TimeKeyword.NOW:
                 start = now
             case TimeKeyword.NEVER as val:
@@ -154,9 +157,12 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         match self._config.oscillator.end:
             case datetime() as val:
-                end = val
+                if val.tzinfo:
+                    end = val.astimezone(settings.TIMEZONE)
+                else:
+                    end = val
             case time() as val:
-                end = datetime.combine(date.today(), val)
+                end = datetime.combine(now.today(), val)
             case TimeKeyword.NOW:
                 end = now
             case TimeKeyword.NEVER:
@@ -172,18 +178,17 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 'in current conditions'
             )
 
-        start = start.astimezone(settings.TIMEZONE)
-        end = end.astimezone(settings.TIMEZONE)
+        start = start.replace(tzinfo=None)
+        end = end.replace(tzinfo=None)
 
         if start >= end:
             raise InputPluginRuntimeError(
                 '"start" time must be earlier than "end" time'
             )
 
-        return (
-            np.datetime64(start.replace(tzinfo=None)),
-            np.datetime64(end.replace(tzinfo=None))
-        )
+        print(np.datetime64(start), np.datetime64(end))
+
+        return (np.datetime64(start), np.datetime64(end))
 
     def _get_required_eps(self) -> float:
         """Get required eps for performance check."""
