@@ -1,6 +1,6 @@
-from datetime import datetime
 from typing import Iterable
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go  # type: ignore
 import streamlit as st
@@ -29,13 +29,13 @@ def _hash_config(config: TimePatternConfig) -> int:
     persist=True,
     hash_funcs={TimePatternConfig: _hash_config}
 )
-def _calculate_sample(config: TimePatternConfig) -> list[datetime]:
+def _calculate_sample(config: TimePatternConfig) -> np.ndarray[np.datetime64]:
     """Calculate sample for specified `config`. If finite sample cannot
     be calculated then empty list is returned and corresponding
     notification is displayed."""
     pattern = TimePatternInputPlugin(config)
+    data = []
     try:
-        data = []
         pattern.sample(lambda ts: data.append(ts))
     except InputPluginRuntimeError as e:
         default_notifier(
@@ -45,8 +45,7 @@ def _calculate_sample(config: TimePatternConfig) -> list[datetime]:
             ),
             level=NotificationLevel.WARNING
         )
-        return []
-    return data
+    return np.array(data)
 
 
 class DistributionHistogram(BaseComponent):
@@ -67,7 +66,7 @@ class DistributionHistogram(BaseComponent):
         downsampling: bool = self._props['downsampling']
         downsampling_span: str = self._props['downsampling_span']
 
-        series: list[pd.DataFrame] = []
+        series: list[pd.Series] = []
         labels: list[str] = []
         total_events = 0
 
@@ -102,7 +101,7 @@ class DistributionHistogram(BaseComponent):
         col1, col2 = st.columns([8, 2])
         col1.text(f'Total events: {total_events}')
         col2.button(
-            'Update',
+            'Recalculate',
             use_container_width=True,
             key=self._wk.get_ephemeral(),
             on_click=_calculate_sample.clear
