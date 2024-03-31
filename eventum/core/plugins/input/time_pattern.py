@@ -186,8 +186,6 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 '"start" time must be earlier than "end" time'
             )
 
-        print(np.datetime64(start), np.datetime64(end))
-
         return (np.datetime64(start), np.datetime64(end))
 
     def _get_required_eps(self) -> float:
