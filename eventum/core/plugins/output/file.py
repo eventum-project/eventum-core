@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Collection
+from typing import Iterable
 
 import eventum.logging_config
 from eventum.core.models.application_config import OutputFormat
@@ -54,7 +54,7 @@ class FileOutputPlugin(BaseOutputPlugin):
         except OSError as e:
             logger.error(f'Failed to write event to file: {e}')
 
-    def write_many(self, events: Collection[str]) -> None:
+    def write_many(self, events: Iterable[str]) -> None:
         fmt_events = []
 
         for event in events:
