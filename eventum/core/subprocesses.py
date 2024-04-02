@@ -47,10 +47,7 @@ def subprocess(module_name: str) -> Callable:
         def wrapper(*args, **kwargs):
             setproctitle(f'{getproctitle()} [{module_name}]')
 
-            signal.signal(
-                signal.SIGINT,
-                lambda signal, stack_frame: exit(0)
-            )
+            signal.signal(signal.SIGINT, lambda signal, stack_frame: exit(0))
 
             result = f(*args, **kwargs)
             return result
@@ -140,9 +137,7 @@ def start_input_subprocess(
         )
         _terminate_subprocess(is_done, 1, queue)
     except InputPluginRuntimeError as e:
-        logger.error(
-            f'Error occurred during input plugin execution: {e}'
-        )
+        logger.error(f'Error occurred during input plugin execution: {e}')
         _terminate_subprocess(is_done, 1, queue)
     except Exception as e:
         logger.error(
@@ -213,9 +208,7 @@ def start_output_subprocess(
     processed_events: SynchronizedBase,
     is_done: EventClass
 ) -> None:
-    plugins_list_fmt = ", ".join(
-        [f'"{plugin}"' for plugin in config.keys()]
-    )
+    plugins_list_fmt = ", ".join([f'"{plugin}"' for plugin in config.keys()])
 
     logger.info(f'Initializing [{plugins_list_fmt}] output plugins')
 
@@ -226,9 +219,7 @@ def start_output_subprocess(
             match output:
                 case OutputType.STDOUT:
                     output_plugins.append(
-                        StdoutOutputPlugin(
-                            format=output_conf.format
-                        )
+                        StdoutOutputPlugin(format=output_conf.format)
                     )
                 case OutputType.FILE:
                     output_plugins.append(
@@ -240,9 +231,7 @@ def start_output_subprocess(
                 case val:
                     assert_never(val)
         except OutputPluginConfigurationError as e:
-            logger.error(
-                f'Failed to initialize "{output}" output plugin: {e}'
-            )
+            logger.error(f'Failed to initialize "{output}" output plugin: {e}')
             _terminate_subprocess(is_done, 1)
         except Exception as e:
             logger.error(
