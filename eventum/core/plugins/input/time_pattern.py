@@ -299,12 +299,16 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 duration=self._period_duration
             )
 
-        with ThreadPoolExecutor(max_workers=2) as pool:
+        with ThreadPoolExecutor(max_workers=2) as executor:
             while start < end:
                 next_start = start + self._period_duration
 
-                prepare_task = pool.submit(prepare_period_thread, next_start)
-                publish_task = pool.submit(publish_period_thread, timestamps)
+                prepare_task = executor.submit(
+                    prepare_period_thread, next_start
+                )
+                publish_task = executor.submit(
+                    publish_period_thread, timestamps
+                )
 
                 try:
                     publish_task.result()
@@ -354,11 +358,11 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
         queues: list[Queue[np.datetime64]] = []
         tasks: list[Future] = []
 
-        with ThreadPoolExecutor(max_workers=self._size) as pool:
+        with ThreadPoolExecutor(max_workers=self._size) as executor:
             for pattern in self._time_patterns:
                 queue: Queue[np.datetime64] = Queue()
                 tasks.append(
-                    pool.submit(pattern.live, queue.put)
+                    executor.submit(pattern.live, queue.put)
                 )
                 queues.append(queue)
 
