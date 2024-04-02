@@ -1,13 +1,19 @@
+import asyncio
 import logging
 import signal
+from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Queue
 from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
 from typing import Callable, NoReturn, Optional, assert_never
 
-from eventum.core.batcher import Batcher
+import numpy as np
+from numpy.typing import NDArray
+from setproctitle import getproctitle, setproctitle
+
 import eventum.logging_config
 from eventum.core import settings
+from eventum.core.batcher import Batcher
 from eventum.core.models.application_config import (InputConfigMapping,
                                                     InputType,
                                                     JinjaEventConfig,
@@ -29,7 +35,6 @@ from eventum.core.plugins.output.base import (BaseOutputPlugin,
 from eventum.core.plugins.output.file import FileOutputPlugin
 from eventum.core.plugins.output.stdout import StdoutOutputPlugin
 from eventum.repository.manage import ContentReadError, load_time_pattern
-from setproctitle import getproctitle, setproctitle
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)
@@ -248,25 +253,40 @@ def start_output_subprocess(
 
     logger.info('Output plugins are successfully initialized')
 
-    is_running = True
-    while is_running:
-        events_batch = queue.get()
-        if events_batch is None:
-            is_running = False
-            break
+    async def write_batch(
+        plugin: BaseOutputPlugin,
+        events_batch: NDArray[np.str_]
+    ) -> None:
+        # TODO: make BaseOutputPlugin methods async
+        try:
+            if len(events_batch) == 1:
+                plugin.write(events_batch[0])
+            elif len(events_batch) > 1:
+                plugin.write_many(events_batch)
+        except OutputPluginRuntimeError as e:
+            logger.error(f'Failed to write events to output: {e}')
 
-        for plugin in output_plugins:
-            try:
-                if len(events_batch) == 1:
-                    plugin.write(events_batch[0])
-                elif len(events_batch) > 1:
-                    plugin.write_many(events_batch)
-            except OutputPluginRuntimeError as e:
-                logger.error(
-                    f'Failed to write events to output: {e}'
-                )
+    async def run_loop() -> None:
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            loop = asyncio.get_running_loop()
 
-        processed_events.value += len(events_batch)  # type: ignore
+            is_running = True
+            while is_running:
+                events_batch = await loop.run_in_executor(executor, queue.get)
+
+                if events_batch is None:
+                    is_running = False
+                    break
+
+                tasks = []
+                for plugin in output_plugins:
+                    tasks.append(write_batch(plugin, events_batch))
+
+                await asyncio.gather(*tasks)
+
+                processed_events.value += len(events_batch)  # type: ignore
+
+    asyncio.run(run_loop())
 
     logger.info('Stopping output plugins')
     _terminate_subprocess(is_done, 0)
