@@ -24,20 +24,6 @@ class FormatError(OutputPluginRuntimeError):
 class BaseOutputPlugin(ABC):
     """Base class for all output plugins."""
 
-    @staticmethod
-    def _format_event(format: OutputFormat, event: str) -> str:
-        """Format `event` to specified `format`"""
-        try:
-            match format:
-                case OutputFormat.ORIGINAL:
-                    return event
-                case OutputFormat.JSON_LINES:
-                    return json.dumps(json.loads(event), ensure_ascii=False)
-                case val:
-                    assert_never(val)
-        except Exception as e:
-            raise FormatError(str(e)) from e
-
     async def open(self) -> None:
         """Open target for async write."""
         ...
@@ -55,3 +41,17 @@ class BaseOutputPlugin(ABC):
     async def write_many(self, events: Iterable[str]) -> None:
         """Write events to output stream."""
         ...
+
+    @staticmethod
+    def _format_event(format: OutputFormat, event: str) -> str:
+        """Format `event` to specified `format`"""
+        try:
+            match format:
+                case OutputFormat.ORIGINAL:
+                    return event
+                case OutputFormat.JSON_LINES:
+                    return json.dumps(json.loads(event), ensure_ascii=False)
+                case val:
+                    assert_never(val)
+        except Exception as e:
+            raise FormatError(str(e)) from e

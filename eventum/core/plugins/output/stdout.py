@@ -33,6 +33,9 @@ class StdoutOutputPlugin(BaseOutputPlugin):
             loop=loop
         )
 
+    async def close(self) -> None:
+        self._writer = None
+
     async def write(self, event: str) -> None:
         if self._writer is None:
             raise OutputPluginRuntimeError(
