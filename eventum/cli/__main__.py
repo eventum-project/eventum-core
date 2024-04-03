@@ -25,6 +25,11 @@ def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
         choices=[str(elem) for elem in TimeMode],
         help='Time mode'
     )
+    argparser.add_argument(
+        '-i', '--interactive',
+        action='store_true',
+        help='Enable interactive mode'
+    )
 
 
 def main() -> None:
@@ -70,7 +75,7 @@ def main() -> None:
         time_mode=TimeMode(args.time_mode)
     )
 
-    app.start()
+    app.start(interactive=args.interactive)
 
 
 if __name__ == '__main__':
