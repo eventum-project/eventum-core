@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import signal
-from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Queue
 from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
@@ -246,34 +245,35 @@ def start_output_subprocess(
         plugin: BaseOutputPlugin,
         events_batch: NDArray[np.str_]
     ) -> None:
-        # TODO: make BaseOutputPlugin methods async
         try:
             if len(events_batch) == 1:
-                plugin.write(events_batch[0])
+                await plugin.write(events_batch[0])
             elif len(events_batch) > 1:
-                plugin.write_many(events_batch)
+                await plugin.write_many(events_batch)
         except OutputPluginRuntimeError as e:
             logger.error(f'Failed to write events to output: {e}')
 
     async def run_loop() -> None:
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            loop = asyncio.get_running_loop()
+        await asyncio.gather(
+            *[plugin.connect() for plugin in output_plugins]
+        )
 
-            is_running = True
-            while is_running:
-                events_batch = await loop.run_in_executor(executor, queue.get)
+        is_running = True
+        while is_running:
+            events_batch = queue.get()
 
-                if events_batch is None:
-                    is_running = False
-                    break
+            if events_batch is None:
+                is_running = False
+                break
 
-                tasks = []
-                for plugin in output_plugins:
-                    tasks.append(write_batch(plugin, events_batch))
+            await asyncio.gather(
+                *[
+                    write_batch(plugin, events_batch)
+                    for plugin in output_plugins
+                ]
+            )
 
-                await asyncio.gather(*tasks)
-
-                processed_events.value += len(events_batch)  # type: ignore
+            processed_events.value += len(events_batch)  # type: ignore
 
     asyncio.run(run_loop())
 
