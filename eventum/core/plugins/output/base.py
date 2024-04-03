@@ -25,7 +25,7 @@ class BaseOutputPlugin(ABC):
     """Base class for all output plugins."""
 
     async def open(self) -> None:
-        """Open target for async write."""
+        """Open target for async writing."""
         ...
 
     async def close(self) -> None:
