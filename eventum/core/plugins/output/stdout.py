@@ -52,7 +52,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
             )
             return
 
-        self._writer.write(fmt_event)
+        self._writer.write(fmt_event.encode())
         await self._writer.drain()
 
     async def write_many(self, events: Iterable[str]) -> None:
@@ -72,7 +72,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
                 )
                 continue
 
-            fmt_events.append(fmt_event)
+            fmt_events.append(fmt_event.encode())
 
         self._writer.writelines(fmt_events)
         await self._writer.drain()
