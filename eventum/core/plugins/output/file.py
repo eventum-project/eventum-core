@@ -2,10 +2,13 @@ import logging
 import os
 from typing import Iterable
 
+import aiofiles
+
 import eventum.logging_config
 from eventum.core.models.application_config import OutputFormat
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
-                                              OutputPluginConfigurationError)
+                                              OutputPluginConfigurationError,
+                                              OutputPluginRuntimeError)
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)
@@ -33,8 +36,28 @@ class FileOutputPlugin(BaseOutputPlugin):
 
         self._filepath = filepath
         self._format = format
+        self._file = None
 
-    def write(self, event: str) -> None:
+    async def open(self) -> None:
+        self._file = await aiofiles.open(
+            file=self._filepath,
+            mode='a',
+            encoding='utf-8'
+        )
+
+    async def close(self) -> None:
+        if self._file is None:
+            return
+
+        await self._file.close()
+        self._file = None
+
+    async def write(self, event: str) -> None:
+        if self._file is None:
+            raise OutputPluginRuntimeError(
+                'Output plugin is not opened for writing to target'
+            )
+
         try:
             fmt_event = self._format_event(self._format, event)
             fmt_event += os.linesep
@@ -47,14 +70,17 @@ class FileOutputPlugin(BaseOutputPlugin):
                 f'{event}'
             )
             return
-
         try:
-            with open(self._filepath, 'a', encoding='utf-8') as f:
-                f.write(fmt_event)
+            await self._file.write(fmt_event)
         except OSError as e:
             logger.error(f'Failed to write event to file: {e}')
 
-    def write_many(self, events: Iterable[str]) -> None:
+    async def write_many(self, events: Iterable[str]) -> None:
+        if self._file is None:
+            raise OutputPluginRuntimeError(
+                'Output plugin is not opened for writing to target'
+            )
+
         fmt_events = []
 
         for event in events:
@@ -72,10 +98,8 @@ class FileOutputPlugin(BaseOutputPlugin):
                 continue
 
             fmt_events.append(fmt_event)
-
         try:
-            with open(self._filepath, 'a', encoding='utf-8') as f:
-                f.writelines(fmt_events)
+            await self._file.writelines(fmt_events)
         except OSError as e:
             logger.error(
                 f'Failed to write {len(fmt_events)} events to file: {e}'
