@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import sys
@@ -5,7 +6,8 @@ from typing import Iterable
 
 import eventum.logging_config
 from eventum.core.models.application_config import OutputFormat
-from eventum.core.plugins.output.base import BaseOutputPlugin, FormatError
+from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
+                                              OutputPluginRuntimeError)
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)
@@ -16,8 +18,27 @@ class StdoutOutputPlugin(BaseOutputPlugin):
 
     def __init__(self, format: OutputFormat) -> None:
         self._format = format
+        self._writer = None
 
-    def write(self, event: str) -> None:
+    async def connect(self) -> None:
+        loop = asyncio.get_event_loop()
+        w_transport, w_protocol = await loop.connect_write_pipe(
+            protocol_factory=asyncio.streams.FlowControlMixin,
+            pipe=sys.stdout
+        )
+        self._writer = asyncio.StreamWriter(
+            transport=w_transport,
+            protocol=w_protocol,
+            reader=None,
+            loop=loop
+        )
+
+    async def write(self, event: str) -> None:
+        if self._writer is None:
+            raise OutputPluginRuntimeError(
+                'Output plugin is not connected to target'
+            )
+
         try:
             fmt_event = self._format_event(self._format, event)
             fmt_event += os.linesep
@@ -31,10 +52,10 @@ class StdoutOutputPlugin(BaseOutputPlugin):
             )
             return
 
-        sys.stdout.write(fmt_event)
-        sys.stdout.flush()
+        self._writer.write(fmt_event)
+        await self._writer.drain()
 
-    def write_many(self, events: Iterable[str]) -> None:
+    async def write_many(self, events: Iterable[str]) -> None:
         fmt_events = []
 
         for event in events:
@@ -53,5 +74,5 @@ class StdoutOutputPlugin(BaseOutputPlugin):
 
             fmt_events.append(fmt_event)
 
-        sys.stdout.writelines(fmt_events)
-        sys.stdout.flush()
+        self._writer.writelines(fmt_events)
+        await self._writer.drain()

@@ -38,12 +38,16 @@ class BaseOutputPlugin(ABC):
         except Exception as e:
             raise FormatError(str(e)) from e
 
+    async def connect(self) -> None:
+        """Connect instance to async target."""
+        ...
+
     @abstractmethod
-    def write(self, event: str) -> None:
+    async def write(self, event: str) -> None:
         """Write single event to output stream."""
         ...
 
     @abstractmethod
-    def write_many(self, events: Iterable[str]) -> None:
+    async def write_many(self, events: Iterable[str]) -> None:
         """Write events to output stream."""
         ...
