@@ -255,7 +255,7 @@ def start_output_subprocess(
 
     async def run_loop() -> None:
         await asyncio.gather(
-            *[plugin.connect() for plugin in output_plugins]
+            *[plugin.open() for plugin in output_plugins]
         )
 
         is_running = True
@@ -274,6 +274,10 @@ def start_output_subprocess(
             )
 
             processed_events.value += len(events_batch)  # type: ignore
+
+        await asyncio.gather(
+            *[plugin.close() for plugin in output_plugins]
+        )
 
     asyncio.run(run_loop())
 
