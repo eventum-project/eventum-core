@@ -8,7 +8,9 @@ from multiprocessing.synchronize import Event as EventClass
 from time import sleep
 from typing import NoReturn
 
-from alive_progress import alive_bar    # type: ignore
+import numpy as np
+from alive_progress import alive_bar  # type: ignore
+from numpy.typing import NDArray
 from setproctitle import getproctitle, setproctitle
 
 import eventum.logging_config
@@ -37,8 +39,8 @@ class Application:
 
         # For all queues: The None element indicates that no more new
         # elements will be put in that queue
-        self._input_queue: Queue[str] = Queue()
-        self._event_queue: Queue[str] = Queue()
+        self._input_queue: Queue[NDArray[np.datetime64]] = Queue()
+        self._event_queue: Queue[NDArray[np.str_]] = Queue()
 
         # Regardless of whether the process ended with an error or not
         # this flag must be set at the end of its execution.
