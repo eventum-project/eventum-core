@@ -20,7 +20,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         self._format = format
         self._writer = None
 
-    async def connect(self) -> None:
+    async def open(self) -> None:
         loop = asyncio.get_event_loop()
         w_transport, w_protocol = await loop.connect_write_pipe(
             protocol_factory=asyncio.streams.FlowControlMixin,
@@ -36,7 +36,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
     async def write(self, event: str) -> None:
         if self._writer is None:
             raise OutputPluginRuntimeError(
-                'Output plugin is not connected to target'
+                'Output plugin is not opened for writing to target'
             )
 
         try:
@@ -56,6 +56,11 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         await self._writer.drain()
 
     async def write_many(self, events: Iterable[str]) -> None:
+        if self._writer is None:
+            raise OutputPluginRuntimeError(
+                'Output plugin is not opened for writing to target'
+            )
+
         fmt_events = []
 
         for event in events:

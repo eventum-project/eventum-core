@@ -38,8 +38,12 @@ class BaseOutputPlugin(ABC):
         except Exception as e:
             raise FormatError(str(e)) from e
 
-    async def connect(self) -> None:
-        """Connect instance to async target."""
+    async def open(self) -> None:
+        """Open target for async write."""
+        ...
+
+    async def close(self) -> None:
+        """Close target and release acquired resources."""
         ...
 
     @abstractmethod
