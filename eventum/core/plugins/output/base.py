@@ -50,21 +50,25 @@ class BaseOutputPlugin(ABC):
         await self._close()
         self._is_opened = False
 
-    async def write(self, event: str) -> None:
-        """Write single event to output stream."""
+    async def write(self, event: str) -> int:
+        """Write single event to output stream. `1` is returned if
+        event is successfully written else `0`.
+        """
         if not self._is_opened:
             raise OutputPluginRuntimeError(
                 'Output plugin is not opened for writing to target'
             )
-        await self._write(event)
+        return await self._write(event)
 
-    async def write_many(self, events: Iterable[str]) -> None:
-        """Write many events to output stream."""
+    async def write_many(self, events: Iterable[str]) -> int:
+        """Write many events to output stream. Number of successfully
+        written events is returned.
+        """
         if not self._is_opened:
             raise OutputPluginRuntimeError(
                 'Output plugin is not opened for writing to target'
             )
-        await self._write_many(events)
+        return await self._write_many(events)
 
     async def _open(self) -> None:
         """Perform open operation. May be overridden in subclasses."""
@@ -75,11 +79,11 @@ class BaseOutputPlugin(ABC):
         ...
 
     @abstractmethod
-    async def _write(self, event: str) -> None:
+    async def _write(self, event: str) -> int:
         """Perform write operation. Must be overridden in subclasses."""
         ...
 
     @abstractmethod
-    async def _write_many(self, events: Iterable[str]) -> None:
+    async def _write_many(self, events: Iterable[str]) -> int:
         """Perform bulk write operation. Must be overridden in subclasses."""
         ...

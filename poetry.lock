@@ -2351,6 +2351,17 @@ files = [
 ]
 
 [[package]]
+name = "types-aiofiles"
+version = "23.2.0.20240403"
+description = "Typing stubs for aiofiles"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-aiofiles-23.2.0.20240403.tar.gz", hash = "sha256:1ffcf8f5f72b81f71139f754ea2610ab0017f27ba4fd771e187b07840ee49c0f"},
+    {file = "types_aiofiles-23.2.0.20240403-py3-none-any.whl", hash = "sha256:adeeb4b999f19fda2dfe91c07857ff54701b6ee9b227b523a5a7be92125a2c5f"},
+]
+
+[[package]]
 name = "types-python-crontab"
 version = "3.0.0.20240106"
 description = "Typing stubs for python-crontab"
@@ -2621,4 +2632,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "39dbe0a6b8070cc7040e9e86921ea7f347e261139d91c63b2679e340eef8dcca"
+content-hash = "8a816bdeaa8a4bc0fda436848548b26f8eed25c1686e67d05ab15dee0a8555fc"

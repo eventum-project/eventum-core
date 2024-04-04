@@ -3,10 +3,13 @@ import os
 from typing import Iterable
 
 import aiofiles
+import aiofiles.base
+
 import eventum.logging_config
 from eventum.core.models.application_config import OutputFormat
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
                                               OutputPluginConfigurationError,
+                                              OutputPluginRuntimeError,
                                               format_event)
 
 eventum.logging_config.apply()
@@ -39,7 +42,7 @@ class FileOutputPlugin(BaseOutputPlugin):
         self._file = None
 
     async def _open(self) -> None:
-        self._file = await aiofiles.open(
+        self._file = await aiofiles.open(       # type: ignore
             file=self._filepath,
             mode='a',
             encoding='utf-8'
@@ -52,25 +55,29 @@ class FileOutputPlugin(BaseOutputPlugin):
         await self._file.close()
         self._file = None
 
-    async def _write(self, event: str) -> None:
+    async def _write(self, event: str) -> int:
         try:
             fmt_event = format_event(self._format, event)
             fmt_event += os.linesep
         except FormatError as e:
-            logger.error(
+            logger.warning(
                 f'Failed to format event to "{self._format}" format: {e}'
                 f'{os.linesep}'
                 'Original unformatted event: '
                 f'{os.linesep}'
                 f'{event}'
             )
-            return
+            return 0
         try:
-            await self._file.write(fmt_event)
+            await self._file.write(fmt_event)           # type: ignore
         except OSError as e:
-            logger.error(f'Failed to write event to file: {e}')
+            raise OutputPluginRuntimeError(
+                f'Failed to write event to file: {e}'
+            ) from e
 
-    async def _write_many(self, events: Iterable[str]) -> None:
+        return 1
+
+    async def _write_many(self, events: Iterable[str]) -> int:
         fmt_events = []
 
         for event in events:
@@ -78,7 +85,7 @@ class FileOutputPlugin(BaseOutputPlugin):
                 fmt_event = format_event(self._format, event)
                 fmt_event += os.linesep
             except FormatError as e:
-                logger.error(
+                logger.warning(
                     f'Failed to format event to "{self._format}" format: {e}'
                     f'{os.linesep}'
                     'Original unformatted event: '
@@ -89,8 +96,10 @@ class FileOutputPlugin(BaseOutputPlugin):
 
             fmt_events.append(fmt_event)
         try:
-            await self._file.writelines(fmt_events)
+            await self._file.writelines(fmt_events)     # type: ignore
         except OSError as e:
-            logger.error(
+            raise OutputPluginRuntimeError(
                 f'Failed to write {len(fmt_events)} events to file: {e}'
-            )
+            ) from e
+
+        return len(fmt_event)

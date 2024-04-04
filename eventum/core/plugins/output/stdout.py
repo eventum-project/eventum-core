@@ -28,7 +28,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
             protocol_factory=asyncio.streams.FlowControlMixin,
             pipe=sys.stdout
         )
-        self._writer = asyncio.StreamWriter(
+        self._writer = asyncio.StreamWriter(        # type: ignore
             transport=w_transport,
             protocol=w_protocol,
             reader=None,
@@ -42,7 +42,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         self._writer.close()
         self._writer = None
 
-    async def _write(self, event: str) -> None:
+    async def _write(self, event: str) -> int:
         try:
             fmt_event = format_event(self._format, event)
             fmt_event += os.linesep
@@ -54,12 +54,14 @@ class StdoutOutputPlugin(BaseOutputPlugin):
                 f'{os.linesep}'
                 f'{event}'
             )
-            return
+            return 0
 
-        self._writer.write(fmt_event.encode())
-        await self._writer.drain()
+        self._writer.write(fmt_event.encode())      # type: ignore
+        await self._writer.drain()                  # type: ignore
 
-    async def _write_many(self, events: Iterable[str]) -> None:
+        return 1
+
+    async def _write_many(self, events: Iterable[str]) -> int:
         fmt_events = []
 
         for event in events:
@@ -78,5 +80,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
 
             fmt_events.append(fmt_event.encode())
 
-        self._writer.writelines(fmt_events)
-        await self._writer.drain()
+        self._writer.writelines(fmt_events)         # type: ignore
+        await self._writer.drain()                  # type: ignore
+
+        return len(fmt_event)

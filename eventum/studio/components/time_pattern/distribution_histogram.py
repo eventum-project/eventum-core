@@ -76,7 +76,7 @@ class DistributionHistogram(BaseComponent):
             return series.resample(rule=custom_span).sum()
         else:
             auto_span = timedelta(
-                seconds=timedelta_to_seconds(
+                seconds=timedelta_to_seconds(               # type: ignore
                     (series.index[-1] - series.index[0])
                     / self._AUTO_SPAN_BINS_COUNT
                 )
@@ -119,7 +119,7 @@ class DistributionHistogram(BaseComponent):
                 }
             }
         else:
-            kwargs = {'nbinsx': self._AUTO_SPAN_BINS_COUNT}
+            kwargs = {'nbinsx': self._AUTO_SPAN_BINS_COUNT}     # type: ignore
 
         fig = go.Figure()
 

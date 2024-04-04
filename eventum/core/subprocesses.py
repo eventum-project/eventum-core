@@ -245,13 +245,20 @@ def start_output_subprocess(
         plugin: BaseOutputPlugin,
         events_batch: NDArray[np.str_]
     ) -> None:
+        batch_size = len(events_batch)
         try:
-            if len(events_batch) == 1:
-                await plugin.write(events_batch[0])
-            elif len(events_batch) > 1:
-                await plugin.write_many(events_batch)
+            if batch_size == 1:
+                count = await plugin.write(events_batch[0])
+            elif batch_size > 1:
+                count = await plugin.write_many(events_batch)
         except OutputPluginRuntimeError as e:
-            logger.error(f'Failed to write events to output: {e}')
+            logger.error(f'Output plugin failed to write events: {e}')
+
+        if count < batch_size:
+            logger.warning(
+                f'Only {count} events were written by output plugin from '
+                f' batch with size {batch_size}'
+            )
 
     async def run_loop() -> None:
         await asyncio.gather(
