@@ -3,12 +3,11 @@ import os
 from typing import Iterable
 
 import aiofiles
-
 import eventum.logging_config
 from eventum.core.models.application_config import OutputFormat
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
                                               OutputPluginConfigurationError,
-                                              OutputPluginRuntimeError)
+                                              format_event)
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)
@@ -16,8 +15,9 @@ logger = logging.getLogger(__name__)
 
 class FileOutputPlugin(BaseOutputPlugin):
     """Output plugin for writing events to file."""
-
     def __init__(self, filepath: str, format: OutputFormat) -> None:
+        super().__init__()
+
         if not os.path.isabs(filepath):
             raise OutputPluginConfigurationError(
                 f'Filepath must be absolute, but got "{filepath}"'
@@ -38,28 +38,23 @@ class FileOutputPlugin(BaseOutputPlugin):
         self._format = format
         self._file = None
 
-    async def open(self) -> None:
+    async def _open(self) -> None:
         self._file = await aiofiles.open(
             file=self._filepath,
             mode='a',
             encoding='utf-8'
         )
 
-    async def close(self) -> None:
+    async def _close(self) -> None:
         if self._file is None:
             return
 
         await self._file.close()
         self._file = None
 
-    async def write(self, event: str) -> None:
-        if self._file is None:
-            raise OutputPluginRuntimeError(
-                'Output plugin is not opened for writing to target'
-            )
-
+    async def _write(self, event: str) -> None:
         try:
-            fmt_event = self._format_event(self._format, event)
+            fmt_event = format_event(self._format, event)
             fmt_event += os.linesep
         except FormatError as e:
             logger.error(
@@ -75,17 +70,12 @@ class FileOutputPlugin(BaseOutputPlugin):
         except OSError as e:
             logger.error(f'Failed to write event to file: {e}')
 
-    async def write_many(self, events: Iterable[str]) -> None:
-        if self._file is None:
-            raise OutputPluginRuntimeError(
-                'Output plugin is not opened for writing to target'
-            )
-
+    async def _write_many(self, events: Iterable[str]) -> None:
         fmt_events = []
 
         for event in events:
             try:
-                fmt_event = self._format_event(self._format, event)
+                fmt_event = format_event(self._format, event)
                 fmt_event += os.linesep
             except FormatError as e:
                 logger.error(
