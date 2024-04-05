@@ -110,3 +110,8 @@ class FileOutputPlugin(BaseOutputPlugin):
         config: FileOutputConfig
     ) -> 'FileOutputPlugin':
         return FileOutputPlugin(filepath=config.path, format=config.format)
+
+
+def load_plugin():
+    """Return class of plugin from current module."""
+    return FileOutputPlugin

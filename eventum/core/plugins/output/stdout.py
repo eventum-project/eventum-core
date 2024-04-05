@@ -92,3 +92,8 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         config: StdOutOutputConfig
     ) -> 'StdoutOutputPlugin':
         return StdoutOutputPlugin(format=config.format)
+
+
+def load_plugin():
+    """Return class of plugin from current module."""
+    return StdoutOutputPlugin
