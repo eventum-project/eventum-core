@@ -4,9 +4,9 @@ from typing import Iterable
 
 import aiofiles
 import aiofiles.base
-
 import eventum.logging_config
-from eventum.core.models.application_config import OutputFormat
+from eventum.core.models.application_config import (FileOutputConfig,
+                                                    OutputFormat)
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
                                               OutputPluginConfigurationError,
                                               OutputPluginRuntimeError,
@@ -103,3 +103,10 @@ class FileOutputPlugin(BaseOutputPlugin):
             ) from e
 
         return len(fmt_events)
+
+    @classmethod
+    def create_from_config(
+        cls,
+        config: FileOutputConfig
+    ) -> 'FileOutputPlugin':
+        return FileOutputPlugin(filepath=config.path, format=config.format)

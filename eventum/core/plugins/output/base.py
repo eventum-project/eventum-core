@@ -2,7 +2,7 @@ import json
 from abc import ABC, abstractmethod
 from typing import Iterable, assert_never
 
-from eventum.core.models.application_config import OutputFormat
+from eventum.core.models.application_config import OutputConfig, OutputFormat
 
 
 class OutputPluginError(Exception):
@@ -19,20 +19,6 @@ class OutputPluginRuntimeError(OutputPluginError):
 
 class FormatError(OutputPluginRuntimeError):
     """Exception for formatting errors."""
-
-
-def format_event(format: OutputFormat, event: str) -> str:
-    """Format `event` to specified `format`"""
-    try:
-        match format:
-            case OutputFormat.ORIGINAL:
-                return event
-            case OutputFormat.JSON_LINES:
-                return json.dumps(json.loads(event), ensure_ascii=False)
-            case val:
-                assert_never(val)
-    except Exception as e:
-        raise FormatError(str(e)) from e
 
 
 class BaseOutputPlugin(ABC):
@@ -87,3 +73,23 @@ class BaseOutputPlugin(ABC):
     async def _write_many(self, events: Iterable[str]) -> int:
         """Perform bulk write operation. Must be overridden in subclasses."""
         ...
+
+    @classmethod
+    @abstractmethod
+    def create_from_config(cls, config: OutputConfig) -> 'BaseOutputPlugin':
+        """Create instance of configured plugin from config."""
+        ...
+
+
+def format_event(format: OutputFormat, event: str) -> str:
+    """Format `event` to specified `format`"""
+    try:
+        match format:
+            case OutputFormat.ORIGINAL:
+                return event
+            case OutputFormat.JSON_LINES:
+                return json.dumps(json.loads(event), ensure_ascii=False)
+            case val:
+                assert_never(val)
+    except Exception as e:
+        raise FormatError(str(e)) from e

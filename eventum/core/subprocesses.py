@@ -13,22 +13,17 @@ from eventum.core import settings
 from eventum.core.batcher import Batcher
 from eventum.core.models.application_config import (EventConfig,
                                                     InputConfigMapping,
-                                                    OutputConfigMapping,
-                                                    OutputType)
+                                                    OutputConfigMapping)
 from eventum.core.models.time_mode import TimeMode
 from eventum.core.plugins.event.base import (BaseEventPlugin,
                                              EventPluginConfigurationError,
                                              EventPluginRuntimeError)
-from eventum.core.plugins.input.base import (InputPluginConfigurationError,
-                                             InputPluginRuntimeError,
-                                             LiveInputPlugin,
-                                             SampleInputPlugin)
+from eventum.core.plugins.input.base import (BaseInputPlugin,
+                                             InputPluginConfigurationError,
+                                             InputPluginRuntimeError)
 from eventum.core.plugins.output.base import (BaseOutputPlugin,
                                               OutputPluginConfigurationError,
                                               OutputPluginRuntimeError)
-from eventum.core.plugins.output.file import FileOutputPlugin
-from eventum.core.plugins.output.stdout import StdoutOutputPlugin
-from eventum.repository.manage import ContentReadError
 from numpy.typing import NDArray
 from setproctitle import getproctitle, setproctitle
 
@@ -71,25 +66,22 @@ def start_input_subprocess(
     queue: Queue,
     is_done: EventClass,
 ) -> None:
-    input_type, input_conf = config.popitem()
+    plugin_name, input_conf = config.popitem()
 
-    logger.info(f'Initializing "{input_type}" input plugin')
+    logger.info(f'Initializing "{plugin_name}" input plugin')
 
     try:
         plugin_module = importlib.import_module(
-            f'eventum.core.plugins.input.{input_type.value}'
+            f'eventum.core.plugins.input.{plugin_name}'
         )
         input_plugin_class = plugin_module.load_plugin()        # type: ignore
-        input_plugin: LiveInputPlugin | SampleInputPlugin = (
+        input_plugin: BaseInputPlugin = (
             input_plugin_class.create_from_config(              # type: ignore
                 config=input_conf
             )
         )
     except ImportError as e:
         logger.error(f'Failed to load input plugin: {e}')
-        _terminate_subprocess(is_done, 1, queue)
-    except ContentReadError as e:
-        logger.error(f'Failed to load content for input plugin: {e}')
         _terminate_subprocess(is_done, 1, queue)
     except InputPluginConfigurationError as e:
         logger.error(f'Failed to initialize input plugin: {e}')
@@ -111,9 +103,9 @@ def start_input_subprocess(
         ) as batcher:
             match time_mode:
                 case TimeMode.LIVE:
-                    input_plugin.live(on_event=batcher.add)
+                    input_plugin.live(on_event=batcher.add)     # type: ignore
                 case TimeMode.SAMPLE:
-                    input_plugin.sample(on_event=batcher.add)
+                    input_plugin.sample(on_event=batcher.add)   # type: ignore
                 case _:
                     assert_never(time_mode)
     except AttributeError:
@@ -143,11 +135,11 @@ def start_event_subprocess(
 ) -> None:
     logger.info('Initializing event plugin')
 
-    plugin = 'jinja'
+    plugin_name = 'jinja'
 
     try:
         plugin_module = importlib.import_module(
-            f'eventum.core.plugins.event.{plugin}'
+            f'eventum.core.plugins.event.{plugin_name}'
         )
         event_plugin_class = plugin_module.load_plugin()    # type: ignore
         event_plugin: BaseEventPlugin = (
@@ -212,29 +204,30 @@ def start_output_subprocess(
 
     output_plugins: list[BaseOutputPlugin] = []
 
-    for output, output_conf in config.items():
+    for plugin_name, output_conf in config.items():
         try:
-            match output:
-                case OutputType.STDOUT:
-                    output_plugins.append(
-                        StdoutOutputPlugin(format=output_conf.format)
-                    )
-                case OutputType.FILE:
-                    output_plugins.append(
-                        FileOutputPlugin(
-                            filepath=output_conf.path,  # type: ignore
-                            format=output_conf.format,
-                        )
-                    )
-                case val:
-                    assert_never(val)
+            plugin_module = importlib.import_module(
+                f'eventum.core.plugins.output.{plugin_name}'
+            )
+            output_plugin_class = plugin_module.load_plugin()   # type: ignore
+            output_plugin: BaseOutputPlugin = (
+                output_plugin_class.create_from_config(         # type: ignore
+                    config=output_conf
+                )
+            )
+            output_plugins.append(output_plugin)
+        except ImportError as e:
+            logger.error(f'Failed to load input plugin: {e}')
+            _terminate_subprocess(is_done, 1)
         except OutputPluginConfigurationError as e:
-            logger.error(f'Failed to initialize "{output}" output plugin: {e}')
+            logger.error(
+                f'Failed to initialize "{plugin_name}" output plugin: {e}'
+            )
             _terminate_subprocess(is_done, 1)
         except Exception as e:
             logger.error(
                 'Unexpected error occurred during initializing '
-                f'"{output}" output plugin: {e}'
+                f'"{plugin_name}" output plugin: {e}'
             )
             _terminate_subprocess(is_done, 1)
 

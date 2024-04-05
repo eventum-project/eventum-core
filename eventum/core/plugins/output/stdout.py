@@ -5,7 +5,8 @@ import sys
 from typing import Iterable
 
 import eventum.logging_config
-from eventum.core.models.application_config import OutputFormat
+from eventum.core.models.application_config import (OutputFormat,
+                                                    StdOutOutputConfig)
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
                                               format_event)
 
@@ -84,3 +85,10 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         await self._writer.drain()                  # type: ignore
 
         return len(fmt_events)
+
+    @classmethod
+    def create_from_config(
+        cls,
+        config: StdOutOutputConfig
+    ) -> 'StdoutOutputPlugin':
+        return StdoutOutputPlugin(format=config.format)

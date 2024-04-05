@@ -8,7 +8,7 @@ from pydantic import (BaseModel, BeforeValidator, field_validator)
 from eventum.utils.fs import validate_yaml_filename
 
 
-class InputType(StrEnum):
+class InputName(StrEnum):
     TIMESTAMPS = 'timestamps'
     TIME_PATTERNS = 'time_patterns'
     CRON = 'cron'
@@ -99,7 +99,7 @@ class JinjaEventConfig(BaseModel):
     subprocesses: dict[str, SubprocessConfig]
 
 
-class OutputType(StrEnum):
+class OutputName(StrEnum):
     STDOUT = 'stdout'
     FILE = 'file'
 
@@ -132,8 +132,8 @@ OutputConfig: TypeAlias = (
 )
 
 
-InputConfigMapping: TypeAlias = dict[InputType, InputConfig]
-OutputConfigMapping: TypeAlias = dict[OutputType, OutputConfig]
+InputConfigMapping: TypeAlias = dict[InputName, InputConfig]
+OutputConfigMapping: TypeAlias = dict[OutputName, OutputConfig]
 
 
 class ApplicationConfig(BaseModel):

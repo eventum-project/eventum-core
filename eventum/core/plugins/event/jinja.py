@@ -1,9 +1,6 @@
 import random
 from typing import Any, Iterator, assert_never
 
-from jinja2 import (Template, TemplateError, TemplateNotFound,
-                    TemplateRuntimeError, TemplateSyntaxError)
-
 from eventum.core.models.application_config import (CSVSampleConfig,
                                                     ItemsSampleConfig,
                                                     JinjaEventConfig,
@@ -15,6 +12,8 @@ from eventum.core.settings import JINJA_ENABLED_EXTENSIONS
 from eventum.repository.manage import (ContentReadError,
                                        get_templates_environment,
                                        load_csv_sample)
+from jinja2 import (Template, TemplateError, TemplateNotFound,
+                    TemplateRuntimeError, TemplateSyntaxError)
 
 
 class Subprocess:
