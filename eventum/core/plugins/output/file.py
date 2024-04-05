@@ -102,4 +102,4 @@ class FileOutputPlugin(BaseOutputPlugin):
                 f'Failed to write {len(fmt_events)} events to file: {e}'
             ) from e
 
-        return len(fmt_event)
+        return len(fmt_events)

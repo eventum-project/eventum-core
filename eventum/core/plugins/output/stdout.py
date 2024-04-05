@@ -83,4 +83,4 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         self._writer.writelines(fmt_events)         # type: ignore
         await self._writer.drain()                  # type: ignore
 
-        return len(fmt_event)
+        return len(fmt_events)
