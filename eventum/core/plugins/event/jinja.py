@@ -186,3 +186,15 @@ class JinjaEventPlugin(BaseEventPlugin):
                 ) from e
 
         return rendered
+
+    @classmethod
+    def create_from_config(
+        cls,
+        config: JinjaEventConfig
+    ) -> 'JinjaEventPlugin':
+        return JinjaEventPlugin(config)
+
+
+def load_plugin():
+    """Return class of plugin from current module."""
+    return JinjaEventPlugin

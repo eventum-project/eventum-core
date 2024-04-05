@@ -123,6 +123,10 @@ InputConfig: TypeAlias = (
     | CronInputConfig | SampleInputConfig
 )
 
+EventConfig: TypeAlias = (
+    JinjaEventConfig
+)
+
 OutputConfig: TypeAlias = (
     FileOutputConfig | StdOutOutputConfig
 )
@@ -134,7 +138,7 @@ OutputConfigMapping: TypeAlias = dict[OutputType, OutputConfig]
 
 class ApplicationConfig(BaseModel):
     input: InputConfigMapping
-    event: JinjaEventConfig
+    event: EventConfig
     output: OutputConfigMapping
 
     @field_validator('input')

@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from eventum.core.models.application_config import EventConfig
+
 
 class EventPluginError(Exception):
     """Base exception for all event plugin errors."""
@@ -19,4 +21,10 @@ class BaseEventPlugin(ABC):
     @abstractmethod
     def render(self, **kwargs) -> list[str]:
         """Render events with specified parameters and return it."""
+        ...
+
+    @classmethod
+    @abstractmethod
+    def create_from_config(cls, config: EventConfig) -> 'BaseEventPlugin':
+        """Create instance of configured plugin from config."""
         ...

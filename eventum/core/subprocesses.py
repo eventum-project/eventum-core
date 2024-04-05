@@ -11,14 +11,14 @@ import eventum.logging_config
 import numpy as np
 from eventum.core import settings
 from eventum.core.batcher import Batcher
-from eventum.core.models.application_config import (InputConfigMapping,
-                                                    JinjaEventConfig,
+from eventum.core.models.application_config import (EventConfig,
+                                                    InputConfigMapping,
                                                     OutputConfigMapping,
                                                     OutputType)
 from eventum.core.models.time_mode import TimeMode
-from eventum.core.plugins.event.base import (EventPluginConfigurationError,
+from eventum.core.plugins.event.base import (BaseEventPlugin,
+                                             EventPluginConfigurationError,
                                              EventPluginRuntimeError)
-from eventum.core.plugins.event.jinja import JinjaEventPlugin
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              InputPluginRuntimeError,
                                              LiveInputPlugin,
@@ -79,10 +79,12 @@ def start_input_subprocess(
         plugin_module = importlib.import_module(
             f'eventum.core.plugins.input.{input_type.value}'
         )
-        input_plugin: SampleInputPlugin | LiveInputPlugin = (
-            plugin_module.load_plugin()     # type: ignore
+        input_plugin_class = plugin_module.load_plugin()        # type: ignore
+        input_plugin: LiveInputPlugin | SampleInputPlugin = (
+            input_plugin_class.create_from_config(              # type: ignore
+                config=input_conf
+            )
         )
-        input_plugin.create_from_config(config=input_conf)
     except ImportError as e:
         logger.error(f'Failed to load input plugin: {e}')
         _terminate_subprocess(is_done, 1, queue)
@@ -134,15 +136,28 @@ def start_input_subprocess(
 
 @subprocess('event')
 def start_event_subprocess(
-    config: JinjaEventConfig,
+    config: EventConfig,
     input_queue: Queue,
     event_queue: Queue,
     is_done: EventClass
 ) -> None:
     logger.info('Initializing event plugin')
 
+    plugin = 'jinja'
+
     try:
-        event_plugin = JinjaEventPlugin(config)
+        plugin_module = importlib.import_module(
+            f'eventum.core.plugins.event.{plugin}'
+        )
+        event_plugin_class = plugin_module.load_plugin()    # type: ignore
+        event_plugin: BaseEventPlugin = (
+            event_plugin_class.create_from_config(          # type: ignore
+                config=config
+            )
+        )
+    except ImportError as e:
+        logger.error(f'Failed to load event plugin: {e}')
+        _terminate_subprocess(is_done, 1, event_queue)
     except EventPluginConfigurationError as e:
         logger.error(f'Failed to initialize event plugin: {e}')
         _terminate_subprocess(is_done, 1, event_queue)
