@@ -7,7 +7,7 @@ import plotly.graph_objects as go  # type: ignore
 import streamlit as st
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.core.plugins.input.base import InputPluginRuntimeError
-from eventum.core.plugins.input.time_pattern import TimePatternInputPlugin
+from eventum.core.plugins.input.time_patterns import TimePatternInputPlugin
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 from eventum.utils.numpy_time import timedelta_to_seconds

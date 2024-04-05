@@ -1,5 +1,6 @@
 from typing import Any, Callable
 
+from eventum.core.models.application_config import SampleInputConfig
 from eventum.core.plugins.input.base import \
     SampleInputPlugin as BaseSampleInputPlugin
 from eventum.utils.numpy_time import get_now
@@ -21,3 +22,15 @@ class SampleInputPlugin(BaseSampleInputPlugin):
 
         for _ in range(self._count):
             on_event(timestamp)
+
+    @classmethod
+    def create_from_config(
+        cls,
+        config: SampleInputConfig
+    ) -> 'SampleInputPlugin':
+        return SampleInputPlugin(count=config.count)
+
+
+def load_plugin():
+    """Return class of plugin from current module."""
+    return SampleInputPlugin

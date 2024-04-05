@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 from crontab import CronTab
 from eventum.core import settings
+from eventum.core.models.application_config import CronInputConfig
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              LiveInputPlugin)
 from numpy import datetime64
@@ -43,3 +44,15 @@ class CronInputPlugin(LiveInputPlugin):
 
             for _ in range(self._count):
                 on_event(timestamp)
+
+    @classmethod
+    def create_from_config(cls, config: CronInputConfig) -> 'CronInputPlugin':
+        return CronInputPlugin(
+            expression=config.expression,
+            count=config.count
+        )
+
+
+def load_plugin():
+    """Return class of plugin from current module."""
+    return CronInputPlugin

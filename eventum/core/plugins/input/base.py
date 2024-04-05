@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable
 
+from eventum.core.models.application_config import InputConfig
 from numpy import datetime64
 
 
@@ -24,6 +25,12 @@ class PerformanceError(InputPluginRuntimeError):
 
 class BaseInputPlugin(ABC):
     """Base class for all input plugins."""
+
+    @classmethod
+    @abstractmethod
+    def create_from_config(cls, config: InputConfig) -> 'BaseInputPlugin':
+        """Create instance of configured plugin from config."""
+        ...
 
 
 class LiveInputPlugin(BaseInputPlugin):

@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import logging
 import signal
 from multiprocessing import Queue
@@ -6,15 +7,11 @@ from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
 from typing import Callable, NoReturn, Optional, assert_never
 
-import numpy as np
-from numpy.typing import NDArray
-from setproctitle import getproctitle, setproctitle
-
 import eventum.logging_config
+import numpy as np
 from eventum.core import settings
 from eventum.core.batcher import Batcher
 from eventum.core.models.application_config import (InputConfigMapping,
-                                                    InputType,
                                                     JinjaEventConfig,
                                                     OutputConfigMapping,
                                                     OutputType)
@@ -23,17 +20,17 @@ from eventum.core.plugins.event.base import (EventPluginConfigurationError,
                                              EventPluginRuntimeError)
 from eventum.core.plugins.event.jinja import JinjaEventPlugin
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
-                                             InputPluginRuntimeError)
-from eventum.core.plugins.input.cron import CronInputPlugin
-from eventum.core.plugins.input.sample import SampleInputPlugin
-from eventum.core.plugins.input.time_pattern import TimePatternPoolInputPlugin
-from eventum.core.plugins.input.timestamps import TimestampsInputPlugin
+                                             InputPluginRuntimeError,
+                                             LiveInputPlugin,
+                                             SampleInputPlugin)
 from eventum.core.plugins.output.base import (BaseOutputPlugin,
                                               OutputPluginConfigurationError,
                                               OutputPluginRuntimeError)
 from eventum.core.plugins.output.file import FileOutputPlugin
 from eventum.core.plugins.output.stdout import StdoutOutputPlugin
-from eventum.repository.manage import ContentReadError, load_time_pattern
+from eventum.repository.manage import ContentReadError
+from numpy.typing import NDArray
+from setproctitle import getproctitle, setproctitle
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)
@@ -79,29 +76,16 @@ def start_input_subprocess(
     logger.info(f'Initializing "{input_type}" input plugin')
 
     try:
-        match input_type:
-            case InputType.PATTERNS:
-                input_plugin = TimePatternPoolInputPlugin(
-                    [
-                        load_time_pattern(path)         # type: ignore
-                        for path in input_conf
-                    ]
-                )
-            case InputType.TIMESTAMPS:
-                input_plugin = TimestampsInputPlugin(
-                    timestamps=input_conf               # type: ignore
-                )
-            case InputType.CRON:
-                input_plugin = CronInputPlugin(
-                    expression=input_conf.expression,   # type: ignore
-                    count=input_conf.count              # type: ignore
-                )
-            case InputType.SAMPLE:
-                input_plugin = SampleInputPlugin(
-                    count=input_conf.count              # type: ignore
-                )
-            case value:
-                assert_never(value)
+        plugin_module = importlib.import_module(
+            f'eventum.core.plugins.input.{input_type.value}'
+        )
+        input_plugin: SampleInputPlugin | LiveInputPlugin = (
+            plugin_module.load_plugin()     # type: ignore
+        )
+        input_plugin.create_from_config(config=input_conf)
+    except ImportError as e:
+        logger.error(f'Failed to load input plugin: {e}')
+        _terminate_subprocess(is_done, 1, queue)
     except ContentReadError as e:
         logger.error(f'Failed to load content for input plugin: {e}')
         _terminate_subprocess(is_done, 1, queue)

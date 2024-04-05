@@ -10,7 +10,7 @@ from eventum.utils.fs import validate_yaml_filename
 
 class InputType(StrEnum):
     TIMESTAMPS = 'timestamps'
-    PATTERNS = 'patterns'
+    TIME_PATTERNS = 'time_patterns'
     CRON = 'cron'
     SAMPLE = 'sample'
 
@@ -44,7 +44,7 @@ TimestampsInputConfig = Annotated[
     list[datetime], BeforeValidator(try_parse_datetime)
 ]
 
-PatternsInputConfig = Annotated[
+TimePatternsInputConfig = Annotated[
     list[str], BeforeValidator(validate_filenames)
 ]
 
@@ -119,7 +119,7 @@ class FileOutputConfig(BaseModel):
 
 
 InputConfig: TypeAlias = (
-    TimestampsInputConfig | PatternsInputConfig
+    TimestampsInputConfig | TimePatternsInputConfig
     | CronInputConfig | SampleInputConfig
 )
 

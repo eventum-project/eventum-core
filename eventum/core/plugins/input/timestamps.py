@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any, Callable
 
 import eventum.core.settings as settings
+from eventum.core.models.application_config import TimestampsInputConfig
 from eventum.core.plugins.input.base import LiveInputPlugin, SampleInputPlugin
 from eventum.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum.utils.timeseries import get_future_slice
@@ -41,3 +42,15 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 now = get_now()
 
             on_event(timestamp)
+
+    @classmethod
+    def create_from_config(
+        cls,
+        config: TimestampsInputConfig
+    ) -> 'TimestampsInputPlugin':
+        return TimestampsInputPlugin(timestamps=config)
+
+
+def load_plugin():
+    """Return class of plugin from current module."""
+    return TimestampsInputPlugin

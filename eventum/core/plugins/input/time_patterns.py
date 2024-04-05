@@ -8,6 +8,7 @@ from typing import Any, Callable, Sequence, assert_never
 
 import numpy as np
 from eventum.core import settings
+from eventum.core.models.application_config import TimePatternsInputConfig
 from eventum.core.models.time_pattern_config import (Distribution,
                                                      RandomizerDirection,
                                                      TimeKeyword,
@@ -16,6 +17,7 @@ from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              InputPluginRuntimeError,
                                              LiveInputPlugin, PerformanceError,
                                              SampleInputPlugin)
+from eventum.repository.manage import ContentReadError, load_time_pattern
 from eventum.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum.utils.relative_time import parse_relative_time
 from eventum.utils.timeseries import get_future_slice
@@ -324,6 +326,17 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
                 start += self._period_duration
 
+    @classmethod
+    def create_from_config(cls, config: str) -> 'TimePatternInputPlugin':
+        try:
+            config = load_time_pattern(config)
+        except ContentReadError as e:
+            raise InputPluginConfigurationError(
+                f'Failed to load time pattern config: {e}'
+            ) from e
+
+        return TimePatternInputPlugin(config=config)
+
 
 class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
     """Input plugin for combining multiple `TimePatternInputPlugin`
@@ -394,3 +407,25 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
                         # get result to propagate exceptions
                         tasks.pop(i).result()
                         queues.pop(i)
+
+    @classmethod
+    def create_from_config(
+        cls,
+        config: TimePatternsInputConfig
+    ) -> 'TimePatternPoolInputPlugin':
+        try:
+            configs = [
+                load_time_pattern(path)
+                for path in config
+            ]
+        except ContentReadError as e:
+            raise InputPluginConfigurationError(
+                 f'Failed to load time pattern config: {e}'
+            ) from e
+
+        return TimePatternPoolInputPlugin(configs=configs)
+
+
+def load_plugin():
+    """Return class of plugin from current module."""
+    return TimePatternPoolInputPlugin
