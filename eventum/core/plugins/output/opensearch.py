@@ -7,9 +7,11 @@ import ssl
 from typing import Iterable
 
 import aiohttp
+import keyring
 
 import eventum.logging_config
-from eventum.core.models.application_config import OutputFormat
+from eventum.core.models.application_config import (OpensearchOutputConfig,
+                                                    OutputFormat)
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
                                               OutputPluginConfigurationError,
                                               OutputPluginRuntimeError,
@@ -21,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 class OpensearchOutputPlugin(BaseOutputPlugin):
     """Output plugin for sending events to opensearch."""
+
+    _KEYRING_SERVICE_NAME = 'opensearch'
 
     def __init__(
         self,
@@ -182,8 +186,30 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
         return total_indexed
 
     @classmethod
-    def create_from_config(cls, config: ...) -> 'OpensearchOutputPlugin':
-        return OpensearchOutputPlugin(...)
+    def create_from_config(
+        cls,
+        config: OpensearchOutputConfig
+    ) -> 'OpensearchOutputPlugin':
+        service = cls._KEYRING_SERVICE_NAME
+        password = keyring.get_password(
+            service_name=service,
+            username=config.user
+        )
+
+        if password is None:
+            raise OutputPluginConfigurationError(
+                'Failed to get password from keyring for '
+                f'service "{service}" and user "{config.user}"'
+            )
+
+        return OpensearchOutputPlugin(
+            hosts=config.hosts,
+            user=config.user,
+            password=password,
+            index=config.index,
+            verify_ssl=config.verify_ssl,
+            ca_cert_path=config.ca_cert_path
+        )
 
 
 def load_plugin():

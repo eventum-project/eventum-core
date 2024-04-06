@@ -118,6 +118,14 @@ class FileOutputConfig(BaseModel):
     format: OutputFormat = OutputFormat.ORIGINAL
 
 
+class OpensearchOutputConfig(BaseModel):
+    hosts: list[str]
+    user: str
+    index: str
+    verify_ssl: bool
+    ca_cert_path: str | None = None
+
+
 InputConfig: TypeAlias = (
     TimestampsInputConfig | TimePatternsInputConfig
     | CronInputConfig | SampleInputConfig
@@ -128,7 +136,7 @@ EventConfig: TypeAlias = (
 )
 
 OutputConfig: TypeAlias = (
-    FileOutputConfig | StdOutOutputConfig
+    OpensearchOutputConfig | FileOutputConfig | StdOutOutputConfig
 )
 
 
