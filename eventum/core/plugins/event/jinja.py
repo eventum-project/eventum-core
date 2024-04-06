@@ -189,7 +189,7 @@ class JinjaEventPlugin(BaseEventPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: JinjaEventConfig
+        config: JinjaEventConfig        # type: ignore
     ) -> 'JinjaEventPlugin':
         return JinjaEventPlugin(config)
 

@@ -68,7 +68,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
         self._session = None
 
     async def _open(self) -> None:
-        self._session = aiohttp.ClientSession(
+        self._session = aiohttp.ClientSession(      # type: ignore
             auth=aiohttp.BasicAuth(self._user, self._password),
             connector=aiohttp.TCPConnector(ssl=self._ssl_context),
             headers={
@@ -100,7 +100,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
             return 0
 
         try:
-            response = await self._session.post(
+            response = await self._session.post(        # type: ignore
                 url=url,
                 data=event
             )
@@ -147,7 +147,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
         async def perform_bulk(host: str, bulk_data: str) -> None:
             """Index bulk data to specified host."""
             try:
-                response = await self._session.post(
+                response = await self._session.post(        # type: ignore
                     url=f'{host}/_bulk/',
                     data=bulk_data
                 )
@@ -188,7 +188,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: OpensearchOutputConfig
+        config: OpensearchOutputConfig      # type: ignore
     ) -> 'OpensearchOutputPlugin':
         credentials_manager = get_credentials_manager()
 

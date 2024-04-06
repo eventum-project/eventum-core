@@ -26,7 +26,7 @@ class SampleInputPlugin(BaseSampleInputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: SampleInputConfig
+        config: SampleInputConfig       # type: ignore
     ) -> 'SampleInputPlugin':
         return SampleInputPlugin(count=config.count)
 

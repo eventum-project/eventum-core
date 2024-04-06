@@ -1,5 +1,5 @@
 import os
-from keyrings.cryptfile.cryptfile import CryptFileKeyring
+from keyrings.cryptfile.cryptfile import CryptFileKeyring   # type: ignore
 
 
 def get_credentials_manager() -> CryptFileKeyring:

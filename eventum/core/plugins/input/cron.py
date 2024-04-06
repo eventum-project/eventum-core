@@ -46,7 +46,10 @@ class CronInputPlugin(LiveInputPlugin):
                 on_event(timestamp)
 
     @classmethod
-    def create_from_config(cls, config: CronInputConfig) -> 'CronInputPlugin':
+    def create_from_config(
+        cls,
+        config: CronInputConfig     # type: ignore
+    ) -> 'CronInputPlugin':
         return CronInputPlugin(
             expression=config.expression,
             count=config.count

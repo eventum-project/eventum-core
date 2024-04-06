@@ -327,15 +327,18 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 start += self._period_duration
 
     @classmethod
-    def create_from_config(cls, config: str) -> 'TimePatternInputPlugin':
+    def create_from_config(
+        cls,
+        config: str     # type: ignore
+    ) -> 'TimePatternInputPlugin':
         try:
-            config = load_time_pattern(config)
+            pattern_config = load_time_pattern(config)
         except ContentReadError as e:
             raise InputPluginConfigurationError(
                 f'Failed to load time pattern config: {e}'
             ) from e
 
-        return TimePatternInputPlugin(config=config)
+        return TimePatternInputPlugin(config=pattern_config)
 
 
 class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
@@ -411,7 +414,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: TimePatternsInputConfig
+        config: TimePatternsInputConfig     # type: ignore
     ) -> 'TimePatternPoolInputPlugin':
         try:
             configs = [

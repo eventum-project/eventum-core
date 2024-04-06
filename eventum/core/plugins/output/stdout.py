@@ -89,7 +89,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: StdOutOutputConfig
+        config: StdOutOutputConfig      # type: ignore
     ) -> 'StdoutOutputPlugin':
         return StdoutOutputPlugin(format=config.format)
 

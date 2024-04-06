@@ -107,7 +107,7 @@ class FileOutputPlugin(BaseOutputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: FileOutputConfig
+        config: FileOutputConfig        # type: ignore
     ) -> 'FileOutputPlugin':
         return FileOutputPlugin(filepath=config.path, format=config.format)
 
