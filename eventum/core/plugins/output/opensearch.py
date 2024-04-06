@@ -7,9 +7,10 @@ import ssl
 from typing import Iterable
 
 import aiohttp
-import keyring
 
 import eventum.logging_config
+from eventum.core.credentials_manager import (CredentialsManagerError,
+                                              get_credentials_manager)
 from eventum.core.models.application_config import (OpensearchOutputConfig,
                                                     OutputFormat)
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
@@ -190,9 +191,16 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
         cls,
         config: OpensearchOutputConfig
     ) -> 'OpensearchOutputPlugin':
+        try:
+            credentials_manager = get_credentials_manager()
+        except CredentialsManagerError as e:
+            raise OutputPluginConfigurationError(
+                f'Failed to get credentials manager: {e}'
+            )
+
         service = cls._KEYRING_SERVICE_NAME
-        password = keyring.get_password(
-            service_name=service,
+        password = credentials_manager.get_password(
+            service=service,
             username=config.user
         )
 

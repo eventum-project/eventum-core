@@ -133,9 +133,9 @@ def start_event_subprocess(
     event_queue: Queue,
     is_done: EventClass
 ) -> None:
-    logger.info('Initializing event plugin')
-
     plugin_name = 'jinja'
+
+    logger.info(f'Initializing "{plugin_name}" event plugin')
 
     try:
         plugin_module = importlib.import_module(

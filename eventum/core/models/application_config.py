@@ -102,6 +102,7 @@ class JinjaEventConfig(BaseModel):
 class OutputName(StrEnum):
     STDOUT = 'stdout'
     FILE = 'file'
+    OPENSEARCH = 'opensearch'
 
 
 class OutputFormat(StrEnum):
