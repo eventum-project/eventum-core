@@ -118,6 +118,25 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
 
         return 1
 
+    async def _perform_bulk(self, host: str, bulk_data: str) -> None:
+        """Index bulk data to specified host."""
+        try:
+            response = await self._session.post(        # type: ignore
+                url=f'{host}/_bulk/',
+                data=bulk_data
+            )
+        except aiohttp.ClientError as e:
+            raise OutputPluginRuntimeError(
+                f'Failed to bulk index events to opensearch ({host}): {e}'
+            )
+
+        if response.status != 200:
+            text = await response.text()
+            raise OutputPluginRuntimeError(
+                f'Failed to bulk index events to opensearch ({host}): '
+                f'HTTP {response.status} - {text}'
+            )
+
     async def _write_many(self, events: Iterable[str]) -> int:
         bulks_count = len(self._hosts)
         bulks = [""] * bulks_count
@@ -144,28 +163,9 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
             bulks[i % bulks_count] += bulk_data
             bulk_sizes[i % bulks_count] += 1
 
-        async def perform_bulk(host: str, bulk_data: str) -> None:
-            """Index bulk data to specified host."""
-            try:
-                response = await self._session.post(        # type: ignore
-                    url=f'{host}/_bulk/',
-                    data=bulk_data
-                )
-            except aiohttp.ClientError as e:
-                raise OutputPluginRuntimeError(
-                    f'Failed to bulk index events to opensearch ({host}): {e}'
-                )
-
-            if response.status != 200:
-                text = await response.text()
-                raise OutputPluginRuntimeError(
-                    f'Failed to bulk index events to opensearch ({host}): '
-                    f'HTTP {response.status} - {text}'
-                )
-
         results = await asyncio.gather(
             *[
-                perform_bulk(host=host, bulk_data=bulk_data)
+                self._perform_bulk(host=host, bulk_data=bulk_data)
                 for host, bulk_data in zip(self._hosts, bulks)
             ],
             return_exceptions=True
