@@ -170,11 +170,14 @@ class Application:
 
                 sleep(Application._IDLE_SLEEP_SECONDS)
 
-            self._proc_input.join()
-            self._proc_event.join()
-            self._proc_output.join()
+            if self._proc_input.is_alive() or self._proc_event.is_alive():
+                self._terminate_application_on_crash()
+            else:
+                self._proc_input.join()
+                self._proc_event.join()
+                self._proc_output.join()
 
-            self._increment_progress(bar)
+                self._increment_progress(bar)
 
             logger.info('Application is stopped')
             exit(0)
