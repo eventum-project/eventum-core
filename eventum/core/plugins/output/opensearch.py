@@ -9,8 +9,7 @@ from typing import Iterable
 import aiohttp
 
 import eventum.logging_config
-from eventum.core.credentials_manager import (CredentialsManagerError,
-                                              get_credentials_manager)
+from eventum.core.credentials_manager import get_credentials_manager
 from eventum.core.models.application_config import (OpensearchOutputConfig,
                                                     OutputFormat)
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
@@ -173,7 +172,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
         )
 
         total_indexed = 0
-        for result, size in enumerate(results, bulk_sizes):
+        for result, size in zip(results, bulk_sizes):
             if isinstance(result, OutputPluginRuntimeError):
                 logger.error(str(result))
             else:
@@ -191,12 +190,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
         cls,
         config: OpensearchOutputConfig
     ) -> 'OpensearchOutputPlugin':
-        try:
-            credentials_manager = get_credentials_manager()
-        except CredentialsManagerError as e:
-            raise OutputPluginConfigurationError(
-                f'Failed to get credentials manager: {e}'
-            )
+        credentials_manager = get_credentials_manager()
 
         service = cls._KEYRING_SERVICE_NAME
         password = credentials_manager.get_password(
