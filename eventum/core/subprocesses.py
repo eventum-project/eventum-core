@@ -256,12 +256,10 @@ def start_output_subprocess(
             *[plugin.open() for plugin in output_plugins]
         )
 
-        is_running = True
-        while is_running:
+        while True:
             events_batch = queue.get()
 
             if events_batch is None:
-                is_running = False
                 break
 
             await asyncio.gather(
