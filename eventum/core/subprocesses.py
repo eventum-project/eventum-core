@@ -245,6 +245,7 @@ def start_output_subprocess(
                 count = await plugin.write_many(events_batch)
         except OutputPluginRuntimeError as e:
             logger.error(f'Output plugin failed to write events: {e}')
+            return
 
         if count < batch_size:
             logger.warning(

@@ -1,3 +1,5 @@
+import asyncio
+import json
 import logging
 import os
 import random
@@ -5,6 +7,7 @@ import ssl
 from typing import Iterable
 
 import aiohttp
+
 import eventum.logging_config
 from eventum.core.models.application_config import OutputFormat
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
@@ -99,7 +102,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
             )
         except aiohttp.ClientError as e:
             raise OutputPluginRuntimeError(
-                f'Failed to index events to opensearch: {e}'
+                f'Failed to index events to opensearch ({host}): {e}'
             )
 
         if response.status != 201:
@@ -112,4 +115,77 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
         return 1
 
     async def _write_many(self, events: Iterable[str]) -> int:
-        ...
+        bulks_count = len(self._hosts)
+        bulks = [""] * bulks_count
+        bulk_sizes = [0] * bulks_count
+
+        for i, event in enumerate(events):
+            try:
+                fmt_event = format_event(
+                    format=OutputFormat.JSON_LINES,
+                    event=event
+                )
+            except FormatError as e:
+                logger.warning(
+                    f'Failed to format event before sending to opensearch: {e}'
+                    f'{os.linesep}'
+                    'Original unformatted event: '
+                    f'{os.linesep}'
+                    f'{event}')
+                continue
+
+            bulk_data = json.dumps({"index": {"_index": self._index}}) + '\n'
+            bulk_data += fmt_event + '\n'
+
+            bulks[i % bulks_count] += bulk_data
+            bulk_sizes[i % bulks_count] += 1
+
+        async def perform_bulk(host: str, bulk_data: str) -> None:
+            """Index bulk data to specified host."""
+            try:
+                response = await self._session.post(
+                    url=f'{host}/_bulk/',
+                    data=bulk_data
+                )
+            except aiohttp.ClientError as e:
+                raise OutputPluginRuntimeError(
+                    f'Failed to bulk index events to opensearch ({host}): {e}'
+                )
+
+            if response.status != 200:
+                text = await response.text()
+                raise OutputPluginRuntimeError(
+                    f'Failed to bulk index events to opensearch ({host}): '
+                    f'HTTP {response.status} - {text}'
+                )
+
+        results = await asyncio.gather(
+            *[
+                perform_bulk(host=host, bulk_data=bulk_data)
+                for host, bulk_data in zip(self._hosts, bulks)
+            ],
+            return_exceptions=True
+        )
+
+        total_indexed = 0
+        for result, size in enumerate(results, bulk_sizes):
+            if isinstance(result, OutputPluginRuntimeError):
+                logger.error(str(result))
+            else:
+                total_indexed += size
+
+        if total_indexed == 0:
+            raise OutputPluginRuntimeError(
+                'All hosts failed to bulk index events.'
+            )
+
+        return total_indexed
+
+    @classmethod
+    def create_from_config(cls, config: ...) -> 'OpensearchOutputPlugin':
+        return OpensearchOutputPlugin(...)
+
+
+def load_plugin():
+    """Return class of plugin from current module."""
+    return OpensearchOutputPlugin
