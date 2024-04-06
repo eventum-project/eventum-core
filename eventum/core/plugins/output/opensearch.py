@@ -104,13 +104,13 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
                 url=url,
                 data=event
             )
+            text = await response.text()
         except aiohttp.ClientError as e:
             raise OutputPluginRuntimeError(
                 f'Failed to index events to opensearch ({host}): {e}'
             )
 
         if response.status != 201:
-            text = await response.text()
             raise OutputPluginRuntimeError(
                 f'Failed to index events to opensearch: '
                 f'HTTP {response.status} - {text}'
@@ -125,13 +125,13 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
                 url=f'{host}/_bulk/',
                 data=bulk_data
             )
+            text = await response.text()
         except aiohttp.ClientError as e:
             raise OutputPluginRuntimeError(
                 f'Failed to bulk index events to opensearch ({host}): {e}'
             )
 
         if response.status != 200:
-            text = await response.text()
             raise OutputPluginRuntimeError(
                 f'Failed to bulk index events to opensearch ({host}): '
                 f'HTTP {response.status} - {text}'

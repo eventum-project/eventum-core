@@ -28,9 +28,9 @@ JINJA_ENABLED_EXTENSIONS = [
 
 # Batch size / timeout (in seconds) for input-to-event plugins
 # communication.
-EVENTS_BATCH_SIZE = 100000
-EVENTS_BATCH_TIMEOUT = 0.1
+EVENTS_BATCH_SIZE = 1000000
+EVENTS_BATCH_TIMEOUT = 1.0
 
 # Batch size / timeout (in seconds) for output plugins.
-OUTPUT_BATCH_SIZE = 1000
+OUTPUT_BATCH_SIZE = 10000
 OUTPUT_BATCH_TIMEOUT = 1.0
