@@ -96,8 +96,3 @@ class Batcher:
 
         self._thread.join()
         self._flush_batch(self._batch)
-
-
-with Batcher(1000000, 1, lambda x: print(len(x))) as batcher:
-    while True:
-        batcher.add(0)
