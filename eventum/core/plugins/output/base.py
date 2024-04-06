@@ -57,21 +57,21 @@ class BaseOutputPlugin(ABC):
         return await self._write_many(events)
 
     async def _open(self) -> None:
-        """Perform open operation. May be overridden in subclasses."""
+        """Perform open operation."""
         ...
 
     async def _close(self) -> None:
-        """Perform close operation. May be overridden in subclasses."""
+        """Perform close operation."""
         ...
 
     @abstractmethod
     async def _write(self, event: str) -> int:
-        """Perform write operation. Must be overridden in subclasses."""
+        """Perform write operation."""
         ...
 
     @abstractmethod
     async def _write_many(self, events: Iterable[str]) -> int:
-        """Perform bulk write operation. Must be overridden in subclasses."""
+        """Perform bulk write operation."""
         ...
 
     @classmethod
