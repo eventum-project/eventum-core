@@ -162,30 +162,28 @@ def start_event_subprocess(
 
     logger.info('Event plugin is successfully initialized')
 
-    is_running = True
-    while is_running:
-        timestamps_batch = input_queue.get()
-        if timestamps_batch is None:
-            is_running = False
-            break
+    with Batcher(
+        size=settings.OUTPUT_BATCH_SIZE,
+        timeout=settings.OUTPUT_BATCH_TIMEOUT,
+        callback=event_queue.put
+    ) as batcher:
+        while True:
+            timestamps_batch = input_queue.get()
+            if timestamps_batch is None:
+                break
 
-        try:
-            with Batcher(
-                size=settings.OUTPUT_BATCH_SIZE,
-                timeout=settings.OUTPUT_BATCH_TIMEOUT,
-                callback=event_queue.put
-            ) as batcher:
+            try:
                 for timestamp in timestamps_batch:
                     for event in event_plugin.render(timestamp=timestamp):
                         batcher.add(event)
-        except EventPluginRuntimeError as e:
-            logger.error(f'Failed to produce event: {e}')
-            _terminate_subprocess(is_done, 1, event_queue)
-        except Exception as e:
-            logger.error(
-                f'Unexpected error occurred during producing event: {e}'
-            )
-            _terminate_subprocess(is_done, 1, event_queue)
+            except EventPluginRuntimeError as e:
+                logger.error(f'Failed to produce event: {e}')
+                _terminate_subprocess(is_done, 1, event_queue)
+            except Exception as e:
+                logger.error(
+                    f'Unexpected error occurred during producing event: {e}'
+                )
+                _terminate_subprocess(is_done, 1, event_queue)
 
     logger.info('Stopping event plugin')
     _terminate_subprocess(is_done, 0, event_queue)
