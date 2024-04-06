@@ -57,11 +57,16 @@ class Batcher:
                 batch = self._batch
                 self._batch = []
 
-            if batch:
-                self._callback(batch)
+            self._flush_batch(batch)
+
+    def _flush_batch(self, batch):
+        """Perform callback on current batch."""
+        if batch:
+            self._callback(np.array(batch))
 
     def add(self, element: Any) -> None:
         """Add element to current batch."""
+
         complete_batch = None
 
         with self._lock:
@@ -78,7 +83,7 @@ class Batcher:
                 self._first_element_condition.notify_all()
 
         if complete_batch:
-            self._callback(np.array(complete_batch))
+            self._flush_batch(complete_batch)
 
     def __enter__(self):
         return self
@@ -90,6 +95,9 @@ class Batcher:
             self._size_condition.notify_all()
 
         self._thread.join()
+        self._flush_batch(self._batch)
 
-        if self._batch:
-            self._callback(self._batch)
+
+with Batcher(1000000, 1, lambda x: print(len(x))) as batcher:
+    while True:
+        batcher.add(0)
