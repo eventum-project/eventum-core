@@ -27,6 +27,7 @@ aiofiles = "^23.2.1"
 [tool.poetry.group.studio.dependencies]
 streamlit = "^1.28.1"
 plotly = "^5.20.0"
+streamlit-elements = "^0.1.0"
 
 
 [tool.poetry.group.dev.dependencies]
