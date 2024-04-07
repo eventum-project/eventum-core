@@ -105,7 +105,6 @@ class TemplateConfigurator(BaseComponent):
 
             with st.expander(label, expanded=True):
                 self._show_manage_section()
-                st.divider()
 
         st.divider()
         self._show_manage_buttons()
