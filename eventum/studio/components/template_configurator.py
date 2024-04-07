@@ -56,7 +56,7 @@ class TemplateConfigurator(BaseComponent):
         )
 
         if not is_empty:
-            st.write('*:grey[Template is already added]*')
+            st.write('*:grey[Template is added]*')
 
     def _show_manage_section(self) -> None:
         st.header('General')
@@ -120,7 +120,7 @@ class TemplateConfigurator(BaseComponent):
     ) -> None:
         """Add new template to configurator."""
         if not self._session_state['is_empty']:
-            raise ComponentActionError('Template is added')
+            raise ComponentActionError('Template is already added')
 
         if initial_state is None:
             initial_state = ''
@@ -164,6 +164,7 @@ class TemplateConfigurator(BaseComponent):
         self._session_state['is_empty'] = True
         self._session_state['is_saved'] = False
         self._session_state['template_filename'] = ''
+        self._props['set_content_callback']('')
 
     def _save(
         self,
