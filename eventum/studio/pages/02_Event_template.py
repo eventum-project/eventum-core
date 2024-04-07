@@ -30,7 +30,9 @@ configurator = TemplateConfigurator(
 with st.sidebar:
     configurator.show()
 
-editor_tab, rendering_tab = st.tabs(['Editor', 'Rendering'])
+editor_tab, rendering_tab, state_tab = st.tabs(
+    ['Editor', 'Rendering', 'State']
+)
 
 
 def handle_ctrl_s():
@@ -78,13 +80,36 @@ with rendering_tab:
                 'readOnly': True,
                 'cursorSmoothCaretAnimation': True
             },
-            height=520,
+            height=400,
         )
 
-    col1, col2, _, col3 = st.columns([2, 2, 4, 2])
+    st.caption('Rendering options')
 
-    col1.button('Clear shared', use_container_width=True)
-    col2.button('Clear locals', use_container_width=True)
-    col3.button('Render', use_container_width=True, type='primary')
+    with st.expander('Parameters'):
+        ...
 
-    st.divider()
+    with st.expander('Samples'):
+        ...
+
+    _, col2 = st.columns([3, 1])
+
+    col2.button('Render', use_container_width=True, type='primary')
+
+
+with state_tab:
+    st.caption('State')
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        st.caption('Locals')
+        st.write({'some_local_var': 1})
+
+    with col2:
+        st.caption('Shared')
+        st.write({'globally_available': 'yes it is'})
+
+    with col3:
+        st.caption('Subprocesses triggering')
+        st.write({'triggered': True})
+
+    _, col2 = st.columns([3, 1])
+    col2.button('Clear state', use_container_width=True)
