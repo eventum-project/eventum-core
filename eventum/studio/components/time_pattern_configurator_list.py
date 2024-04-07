@@ -14,7 +14,7 @@ from pydantic import ValidationError
 
 
 class TimePatternConfiguratorList(BaseComponent):
-    """Component for managing list of `Configurator`'s."""
+    """Component for managing list of configurators."""
 
     _TIME_PATTERN_COLORS = ('blue', 'green', 'orange', 'red', 'violet')
     _MAX_LIST_SIZE = 5
