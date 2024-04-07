@@ -75,7 +75,7 @@ with rendering_tab:
             original=st.session_state['template_content'],
             modified='',
             options={
-                'readOnly': configurator.is_empty,
+                'readOnly': True,
                 'cursorSmoothCaretAnimation': True
             },
             height=520,
