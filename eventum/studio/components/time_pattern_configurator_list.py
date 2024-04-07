@@ -5,7 +5,8 @@ import streamlit as st
 from eventum.repository.manage import (ContentReadError,
                                        get_time_pattern_filenames,
                                        load_time_pattern)
-from eventum.studio.components.component import BaseComponent
+from eventum.studio.components.component import (BaseComponent,
+                                                 ComponentActionError)
 from eventum.studio.components.time_pattern_configurator import \
     TimePatternConfigurator
 from eventum.studio.notifiers import NotificationLevel, default_notifier
@@ -112,7 +113,7 @@ class TimePatternConfiguratorList(BaseComponent):
     ) -> None:
         """Add time pattern adjuster element to list."""
         if self._session_state['time_patterns_counter'] == self._MAX_LIST_SIZE:
-            raise ValueError(
+            raise ComponentActionError(
                 f'Max size ({self._MAX_LIST_SIZE}) of list is exceeded'
             )
 

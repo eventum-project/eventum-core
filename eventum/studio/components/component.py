@@ -24,6 +24,12 @@ class ComponentPropsError(Exception):
     """
 
 
+class ComponentActionError(Exception):
+    """Exception for indicating that action performed on component is
+    incorrect.
+    """
+
+
 class BaseComponent(ABC):
     """Base class for creating session isolated components."""
     _STATE_INITIALIZATION_PROPS: dict[str, Any] = {}
