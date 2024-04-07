@@ -71,14 +71,15 @@ def validate_jinja_filename(filename: str) -> None:
 
     filename, ext = os.path.splitext(filename)
 
-    restricted_symbols = set(filename) - set(ascii_letters + digits + '_')
+    restricted_symbols = set(filename) - set(ascii_letters + digits + '_.')
     if restricted_symbols:
         raise ValueError(
-            'Only letters, digits and underscore are allowed in file basename'
+            'Only letters, digits, underscore and dot '
+            'are allowed in file basename'
         )
 
-    if ext != 'jinja':
-        raise ValueError('Only yml and yaml extensions are allowed')
+    if ext != '.jinja':
+        raise ValueError('Only jinja extension is allowed')
 
 
 def load_sample_from_csv(
