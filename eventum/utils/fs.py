@@ -5,7 +5,6 @@ from typing import Any
 
 import yaml
 
-CWD = os.path.abspath('.')
 PROJECT_DIR = os.path.realpath(
     os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
@@ -21,7 +20,7 @@ def resolve_path(path: str) -> str:
     if os.path.isabs(path):
         return path
 
-    return os.path.join(CWD, path)
+    return os.path.join(os.getcwd(), path)
 
 
 def load_object_from_yaml(filepath: str) -> Any:
@@ -57,6 +56,28 @@ def validate_yaml_filename(filename: str) -> None:
         )
 
     if ext not in ['.yml', '.yaml']:
+        raise ValueError('Only yml and yaml extensions are allowed')
+
+
+def validate_jinja_filename(filename: str) -> None:
+    """Check if provided filename is in format <basename>.jinja
+    where basename consists only of ascii letters, digits and
+    underscores. Raise `ValueError` on validation failure.
+    """
+    if not filename:
+        raise ValueError(
+            'File name cannot be empty'
+        )
+
+    filename, ext = os.path.splitext(filename)
+
+    restricted_symbols = set(filename) - set(ascii_letters + digits + '_')
+    if restricted_symbols:
+        raise ValueError(
+            'Only letters, digits and underscore are allowed in file basename'
+        )
+
+    if ext != 'jinja':
         raise ValueError('Only yml and yaml extensions are allowed')
 
 
