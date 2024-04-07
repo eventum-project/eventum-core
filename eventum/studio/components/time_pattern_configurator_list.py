@@ -58,7 +58,8 @@ class TimePatternConfiguratorList(BaseComponent):
             'Time patterns',
             options=get_time_pattern_filenames(),
             key=self._wk('pattern_selected_for_load'),
-            label_visibility='collapsed'
+            label_visibility='collapsed',
+            disabled=is_max_len
         )
 
         col2.button(
