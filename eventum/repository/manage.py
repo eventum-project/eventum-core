@@ -1,14 +1,14 @@
 import os
 from glob import glob
 
-from jinja2 import Environment, FileSystemLoader
-from pydantic import ValidationError
-from yaml import YAMLError
-
 from eventum.core.models.application_config import ApplicationConfig
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.utils.fs import (load_object_from_yaml, load_sample_from_csv,
-                              save_object_as_yaml, validate_yaml_filename)
+                              save_object_as_yaml, validate_jinja_filename,
+                              validate_yaml_filename)
+from jinja2 import Environment, FileSystemLoader
+from pydantic import ValidationError
+from yaml import YAMLError
 
 REPOSITORY_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TIME_PATTERNS_DIR = os.path.join(REPOSITORY_BASE_DIR, 'time_patterns')
@@ -43,11 +43,23 @@ def get_time_pattern_filenames() -> list[str]:
     )
 
 
+def get_template_filenames() -> list[str]:
+    """Get all relative paths of currently existing templates in
+    repository. Paths are relative to templates directory in
+    repository.
+    """
+    return glob(
+        pathname='**/*.jinja',
+        root_dir=EVENT_TEMPLATES_DIR,
+        recursive=True
+    )
+
+
 def save_time_pattern(
     pattern_config: TimePatternConfig,
     path: str,
     overwrite: bool = False
-):
+) -> None:
     """Save time pattern in specified path. If path is relative then it
     is saved in repository. Raise `ContentUpdateError` on failure.
     """
@@ -75,6 +87,36 @@ def save_time_pattern(
         raise ContentUpdateError(str(e)) from e
 
 
+def save_template(
+    content: str,
+    path: str,
+    overwrite: bool = False
+) -> None:
+    """Save template in specified path. If path is relative then it
+    is saved in repository. Raise `ContentUpdateError` on failure.
+    """
+    if not os.path.isabs(path):
+        path = os.path.join(EVENT_TEMPLATES_DIR, path)
+
+    _, filename = os.path.split(path)
+
+    try:
+        validate_jinja_filename(filename)
+    except ValueError as e:
+        raise ContentUpdateError(str(e)) from e
+
+    if overwrite is False and os.path.exists(path):
+        raise ContentUpdateError(
+            'Template already exists in specified location'
+        )
+
+    try:
+        with open(path, 'w') as f:
+            f.write(content)
+    except OSError as e:
+        raise ContentUpdateError(str(e)) from e
+
+
 def load_time_pattern(path: str) -> TimePatternConfig:
     """Load specified time pattern and return its model representation.
     If path is relative then it is loaded from repository. Raise
@@ -92,6 +134,23 @@ def load_time_pattern(path: str) -> TimePatternConfig:
         return TimePatternConfig.model_validate(data)
     except ValidationError as e:
         raise ContentReadError(str(e)) from e
+
+
+def load_template(path: str) -> str:
+    """Load specified template and return its raw content.
+    If path is relative then it is loaded from repository. Raise
+    `ContentReadError` on failure.
+    """
+    if not os.path.isabs(path):
+        path = os.path.join(EVENT_TEMPLATES_DIR, path)
+
+    try:
+        with open(path) as f:
+            data = f.read()
+    except OSError as e:
+        raise ContentReadError(str(e)) from e
+
+    return data
 
 
 def load_csv_sample(path: str, delimiter: str = ',') -> list[tuple[str, ...]]:
