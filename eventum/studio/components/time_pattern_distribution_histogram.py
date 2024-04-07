@@ -43,7 +43,7 @@ def _calculate_sample(config: TimePatternConfig) -> NDArray[np.datetime64]:
     return np.array(data)
 
 
-class DistributionHistogram(BaseComponent):
+class TimePatternDistributionHistogram(BaseComponent):
     """Component for visualizing time patterns distribution."""
     _AUTO_SPAN_BINS_COUNT = 60
 

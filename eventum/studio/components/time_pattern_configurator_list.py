@@ -6,14 +6,14 @@ from eventum.repository.manage import (ContentReadError,
                                        get_time_pattern_filenames,
                                        load_time_pattern)
 from eventum.studio.components.component import BaseComponent
-from eventum.studio.components.time_pattern.configurator import \
-    Configurator
+from eventum.studio.components.time_pattern_configurator import \
+    TimePatternConfigurator
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 from eventum.studio.widget_management import WidgetKeysContext
 from pydantic import ValidationError
 
 
-class ConfiguratorList(BaseComponent):
+class TimePatternConfiguratorList(BaseComponent):
     """Component for managing list of `Configurator`'s."""
 
     _TIME_PATTERN_COLORS = ('blue', 'green', 'orange', 'red', 'violet')
@@ -34,7 +34,7 @@ class ConfiguratorList(BaseComponent):
         self._session_state['time_patterns_counter'] = 0
         self._session_state['time_pattern_ids'] = []
         self._session_state['available_colors'] = set(
-            ConfiguratorList._TIME_PATTERN_COLORS
+            TimePatternConfiguratorList._TIME_PATTERN_COLORS
         )
         self._session_state['given_colors'] = dict()
         self._session_state['loaded_timepattern_filenames'] = set()
@@ -79,7 +79,7 @@ class ConfiguratorList(BaseComponent):
     def _show(self):
         st.title('Time Patterns')
         for id in self._session_state['time_pattern_ids']:
-            Configurator(
+            TimePatternConfigurator(
                 id=id,
                 widget_keys_context=self._wk,
                 props={
@@ -124,7 +124,7 @@ class ConfiguratorList(BaseComponent):
         color = self._session_state['available_colors'].pop()
         self._session_state['given_colors'][id] = color
 
-        Configurator(
+        TimePatternConfigurator(
             id=id,
             widget_keys_context=self._wk,
             props={
@@ -163,7 +163,7 @@ class ConfiguratorList(BaseComponent):
 
     def delete(self, id: int) -> None:
         """Delete specified time pattern adjuster from list."""
-        time_pattern = Configurator(
+        time_pattern = TimePatternConfigurator(
             id=id,
             widget_keys_context=self._wk
         )
@@ -183,7 +183,10 @@ class ConfiguratorList(BaseComponent):
         """Get list of currently adjusted time pattern configs."""
         configs = []
         for id in self._session_state['time_pattern_ids']:
-            pattern = Configurator(id=id, widget_keys_context=self._wk)
+            pattern = TimePatternConfigurator(
+                id=id,
+                widget_keys_context=self._wk
+            )
             try:
                 configs.append(pattern.get_current_configuration())
             except ValidationError as e:

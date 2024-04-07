@@ -8,7 +8,7 @@ from eventum.studio.notifiers import NotificationLevel, default_notifier
 from pydantic import ValidationError
 
 
-class Configurator(BaseComponent):
+class TimePatternConfigurator(BaseComponent):
     """Component for controlling configuration of time pattern."""
 
     _STATE_INITIALIZATION_PROPS = {
@@ -27,7 +27,7 @@ class Configurator(BaseComponent):
 
         if init is None:
             saved = False
-            init = Configurator.get_default_configuration()
+            init = TimePatternConfigurator.get_default_configuration()
         else:
             saved = True
 
