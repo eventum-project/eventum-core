@@ -30,7 +30,7 @@ configurator = TemplateConfigurator(
 with st.sidebar:
     configurator.show()
 
-editor_tab, debugger_tab = st.tabs(['Editor', 'Debugger'])
+editor_tab, rendering_tab = st.tabs(['Editor', 'Rendering'])
 
 
 def handle_ctrl_s():
@@ -66,7 +66,25 @@ with editor_tab:
             height=520,
         )
 
-with debugger_tab:
-    st.button('Clear locals')
-    st.button('Clear shared')
-    st.button('Run')
+with rendering_tab:
+    st.caption('Template rendering preview')
+    with elements('render_viewer'):
+        editor.MonacoDiff(
+            theme='vs-dark',
+            language='javascript',
+            original=st.session_state['template_content'],
+            modified='',
+            options={
+                'readOnly': configurator.is_empty,
+                'cursorSmoothCaretAnimation': True
+            },
+            height=520,
+        )
+
+    col1, col2, _, col3 = st.columns([2, 2, 4, 2])
+
+    col1.button('Clear shared', use_container_width=True)
+    col2.button('Clear locals', use_container_width=True)
+    col3.button('Render', use_container_width=True, type='primary')
+
+    st.divider()

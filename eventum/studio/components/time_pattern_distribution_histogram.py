@@ -146,5 +146,6 @@ class TimePatternDistributionHistogram(BaseComponent):
             'Recalculate',
             use_container_width=True,
             key=self._wk.get_ephemeral(),
-            on_click=_calculate_sample.clear    # type: ignore
+            on_click=_calculate_sample.clear,   # type: ignore
+            type='primary'
         )

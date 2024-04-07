@@ -72,6 +72,7 @@ class TemplateConfigurator(BaseComponent):
                 key=self._wk.get_ephemeral(),
                 on_click=lambda: self._save(overwrite=True),
                 use_container_width=True,
+                type='primary'
             )
         else:
             st.button(
@@ -79,13 +80,13 @@ class TemplateConfigurator(BaseComponent):
                 key=self._wk.get_ephemeral(),
                 on_click=self._save,
                 use_container_width=True,
+                type='primary'
             )
         st.button(
             'Delete',
             key=self._wk.get_ephemeral(),
             on_click=self._clear,
             use_container_width=True,
-            type='primary',
         )
 
     def _show(self):
