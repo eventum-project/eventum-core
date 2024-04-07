@@ -194,3 +194,7 @@ class TemplateConfigurator(BaseComponent):
 
         self._session_state['is_saved'] = True
         notify_callback('Saved in repository', NotificationLevel.SUCCESS)
+
+    @property
+    def is_empty(self) -> bool:
+        return self._session_state['is_empty']
