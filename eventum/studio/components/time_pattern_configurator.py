@@ -27,7 +27,7 @@ class TimePatternConfigurator(BaseComponent):
 
         if init is None:
             saved = False
-            init = TimePatternConfigurator.get_default_configuration()
+            init = TimePatternConfigurator._get_default_configuration()
         else:
             saved = True
 
@@ -129,14 +129,14 @@ class TimePatternConfigurator(BaseComponent):
             st.button(
                 'Update',
                 key=self._wk.get_ephemeral(),
-                on_click=lambda: self.save(overwrite=True),
+                on_click=lambda: self._save(overwrite=True),
                 use_container_width=True,
             )
         else:
             st.button(
                 'Save',
                 key=self._wk.get_ephemeral(),
-                on_click=lambda: self.save(),
+                on_click=lambda: self._save(),
                 use_container_width=True,
             )
         st.button(
@@ -290,7 +290,7 @@ class TimePatternConfigurator(BaseComponent):
             st.divider()
             self._show_spreader_section()
 
-    def save(
+    def _save(
         self,
         overwrite: bool = False,
         notify_callback: Callable[
@@ -367,7 +367,7 @@ class TimePatternConfigurator(BaseComponent):
         )
 
     @staticmethod
-    def get_default_configuration(
+    def _get_default_configuration(
         label: str = 'New pattern'
     ) -> models.TimePatternConfig:
         """Create `TimePatternConfig` object with default values."""

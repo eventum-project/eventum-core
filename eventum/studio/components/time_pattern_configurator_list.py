@@ -49,7 +49,7 @@ class TimePatternConfiguratorList(BaseComponent):
             'Create new',
             key=self._wk.get_ephemeral(),
             disabled=is_max_len,
-            on_click=lambda: self.add(),
+            on_click=lambda: self._add(),
             use_container_width=True
         )
         col1, col2 = st.columns([7, 3])
@@ -68,7 +68,7 @@ class TimePatternConfiguratorList(BaseComponent):
                 is_max_len
                 or not selected_pattern
             ),
-            on_click=lambda: self.load_time_pattern(
+            on_click=lambda: self._load(
                 filename=selected_pattern   # type: ignore
             ),
             use_container_width=True,
@@ -90,7 +90,7 @@ class TimePatternConfiguratorList(BaseComponent):
                         ].add(filename)
                     ),
                     'delete_callback': (
-                        lambda id=id: self.delete(id)
+                        lambda id=id: self._delete(id)
                     )
                 }
             )._show()
@@ -106,7 +106,7 @@ class TimePatternConfiguratorList(BaseComponent):
         st.divider()
         self._show_manage_buttons()
 
-    def add(
+    def _add(
         self,
         initial_state: Optional[models.TimePatternConfig] = None,
         pattern_filename: Optional[str] = None
@@ -135,7 +135,7 @@ class TimePatternConfiguratorList(BaseComponent):
             }
         )
 
-    def load_time_pattern(
+    def _load(
         self,
         filename: str,
         notify_callback: Callable[
@@ -156,13 +156,13 @@ class TimePatternConfiguratorList(BaseComponent):
             notify_callback(str(e), NotificationLevel.ERROR)
             return
 
-        self.add(
+        self._add(
             initial_state=time_pattern,
             pattern_filename=self._session_state['pattern_selected_for_load']
         )
         self._session_state['loaded_timepattern_filenames'].add(filename)
 
-    def delete(self, id: int) -> None:
+    def _delete(self, id: int) -> None:
         """Delete specified time pattern adjuster from list."""
         time_pattern = TimePatternConfigurator(
             id=id,
