@@ -29,7 +29,6 @@ def _hash_config(config: TimePatternConfig) -> int:
 @st.cache_data(
     max_entries=1024,
     show_spinner='Calculating distribution',
-    persist=True,
     hash_funcs={TimePatternConfig: _hash_config}
 )
 def _calculate_sample(config: TimePatternConfig) -> NDArray[np.datetime64]:
@@ -37,17 +36,10 @@ def _calculate_sample(config: TimePatternConfig) -> NDArray[np.datetime64]:
     be calculated then empty list is returned and corresponding
     notification is displayed."""
     pattern = TimePatternInputPlugin(config)
+
     data = []
-    try:
-        pattern.sample(lambda ts: data.append(ts))
-    except InputPluginRuntimeError as e:
-        default_notifier(
-            message=(
-                'Skip distribution calculation '
-                f'for pattern "{config.label}": {e}'
-            ),
-            level=NotificationLevel.WARNING
-        )
+    pattern.sample(lambda ts: data.append(ts))
+
     return np.array(data)
 
 
@@ -97,8 +89,18 @@ class DistributionHistogram(BaseComponent):
         max_timestamp = np.datetime64('0000-01-01')
 
         for config, color in zip(configs, colors):
-            series = pd.Series(1, index=_calculate_sample(config))
-            total_events += series.size
+            try:
+                series = pd.Series(1, index=_calculate_sample(config))
+                total_events += series.size
+            except InputPluginRuntimeError as e:
+                default_notifier(
+                    message=(
+                        'Skip distribution calculation '
+                        f'for pattern "{config.label}": {e}'
+                    ),
+                    level=NotificationLevel.WARNING
+                )
+                continue
 
             if not series.empty:
                 series = self._resample_series(series)

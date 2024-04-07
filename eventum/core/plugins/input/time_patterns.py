@@ -176,8 +176,8 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         if end is never and not allow_never_end:
             raise InputPluginRuntimeError(
-                f'Value of "end" - "{TimeKeyword.NEVER}" is disallowed '
-                'in current conditions'
+                f'Value "{TimeKeyword.NEVER}" for "end" parameter '
+                'is not allowed here'
             )
 
         start = start.replace(tzinfo=None)
