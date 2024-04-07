@@ -42,6 +42,10 @@ def handle_ctrl_s():
 
 
 with editor_tab:
+    st.caption(
+        'Template content',
+        help='Use `Ctrl+S` to commit changes after editing'
+    )
     with elements('editor'):
         event.Hotkey(
             sequence='ctrl+s',

@@ -28,14 +28,14 @@ with col1:
     span = SpanInput()
     span.show()
 
-col2.markdown(
+col2.caption(
     '<div style="text-align: right">'
     f'Local time zone: <code>{datetime.now().astimezone().tzinfo}</code>'
     '</div>',
     unsafe_allow_html=True
 )
 
-col2.markdown(
+col2.caption(
     '<div style="text-align: right">'
     f'Sample time zone: <code>{settings.TIMEZONE}</code>'
     '</div>',
