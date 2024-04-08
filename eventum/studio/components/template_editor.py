@@ -9,7 +9,7 @@ from eventum.studio.notifiers import NotificationLevel, default_notifier
 
 class TemplateEditor(BaseComponent):
     _SHOW_PROPS = {
-        'value': str,
+        'content': str,
         'read_only': bool,
         'on_change': Callable[[str], None]
     }
@@ -19,7 +19,7 @@ class TemplateEditor(BaseComponent):
             'Template content',
             help='Use `Ctrl+S` to commit changes after editing'
         )
-        with elements('editor'):
+        with elements(self._wk('template_editor')):
             event.Hotkey(
                 sequence='ctrl+s',
                 callback=(
@@ -36,7 +36,7 @@ class TemplateEditor(BaseComponent):
             editor.Monaco(
                 theme='vs-dark',
                 language='javascript',
-                value=self._props['value'],
+                value=self._props['content'],
                 onChange=lazy(self._props['on_change']),
                 options={
                     'readOnly': self._props['read_only'],
