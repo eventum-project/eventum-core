@@ -1,11 +1,9 @@
 import streamlit as st
+from streamlit_elements import editor, elements, event, lazy, sync
+
 from eventum.studio.components.component import persist_state
-from eventum.studio.components.template_configurator import \
-    TemplateConfigurator
-
-from streamlit_elements import elements, editor, sync, lazy, event
+from eventum.studio.components.template_manager import TemplateManager
 from eventum.studio.notifiers import NotificationLevel, default_notifier
-
 
 persist_state()
 
@@ -18,7 +16,7 @@ st.set_page_config(
 if 'template_content' not in st.session_state:
     st.session_state['template_content'] = ''
 
-configurator = TemplateConfigurator(
+manager = TemplateManager(
     props={
         'get_content_callback': lambda: st.session_state['template_content'],
         'set_content_callback': (
@@ -28,11 +26,9 @@ configurator = TemplateConfigurator(
     }
 )
 with st.sidebar:
-    configurator.show()
+    manager.show()
 
-editor_tab, rendering_tab, state_tab = st.tabs(
-    ['Editor', 'Rendering', 'State']
-)
+editor_tab, render_tab, state_tab = st.tabs(['Editor', 'Rendering', 'State'])
 
 
 def handle_ctrl_s():
@@ -62,13 +58,13 @@ with editor_tab:
             value=st.session_state['template_content'],
             onChange=lazy(sync('template_content')),
             options={
-                'readOnly': configurator.is_empty,
+                'readOnly': manager.is_empty,
                 'cursorSmoothCaretAnimation': True
             },
             height=520,
         )
 
-with rendering_tab:
+with render_tab:
     st.caption('Template rendering preview')
     with elements('render_viewer'):
         editor.MonacoDiff(

@@ -9,8 +9,8 @@ from eventum.studio.components.component import (BaseComponent,
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 
 
-class TemplateConfigurator(BaseComponent):
-    """Component for controlling configuration of template."""
+class TemplateManager(BaseComponent):
+    """Component for managing templates."""
 
     _SHOW_PROPS = {
         'get_content_callback': Callable[[], str],
