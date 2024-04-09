@@ -8,6 +8,8 @@ from eventum.studio.notifiers import NotificationLevel, default_notifier
 
 
 class TemplateEditor(BaseComponent):
+    """Component for editing template content."""
+
     _SHOW_PROPS = {
         'content': str,
         'read_only': bool,

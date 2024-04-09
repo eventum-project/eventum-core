@@ -17,8 +17,9 @@ st.set_page_config(
     initial_sidebar_state='expanded'
 )
 
-if 'template_content' not in st.session_state:
-    st.session_state['template_content'] = ''
+for key in ['template_content', 'config_content']:
+    if key not in st.session_state:
+        st.session_state[key] = ''
 
 manager = TemplateManager(
     props={
@@ -36,7 +37,11 @@ editor = TemplateEditor(
         'on_change': sync('template_content')
     }
 )
-config_editor = TemplateConfigurationEditor()
+config_editor = TemplateConfigurationEditor(
+    props={
+        'on_change': sync('config_content')
+    }
+)
 renderer = TemplateRenderer(
     props={
         'template_content': st.session_state['template_content']
