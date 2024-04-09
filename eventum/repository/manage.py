@@ -55,6 +55,18 @@ def get_template_filenames() -> list[str]:
     )
 
 
+def get_csv_sample_filenames() -> list[str]:
+    """Get all relative paths of currently existing samples in
+    repository. Paths are relative to templates directory in
+    repository.
+    """
+    return glob(
+        pathname='**/*.csv',
+        root_dir=CSV_SAMPLES_DIR,
+        recursive=True
+    )
+
+
 def save_time_pattern(
     pattern_config: TimePatternConfig,
     path: str,
