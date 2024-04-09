@@ -50,7 +50,8 @@ class TemplateConfigurationEditor(BaseComponent):
                     value=self._DEFAULT_CONTENT,
                     onChange=lazy(self._props['on_change']),
                     options={
-                        'cursorSmoothCaretAnimation': True
+                        'cursorSmoothCaretAnimation': True,
+                        'tabSize': 2
                     }
                 )
 
