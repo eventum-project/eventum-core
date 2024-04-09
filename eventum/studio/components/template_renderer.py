@@ -23,17 +23,8 @@ class TemplateRenderer(BaseComponent):
                     'readOnly': True,
                     'cursorSmoothCaretAnimation': True
                 },
-                height=400,
+                height=600,
             )
 
-        st.caption('Rendering options')
-
-        with st.expander('Parameters'):
-            st.write('Not Implemented')
-
-        with st.expander('Samples'):
-            st.write('Not Implemented')
-
         _, col2 = st.columns([3, 1])
-
         col2.button('Render', use_container_width=True, type='primary')

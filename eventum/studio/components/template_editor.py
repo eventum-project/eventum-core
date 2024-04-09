@@ -42,5 +42,5 @@ class TemplateEditor(BaseComponent):
                     'readOnly': self._props['read_only'],
                     'cursorSmoothCaretAnimation': True
                 },
-                height=520,
+                height=650,
             )

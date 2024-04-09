@@ -2,6 +2,8 @@ import streamlit as st
 from streamlit_elements import sync
 
 from eventum.studio.components.component import persist_state
+from eventum.studio.components.template_configuration_editor import \
+    TemplateConfigurationEditor
 from eventum.studio.components.template_editor import TemplateEditor
 from eventum.studio.components.template_manager import TemplateManager
 from eventum.studio.components.template_renderer import TemplateRenderer
@@ -34,6 +36,7 @@ editor = TemplateEditor(
         'on_change': sync('template_content')
     }
 )
+config_editor = TemplateConfigurationEditor()
 renderer = TemplateRenderer(
     props={
         'template_content': st.session_state['template_content']
@@ -44,12 +47,17 @@ state_viewer = TemplateStateViewer()
 with st.sidebar:
     manager.show()
 
-editor_tab, render_tab, state_tab = st.tabs(['Editor', 'Rendering', 'State'])
+editor_tab, configuration_tab, rendering_tab, state_tab = st.tabs(
+    ['Template', 'Configuration', 'Rendering', 'State']
+)
 
 with editor_tab:
     editor.show()
 
-with render_tab:
+with configuration_tab:
+    config_editor.show()
+
+with rendering_tab:
     renderer.show()
 
 with state_tab:
