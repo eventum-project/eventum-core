@@ -8,14 +8,17 @@ from eventum.studio.components.template_editor import TemplateEditor
 from eventum.studio.components.template_manager import TemplateManager
 from eventum.studio.components.template_renderer import TemplateRenderer
 from eventum.studio.components.template_state_viewer import TemplateStateViewer
+from eventum.studio.theme import apply_theme
 
 persist_state()
+apply_theme()
 
 st.set_page_config(
     page_title='Eventum Studio',
     layout='wide',
     initial_sidebar_state='expanded'
 )
+
 
 for key in ['template_content', 'config_content']:
     if key not in st.session_state:

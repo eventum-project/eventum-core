@@ -1,15 +1,18 @@
 from datetime import datetime
 
 import streamlit as st
+
 from eventum.core import settings
 from eventum.studio.components.component import persist_state
+from eventum.studio.components.span_input import SpanInput
 from eventum.studio.components.time_pattern_configurator_list import \
     TimePatternConfiguratorList
 from eventum.studio.components.time_pattern_distribution_histogram import \
     TimePatternDistributionHistogram
-from eventum.studio.components.span_input import SpanInput
+from eventum.studio.theme import apply_theme
 
 persist_state()
+apply_theme()
 
 st.set_page_config(
     page_title='Eventum Studio',
