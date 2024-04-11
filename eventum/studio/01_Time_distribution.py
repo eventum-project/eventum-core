@@ -12,13 +12,12 @@ from eventum.studio.components.time_pattern_distribution_histogram import \
 from eventum.studio.theme import apply_theme
 
 persist_state()
-apply_theme()
-
 st.set_page_config(
     page_title='Eventum Studio',
     layout='wide',
     initial_sidebar_state='expanded'
 )
+apply_theme()
 
 configs_list = TimePatternConfiguratorList()
 with st.sidebar:
