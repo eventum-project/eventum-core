@@ -23,20 +23,20 @@ class SampleExplorer(BaseComponent):
         )
         try:
             if sample is not None:
-                sample = load_csv_sample(sample)
+                sample_data = load_csv_sample(sample)
             else:
-                sample = []
+                sample_data = []
         except ContentReadError as e:
             default_notifier(
                 message=f'Failed to load sample: {e}',
                 level=NotificationLevel.ERROR
             )
-            sample = []
+            sample_data = []
 
-        total_size = len(sample)
+        total_size = len(sample_data)
         display_size = self._props['display_size']
 
-        st.table(sample[:display_size])
+        st.table(sample_data[:display_size])
 
         if total_size > display_size:
             st.text(f'and {total_size - display_size} more ...')

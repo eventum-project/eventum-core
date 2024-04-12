@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_elements import sync
+from streamlit_elements import sync     # type: ignore
 
 from eventum.studio.components.component import persist_state
 from eventum.studio.components.template_configuration_editor import \

@@ -5,7 +5,7 @@ import streamlit as st
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from pydantic import ValidationError
-from streamlit_elements import editor, elements
+from streamlit_elements import editor, elements     # type: ignore
 
 import eventum.core.models.application_config as models
 from eventum.core.plugins.event.base import (EventPluginConfigurationError,
@@ -66,8 +66,11 @@ class TemplateRenderer(BaseComponent):
             )
             return
 
-        timestamp = datetime.now().astimezone(TIMEZONE)
-        timestamp = timestamp.replace(tzinfo=None).isoformat()
+        timestamp = datetime.now().astimezone(
+            tz=TIMEZONE
+        ).replace(
+            tzinfo=None
+        ).isoformat()
         params = {TIMESTAMP_FIELD_NAME: timestamp}
 
         try:
