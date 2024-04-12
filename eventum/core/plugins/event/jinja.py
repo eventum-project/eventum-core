@@ -55,11 +55,15 @@ class JinjaEventPlugin(BaseEventPlugin):
     def __init__(
         self,
         config: JinjaEventConfig,
-        environment: Environment = get_templates_environment()
+        environment: Environment | None = None
     ) -> None:
         self._config = config
 
-        self._env = environment
+        if environment is None:
+            self._env = get_templates_environment()
+        else:
+            self._env = environment
+
         self._initialize_environment()
 
         self._templates = self._load_templates()
