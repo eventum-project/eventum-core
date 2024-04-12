@@ -1,4 +1,4 @@
-from typing import Callable, MutableMapping, Optional
+from typing import MutableMapping, Optional
 
 import eventum.core.models.time_pattern_config as models
 import streamlit as st
@@ -136,16 +136,10 @@ class TimePatternConfiguratorList(BaseComponent):
             }
         )
 
-    def _load(
-        self,
-        filename: str,
-        notify_callback: Callable[
-            [str, NotificationLevel], None
-        ] = default_notifier
-    ) -> None:
+    def _load(self, filename: str) -> None:
         """Load selected time pattern from repository"""
         if filename in self._session_state['loaded_timepattern_filenames']:
-            notify_callback(
+            default_notifier(
                 'Time pattern is already loaded',
                 NotificationLevel.WARNING
             )
@@ -154,7 +148,7 @@ class TimePatternConfiguratorList(BaseComponent):
         try:
             time_pattern = load_time_pattern(filename)
         except ContentReadError as e:
-            notify_callback(str(e), NotificationLevel.ERROR)
+            default_notifier(str(e), NotificationLevel.ERROR)
             return
 
         self._add(

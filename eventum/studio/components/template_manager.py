@@ -113,10 +113,7 @@ class TemplateManager(BaseComponent):
     def _add(
         self,
         initial_state: Optional[str] = None,
-        template_filename: Optional[str] = None,
-        notify_callback: Callable[
-            [str, NotificationLevel], None
-        ] = default_notifier
+        template_filename: Optional[str] = None
     ) -> None:
         """Add new template to configurator."""
         if not self._session_state['is_empty']:
@@ -128,7 +125,7 @@ class TemplateManager(BaseComponent):
         try:
             self._props['set_content_callback'](initial_state)
         except Exception as e:
-            notify_callback(
+            default_notifier(
                 f'Failed to present content of template: {e}',
                 NotificationLevel.ERROR
             )
@@ -140,18 +137,12 @@ class TemplateManager(BaseComponent):
 
         self._session_state['is_empty'] = False
 
-    def _load(
-        self,
-        filename: str,
-        notify_callback: Callable[
-            [str, NotificationLevel], None
-        ] = default_notifier
-    ) -> None:
+    def _load(self, filename: str) -> None:
         """Load selected template from repository to configurator."""
         try:
             template_content = load_template(filename)
         except ContentReadError as e:
-            notify_callback(str(e), NotificationLevel.ERROR)
+            default_notifier(str(e), NotificationLevel.ERROR)
             return
 
         self._add(
@@ -166,18 +157,12 @@ class TemplateManager(BaseComponent):
         self._session_state['template_filename'] = ''
         self._props['set_content_callback']('')
 
-    def _save(
-        self,
-        overwrite: bool = False,
-        notify_callback: Callable[
-            [str, NotificationLevel], None
-        ] = default_notifier
-    ):
+    def _save(self, overwrite: bool = False) -> None:
         """Save current template to repository."""
         try:
             content = self._props['get_content_callback']()
         except Exception as e:
-            notify_callback(
+            default_notifier(
                 f'Failed to get template content: {e}',
                 NotificationLevel.ERROR
             )
@@ -190,11 +175,11 @@ class TemplateManager(BaseComponent):
                 overwrite=overwrite
             )
         except ContentUpdateError as e:
-            notify_callback(f'Failed to save: {e}', NotificationLevel.ERROR)
+            default_notifier(f'Failed to save: {e}', NotificationLevel.ERROR)
             return
 
         self._session_state['is_saved'] = True
-        notify_callback('Saved in repository', NotificationLevel.SUCCESS)
+        default_notifier('Saved in repository', NotificationLevel.SUCCESS)
 
     @property
     def is_empty(self) -> bool:

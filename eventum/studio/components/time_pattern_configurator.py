@@ -291,13 +291,7 @@ class TimePatternConfigurator(BaseComponent):
             st.divider()
             self._show_spreader_section()
 
-    def _save(
-        self,
-        overwrite: bool = False,
-        notify_callback: Callable[
-            [str, NotificationLevel], None
-        ] = default_notifier
-    ):
+    def _save(self, overwrite: bool = False) -> None:
         """Save currently configured time pattern to repository as
         configuration file.
         """
@@ -308,19 +302,19 @@ class TimePatternConfigurator(BaseComponent):
                 overwrite=overwrite
             )
         except ValidationError as e:
-            notify_callback(
+            default_notifier(
                 f'Field validation fail for "{e.title}"',
                 NotificationLevel.ERROR
             )
             return
         except ContentUpdateError as e:
-            notify_callback(f'Failed to save: {e}', NotificationLevel.ERROR)
+            default_notifier(f'Failed to save: {e}', NotificationLevel.ERROR)
             return
 
         self._props['save_callback'](self._session_state['pattern_filename'])
 
         self._session_state['is_saved'] = True
-        notify_callback('Saved in repository', NotificationLevel.SUCCESS)
+        default_notifier('Saved in repository', NotificationLevel.SUCCESS)
 
     def is_saved(self) -> bool:
         """Get status whether the time pattern is saved in repository."""
