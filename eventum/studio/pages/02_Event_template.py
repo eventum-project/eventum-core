@@ -45,7 +45,8 @@ config_editor = TemplateConfigurationEditor(
 )
 renderer = TemplateRenderer(
     props={
-        'template_content': st.session_state['template_content']
+        'template_content': st.session_state['template_content'],
+        'configuration_content': config_editor.content
     }
 )
 state_viewer = TemplateStateViewer()

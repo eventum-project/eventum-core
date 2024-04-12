@@ -21,7 +21,12 @@ class TemplateConfigurationEditor(BaseComponent):
     )
 
     def _init_state(self) -> None:
-        return super()._init_state()
+        self._session_state['content'] = self._DEFAULT_CONTENT
+
+    def _handle_on_change(self, value: str) -> None:
+        """Handle changes committing."""
+        self._session_state['content'] = value
+        self._props['on_change'](value)
 
     def _show(self) -> None:
         col1, col2 = st.columns([1, 1])
@@ -48,7 +53,7 @@ class TemplateConfigurationEditor(BaseComponent):
                     language='yaml',
                     height=670,
                     value=self._DEFAULT_CONTENT,
-                    onChange=lazy(self._props['on_change']),
+                    onChange=lazy(self._handle_on_change),
                     options={
                         'cursorSmoothCaretAnimation': True,
                         'tabSize': 2
@@ -60,3 +65,8 @@ class TemplateConfigurationEditor(BaseComponent):
                 widget_keys_context=self._wk,
                 props={'display_size': 15}
             ).show()
+
+    @property
+    def content(self) -> str:
+        """Get currently committed content in editor."""
+        return self._session_state['content']

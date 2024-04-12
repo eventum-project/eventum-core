@@ -1,6 +1,9 @@
 import random
 from typing import Any, Iterator, assert_never
 
+from jinja2 import (Environment, Template, TemplateError, TemplateNotFound,
+                    TemplateRuntimeError, TemplateSyntaxError)
+
 from eventum.core.models.application_config import (CSVSampleConfig,
                                                     ItemsSampleConfig,
                                                     JinjaEventConfig,
@@ -12,8 +15,6 @@ from eventum.core.settings import JINJA_ENABLED_EXTENSIONS
 from eventum.repository.manage import (ContentReadError,
                                        get_templates_environment,
                                        load_csv_sample)
-from jinja2 import (Template, TemplateError, TemplateNotFound,
-                    TemplateRuntimeError, TemplateSyntaxError)
 
 
 class Subprocess:
@@ -51,10 +52,14 @@ class State:
 class JinjaEventPlugin(BaseEventPlugin):
     """Event plugin for producing event using Jinja template engine."""
 
-    def __init__(self, config: JinjaEventConfig) -> None:
+    def __init__(
+        self,
+        config: JinjaEventConfig,
+        environment: Environment = get_templates_environment()
+    ) -> None:
         self._config = config
 
-        self._env = get_templates_environment()
+        self._env = environment
         self._initialize_environment()
 
         self._templates = self._load_templates()

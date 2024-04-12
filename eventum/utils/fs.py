@@ -1,5 +1,6 @@
 import csv
 import os
+import tempfile
 from string import ascii_letters, digits
 from typing import Any
 
@@ -91,3 +92,12 @@ def load_sample_from_csv(
         return [
             tuple(row) for row in csv.reader(f, delimiter=delimiter) if row
         ]
+
+
+def write_temporary_file(content: str) -> str:
+    """Write content to temporary file and return its name."""
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+
+    with open(tmp.name, 'w') as f:
+        f.write(content)
+        return tmp.name
