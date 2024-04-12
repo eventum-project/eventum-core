@@ -64,6 +64,7 @@ class TemplateRenderer(BaseComponent):
                 ),
                 level=NotificationLevel.ERROR
             )
+            os.remove(template_path)
             return
 
         timestamp = datetime.now().astimezone(
@@ -98,6 +99,8 @@ class TemplateRenderer(BaseComponent):
                 level=NotificationLevel.ERROR
             )
             return
+        finally:
+            os.remove(template_path)
 
         self._session_state['rendering_result'] = result.pop()
 
