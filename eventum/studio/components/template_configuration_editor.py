@@ -1,6 +1,7 @@
 from typing import Callable
+
 import streamlit as st
-from streamlit_elements import editor, elements, event, lazy    # type: ignore
+from streamlit_elements import editor, elements, event, lazy  # type: ignore
 
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.components.sample_explorer import SampleExplorer
@@ -17,7 +18,6 @@ class TemplateConfigurationEditor(BaseComponent):
     _DEFAULT_CONTENT = (
         'params: { }\n'
         'samples: { }\n'
-        'subprocesses: { }\n'
     )
 
     def _init_state(self) -> None:
