@@ -87,16 +87,11 @@ class TemplateConfig(BaseModel):
     chance: float = 1.0
 
 
-class SubprocessConfig(BaseModel):
-    config: str
-
-
 class JinjaEventConfig(BaseModel):
     params: dict
     samples: dict[str, ItemsSampleConfig | CSVSampleConfig]
     mode: TemplatePickingMode
     templates: dict[str, TemplateConfig]
-    subprocesses: dict[str, SubprocessConfig]
 
 
 class OutputName(StrEnum):
