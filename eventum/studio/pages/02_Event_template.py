@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_elements import sync     # type: ignore
 
 from eventum.studio.components.component import persist_state
 from eventum.studio.components.template_configuration_editor import \
@@ -35,12 +34,18 @@ editor = TemplateEditor(
     props={
         'content': st.session_state['template_content'],
         'read_only': manager.is_empty,
-        'on_change': sync('template_content')
+        'on_change': (
+            lambda value:
+            st.session_state.__setitem__('template_content', value)
+        )
     }
 )
 config_editor = TemplateConfigurationEditor(
     props={
-        'on_change': sync('config_content')
+        'on_change': (
+            lambda value:
+            st.session_state.__setitem__('config_content', value)
+        )
     }
 )
 renderer = TemplateRenderer(
