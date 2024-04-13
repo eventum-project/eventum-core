@@ -5,12 +5,12 @@ import streamlit as st
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from pydantic import ValidationError
-from streamlit_elements import editor, elements     # type: ignore
+from streamlit_elements import editor, elements  # type: ignore
 
 import eventum.core.models.application_config as models
 from eventum.core.plugins.event.base import (EventPluginConfigurationError,
                                              EventPluginRuntimeError)
-from eventum.core.plugins.event.jinja import JinjaEventPlugin
+from eventum.core.plugins.event.jinja import JinjaEventPlugin, State
 from eventum.core.settings import TIMESTAMP_FIELD_NAME, TIMEZONE
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
@@ -27,6 +27,8 @@ class TemplateRenderer(BaseComponent):
 
     def _init_state(self) -> None:
         self._session_state['rendering_result'] = ''
+        self._session_state['local_vars_state'] = None
+        self._session_state['shared_vars_state'] = None
 
     def _render(self) -> None:
         """Render currently set template content."""
@@ -74,14 +76,26 @@ class TemplateRenderer(BaseComponent):
         ).isoformat()
         params = {TIMESTAMP_FIELD_NAME: timestamp}
 
+        local_vars: dict | None = self._session_state['local_vars_state']
+        shared_vars: State | None = self._session_state['shared_vars_state']
+
         try:
-            result = JinjaEventPlugin(
+            plugin = JinjaEventPlugin(
                 config=config,
                 environment=Environment(
                     loader=FileSystemLoader(searchpath=base_dir),
                     autoescape=False
                 )
-            ).render(**params)
+            )
+
+            if local_vars:
+                _, state = local_vars.popitem()
+                plugin.local_vars = {template_name: state}
+
+            if shared_vars:
+                plugin.shared_vars = shared_vars
+
+            result = plugin.render(**params)
         except (EventPluginConfigurationError, EventPluginRuntimeError) as e:
             default_notifier(
                 message=(f'Failed to render template: {e}'),
@@ -92,6 +106,10 @@ class TemplateRenderer(BaseComponent):
             os.remove(template_path)
 
         self._session_state['rendering_result'] = result.pop()
+
+        self._session_state['local_vars_state'] = plugin.local_vars
+        self._session_state['shared_vars_state'] = plugin.shared_vars
+
         default_notifier(
             message=('Rendered successfully'),
             level=NotificationLevel.SUCCESS
@@ -119,3 +137,27 @@ class TemplateRenderer(BaseComponent):
             type='primary',
             on_click=self._render
         )
+
+    @property
+    def local_vars_state(self) -> dict:
+        """Get state of template local variables."""
+        locals: dict[str, State] = self._session_state['local_vars_state']
+
+        if locals is None:
+            return {}
+
+        if locals:
+            for value in locals.values():
+                return value.as_dict()
+        else:
+            return {}
+
+    @property
+    def shared_vars_state(self) -> dict:
+        """Get state of template shared variables."""
+        shared: State = self._session_state['shared_vars_state']
+
+        if shared is None:
+            return {}
+
+        return shared.as_dict()

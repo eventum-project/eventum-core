@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 from typing import Any, Iterator, assert_never
 
 from jinja2 import (Environment, Template, TemplateError, TemplateNotFound,
@@ -47,6 +48,10 @@ class State:
             return self._state[key]
         except KeyError:
             return default
+
+    def as_dict(self) -> dict:
+        """Get dictionary representation of state."""
+        return deepcopy(self._state)
 
 
 class JinjaEventPlugin(BaseEventPlugin):
@@ -194,6 +199,26 @@ class JinjaEventPlugin(BaseEventPlugin):
                 ) from e
 
         return rendered
+
+    @property
+    def shared_vars(self) -> State:
+        """Get state of shared variables. The returned state is a copy."""
+        return deepcopy(self._env.globals['shared'])
+
+    @shared_vars.setter
+    def shared_vars(self, value: State) -> None:
+        """Set state of shared variables."""
+        self._env.globals['shared'] = value
+
+    @property
+    def local_vars(self) -> dict[str, State]:
+        """Get state of local variables. The returned state is a copy."""
+        return deepcopy(self._template_states)
+
+    @local_vars.setter
+    def local_vars(self, value: dict[str, State]) -> None:
+        """Set state of local variables."""
+        self._template_states = value
 
     @classmethod
     def create_from_config(
