@@ -1,4 +1,6 @@
 import random
+import subprocess
+from collections import deque
 from copy import deepcopy
 from typing import Any, Iterator, assert_never
 
@@ -18,18 +20,43 @@ from eventum.repository.manage import (ContentReadError,
                                        load_csv_sample)
 
 
-class Subprocess:
-    def __init__(self, config: str) -> None:
-        self._config = config
+class SubprocessManager:
+    """Class for running any command in subprocess from template."""
 
-    def start(self) -> None:
-        """Start subprocess with config specified in initializer."""
-        raise NotImplementedError
+    _HISTORY_SIZE = 10
+
+    def __init__(self) -> None:
+        self._commands_history = deque(maxlen=self._HISTORY_SIZE)
+        self._commands_counter = 1
+
+    def _save_command_in_history(self, command: str) -> None:
+        self._commands_history.append((self._commands_counter, command))
+        self._commands_counter += 1
+
+    def run(self, command: str, block: bool = False) -> str | None:
+        """Start command in a subprocess. If `block` is `True` then stdout
+        of command will be returned. Otherwise `None` is returned.
+        """
+        self._save_command_in_history(command)
+
+        proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+
+        if block:
+            stdout, stderr = proc.communicate()
+            return stdout.decode()
 
     @property
-    def is_running(self) -> bool:
-        """Get status whether the subprocess is running."""
-        raise NotImplementedError
+    def commands_history(self) -> tuple[tuple[int, str]]:
+        """Get history of running commands."""
+        return tuple(self._commands_history)
+
+
+class SubprocessManagerMock(SubprocessManager):
+    def run(self, command: str, block: bool = False) -> str | None:
+        self._save_command_in_history(command)
+
+        if block:
+            return '<SUBPROCESS MOCK RESULT>'
 
 
 class State:
@@ -136,16 +163,10 @@ class JinjaEventPlugin(BaseEventPlugin):
         self._env.globals['params'] = self._config.params
         self._env.globals['samples'] = self._load_samples()
         self._env.globals['shared'] = State()
+        self._env.globals['subprocess'] = SubprocessManager()
 
         for ext in JINJA_ENABLED_EXTENSIONS:
             self._env.add_extension(ext)
-
-        subprocesses: dict[str, Subprocess] = {
-            name: Subprocess(config=subproc_conf.config)
-            for name, subproc_conf in self._config.subprocesses.items()
-        }
-
-        self._env.globals['subprocesses'] = subprocesses
 
     def _get_spinning_template_index(self) -> Iterator[int]:
         """Get generator for "spin" picking mode."""
@@ -219,6 +240,16 @@ class JinjaEventPlugin(BaseEventPlugin):
     def local_vars(self, value: dict[str, State]) -> None:
         """Set state of local variables."""
         self._template_states = value
+
+    @property
+    def subprocess_manager(self) -> SubprocessManager:
+        """Get `SubprocessManager`."""
+        return self._env.globals['subprocess']
+
+    @subprocess_manager.setter
+    def subprocess_manager(self, value: SubprocessManager) -> None:
+        """Set `SubprocessManager`."""
+        self._env.globals['subprocess'] = value
 
     @classmethod
     def create_from_config(
