@@ -54,7 +54,13 @@ renderer = TemplateRenderer(
         'configuration_content': config_editor.content
     }
 )
-state_viewer = TemplateStateViewer()
+state_viewer = TemplateStateViewer(
+    props={
+        'local_vars': renderer.local_vars_state,
+        'shared_vars': renderer.shared_vars_state,
+        'subprocess_commands_history': renderer.subprocess_commands_history
+    }
+)
 
 with st.sidebar:
     manager.show()

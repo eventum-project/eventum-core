@@ -10,7 +10,8 @@ from streamlit_elements import editor, elements  # type: ignore
 import eventum.core.models.application_config as models
 from eventum.core.plugins.event.base import (EventPluginConfigurationError,
                                              EventPluginRuntimeError)
-from eventum.core.plugins.event.jinja import JinjaEventPlugin, State
+from eventum.core.plugins.event.jinja import (JinjaEventPlugin, State,
+                                              SubprocessManagerMock)
 from eventum.core.settings import TIMESTAMP_FIELD_NAME, TIMEZONE
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
@@ -29,6 +30,7 @@ class TemplateRenderer(BaseComponent):
         self._session_state['rendering_result'] = ''
         self._session_state['local_vars_state'] = None
         self._session_state['shared_vars_state'] = None
+        self._session_state['subprocess_manager'] = SubprocessManagerMock()
 
     def _render(self) -> None:
         """Render currently set template content."""
@@ -78,6 +80,7 @@ class TemplateRenderer(BaseComponent):
 
         local_vars: dict | None = self._session_state['local_vars_state']
         shared_vars: State | None = self._session_state['shared_vars_state']
+        subprocess_manager = self._session_state['subprocess_manager']
 
         try:
             plugin = JinjaEventPlugin(
@@ -95,6 +98,9 @@ class TemplateRenderer(BaseComponent):
             if shared_vars:
                 plugin.shared_vars = shared_vars
 
+            if subprocess_manager:
+                plugin.subprocess_manager = subprocess_manager
+
             result = plugin.render(**params)
         except (EventPluginConfigurationError, EventPluginRuntimeError) as e:
             default_notifier(
@@ -109,6 +115,7 @@ class TemplateRenderer(BaseComponent):
 
         self._session_state['local_vars_state'] = plugin.local_vars
         self._session_state['shared_vars_state'] = plugin.shared_vars
+        self._session_state['subprocess_manager'] = plugin.subprocess_manager
 
         default_notifier(
             message=('Rendered successfully'),
@@ -116,7 +123,7 @@ class TemplateRenderer(BaseComponent):
         )
 
     def _show(self) -> None:
-        st.caption('Template rendering preview')
+        st.caption('Template rendering')
         with elements(self._wk('template_renderer')):
             editor.MonacoDiff(
                 theme='vs-dark',
@@ -161,3 +168,9 @@ class TemplateRenderer(BaseComponent):
             return {}
 
         return shared.as_dict()
+
+    @property
+    def subprocess_commands_history(self) -> tuple[tuple[int, str]]:
+        """Get history of commands running in templates via `subprocess`."""
+        subprocess_manager = self._session_state['subprocess_manager']
+        return subprocess_manager.commands_history      # type: ignore
