@@ -11,6 +11,7 @@ import eventum.core.models.application_config as models
 from eventum.core.plugins.event.base import (EventPluginConfigurationError,
                                              EventPluginRuntimeError)
 from eventum.core.plugins.event.jinja import (JinjaEventPlugin, State,
+                                              SubprocessManager,
                                               SubprocessManagerMock)
 from eventum.core.settings import TIMESTAMP_FIELD_NAME, TIMEZONE
 from eventum.studio.components.component import BaseComponent
@@ -31,6 +32,8 @@ class TemplateRenderer(BaseComponent):
         self._session_state['local_vars_state'] = None
         self._session_state['shared_vars_state'] = None
         self._session_state['subprocess_manager'] = SubprocessManagerMock()
+
+        self._session_state['mock_checkbox'] = True
 
     def _render(self) -> None:
         """Render currently set template content."""
@@ -124,6 +127,7 @@ class TemplateRenderer(BaseComponent):
 
     def _show(self) -> None:
         st.caption('Template rendering')
+
         with elements(self._wk('template_renderer')):
             editor.MonacoDiff(
                 theme='vs-dark',
@@ -137,12 +141,25 @@ class TemplateRenderer(BaseComponent):
                 height=560,
             )
 
-        _, col2 = st.columns([3, 1])
+        col1, col2 = st.columns([3, 1])
         col2.button(
             'Render',
             use_container_width=True,
             type='primary',
             on_click=self._render
+        )
+        col1.checkbox(
+            'Mock subprocess',
+            key=self._wk('mock_checkbox'),
+            on_change=(
+                lambda:
+                self._session_state.__setitem__(
+                    'subprocess_manager',
+                    SubprocessManager()
+                    if not self._session_state['mock_checkbox']
+                    else SubprocessManagerMock()
+                )
+            )
         )
 
     @property
