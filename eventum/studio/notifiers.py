@@ -24,13 +24,6 @@ def null_notifier(
     pass
 
 
-def logger_notifier(
-    message: str,
-    level: NotificationLevel = NotificationLevel.INFO,
-) -> None:
-    raise NotImplementedError
-
-
 def streamlit_toast_notifier(
     message: str,
     level: NotificationLevel = NotificationLevel.INFO,

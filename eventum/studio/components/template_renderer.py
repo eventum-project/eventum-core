@@ -82,20 +82,9 @@ class TemplateRenderer(BaseComponent):
                     autoescape=False
                 )
             ).render(**params)
-        except EventPluginConfigurationError as e:
+        except (EventPluginConfigurationError, EventPluginRuntimeError) as e:
             default_notifier(
-                message=(
-                    'Failed to render template due to invalid '
-                    f'configuration: {e}'
-                ),
-                level=NotificationLevel.ERROR
-            )
-            return
-        except EventPluginRuntimeError as e:
-            default_notifier(
-                message=(
-                    f'Failed to render template due to rendering error {e}'
-                ),
+                message=(f'Failed to render template: {e}'),
                 level=NotificationLevel.ERROR
             )
             return
@@ -103,6 +92,10 @@ class TemplateRenderer(BaseComponent):
             os.remove(template_path)
 
         self._session_state['rendering_result'] = result.pop()
+        default_notifier(
+            message=('Rendered successfully'),
+            level=NotificationLevel.SUCCESS
+        )
 
     def _show(self) -> None:
         st.caption('Template rendering preview')
@@ -116,7 +109,7 @@ class TemplateRenderer(BaseComponent):
                     'readOnly': True,
                     'cursorSmoothCaretAnimation': True
                 },
-                height=600,
+                height=560,
             )
 
         _, col2 = st.columns([3, 1])
