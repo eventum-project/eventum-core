@@ -65,7 +65,7 @@ class SampleType(StrEnum):
 
 class CSVSampleConfig(BaseModel):
     type: SampleType
-    header: bool
+    header: bool = False
     delimiter: str = ','
     source: str
 
