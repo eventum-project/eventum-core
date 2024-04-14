@@ -80,7 +80,7 @@ def start_input_subprocess(
                 config=input_conf
             )
         )
-    except ImportError as e:
+    except ModuleNotFoundError as e:
         logger.error(f'Failed to load input plugin: {e}')
         _terminate_subprocess(is_done, 1, queue)
     except InputPluginConfigurationError as e:
@@ -147,7 +147,7 @@ def start_event_subprocess(
                 config=config
             )
         )
-    except ImportError as e:
+    except ModuleNotFoundError as e:
         logger.error(f'Failed to load event plugin: {e}')
         _terminate_subprocess(is_done, 1, event_queue)
     except EventPluginConfigurationError as e:
@@ -214,7 +214,7 @@ def start_output_subprocess(
                 )
             )
             output_plugins.append(output_plugin)
-        except ImportError as e:
+        except ModuleNotFoundError as e:
             logger.error(f'Failed to load input plugin: {e}')
             _terminate_subprocess(is_done, 1)
         except OutputPluginConfigurationError as e:
