@@ -14,10 +14,11 @@ from eventum.core.models.application_config import (CSVSampleConfig,
 from eventum.core.plugins.event.base import (BaseEventPlugin,
                                              EventPluginConfigurationError,
                                              EventPluginRuntimeError)
-from eventum.core.settings import JINJA_ENABLED_EXTENSIONS
+from eventum.core.settings import JINJA_EXTENSIONS, JINJA_MODULES
 from eventum.repository.manage import (ContentReadError,
                                        get_templates_environment,
                                        load_csv_sample)
+import importlib
 
 
 class SubprocessManager:
@@ -165,8 +166,25 @@ class JinjaEventPlugin(BaseEventPlugin):
         self._env.globals['shared'] = State()
         self._env.globals['subprocess'] = SubprocessManager()
 
-        for ext in JINJA_ENABLED_EXTENSIONS:
-            self._env.add_extension(ext)
+        for extension_name in JINJA_EXTENSIONS:
+            try:
+                self._env.add_extension(extension_name)
+            except ModuleNotFoundError as e:
+                raise EventPluginConfigurationError(
+                    f'Failed to load jinja extension {extension_name}: {e}'
+                )
+
+        for module_name in JINJA_MODULES:
+            try:
+                module = importlib.import_module(
+                    f'eventum.core.plugins.event.jinja_modules.{module_name}'
+                )
+            except ModuleNotFoundError as e:
+                raise EventPluginConfigurationError(
+                    f'Failed to load jinja module {module_name}: {e}'
+                )
+
+            self._env.globals[module_name] = module
 
     def _get_spinning_template_index(self) -> Iterator[int]:
         """Get generator for "spin" picking mode."""

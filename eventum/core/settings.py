@@ -19,10 +19,14 @@ TIMEZONE = UTC
 TIMESTAMP_FIELD_NAME = 'timestamp'
 
 # Extensions that will be loaded to Jinja Environment
-JINJA_ENABLED_EXTENSIONS = [
+JINJA_EXTENSIONS = [
     'jinja2.ext.do'
 ]
 
+# Modules that will be loaded to Jinja Environment
+JINJA_MODULES = [
+    'random'
+]
 
 # ========== Queues batching parameters ==========
 
