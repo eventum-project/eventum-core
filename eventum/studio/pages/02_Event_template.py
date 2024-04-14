@@ -58,7 +58,8 @@ state_viewer = TemplateStateViewer(
     props={
         'local_vars': renderer.local_vars_state,
         'shared_vars': renderer.shared_vars_state,
-        'subprocess_commands_history': renderer.subprocess_commands_history
+        'subprocess_commands_history': renderer.subprocess_commands_history,
+        'clear_state_callback': renderer.clear_state
     }
 )
 

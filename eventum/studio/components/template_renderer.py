@@ -162,6 +162,18 @@ class TemplateRenderer(BaseComponent):
             )
         )
 
+    def clear_state(self) -> None:
+        """Clear state of locals, shared and history of subprocess
+        commands.
+        """
+        self._session_state['local_vars_state'] = None
+        self._session_state['shared_vars_state'] = None
+        self._session_state['subprocess_manager'] = (
+            SubprocessManager()
+            if not self._session_state['mock_checkbox']
+            else SubprocessManagerMock()
+        )
+
     @property
     def local_vars_state(self) -> dict:
         """Get state of template local variables."""

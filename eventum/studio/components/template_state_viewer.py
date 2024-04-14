@@ -1,3 +1,5 @@
+from typing import Callable
+
 import streamlit as st
 
 from eventum.studio.components.component import BaseComponent
@@ -9,7 +11,8 @@ class TemplateStateViewer(BaseComponent):
     _SHOW_PROPS = {
         'local_vars': dict,
         'shared_vars': dict,
-        'subprocess_commands_history': tuple[tuple[int, str]]
+        'subprocess_commands_history': tuple[tuple[int, str]],
+        'clear_state_callback': Callable[[], None]
     }
 
     def _show(self) -> None:
@@ -33,4 +36,8 @@ class TemplateStateViewer(BaseComponent):
             )
 
         _, col2 = st.columns([3, 1])
-        col2.button('Clear state', use_container_width=True)
+        col2.button(
+            'Clear state',
+            use_container_width=True,
+            on_click=self._props['clear_state_callback']
+        )
