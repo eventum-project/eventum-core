@@ -137,3 +137,11 @@ class network:
             int(ipaddress.IPv4Address(end))
         )
         return str(ipaddress.IPv4Address(ipv4_int))
+
+    @staticmethod
+    def mac() -> str:
+        """Return random MAC address."""
+        mac = [random.randint(0x00, 0xff) for _ in range(6)]
+        mac_address = ':'.join(map(lambda x: '{:02x}'.format(x), mac))
+
+        return mac_address
