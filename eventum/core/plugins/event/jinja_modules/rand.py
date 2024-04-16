@@ -1,15 +1,9 @@
 import ipaddress
 import random
-from typing import Any, Sequence
 import uuid
 from string import (ascii_letters, ascii_lowercase, ascii_uppercase, digits,
                     punctuation)
-
-# categories = [
-#     'geo',
-#     'system',
-#     'web',
-# ]
+from typing import Any, Sequence
 
 
 def choice(items: Sequence) -> Any:
