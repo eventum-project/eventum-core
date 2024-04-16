@@ -1,5 +1,5 @@
 import random
-from string import (ascii_letters, ascii_lowercase, ascii_uppercase, hexdigits,
+from string import (ascii_letters, ascii_lowercase, ascii_uppercase, digits,
                     punctuation)
 import ipaddress
 import uuid
@@ -69,6 +69,7 @@ class string:
         """Return string of specified `size` that contains random hex
         characters.
         """
+        hexdigits = digits + 'abcdef'
         return ''.join(random.choices(hexdigits, k=size))
 
 
