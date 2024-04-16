@@ -1,15 +1,43 @@
+import ipaddress
 import random
+from typing import Any, Sequence
+import uuid
 from string import (ascii_letters, ascii_lowercase, ascii_uppercase, digits,
                     punctuation)
-import ipaddress
-import uuid
 
 # categories = [
 #     'geo',
 #     'system',
 #     'web',
-#     'crypto',
 # ]
+
+
+def choice(items: Sequence) -> Any:
+    """Return random item from non empty sequence."""
+    return random.choice(items)
+
+
+def choices(items: Sequence, n: int) -> list:
+    """Return `n` random items from non empty sequence."""
+    return random.choices(items, k=n)
+
+
+def weighted_choice(items: Sequence, weights: Sequence[float]) -> Any:
+    """Return random item from non empty sequence with `weights`
+    probability.
+    """
+    return random.choices(items, weights=weights, k=1).pop()
+
+
+def weighted_choices(
+    items: Sequence,
+    weights: Sequence[float],
+    n: int
+) -> list:
+    """Return `n` random items from non empty sequence with `weights`
+    probability.
+    """
+    return random.choices(items, weights=weights, k=n)
 
 
 class number:
