@@ -2,14 +2,11 @@ import random
 from string import (ascii_letters, ascii_lowercase, ascii_uppercase, hexdigits,
                     punctuation)
 import ipaddress
+import uuid
 
 # categories = [
-#     'number',
-#     'string',
 #     'geo',
 #     'system',
-#     'software',
-#     'network',
 #     'web',
 #     'crypto',
 # ]
@@ -145,3 +142,20 @@ class network:
         mac_address = ':'.join(map(lambda x: '{:02x}'.format(x), mac))
 
         return mac_address
+
+
+class crypto:
+    @staticmethod
+    def uuid4() -> str:
+        """Return universally unique identifier of version 4."""
+        return str(uuid.uuid4())
+
+    @staticmethod
+    def md5() -> str:
+        """Return random MD5 hash."""
+        return '{:32x}'.format(random.getrandbits(128))
+
+    @staticmethod
+    def sha256() -> str:
+        """Return random SHA-256 hash."""
+        return '{:64x}'.format(random.getrandbits(256))
