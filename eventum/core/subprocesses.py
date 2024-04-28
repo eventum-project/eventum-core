@@ -31,12 +31,12 @@ eventum.logging_config.apply()
 logger = logging.getLogger(__name__)
 
 
-def subprocess(module_name: str) -> Callable:
+def subprocess(name: str) -> Callable:
     """Parametrized decorator for all subprocesses."""
 
     def decorator(f: Callable):
         def wrapper(*args, **kwargs):
-            setproctitle(f'{getproctitle()} [{module_name}]')
+            setproctitle(f'{getproctitle()} [{name}]')
 
             signal.signal(signal.SIGINT, lambda signal, stack_frame: exit(0))
 
