@@ -160,8 +160,7 @@ class UniformDistributionParameters(BaseModel):
 DistributionParameters: TypeAlias = (
     UniformDistributionParameters |
     TriangularDistributionParameters |
-    BetaDistributionParameters |
-    None
+    BetaDistributionParameters
 )
 
 
