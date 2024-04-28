@@ -65,6 +65,12 @@ class MultiplierConfig(BaseModel):
     def __hash__(self) -> int:
         return hash(self.ratio)
 
+    @field_validator('ratio')
+    def validate_ratio(cls, v: Any):
+        if v <= 0:
+            raise ValueError('Ratio must be greater or equal to 1')
+        return v
+
 
 class RandomizerConfig(BaseModel):
     deviation: float
@@ -73,10 +79,19 @@ class RandomizerConfig(BaseModel):
     def __hash__(self) -> int:
         return hash((self.deviation, self.direction))
 
+    @field_validator('deviation')
+    def validate_deviation(cls, v: Any):
+        if 0 <= v <= 1:
+            return v
+        raise ValueError('Deviation must be in range [0, 1]')
+
 
 class BetaDistributionParameters(BaseModel):
     a: float
     b: float
+
+    def __hash__(self) -> int:
+        return hash((self.a, self.b))
 
     @field_validator('a')
     def validate_a(cls, v: Any):
@@ -89,9 +104,6 @@ class BetaDistributionParameters(BaseModel):
         if v >= 0:
             return v
         raise ValueError('"b" must be greater or equal to 0')
-
-    def __hash__(self) -> int:
-        return hash((self.a, self.b))
 
 
 class TriangularDistributionParameters(BaseModel):
@@ -183,7 +195,7 @@ class SpreaderConfig(BaseModel):
         if isinstance(self.parameters, expected_params_model):
             return self
 
-        raise TypeError(
+        raise ValueError(
             f'Improper parameters model for "{self.distribution}" distribution'
         )
 
@@ -197,3 +209,10 @@ class TimePatternConfig(BaseModel):
     multiplier: MultiplierConfig
     randomizer: RandomizerConfig
     spreader: SpreaderConfig
+
+    @field_validator('label')
+    def validate_high(cls, v: Any):
+        if v:
+            return v
+
+        raise ValueError('Label cannot be empty string')

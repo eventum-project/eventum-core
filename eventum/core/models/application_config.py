@@ -71,10 +71,10 @@ class CSVSampleConfig(BaseModel):
 
     @field_validator('source')
     def validate_source(cls, v: Any):
-        if len(v) == 0:
-            raise ValueError('Source cannot be empty string')
+        if v:
+            return v
 
-        return v
+        raise ValueError('Source cannot be empty string')
 
 
 class ItemsSampleConfig(BaseModel):
@@ -83,10 +83,9 @@ class ItemsSampleConfig(BaseModel):
 
     @field_validator('source')
     def validate_source(cls, v: Any):
-        if len(v) == 0:
-            raise ValueError('Source cannot be empty list')
-
-        return v
+        if v:
+            return v
+        raise ValueError('Source cannot be empty list')
 
 
 class TemplatePickingMode(StrEnum):
@@ -134,10 +133,9 @@ class FileOutputConfig(BaseModel):
 
     @field_validator('path')
     def validate_path(cls, v: Any):
-        if len(v) == 0:
-            raise ValueError('Path cannot be empty string')
-
-        return v
+        if v:
+            return v
+        raise ValueError('Path cannot be empty string')
 
 
 class OpensearchOutputConfig(BaseModel):
@@ -149,24 +147,21 @@ class OpensearchOutputConfig(BaseModel):
 
     @field_validator('hosts')
     def validate_hosts(cls, v: Any):
-        if len(v) == 0:
-            raise ValueError('Hosts cannot be empty list')
-
-        return v
+        if v:
+            return v
+        raise ValueError('Hosts cannot be empty list')
 
     @field_validator('user')
     def validate_user(cls, v: Any):
-        if len(v) == 0:
-            raise ValueError('User cannot be empty string')
-
-        return v
+        if v:
+            return v
+        raise ValueError('User cannot be empty string')
 
     @field_validator('index')
     def validate_index(cls, v: Any):
-        if len(v) == 0:
-            raise ValueError('User cannot be empty string')
-
-        return v
+        if v:
+            return v
+        raise ValueError('User cannot be empty string')
 
 
 InputConfig: TypeAlias = (
@@ -199,14 +194,10 @@ class ApplicationConfig(BaseModel):
             raise ValueError(
                 f'Only one input must be adjusted but you have {len(v)}'
             )
-
         return v
 
     @field_validator('output')
     def validate_output(cls, v: Any):
-        if len(v) == 0:
-            raise ValueError(
-                'At least one output must be adjusted'
-            )
-
-        return v
+        if v:
+            return v
+        raise ValueError('At least one output must be adjusted')
