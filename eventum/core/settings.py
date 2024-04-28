@@ -25,7 +25,7 @@ JINJA_EXTENSIONS = [
 
 # Modules that will be loaded to Jinja Environment
 JINJA_MODULES = [
-    'random'
+    'rand'
 ]
 
 # ========== Queues batching parameters ==========
