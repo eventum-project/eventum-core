@@ -96,6 +96,7 @@ class JinjaEventConfig(BaseModel):
 
 class OutputName(StrEnum):
     STDOUT = 'stdout'
+    NULL = 'null'
     FILE = 'file'
     OPENSEARCH = 'opensearch'
 
@@ -107,6 +108,10 @@ class OutputFormat(StrEnum):
 
 class StdOutOutputConfig(BaseModel):
     format: OutputFormat = OutputFormat.ORIGINAL
+
+
+class NullOutputConfig(BaseModel):
+    ...
 
 
 class FileOutputConfig(BaseModel):
@@ -133,6 +138,7 @@ EventConfig: TypeAlias = (
 
 OutputConfig: TypeAlias = (
     OpensearchOutputConfig | FileOutputConfig | StdOutOutputConfig
+    | NullOutputConfig
 )
 
 
