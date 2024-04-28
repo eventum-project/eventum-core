@@ -69,10 +69,24 @@ class CSVSampleConfig(BaseModel):
     delimiter: str = ','
     source: str
 
+    @field_validator('source')
+    def validate_source(cls, v: Any):
+        if len(v) == 0:
+            raise ValueError('Source cannot be empty string')
+
+        return v
+
 
 class ItemsSampleConfig(BaseModel):
     type: SampleType
     source: list[str]
+
+    @field_validator('source')
+    def validate_source(cls, v: Any):
+        if len(v) == 0:
+            raise ValueError('Source cannot be empty list')
+
+        return v
 
 
 class TemplatePickingMode(StrEnum):
@@ -118,6 +132,13 @@ class FileOutputConfig(BaseModel):
     path: str
     format: OutputFormat = OutputFormat.ORIGINAL
 
+    @field_validator('path')
+    def validate_path(cls, v: Any):
+        if len(v) == 0:
+            raise ValueError('Path cannot be empty string')
+
+        return v
+
 
 class OpensearchOutputConfig(BaseModel):
     hosts: list[str]
@@ -125,6 +146,27 @@ class OpensearchOutputConfig(BaseModel):
     index: str
     verify_ssl: bool
     ca_cert_path: str | None = None
+
+    @field_validator('hosts')
+    def validate_hosts(cls, v: Any):
+        if len(v) == 0:
+            raise ValueError('Hosts cannot be empty list')
+
+        return v
+
+    @field_validator('user')
+    def validate_user(cls, v: Any):
+        if len(v) == 0:
+            raise ValueError('User cannot be empty string')
+
+        return v
+
+    @field_validator('index')
+    def validate_index(cls, v: Any):
+        if len(v) == 0:
+            raise ValueError('User cannot be empty string')
+
+        return v
 
 
 InputConfig: TypeAlias = (
