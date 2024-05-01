@@ -1,10 +1,12 @@
 from typing import Any, Callable
 
+from numpy import datetime64
+
 from eventum.core.models.application_config import SampleInputConfig
+from eventum.core.plugins.input.base import InputPluginConfigurationError
 from eventum.core.plugins.input.base import \
     SampleInputPlugin as BaseSampleInputPlugin
 from eventum.utils.numpy_time import get_now
-from numpy import datetime64
 
 
 class SampleInputPlugin(BaseSampleInputPlugin):
@@ -15,6 +17,9 @@ class SampleInputPlugin(BaseSampleInputPlugin):
     """
 
     def __init__(self, count: int) -> None:
+        if count <= 0:
+            raise InputPluginConfigurationError('Count must be greater than 0')
+
         self._count = count
 
     def sample(self, on_event: Callable[[datetime64], Any]) -> None:
