@@ -43,7 +43,7 @@ RelativeTime = Annotated[str, AfterValidator(check_relative_time)]
 
 
 class OscillatorConfig(BaseModel):
-    period: float
+    period: int
     unit: TimeUnit
     start: time | datetime | TimeKeyword | RelativeTime
     end: time | datetime | TimeKeyword | RelativeTime

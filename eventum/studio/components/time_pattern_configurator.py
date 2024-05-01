@@ -153,8 +153,8 @@ class TimePatternConfigurator(BaseComponent):
         col1, col2 = st.columns([3, 7])
         col1.number_input(
             'Period',
-            step=1.0,
-            min_value=0.0,
+            step=1,
+            min_value=1,
             key=self._wk('oscillator_period')
         )
         col2.selectbox(
