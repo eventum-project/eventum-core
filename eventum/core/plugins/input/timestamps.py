@@ -2,18 +2,26 @@ import time
 from datetime import datetime
 from typing import Any, Callable
 
+from numpy import array, datetime64
+
 import eventum.core.settings as settings
 from eventum.core.models.application_config import TimestampsInputConfig
-from eventum.core.plugins.input.base import LiveInputPlugin, SampleInputPlugin
+from eventum.core.plugins.input.base import (InputPluginConfigurationError,
+                                             LiveInputPlugin,
+                                             SampleInputPlugin)
 from eventum.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum.utils.timeseries import get_future_slice
-from numpy import array, datetime64
 
 
 class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
     """Input plugin for generating events in specified timestamps."""
 
     def __init__(self, timestamps: list[datetime]) -> None:
+        if not timestamps:
+            raise InputPluginConfigurationError(
+                'At least one timestamp must be in list'
+            )
+
         self._timestamps = array(
             [
                 ts.astimezone(settings.TIMEZONE).replace(tzinfo=None)

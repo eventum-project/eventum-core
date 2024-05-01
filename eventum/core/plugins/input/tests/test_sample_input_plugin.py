@@ -1,6 +1,7 @@
 import pytest
-from eventum.core.plugins.input.sample import SampleInputPlugin
+
 from eventum.core.plugins.input.base import InputPluginConfigurationError
+from eventum.core.plugins.input.sample import SampleInputPlugin
 
 
 def test_sample_mode():
