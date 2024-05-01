@@ -5,7 +5,7 @@ from eventum.core.models.time_pattern_config import (
 from eventum.core.plugins.input.time_patterns import TimePatternInputPlugin
 
 
-def test_sample():
+def test_sample_mode():
     out = []
     TimePatternInputPlugin(
         config=TimePatternConfig(
@@ -31,7 +31,7 @@ def test_sample():
     assert len(out) == 100
 
 
-def test_live():
+def test_live_mode():
     out = []
     TimePatternInputPlugin(
         config=TimePatternConfig(
@@ -53,4 +53,5 @@ def test_live():
             )
         )
     ).live(on_event=out.append)
+
     assert len(out) == 10
