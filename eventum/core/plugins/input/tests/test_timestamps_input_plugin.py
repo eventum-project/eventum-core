@@ -33,3 +33,4 @@ def test_unsorted():
     TimestampsInputPlugin(timestamps=timestamps).sample(on_event=out.append)
 
     assert len(out) == len(timestamps)
+    assert out == sorted(out)
