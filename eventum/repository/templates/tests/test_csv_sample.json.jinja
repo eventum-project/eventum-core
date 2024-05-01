@@ -1,0 +1,7 @@
+{% set row = samples.test_sample|random %}
+
+{
+    "@timestamp": "{{ timestamp }}",
+    "col1": "{{ row[0] }}",
+    "col2": "{{ row[1] }}"
+}

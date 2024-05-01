@@ -58,8 +58,8 @@ def test_items_sample_config():
 
 
 def test_template_config():
-    TemplateConfig(template='test/test.json.jinja')
-    TemplateConfig(template='test/test.json.jinja', chance=0.8)
+    TemplateConfig(template='tests/test.json.jinja')
+    TemplateConfig(template='tests/test.json.jinja', chance=0.8)
 
 
 def test_jinja_event_config():
@@ -78,7 +78,7 @@ def test_jinja_event_config():
         mode=TemplatePickingMode.ALL,
         templates={
             'test_template': TemplateConfig(
-                template='test/test.json.csv'
+                template='tests/test.json.csv'
             )
         }
     )
@@ -157,7 +157,7 @@ def test_application_config():
         mode=TemplatePickingMode.ALL,
         templates={
             'test_template': TemplateConfig(
-                template='test/test.json.csv'
+                template='tests/test.json.csv'
             )
         }
     )

@@ -1,0 +1,6 @@
+{% set value = samples.test_sample|random %}
+
+{
+    "@timestamp": "{{ timestamp }}",
+    "value": "{{ value }}"
+}

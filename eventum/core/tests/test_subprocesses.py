@@ -63,7 +63,7 @@ def test_event_subprocess():
                 samples={},
                 mode=TemplatePickingMode.ALL,
                 templates={
-                    'test': TemplateConfig(template='test/test.json.jinja')
+                    'test': TemplateConfig(template='tests/test.json.jinja')
                 }
             ),
             input_queue,
