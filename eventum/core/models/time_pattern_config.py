@@ -87,7 +87,10 @@ class TriangularDistributionParameters(BaseModel):
 
     @model_validator(mode='after')
     def validate_points(self):
-        if self.left <= self.mode <= self.right:
+        if (
+            self.left <= self.mode <= self.right
+            and not (self.left == self.mode == self.right)
+        ):
             return self
         raise ValueError(
             'Values do not comply "left <= mode <= right" condition'
