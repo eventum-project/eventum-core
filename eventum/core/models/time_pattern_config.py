@@ -2,10 +2,8 @@ from datetime import datetime, time
 from enum import StrEnum
 from typing import Annotated, Any, TypeAlias, assert_never
 
-from pydantic import (BaseModel, AfterValidator, field_validator,
-                      model_validator)
-
 from eventum.utils.relative_time import parse_relative_time
+from pydantic import AfterValidator, BaseModel, Field, model_validator
 
 
 class TimeUnit(StrEnum):
@@ -43,7 +41,7 @@ RelativeTime = Annotated[str, AfterValidator(check_relative_time)]
 
 
 class OscillatorConfig(BaseModel):
-    period: int
+    period: int = Field(..., ge=1)
     unit: TimeUnit
     start: time | datetime | TimeKeyword | RelativeTime
     end: time | datetime | TimeKeyword | RelativeTime
@@ -60,74 +58,32 @@ class OscillatorConfig(BaseModel):
 
 
 class MultiplierConfig(BaseModel):
-    ratio: int
+    ratio: int = Field(..., ge=1)
 
     def __hash__(self) -> int:
         return hash(self.ratio)
 
-    @field_validator('ratio')
-    def validate_ratio(cls, v: Any):
-        if v <= 0:
-            raise ValueError('Ratio must be greater or equal to 1')
-        return v
-
 
 class RandomizerConfig(BaseModel):
-    deviation: float
+    deviation: float = Field(..., ge=0, le=1)
     direction: RandomizerDirection
 
     def __hash__(self) -> int:
         return hash((self.deviation, self.direction))
 
-    @field_validator('deviation')
-    def validate_deviation(cls, v: Any):
-        if 0 <= v <= 1:
-            return v
-        raise ValueError('Deviation must be in range [0, 1]')
-
 
 class BetaDistributionParameters(BaseModel):
-    a: float
-    b: float
+    a: float = Field(..., ge=0)
+    b: float = Field(..., ge=0)
 
     def __hash__(self) -> int:
         return hash((self.a, self.b))
 
-    @field_validator('a')
-    def validate_a(cls, v: Any):
-        if v >= 0:
-            return v
-        raise ValueError('"a" must be greater or equal to 0')
-
-    @field_validator('b')
-    def validate_b(cls, v: Any):
-        if v >= 0:
-            return v
-        raise ValueError('"b" must be greater or equal to 0')
-
 
 class TriangularDistributionParameters(BaseModel):
-    left: float
-    mode: float
-    right: float
-
-    @field_validator('left')
-    def validate_left(cls, v: Any):
-        if 0 <= v < 1:
-            return v
-        raise ValueError('"left" must be in [0; 1) range')
-
-    @field_validator('mode')
-    def validate_mode(cls, v: Any):
-        if 0 <= v <= 1:
-            return v
-        raise ValueError('"mode" must be in [0; 1] range')
-
-    @field_validator('right')
-    def validate_right(cls, v: Any):
-        if 0 < v <= 1:
-            return v
-        raise ValueError('"right" must be in (0; 1] range')
+    left: float = Field(..., ge=0, lt=1)
+    mode: float = Field(..., ge=0, le=1)
+    right: float = Field(..., gt=0, le=1)
 
     @model_validator(mode='after')
     def validate_points(self):
@@ -142,20 +98,8 @@ class TriangularDistributionParameters(BaseModel):
 
 
 class UniformDistributionParameters(BaseModel):
-    low: float
-    high: float
-
-    @field_validator('low')
-    def validate_low(cls, v: Any):
-        if 0 <= v < 1:
-            return v
-        raise ValueError('"low" must be in [0; 1) range')
-
-    @field_validator('high')
-    def validate_high(cls, v: Any):
-        if 0 < v <= 1:
-            return v
-        raise ValueError('"high" must be in (0; 1] range')
+    low: float = Field(..., ge=0, lt=1)
+    high: float = Field(..., gt=0, le=1)
 
     @model_validator(mode='after')
     def validate_points(self):
@@ -204,15 +148,8 @@ class SpreaderConfig(BaseModel):
 
 
 class TimePatternConfig(BaseModel):
-    label: str
+    label: str = Field(..., min_length=1)
     oscillator: OscillatorConfig
     multiplier: MultiplierConfig
     randomizer: RandomizerConfig
     spreader: SpreaderConfig
-
-    @field_validator('label')
-    def validate_high(cls, v: Any):
-        if v:
-            return v
-
-        raise ValueError('Label cannot be empty string')
