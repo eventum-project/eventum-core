@@ -3,9 +3,9 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, TypeAlias
 
-from pydantic import (BaseModel, BeforeValidator, field_validator)
-
+from croniter import croniter
 from eventum.utils.fs import validate_yaml_filename
+from pydantic import (BaseModel, BeforeValidator, Field, field_validator)
 
 
 class InputName(StrEnum):
@@ -51,11 +51,17 @@ TimePatternsInputConfig = Annotated[
 
 class CronInputConfig(BaseModel):
     expression: str
-    count: int
+    count: int = Field(..., gt=0)
+
+    @field_validator('expression')
+    def validate_expression(cls, v: Any):
+        if croniter.is_valid(v):
+            return v
+        raise ValueError('Invalid cron expression')
 
 
 class SampleInputConfig(BaseModel):
-    count: int
+    count: int = Field(..., gt=0)
 
 
 class SampleType(StrEnum):
@@ -66,26 +72,31 @@ class SampleType(StrEnum):
 class CSVSampleConfig(BaseModel):
     type: SampleType
     header: bool = False
-    delimiter: str = ','
-    source: str
+    delimiter: str = Field(',', min_length=1)
+    source: str = Field(..., pattern=r'.*\.csv')
 
-    @field_validator('source')
-    def validate_source(cls, v: Any):
-        if v:
+    @field_validator('type')
+    def validate_type(cls, v: Any):
+        if v == SampleType.CSV:
             return v
 
-        raise ValueError('Source cannot be empty string')
+        raise ValueError(
+            f'Type must be "{SampleType.CSV}" of {SampleType}'
+        )
 
 
 class ItemsSampleConfig(BaseModel):
     type: SampleType
-    source: list[str]
+    source: list[str] = Field(..., min_length=1)
 
-    @field_validator('source')
-    def validate_source(cls, v: Any):
-        if v:
+    @field_validator('type')
+    def validate_type(cls, v: Any):
+        if v == SampleType.ITEMS:
             return v
-        raise ValueError('Source cannot be empty list')
+
+        raise ValueError(
+            f'Type must be "{SampleType.ITEMS}" of {SampleType}'
+        )
 
 
 class TemplatePickingMode(StrEnum):
@@ -96,15 +107,15 @@ class TemplatePickingMode(StrEnum):
 
 
 class TemplateConfig(BaseModel):
-    template: str
-    chance: float = 1.0
+    template: str = Field(..., pattern=r'.*\.(jinja|j2)')
+    chance: float = Field(1.0, gt=0.0)
 
 
 class JinjaEventConfig(BaseModel):
     params: dict
     samples: dict[str, ItemsSampleConfig | CSVSampleConfig]
     mode: TemplatePickingMode
-    templates: dict[str, TemplateConfig]
+    templates: dict[str, TemplateConfig] = Field(..., min_length=1)
 
 
 class OutputName(StrEnum):
@@ -133,35 +144,17 @@ class FileOutputConfig(BaseModel):
 
     @field_validator('path')
     def validate_path(cls, v: Any):
-        if v:
+        if os.path.isabs(v):
             return v
-        raise ValueError('Path cannot be empty string')
+        raise ValueError('Path must be absolute')
 
 
 class OpensearchOutputConfig(BaseModel):
-    hosts: list[str]
-    user: str
-    index: str
+    hosts: list[str] = Field(..., min_length=1)
+    user: str = Field(..., min_length=1)
+    index: str = Field(..., min_length=1)
     verify_ssl: bool
     ca_cert_path: str | None = None
-
-    @field_validator('hosts')
-    def validate_hosts(cls, v: Any):
-        if v:
-            return v
-        raise ValueError('Hosts cannot be empty list')
-
-    @field_validator('user')
-    def validate_user(cls, v: Any):
-        if v:
-            return v
-        raise ValueError('User cannot be empty string')
-
-    @field_validator('index')
-    def validate_index(cls, v: Any):
-        if v:
-            return v
-        raise ValueError('User cannot be empty string')
 
 
 InputConfig: TypeAlias = (
@@ -184,20 +177,6 @@ OutputConfigMapping: TypeAlias = dict[OutputName, OutputConfig]
 
 
 class ApplicationConfig(BaseModel):
-    input: InputConfigMapping
+    input: InputConfigMapping = Field(..., min_length=1, max_length=1)
     event: EventConfig
-    output: OutputConfigMapping
-
-    @field_validator('input')
-    def validate_input(cls, v: Any):
-        if len(v) != 1:
-            raise ValueError(
-                f'Only one input must be adjusted but you have {len(v)}'
-            )
-        return v
-
-    @field_validator('output')
-    def validate_output(cls, v: Any):
-        if v:
-            return v
-        raise ValueError('At least one output must be adjusted')
+    output: OutputConfigMapping = Field(..., min_length=1)
