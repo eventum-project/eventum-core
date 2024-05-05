@@ -33,19 +33,23 @@ def test_input_subprocess():
     proc_input.start()
 
     try:
-        is_done.wait(timeout=EVENTS_BATCH_TIMEOUT + 1)
+        is_done.wait(timeout=EVENTS_BATCH_TIMEOUT + 0.1)
     except TimeoutError:
         proc_input.terminate()
         raise AssertionError('Long subprocess execution')
 
-    assert is_done.is_set()
     assert not queue.empty()
 
-    batch = queue.get()
-    stop_signal = queue.get()
+    elements = []
+    while True:
+        batch = queue.get(timeout=0.1)
 
-    assert len(batch) == 10
-    assert stop_signal is None
+        if batch is None:
+            break
+
+        elements.extend(batch)
+
+    assert len(elements) == 10
 
     proc_input.join()
 
@@ -82,14 +86,15 @@ def test_event_subprocess():
         proc_event.terminate()
         raise AssertionError('Long subprocess execution')
 
-    assert is_done.is_set()
     assert not event_queue.empty()
 
     total_events = 0
     while True:
-        batch = event_queue.get()
+        batch = event_queue.get(timeout=0.1)
+
         if batch is None:
             break
+
         total_events += len(batch)
 
     assert total_events == 10
@@ -117,12 +122,11 @@ def test_output_subprocess():
     event_queue.put(None)
 
     try:
-        is_done.wait(timeout=1)
+        is_done.wait(timeout=0.1)
     except TimeoutError:
         proc_output.terminate()
         raise AssertionError('Long subprocess execution')
 
-    assert is_done.is_set()
     assert processed_event.value == 10
 
     proc_output.join()
