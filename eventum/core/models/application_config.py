@@ -4,7 +4,8 @@ from enum import StrEnum
 from typing import Annotated, Any, TypeAlias
 
 from croniter import croniter
-from pydantic import BaseModel, BeforeValidator, Field, field_validator
+from pydantic import (BaseModel, BeforeValidator, Field, field_validator,
+                      model_validator)
 
 from eventum.utils.fs import validate_yaml_filename
 
@@ -182,4 +183,10 @@ OutputConfigMapping: TypeAlias = dict[OutputName, OutputConfig]
 class ApplicationConfig(BaseModel):
     input: InputConfigMapping = Field(..., min_length=1, max_length=1)
     event: EventConfig
-    output: OutputConfigMapping = Field(..., min_length=1)
+    output: OutputConfigMapping | None = None
+
+    @model_validator(mode='after')
+    def handle_null_output(self):
+        if self.output is None:
+            self.output = {OutputName.NULL: NullOutputConfig()}
+        return self
