@@ -7,6 +7,8 @@ from time import perf_counter, sleep
 from typing import Any, Callable, Sequence, assert_never
 
 import numpy as np
+from numpy.typing import NDArray
+
 from eventum.core import settings
 from eventum.core.models.application_config import TimePatternsInputConfig
 from eventum.core.models.time_pattern_config import (Distribution,
@@ -21,7 +23,6 @@ from eventum.repository.manage import ContentReadError, load_time_pattern
 from eventum.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum.utils.relative_time import parse_relative_time
 from eventum.utils.timeseries import get_future_slice
-from numpy.typing import NDArray
 
 
 class EndTimeReaching(Exception):

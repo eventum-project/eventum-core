@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go  # type: ignore
 import streamlit as st
+from numpy.typing import NDArray
+
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.core.plugins.input.base import InputPluginRuntimeError
 from eventum.core.plugins.input.time_patterns import TimePatternInputPlugin
@@ -12,7 +14,6 @@ from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 from eventum.utils.numpy_time import timedelta_to_seconds
 from eventum.utils.relative_time import parse_relative_time
-from numpy.typing import NDArray
 
 
 def _hash_config(config: TimePatternConfig) -> int:

@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from eventum.core import settings
 from numpy import datetime64, float64, timedelta64
+
+from eventum.core import settings
 
 
 def get_now() -> datetime64:

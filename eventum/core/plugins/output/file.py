@@ -4,6 +4,7 @@ from typing import Iterable
 
 import aiofiles
 import aiofiles.base
+
 import eventum.logging_config
 from eventum.core.models.application_config import (FileOutputConfig,
                                                     OutputFormat)

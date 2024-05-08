@@ -4,8 +4,9 @@ from enum import StrEnum
 from typing import Annotated, Any, TypeAlias
 
 from croniter import croniter
+from pydantic import BaseModel, BeforeValidator, Field, field_validator
+
 from eventum.utils.fs import validate_yaml_filename
-from pydantic import (BaseModel, BeforeValidator, Field, field_validator)
 
 
 class InputName(StrEnum):

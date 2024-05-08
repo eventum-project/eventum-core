@@ -1,7 +1,9 @@
 from typing import MutableMapping, Optional
 
-import eventum.core.models.time_pattern_config as models
 import streamlit as st
+from pydantic import ValidationError
+
+import eventum.core.models.time_pattern_config as models
 from eventum.repository.manage import (ContentReadError,
                                        get_time_pattern_filenames,
                                        load_time_pattern)
@@ -11,7 +13,6 @@ from eventum.studio.components.time_pattern_configurator import \
     TimePatternConfigurator
 from eventum.studio.notifiers import NotificationLevel, default_notifier
 from eventum.studio.widget_management import WidgetKeysContext
-from pydantic import ValidationError
 
 
 class TimePatternConfiguratorList(BaseComponent):

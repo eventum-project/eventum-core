@@ -2,8 +2,9 @@ from datetime import datetime, time
 from enum import StrEnum
 from typing import Annotated, Any, TypeAlias, assert_never
 
-from eventum.utils.relative_time import parse_relative_time
 from pydantic import AfterValidator, BaseModel, Field, model_validator
+
+from eventum.utils.relative_time import parse_relative_time
 
 
 class TimeUnit(StrEnum):

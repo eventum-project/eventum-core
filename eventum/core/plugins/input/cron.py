@@ -3,11 +3,12 @@ from datetime import UTC
 from typing import Any, Callable
 
 from crontab import CronTab
+from numpy import datetime64
+
 from eventum.core import settings
 from eventum.core.models.application_config import CronInputConfig
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              LiveInputPlugin)
-from numpy import datetime64
 
 
 class CronInputPlugin(LiveInputPlugin):

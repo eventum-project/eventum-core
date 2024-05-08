@@ -7,8 +7,11 @@ from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
 from typing import Callable, NoReturn, Optional, assert_never
 
-import eventum.logging_config
 import numpy as np
+from numpy.typing import NDArray
+from setproctitle import getproctitle, setproctitle
+
+import eventum.logging_config
 from eventum.core import settings
 from eventum.core.batcher import Batcher
 from eventum.core.models.application_config import (EventConfig,
@@ -24,8 +27,6 @@ from eventum.core.plugins.input.base import (BaseInputPlugin,
 from eventum.core.plugins.output.base import (BaseOutputPlugin,
                                               OutputPluginConfigurationError,
                                               OutputPluginRuntimeError)
-from numpy.typing import NDArray
-from setproctitle import getproctitle, setproctitle
 
 eventum.logging_config.apply()
 logger = logging.getLogger(__name__)

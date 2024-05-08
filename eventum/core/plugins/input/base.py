@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable
 
-from eventum.core.models.application_config import InputConfig
 from numpy import datetime64
+
+from eventum.core.models.application_config import InputConfig
 
 
 class InputPluginError(Exception):

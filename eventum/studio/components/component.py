@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Any, MutableMapping, Optional
 
 import streamlit as st
+
 from eventum.studio.widget_management import (EPHEMERAL_PREFIX,
                                               ContextualSessionState,
                                               WidgetKeysContext)

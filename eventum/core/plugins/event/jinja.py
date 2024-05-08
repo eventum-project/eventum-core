@@ -1,3 +1,4 @@
+import importlib
 import random
 import subprocess
 from collections import deque
@@ -18,7 +19,6 @@ from eventum.core.settings import JINJA_EXTENSIONS, JINJA_MODULES
 from eventum.repository.manage import (ContentReadError,
                                        get_templates_environment,
                                        load_csv_sample)
-import importlib
 
 
 class SubprocessManager:

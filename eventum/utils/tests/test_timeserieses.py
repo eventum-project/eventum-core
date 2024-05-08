@@ -1,4 +1,5 @@
 import numpy as np
+
 from eventum.utils.timeseries import get_future_slice
 
 

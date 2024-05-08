@@ -1,4 +1,5 @@
 import numpy as np
+
 from eventum.utils.numpy_time import timedelta_to_seconds
 
 

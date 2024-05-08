@@ -1,4 +1,5 @@
 import pytest
+
 from eventum.utils.fs import validate_jinja_filename, validate_yaml_filename
 
 

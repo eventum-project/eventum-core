@@ -1,6 +1,7 @@
 from typing import Any, Callable, Optional
 
 import streamlit as st
+
 from eventum.repository.manage import (ContentReadError, ContentUpdateError,
                                        get_template_filenames, load_template,
                                        save_template)
