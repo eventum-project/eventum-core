@@ -18,6 +18,7 @@ class InputName(StrEnum):
     TIMESTAMPS = 'timestamps'
     TIME_PATTERNS = 'time_patterns'
     CRON = 'cron'
+    TIMER = 'timer'
     SAMPLE = 'sample'
 
 
@@ -64,6 +65,12 @@ class CronInputConfig(BaseModel):
         if croniter.is_valid(v):
             return v
         raise ValueError('Invalid cron expression')
+
+
+class TimerInputConfig(BaseModel):
+    seconds: int = Field(..., ge=1)
+    count: int = Field(..., ge=1)
+    repeat: bool
 
 
 class SampleInputConfig(BaseModel):
@@ -164,7 +171,7 @@ class OpensearchOutputConfig(BaseModel):
 
 InputConfig: TypeAlias = (
     TimestampsInputConfig | TimePatternsInputConfig
-    | CronInputConfig | SampleInputConfig
+    | CronInputConfig | TimerInputConfig | SampleInputConfig
 )
 
 EventConfig: TypeAlias = (
@@ -183,10 +190,10 @@ OutputConfigMapping: TypeAlias = dict[OutputName, OutputConfig]
 class ApplicationConfig(BaseModel):
     input: InputConfigMapping = Field(..., min_length=1, max_length=1)
     event: EventConfig
-    output: OutputConfigMapping | None = None
+    output: OutputConfigMapping
 
     @model_validator(mode='after')
     def handle_null_output(self):
-        if self.output is None:
+        if not self.output:
             self.output = {OutputName.NULL: NullOutputConfig()}
         return self

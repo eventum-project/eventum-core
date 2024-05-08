@@ -1,9 +1,15 @@
 input:
-  time_patterns:
-    - "test.yml"
+  # time_patterns:
+  #   - "test.yml"
   # cron:
   #   expression: "* * * * *"
   #   count: 1
+  # timer:
+  #   seconds: 1
+  #   count: 1
+  #   repeat: true
+  sample:
+    count: 10
 
 event:
   params: { }
@@ -32,6 +38,5 @@ event:
   subprocesses: { }
 
 output:
-  file:
-    path: /home/nikita/log.log
+  stdout:
     format: json-lines
