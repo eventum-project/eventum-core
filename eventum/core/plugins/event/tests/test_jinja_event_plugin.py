@@ -11,7 +11,7 @@ from eventum.core.settings import TIMESTAMP_FIELD_NAME
 
 
 def test_rendering():
-    JinjaEventPlugin(
+    event = JinjaEventPlugin(
         config=JinjaEventConfig(
             params={},
             samples={},
@@ -21,6 +21,9 @@ def test_rendering():
             }
         )
     ).render(**{TIMESTAMP_FIELD_NAME: datetime.now().isoformat()})
+
+    event = json.loads(event)
+    assert TIMESTAMP_FIELD_NAME in event and 'value' in event
 
 
 def test_parameters():
