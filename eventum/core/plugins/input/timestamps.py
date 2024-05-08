@@ -30,7 +30,6 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
             ],
             dtype='datetime64'
         )
-        self._timestamps.sort()
 
     def sample(self, on_event: Callable[[datetime64], Any]) -> None:
         for timestamp in self._timestamps:
