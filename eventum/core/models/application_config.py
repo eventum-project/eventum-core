@@ -9,6 +9,10 @@ from pydantic import BaseModel, BeforeValidator, Field, field_validator
 from eventum.utils.fs import validate_yaml_filename
 
 
+def init_none_config() -> None:
+    return None
+
+
 class InputName(StrEnum):
     TIMESTAMPS = 'timestamps'
     TIME_PATTERNS = 'time_patterns'
@@ -135,8 +139,7 @@ class StdOutOutputConfig(BaseModel):
     format: OutputFormat = OutputFormat.ORIGINAL
 
 
-class NullOutputConfig(BaseModel):
-    ...
+NullOutputConfig = init_none_config
 
 
 class FileOutputConfig(BaseModel):
@@ -168,8 +171,7 @@ EventConfig: TypeAlias = (
 )
 
 OutputConfig: TypeAlias = (
-    OpensearchOutputConfig | FileOutputConfig | StdOutOutputConfig
-    | NullOutputConfig
+    OpensearchOutputConfig | FileOutputConfig | StdOutOutputConfig | None
 )
 
 
