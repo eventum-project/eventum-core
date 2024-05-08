@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 import pytest
-
 from eventum.utils.relative_time import parse_relative_time, validate_time_span
 
 
