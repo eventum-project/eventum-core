@@ -15,7 +15,8 @@ from eventum.core.models.application_config import (ApplicationConfig,
                                                     SampleType,
                                                     StdOutOutputConfig,
                                                     TemplateConfig,
-                                                    TemplatePickingMode)
+                                                    TemplatePickingMode,
+                                                    TimerInputConfig)
 
 
 def test_crontab_input_config():
@@ -38,6 +39,26 @@ def test_crontab_input_config_with_invalid_count():
 
     with pytest.raises(ValidationError):
         CronInputConfig(expression='* * * * *', count=-10)
+
+
+def test_timer_input_config():
+    TimerInputConfig(seconds=1, count=1, repeat=True)
+
+
+def test_timer_config_with_invalid_seconds():
+    with pytest.raises(ValidationError):
+        TimerInputConfig(seconds=0, count=1, repeat=True)
+
+    with pytest.raises(ValidationError):
+        TimerInputConfig(seconds=-1, count=1, repeat=True)
+
+
+def test_timer_config_with_invalid_count():
+    with pytest.raises(ValidationError):
+        TimerInputConfig(seconds=1, count=0, repeat=True)
+
+    with pytest.raises(ValidationError):
+        TimerInputConfig(seconds=1, count=-1, repeat=True)
 
 
 def test_sample_input_config():
@@ -315,14 +336,15 @@ def test_application_config_with_empty_input():
 
 
 def test_application_config_with_empty_output():
-    with pytest.raises(ValidationError):
-        ApplicationConfig(
-            input={InputName.SAMPLE: SampleInputConfig(count=100)},
-            event=JinjaEventConfig(
-                params={},
-                samples={},
-                mode=TemplatePickingMode.ALL,
-                templates={'test': TemplateConfig(template='test.json.jinja')}
-            ),
-            output={}
-        )
+    config = ApplicationConfig(
+        input={InputName.SAMPLE: SampleInputConfig(count=100)},
+        event=JinjaEventConfig(
+            params={},
+            samples={},
+            mode=TemplatePickingMode.ALL,
+            templates={'test': TemplateConfig(template='test.json.jinja')}
+        ),
+        output={}
+    )
+
+    assert OutputName.NULL in config.output
