@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class Application:
     """Main class of application."""
 
-    _IDLE_SLEEP_SECONDS = 0.1
+    _REFRESH_STATUS_INTERVAL = 0.1
 
     def __init__(
         self,
@@ -168,7 +168,7 @@ class Application:
                     logger.info('Application is stopped')
                     self._terminate_application_on_crash()
 
-                sleep(Application._IDLE_SLEEP_SECONDS)
+                sleep(Application._REFRESH_STATUS_INTERVAL)
 
             if self._proc_input.is_alive() or self._proc_event.is_alive():
                 self._terminate_application_on_crash()
