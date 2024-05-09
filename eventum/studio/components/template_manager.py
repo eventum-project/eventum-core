@@ -60,11 +60,11 @@ class TemplateManager(BaseComponent):
             st.write('*:grey[Template is added]*')
 
     def _show_manage_section(self) -> None:
-        st.header('General')
         st.text_input(
             'File name',
             key=self._wk('template_filename'),
-            disabled=self._session_state['is_saved']
+            disabled=self._session_state['is_saved'],
+            help='Path for current template'
         )
 
         if self._session_state['is_saved']:

@@ -19,7 +19,10 @@ class TemplateEditor(BaseComponent):
     def _show(self) -> None:
         st.caption(
             'Template content',
-            help='Use `Ctrl+S` to commit changes after editing'
+            help=(
+                'Edit template content you want to render '
+                'and use `Ctrl+S` to commit changes'
+            )
         )
         with elements(self._wk('template_editor')):
             event.Hotkey(

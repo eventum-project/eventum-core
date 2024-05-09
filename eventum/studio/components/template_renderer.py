@@ -126,7 +126,10 @@ class TemplateRenderer(BaseComponent):
         )
 
     def _show(self) -> None:
-        st.caption('Template rendering')
+        st.caption(
+            'Template rendering',
+            help='Press render button and see the result in right side'
+        )
 
         with elements(self._wk('template_renderer')):
             editor.MonacoDiff(
@@ -149,7 +152,7 @@ class TemplateRenderer(BaseComponent):
             on_click=self._render
         )
         col1.checkbox(
-            'Mock subprocess',
+            'Mock subprocesses',
             key=self._wk('mock_checkbox'),
             on_change=(
                 lambda:
@@ -159,7 +162,8 @@ class TemplateRenderer(BaseComponent):
                     if not self._session_state['mock_checkbox']
                     else SubprocessManagerMock()
                 )
-            )
+            ),
+            help='Mock performing subprocesses in template'
         )
 
     def clear_state(self) -> None:

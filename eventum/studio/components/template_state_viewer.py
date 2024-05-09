@@ -16,14 +16,23 @@ class TemplateStateViewer(BaseComponent):
     }
 
     def _show(self) -> None:
-        st.caption('State')
+        st.caption(
+            'State',
+            help='Cross-rendering persisted state'
+        )
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
-            st.caption('Locals')
+            st.caption(
+                'Locals',
+                help='Variables accessible within a template'
+            )
             st.write(self._props['local_vars'])
 
         with col2:
-            st.caption('Shared')
+            st.caption(
+                'Shared',
+                help='Variables shared between multiple templates'
+            )
             st.write(self._props['shared_vars'])
 
         with col3:

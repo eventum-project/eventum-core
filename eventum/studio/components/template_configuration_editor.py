@@ -32,7 +32,13 @@ class TemplateConfigurationEditor(BaseComponent):
         col1, col2 = st.columns([1, 1])
 
         with col1:
-            st.caption('Configuration')
+            st.caption(
+                'Configuration',
+                help=(
+                    'Edit the configuration for template rendering '
+                    'and use `Ctrl+S` to commit changes'
+                )
+            )
 
             with elements(self._wk('configuration_editor')):
                 event.Hotkey(
