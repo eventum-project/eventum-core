@@ -118,12 +118,16 @@ class TimePatternConfigurator(BaseComponent):
                 assert_never(val)
 
     def _show_manage_section(self) -> None:
-        st.header('General')
-        st.text_input('Label', key=self._wk('pattern_label'))
+        st.text_input(
+            'Label',
+            key=self._wk('pattern_label'),
+            help='Displayed name of time pattern'
+        )
         st.text_input(
             'File name',
             key=self._wk('pattern_filename'),
-            disabled=self._session_state['is_saved']
+            disabled=self._session_state['is_saved'],
+            help='Path for current configuration'
         )
 
         if self._session_state['is_saved']:
@@ -146,50 +150,75 @@ class TimePatternConfigurator(BaseComponent):
             'Delete',
             key=self._wk.get_ephemeral(),
             on_click=lambda: self._props['delete_callback'](),
-            use_container_width=True,
+            use_container_width=True
         )
 
     def _show_oscillator_section(self) -> None:
-        st.header('Oscillator')
+        st.header(
+            'Oscillator',
+            help='When and how often to generate events'
+        )
         col1, col2 = st.columns([3, 7])
         col1.number_input(
             'Period',
             step=1,
             min_value=1,
-            key=self._wk('oscillator_period')
+            key=self._wk('oscillator_period'),
+            help='Period of time between events'
         )
         col2.selectbox(
             'Unit',
             options=[unit.value for unit in models.TimeUnit],
-            key=self._wk('oscillator_period_unit')
+            key=self._wk('oscillator_period_unit'),
+            help='Unit of time used in period'
         )
         col1, col2 = st.columns(2)
         col1.text_input(
             'Start time',
             key=self._wk('oscillator_start'),
+            help=(
+                'Start time of generating events. '
+                'Can be set to time, datetime, relative time (e.g. `+1h30m`) '
+                'or keyword `now`. '
+                'Relative time is measured from current moment.'
+            )
         )
         col2.text_input(
             'End time',
             key=self._wk('oscillator_end'),
+            help=(
+                'End time of generating events. '
+                'Can be set to time, datetime, relative time (e.g. `+1h30m`) '
+                'or keyword `never`. '
+                'Relative time is measured from start time moment.'
+            )
         )
 
     def _show_multiplier_section(self) -> None:
-        st.header('Multiplier')
+        st.header(
+            'Multiplier',
+            help='How many events to generate within the period'
+        )
         st.number_input(
             'Ratio',
             step=1,
             min_value=1,
-            key=self._wk('multiplier_ratio')
+            key=self._wk('multiplier_ratio'),
+            help='Event number multiplication ratio'
         )
 
     def _show_randomizer_section(self) -> None:
-        st.header('Randomizer')
+        st.header(
+            'Randomizer',
+            help='How much to randomize number of event within the period'
+        )
         st.number_input(
             'Deviation',
             min_value=0.0,
             max_value=1.00,
             step=0.05,
-            key=self._wk('randomizer_deviation')
+            key=self._wk('randomizer_deviation'),
+            help='Events number deviation ratio'
         )
         st.selectbox(
             'Direction',
@@ -198,7 +227,7 @@ class TimePatternConfigurator(BaseComponent):
                 for direction in models.RandomizerDirection
             ],
             key=self._wk('randomizer_direction'),
-            help='...'
+            help='Direction of number deviation'
         )
 
     def _show_spreader_parameters(self) -> None:
@@ -265,7 +294,10 @@ class TimePatternConfigurator(BaseComponent):
                 assert_never(val)
 
     def _show_spreader_section(self) -> None:
-        st.header('Spreader')
+        st.header(
+            'Spreader',
+            help='How to spread events within the period'
+        )
         st.selectbox(
             'Distribution',
             options=[
@@ -273,7 +305,7 @@ class TimePatternConfigurator(BaseComponent):
                 for func in models.Distribution
             ],
             key=self._wk('spreader_distribution'),
-            help='...'
+            help='Probability distribution function'
         )
         self._show_spreader_parameters()
 
