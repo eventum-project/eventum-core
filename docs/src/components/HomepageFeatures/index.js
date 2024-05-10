@@ -4,32 +4,36 @@ import styles from './styles.module.css';
 
 const FeatureList = [
   {
-    title: 'Easy to Use',
+    title: 'Define time distribution',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Eventum offers various methods to define time distribution of events.
+        From using cron expressions to combining probability distribution functions
+        - make your own scenario.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
+    title: 'Design event template',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        With the power of <a href='https://jinja.palletsprojects.com/templates/'>Jinja</a>,
+        it's easy to design event template that suits your case. Additionally,
+        advanced functionality enables you to save states, use samples, and run
+        subprocesses directly from templates - very handy, isn't it?
       </>
     ),
   },
   {
-    title: 'Powered by React',
+    title: 'Send events anywhere',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        You are free to choose where to send generated events.
+        Print it to stdout, save it to a file or maybe send it to
+        some endpoint - it's up to you.
       </>
     ),
   },
