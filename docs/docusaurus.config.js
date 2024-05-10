@@ -65,14 +65,15 @@ const config = {
             label: 'Plugins',
           },
           {
-            label: 'GitHub',
-            position: 'right',
-            href: 'https://github.com/rnv812/Eventum',
-          },
-          {
             to: '/blog',
             label: 'Blog',
             position: 'right'
+          },
+          {
+            position: 'right',
+            href: 'https://github.com/rnv812/Eventum',
+            className: 'header-github-link',
+            'aria-label': 'GitHub repository',
           },
         ],
       },
