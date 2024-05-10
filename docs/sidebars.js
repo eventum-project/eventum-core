@@ -36,6 +36,53 @@ const sidebars = {
       ]
     }
   ],
+  pluginsSidebar: [
+    {
+      type: 'category',
+      label: 'Plugins',
+      collapsible: true,
+      collapsed: false,
+      link: {
+        type: 'doc',
+        id: 'plugins/index'
+      },
+      items: [
+        {
+          type: 'category',
+          label: 'Input plugins',
+          collapsible: true,
+          collapsed: false,
+          link: {
+            type: 'doc',
+            id: 'plugins/index'
+          },
+          items: []
+        },
+        {
+          type: 'category',
+          label: 'Event plugins',
+          collapsible: true,
+          collapsed: false,
+          link: {
+            type: 'doc',
+            id: 'plugins/index'
+          },
+          items: []
+        },
+        {
+          type: 'category',
+          label: 'Output plugins',
+          collapsible: true,
+          collapsed: false,
+          link: {
+            type: 'doc',
+            id: 'plugins/index'
+          },
+          items: []
+        },
+      ]
+    },
+  ]
 };
 
 export default sidebars;

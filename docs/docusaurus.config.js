@@ -59,6 +59,12 @@ const config = {
             label: 'Getting started',
           },
           {
+            type: 'docSidebar',
+            sidebarId: 'pluginsSidebar',
+            position: 'left',
+            label: 'Plugins',
+          },
+          {
             label: 'GitHub',
             position: 'right',
             href: 'https://github.com/rnv812/Eventum',
