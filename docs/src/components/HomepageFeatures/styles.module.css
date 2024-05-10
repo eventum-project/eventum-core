@@ -5,7 +5,12 @@
   width: 100%;
 }
 
-.featureSvg {
+.featureImage {
   height: 200px;
   width: 200px;
+  -webkit-user-drag: none;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }

@@ -5,7 +5,7 @@ import styles from './styles.module.css';
 const FeatureList = [
   {
     title: 'Define time distribution',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    image: require('@site/static/img/time_distribution.png').default,
     description: (
       <>
         Eventum offers various methods to define time distribution of events.
@@ -16,7 +16,7 @@ const FeatureList = [
   },
   {
     title: 'Design event template',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    image: require('@site/static/img/event_template.png').default,
     description: (
       <>
         With the power of <a href='https://jinja.palletsprojects.com/templates/'>Jinja</a>,
@@ -28,7 +28,7 @@ const FeatureList = [
   },
   {
     title: 'Send events anywhere',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    image: require('@site/static/img/send_events.png').default,
     description: (
       <>
         You are free to choose where to send generated events.
@@ -39,11 +39,11 @@ const FeatureList = [
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Feature({image, title, description}) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
+        <img className={styles.featureImage} src={image} />
       </div>
       <div className="text--center padding-horiz--md">
         <Heading as="h3">{title}</Heading>
