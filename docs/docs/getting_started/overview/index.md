@@ -84,26 +84,60 @@ Output:
 }
 ```
 
+In the above example, sample `computers` is accessed by it's alias which is set along with the csv file path in application configuration.
+
 ## Connect to reality
 Eventum is not only about synthetic data. You can run subprocesses and obtain their result in templates using **[Subprocess API](./index.md)**.
 
 Template:
 ```javascript
-// highlight-next-line
-{% set my_name = subprocess.run('whoami', True) | trim | capitalize %}
+// highlight-start
+{% set shell = subprocess.run('echo $0', true) | trim %}
+{% set my_name = subprocess.run('whoami', true) | trim | capitalize %}
+// highlight-end
 
 {
-    "name": "Shell says, that I'm {{ my_name }}"
+    "name": "{{ shell }} says, that I'm {{ my_name }}"
 }
 ```
 
 Output:
 ```json
 {
-    "name": "Shell says, that I'm Nikita"
+    "name": "/bin/bash says, that I'm Nikita"
 }
 ```
 
+## Use modules in templates
+You are able to write any python function and run it from template just referencing to it. For example there is default [module `rand`](./index.md) with different function for generating random values.
+
+```javascript
+// highlight-next-line
+{% set ip = rand.network.ip_v4() %}
+
+{
+    "ip": "{{ ip }}"
+}
+```
+Output:
+```json
+{
+    "ip": "244.203.128.130"
+}
+```
+
+Content of `rand.py`:
+```py
+...
+class network:
+    @staticmethod
+    def ip_v4() -> str:
+        """Return random IPv4 address."""
+        return '.'.join(str(random.randint(0, 255)) for _ in range(4))
+...
+```
+
+The only think you need to do to make this work is to put your python module to `jinja_modules` directory of Jinja event plugin. All modules in this directory are accessible from all templates.  
 
 ## Designing with Eventum Studio
 
