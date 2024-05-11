@@ -78,8 +78,6 @@ const config = {
         ],
       },
       footer: {
-        style: 'dark',
-        links: [],
         copyright: `© Eventum, ${new Date().getFullYear()} `,
       },
       prism: {
