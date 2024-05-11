@@ -52,7 +52,10 @@ class TemplateRenderer(BaseComponent):
             )
             return
 
-        template_path = write_temporary_file(self._props['template_content'])
+        temp_path = write_temporary_file(self._props['template_content'])
+        template_path = f'{temp_path}.jinja'
+        os.rename(temp_path, template_path)
+
         base_dir, template_name = os.path.split(template_path)
 
         try:
