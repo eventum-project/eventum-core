@@ -16,13 +16,17 @@
   --ifm-navbar-background-color: #ebedf0;
   --ifm-background-color: #fff;
   --ifm-footer-background-color: #ebedf0;
+
+  --ifm-navbar-search-input-placeholder-color: --ifm-color-content;
+  --ifm-navbar-search-input-background-color: #d4d5d8;
 }
 
 [data-theme='dark'] {
-  --site-color-feedback-background: #181818;
   --ifm-navbar-background-color: #252526;
-  --ifm-background-color: #181818;
+  background-color: #181818;
   --ifm-footer-background-color: #252526;
+
+  --ifm-navbar-search-input-background-color: #3a3a3b;
 }
 
 .header-github-link::before {
