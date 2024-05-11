@@ -29,7 +29,81 @@ Eventum supports two time modes:
 - **Live mode** - in this case, each event will be published as the present time passes event timestamp
 
 ## Stateful templates
-In the default event plugin Eventum uses Jinja template engine. With basic use of Jinja, we cannot access variables from previous templates renders. But with **[State API](./index.md)** of **Jinja event plugin** it is easy to achieve it.
+In the default event plugin Eventum uses Jinja template engine. With basic use of Jinja, we cannot access variables from previous template renders. But with **[State API](./index.md)** of **Jinja event plugin** it is easy to achieve it.
+
+Template:
+```javascript
+// highlight-next-line
+{% set id = locals.get('id', 1) %}
+
+{
+    "userID": {{ id }}
+}
+
+// highlight-next-line
+{% set id = locals.set('id', id + 1) %}
+```
+
+Output:
+```json
+// first render
+{
+    "userID": 1,
+}
+// second render
+{
+    "userID": 2,
+}
+```
+
+## Use your own samples 
+It's easy to use data samples in templates because Jinja event plugin provides **[Sample API](./index.md)**.
+
+Need to change data in your events? - Just update your sample and keep template without any changes.
+
+Template:
+```javascript
+// highlight-next-line
+{% set computer = samples.computers | random %}
+{% set hostname = computer[0] %}
+{% set ip = computer[1] %}
+
+{
+    "sampleRow": "{{ computer }}",
+    "hostname": "{{ hostname }}",
+    "ip": "{{ ip }}"
+}
+```
+
+Output:
+```json
+{
+    "sampleRow": "('wks02', '172.16.0.4')",
+    "hostname": "wks02",
+    "ip": "172.16.0.4"
+}
+```
+
+## Connect to reality
+Eventum is not only about synthetic data. You can run subprocesses and obtain their result in templates using **[Subprocess API](./index.md)**.
+
+Template:
+```javascript
+// highlight-next-line
+{% set my_name = subprocess.run('whoami', True) | trim | capitalize %}
+
+{
+    "name": "Shell says, that I'm {{ my_name }}"
+}
+```
+
+Output:
+```json
+{
+    "name": "Shell says, that I'm Nikita"
+}
+```
+
 
 ## Designing with Eventum Studio
 
