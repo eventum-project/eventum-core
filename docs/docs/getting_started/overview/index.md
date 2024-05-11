@@ -10,9 +10,21 @@ The most popular tasks where Eventum is used are:
 - Filling different systems with demo data
 - Testing on arbitrary data and stress testing
 
-## Content development with Eventum Studio
 
-**Eventum Studio** is the important part of Eventum that empowers you to develop content such as time distribution configurations and event templates.
+## How it works
+The working pipeline of Eventum consists of three parts:
+- **Input plugin** - it creates signals in time represented as timestamps
+- **Event plugin** - for each incoming signal, renders the event according to the template
+- **Output plugin** - sends generated events to specified endpoints
+ 
+![](./scheme.png)
+
+Thus, to launch the application you only need to set parameters for these three parts in a single configuration file.
+
+
+## Designing with Eventum Studio
+
+**Eventum Studio** is the important part of Eventum that empowers you to develop content such as time distribution configurations and event templates in user friendly way.
 
 Using Eventum Studio you can change parameters and visualize the result on the fly.
 ![](./distribution.png)
