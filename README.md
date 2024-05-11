@@ -1,3 +1,3 @@
 # Eventum
 
-Flexible event generation tool
+Flexible event generator
