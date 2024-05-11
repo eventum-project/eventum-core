@@ -21,6 +21,15 @@ The working pipeline of Eventum consists of three parts:
 
 Thus, to launch the application you only need to set parameters for these three parts in a single configuration file.
 
+You may notice that parts are called "plugins". It is so because in addition to using existing ones, you can develop your own plugins and use them easily.
+
+## Time modes
+Eventum supports two time modes:
+- **Sample mode** - it is applicable when you want to generate events without reference to the present time (e.g. create a dataset)
+- **Live mode** - in this case, each event will be published as the present time passes event timestamp
+
+## Stateful templates
+In the default event plugin Eventum uses Jinja template engine. With basic use of Jinja, we cannot access variables from previous templates renders. But with **[State API](./index.md)** of **Jinja event plugin** it is easy to achieve it.
 
 ## Designing with Eventum Studio
 
