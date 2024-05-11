@@ -91,20 +91,18 @@ Eventum is not only about synthetic data. You can run subprocesses and obtain th
 
 Template:
 ```javascript
-// highlight-start
-{% set shell = subprocess.run('echo $0', true) | trim %}
-{% set my_name = subprocess.run('whoami', true) | trim | capitalize %}
-// highlight-end
+// highlight-next-line
+{% set my_name = subprocess.run('git config user.name', true) | trim %}
 
 {
-    "name": "{{ shell }} says, that I'm {{ my_name }}"
+    "name": "Shell says, that I'm {{ my_name }}"
 }
 ```
 
 Output:
 ```json
 {
-    "name": "/bin/bash says, that I'm Nikita"
+    "name": "Shell says, that I'm Nikita Reznikov"
 }
 ```
 
