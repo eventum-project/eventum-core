@@ -213,7 +213,11 @@ def test_null_output_config():
 
 def test_file_output_config():
     FileOutputConfig(path='/tmp/test.out')
-    FileOutputConfig(path='/tmp/test.out', format=OutputFormat.JSON_LINES)
+    FileOutputConfig(
+        path='/tmp/test.out',
+        format=OutputFormat.JSON_LINES,
+        flush=True
+    )
 
 
 def test_file_output_config_with_empty_path():

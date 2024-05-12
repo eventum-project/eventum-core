@@ -19,7 +19,12 @@ logger = logging.getLogger(__name__)
 
 class FileOutputPlugin(BaseOutputPlugin):
     """Output plugin for writing events to file."""
-    def __init__(self, filepath: str, format: OutputFormat) -> None:
+    def __init__(
+        self,
+        filepath: str,
+        format: OutputFormat,
+        flush: bool
+    ) -> None:
         super().__init__()
 
         if not os.path.isabs(filepath):
@@ -40,6 +45,7 @@ class FileOutputPlugin(BaseOutputPlugin):
 
         self._filepath = filepath
         self._format = format
+        self._flush = flush
         self._file = None
 
     async def _open(self) -> None:
@@ -76,6 +82,9 @@ class FileOutputPlugin(BaseOutputPlugin):
                 f'Failed to write event to file: {e}'
             ) from e
 
+        if self._flush:
+            await self._file.flush()
+
         return 1
 
     async def _write_many(self, events: Iterable[str]) -> int:
@@ -103,6 +112,9 @@ class FileOutputPlugin(BaseOutputPlugin):
                 f'Failed to write {len(fmt_events)} events to file: {e}'
             ) from e
 
+        if self._flush:
+            await self._file.flush()
+
         return len(fmt_events)
 
     @classmethod
@@ -110,7 +122,11 @@ class FileOutputPlugin(BaseOutputPlugin):
         cls,
         config: FileOutputConfig        # type: ignore
     ) -> 'FileOutputPlugin':
-        return FileOutputPlugin(filepath=config.path, format=config.format)
+        return FileOutputPlugin(
+            filepath=config.path,
+            format=config.format,
+            flush=config.flush
+        )
 
 
 def load_plugin():

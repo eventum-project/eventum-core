@@ -153,6 +153,7 @@ NullOutputConfig = init_none_config
 class FileOutputConfig(BaseModel):
     path: str
     format: OutputFormat = OutputFormat.ORIGINAL
+    flush: bool = False
 
     @field_validator('path')
     def validate_path(cls, v: Any):
