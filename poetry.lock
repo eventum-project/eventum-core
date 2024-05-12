@@ -640,16 +640,6 @@ python-dateutil = "*"
 pytz = ">2021.1"
 
 [[package]]
-name = "crontab"
-version = "1.0.1"
-description = "Parse and use crontab schedules in Python"
-optional = false
-python-versions = "*"
-files = [
-    {file = "crontab-1.0.1.tar.gz", hash = "sha256:89477e3f93c81365e738d5ee2659509e6373bb2846de13922663e79aa74c6b91"},
-]
-
-[[package]]
 name = "cryptography"
 version = "42.0.5"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
@@ -2661,4 +2651,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "7f8dca15c6e9a691ad366f2a4518be5e827e3420a55cfc0a2966f1510b69567e"
+content-hash = "a94cf5ec8fbec4a1e127c9e31ed971010da7a75702eaad50a99b8f4505b2f3cb"

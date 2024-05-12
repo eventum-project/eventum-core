@@ -1,8 +1,8 @@
 import time
-from datetime import UTC
+from datetime import datetime
 from typing import Any, Callable
 
-from crontab import CronTab
+from croniter import croniter
 from numpy import datetime64
 
 from eventum.core import settings
@@ -21,30 +21,29 @@ class CronInputPlugin(LiveInputPlugin):
         `expression` - cron expression;
         `count` - number of events to generate for each period.
         """
-        try:
-            self._entry = CronTab(expression)
-        except ValueError as e:
+        if not croniter.is_valid(expression):
             raise InputPluginConfigurationError(
-                f'Failed to parse cron expression: {e}'
+                'Failed to parse cron expression'
             )
+
+        self._cron = croniter(
+            expr_format=expression,
+            start_time=datetime.now(tz=settings.TIMEZONE),
+            ret_type=datetime
+        )
         self._count = count
 
     def live(self, on_event: Callable[[datetime64], Any]) -> None:
         while True:
-            timestamp = datetime64(
-                self._entry.next(                               # type: ignore
-                    default_utc=True,
-                    return_datetime=True
-                ).replace(
-                    tzinfo=UTC
-                ).astimezone(settings.TIMEZONE).replace(tzinfo=None)
-            )
-            wait_seconds = self._entry.next(default_utc=False)  # type: ignore
+            timestamp: datetime = self._cron.get_next()
+            now = datetime.now(tz=settings.TIMEZONE)
+            wait_seconds = (timestamp - now).total_seconds()
+
             if wait_seconds > 0:
                 time.sleep(wait_seconds)
 
             for _ in range(self._count):
-                on_event(timestamp)
+                on_event(datetime64(timestamp))
 
     @classmethod
     def create_from_config(
