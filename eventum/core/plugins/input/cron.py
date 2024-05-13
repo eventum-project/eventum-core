@@ -1,12 +1,12 @@
 import time
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, Self
 
 from croniter import croniter
 from numpy import datetime64
 
 from eventum.core import settings
-from eventum.core.models.application_config import CronInputConfig
+from eventum.core.models.input_config import CronInputConfig
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              LiveInputPlugin)
 
@@ -46,10 +46,7 @@ class CronInputPlugin(LiveInputPlugin):
                 on_event(datetime64(timestamp.replace(tzinfo=None)))
 
     @classmethod
-    def create_from_config(
-        cls,
-        config: CronInputConfig     # type: ignore
-    ) -> 'CronInputPlugin':
+    def create_from_config(cls, config: CronInputConfig) -> Self:
         return CronInputPlugin(
             expression=config.expression,
             count=config.count

@@ -1,11 +1,11 @@
 import time
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, Self
 
 from numpy import array, datetime64
 
 import eventum.core.settings as settings
-from eventum.core.models.application_config import TimestampsInputConfig
+from eventum.core.models.input_config import TimestampsInputConfig
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              LiveInputPlugin,
                                              SampleInputPlugin)
@@ -54,7 +54,7 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
     def create_from_config(
         cls,
         config: TimestampsInputConfig       # type: ignore
-    ) -> 'TimestampsInputPlugin':
+    ) -> Self:
         return TimestampsInputPlugin(timestamps=config)
 
 

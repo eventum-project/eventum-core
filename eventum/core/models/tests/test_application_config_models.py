@@ -1,22 +1,21 @@
 import pytest
 from pydantic import ValidationError
 
-from eventum.core.models.application_config import (ApplicationConfig,
-                                                    CronInputConfig,
-                                                    CSVSampleConfig,
-                                                    FileOutputConfig,
-                                                    InputName,
-                                                    ItemsSampleConfig,
-                                                    JinjaEventConfig,
-                                                    NullOutputConfig,
-                                                    OpensearchOutputConfig,
-                                                    OutputFormat, OutputName,
-                                                    SampleInputConfig,
-                                                    SampleType,
-                                                    StdOutOutputConfig,
-                                                    TemplateConfig,
-                                                    TemplatePickingMode,
-                                                    TimerInputConfig)
+from eventum.core.models.application_config import ApplicationConfig
+from eventum.core.models.event_config import (CSVSampleConfig,
+                                              ItemsSampleConfig,
+                                              JinjaEventConfig, SampleType,
+                                              TemplateConfig,
+                                              TemplatePickingMode)
+from eventum.core.models.input_config import (CronInputConfig,
+                                              LinspaceInputConfig,
+                                              SampleInputConfig,
+                                              TimerInputConfig)
+from eventum.core.models.output_config import (FileOutputConfig,
+                                               NullOutputConfig,
+                                               OpensearchOutputConfig,
+                                               OutputFormat,
+                                               StdOutOutputConfig)
 
 
 def test_crontab_input_config():
@@ -39,6 +38,46 @@ def test_crontab_input_config_with_invalid_count():
 
     with pytest.raises(ValidationError):
         CronInputConfig(expression='* * * * *', count=-10)
+
+
+def test_linspace_input_config():
+    LinspaceInputConfig(
+        start='2024-05-01T00:00:00',
+        end='2024-05-31T00:00:00',
+        count=31
+    )
+
+    LinspaceInputConfig(
+        start='2024-05-01T00:00:00',
+        end='2024-05-31T00:00:00',
+        count=4,
+        endpoint=False
+    )
+
+
+def test_linspace_input_config_with_interval():
+    with pytest.raises(ValidationError):
+        LinspaceInputConfig(
+            start='2024-05-31T00:00:00',
+            end='2024-05-01T00:00:00',
+            count=31
+        )
+
+
+def test_linspace_input_config_with_invalid_count():
+    with pytest.raises(ValidationError):
+        LinspaceInputConfig(
+            start='2024-05-01T00:00:00',
+            end='2024-05-31T00:00:00',
+            count=0
+        )
+
+    with pytest.raises(ValidationError):
+        LinspaceInputConfig(
+            start='2024-05-01T00:00:00',
+            end='2024-05-31T00:00:00',
+            count=-10
+        )
 
 
 def test_timer_input_config():
@@ -278,30 +317,30 @@ def test_opensearch_output_config_with_invalid_index():
 
 def test_application_config():
     ApplicationConfig(
-        input={InputName.SAMPLE: SampleInputConfig(count=100)},
+        input={'sample': SampleInputConfig(count=100)},
         event=JinjaEventConfig(
             params={},
             samples={},
             mode=TemplatePickingMode.ALL,
             templates={'test': TemplateConfig(template='test.json.jinja')}
         ),
-        output={OutputName.NULL: NullOutputConfig()}
+        output=[{'file': FileOutputConfig(path='/tmp/out.log')}]
     )
 
 
 def test_application_config_with_plural_output():
     ApplicationConfig(
-        input={InputName.SAMPLE: SampleInputConfig(count=100)},
+        input={'sample': SampleInputConfig(count=100)},
         event=JinjaEventConfig(
             params={},
             samples={},
             mode=TemplatePickingMode.ALL,
             templates={'test': TemplateConfig(template='test.json.jinja')}
         ),
-        output={
-            OutputName.NULL: NullOutputConfig(),
-            OutputName.STDOUT: StdOutOutputConfig()
-        }
+        output=[
+            {'file': FileOutputConfig(path='/tmp/out.log')},
+            {'stdout': StdOutOutputConfig()}
+        ]
     )
 
 
@@ -309,8 +348,8 @@ def test_application_config_with_plural_input():
     with pytest.raises(ValidationError):
         ApplicationConfig(
             input={
-                InputName.SAMPLE: SampleInputConfig(count=100),
-                InputName.CRON: CronInputConfig(
+                'sample': SampleInputConfig(count=100),
+                'cron': CronInputConfig(
                     expression='* * * * *',
                     count=1
                 )
@@ -321,7 +360,7 @@ def test_application_config_with_plural_input():
                 mode=TemplatePickingMode.ALL,
                 templates={'test': TemplateConfig(template='test.json.jinja')}
             ),
-            output={OutputName.NULL: NullOutputConfig()}
+            output=[{'stdout': StdOutOutputConfig()}]
         )
 
 
@@ -335,20 +374,31 @@ def test_application_config_with_empty_input():
                 mode=TemplatePickingMode.ALL,
                 templates={'test': TemplateConfig(template='test.json.jinja')}
             ),
-            output={OutputName.NULL: NullOutputConfig()}
+            output=[{'stdout': StdOutOutputConfig()}]
         )
 
 
 def test_application_config_with_empty_output():
     config = ApplicationConfig(
-        input={InputName.SAMPLE: SampleInputConfig(count=100)},
+        input={'sample': SampleInputConfig(count=100)},
         event=JinjaEventConfig(
             params={},
             samples={},
             mode=TemplatePickingMode.ALL,
             templates={'test': TemplateConfig(template='test.json.jinja')}
         ),
-        output={}
+        output=[]
     )
+    assert 'null' in config.output
 
-    assert OutputName.NULL in config.output
+    config = ApplicationConfig(
+        input={'sample': SampleInputConfig(count=100)},
+        event=JinjaEventConfig(
+            params={},
+            samples={},
+            mode=TemplatePickingMode.ALL,
+            templates={'test': TemplateConfig(template='test.json.jinja')}
+        ),
+        output=None
+    )
+    assert 'null' in config.output

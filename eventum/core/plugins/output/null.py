@@ -1,6 +1,6 @@
-from typing import Iterable
+from typing import Iterable, Self
 
-from eventum.core.models.application_config import NullOutputConfig
+from eventum.core.models.output_config import NullOutputConfig
 from eventum.core.plugins.output.base import BaseOutputPlugin
 
 
@@ -17,7 +17,7 @@ class NullOutputPlugin(BaseOutputPlugin):
     def create_from_config(
         cls,
         config: NullOutputConfig    # type: ignore
-    ) -> 'NullOutputPlugin':
+    ) -> Self:
         return NullOutputPlugin()
 
 

@@ -1,11 +1,11 @@
 import json
 from datetime import datetime
 
-from eventum.core.models.application_config import (CSVSampleConfig,
-                                                    ItemsSampleConfig,
-                                                    JinjaEventConfig,
-                                                    SampleType, TemplateConfig,
-                                                    TemplatePickingMode)
+from eventum.core.models.event_config import (CSVSampleConfig,
+                                              ItemsSampleConfig,
+                                              JinjaEventConfig, SampleType,
+                                              TemplateConfig,
+                                              TemplatePickingMode)
 from eventum.core.plugins.event.jinja import JinjaEventPlugin
 from eventum.core.settings import TIMESTAMP_FIELD_NAME
 

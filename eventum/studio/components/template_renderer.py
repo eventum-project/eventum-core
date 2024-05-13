@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 from pydantic import ValidationError
 from streamlit_elements import editor, elements  # type: ignore
 
-import eventum.core.models.application_config as models
+import eventum.core.models.event_config as models
 from eventum.core.plugins.event.base import (EventPluginConfigurationError,
                                              EventPluginRuntimeError)
 from eventum.core.plugins.event.jinja import (JinjaEventPlugin, State,

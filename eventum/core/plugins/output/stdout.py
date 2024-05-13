@@ -2,11 +2,10 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Iterable
+from typing import Iterable, Self
 
 import eventum.logging_config
-from eventum.core.models.application_config import (OutputFormat,
-                                                    StdOutOutputConfig)
+from eventum.core.models.output_config import OutputFormat, StdOutOutputConfig
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
                                               format_event)
 
@@ -90,7 +89,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
     def create_from_config(
         cls,
         config: StdOutOutputConfig      # type: ignore
-    ) -> 'StdoutOutputPlugin':
+    ) -> Self:
         return StdoutOutputPlugin(format=config.format)
 
 

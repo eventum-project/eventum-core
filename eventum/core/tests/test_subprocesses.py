@@ -5,10 +5,9 @@ from multiprocessing import Event, Process, Queue, TimeoutError, Value
 
 import numpy as np
 
-from eventum.core.models.application_config import (JinjaEventConfig,
-                                                    SampleInputConfig,
-                                                    TemplateConfig,
-                                                    TemplatePickingMode)
+from eventum.core.models.event_config import (JinjaEventConfig, TemplateConfig,
+                                              TemplatePickingMode)
+from eventum.core.models.input_config import SampleInputConfig
 from eventum.core.models.time_mode import TimeMode
 from eventum.core.plugins.output.null import NullOutputPlugin
 from eventum.core.settings import EVENTS_BATCH_TIMEOUT, OUTPUT_BATCH_TIMEOUT

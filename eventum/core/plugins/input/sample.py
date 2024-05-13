@@ -1,8 +1,8 @@
-from typing import Any, Callable
+from typing import Any, Callable, Self
 
 from numpy import datetime64
 
-from eventum.core.models.application_config import SampleInputConfig
+from eventum.core.models.input_config import SampleInputConfig
 from eventum.core.plugins.input.base import InputPluginConfigurationError
 from eventum.core.plugins.input.base import \
     SampleInputPlugin as BaseSampleInputPlugin
@@ -32,7 +32,7 @@ class SampleInputPlugin(BaseSampleInputPlugin):
     def create_from_config(
         cls,
         config: SampleInputConfig       # type: ignore
-    ) -> 'SampleInputPlugin':
+    ) -> Self:
         return SampleInputPlugin(count=config.count)
 
 

@@ -4,13 +4,13 @@ from datetime import datetime, time, timedelta
 from heapq import merge
 from queue import Empty, Queue
 from time import perf_counter, sleep
-from typing import Any, Callable, Sequence, assert_never
+from typing import Any, Callable, Self, Sequence, assert_never
 
 import numpy as np
 from numpy.typing import NDArray
 
 from eventum.core import settings
-from eventum.core.models.application_config import TimePatternsInputConfig
+from eventum.core.models.input_config import TimePatternsInputConfig
 from eventum.core.models.time_pattern_config import (Distribution,
                                                      RandomizerDirection,
                                                      TimeKeyword,
@@ -331,7 +331,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     def create_from_config(
         cls,
         config: str     # type: ignore
-    ) -> 'TimePatternInputPlugin':
+    ) -> Self:
         try:
             pattern_config = load_time_pattern(config)
         except ContentReadError as e:
@@ -416,7 +416,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
     def create_from_config(
         cls,
         config: TimePatternsInputConfig     # type: ignore
-    ) -> 'TimePatternPoolInputPlugin':
+    ) -> Self:
         try:
             configs = [
                 load_time_pattern(path)

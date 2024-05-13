@@ -1,9 +1,9 @@
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Self
 
 from numpy import datetime64
 
-from eventum.core.models.application_config import TimerInputConfig
+from eventum.core.models.input_config import TimerInputConfig
 from eventum.core.plugins.input.base import (InputPluginConfigurationError,
                                              LiveInputPlugin)
 from eventum.utils.numpy_time import get_now
@@ -48,7 +48,7 @@ class TimerInputPlugin(LiveInputPlugin):
     def create_from_config(
         cls,
         config: TimerInputConfig
-    ) -> 'TimerInputPlugin':
+    ) -> Self:
         return TimerInputPlugin(
             seconds=config.seconds,
             count=config.count,

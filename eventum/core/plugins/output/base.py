@@ -1,8 +1,8 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Iterable, assert_never
+from typing import Iterable, Self, assert_never
 
-from eventum.core.models.application_config import OutputConfig, OutputFormat
+from eventum.core.models.output_config import OutputConfig, OutputFormat
 
 
 class OutputPluginError(Exception):
@@ -76,7 +76,7 @@ class BaseOutputPlugin(ABC):
 
     @classmethod
     @abstractmethod
-    def create_from_config(cls, config: OutputConfig) -> 'BaseOutputPlugin':
+    def create_from_config(cls, config: OutputConfig) -> Self:
         """Create instance of configured plugin from config."""
         ...
 

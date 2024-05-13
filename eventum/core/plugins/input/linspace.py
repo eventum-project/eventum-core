@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, Self
 
 from numpy import datetime64, linspace
 
 from eventum.core import settings
-from eventum.core.models.application_config import LinspaceInputConfig
+from eventum.core.models.input_config import LinspaceInputConfig
 from eventum.core.plugins.input.base import InputPluginConfigurationError
 from eventum.core.plugins.input.base import \
     SampleInputPlugin as BaseSampleInputPlugin
@@ -55,7 +55,7 @@ class LinspaceInputPlugin(BaseSampleInputPlugin):
     def create_from_config(
         cls,
         config: LinspaceInputConfig     # type: ignore
-    ) -> 'LinspaceInputPlugin':
+    ) -> Self:
         return LinspaceInputPlugin(
             start=config.start,
             end=config.end,

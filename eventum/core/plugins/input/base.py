@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import Any, Callable, Self
 
 from numpy import datetime64
 
-from eventum.core.models.application_config import InputConfig
+from eventum.core.models.input_config import InputConfig
 
 
 class InputPluginError(Exception):
@@ -29,7 +29,7 @@ class BaseInputPlugin(ABC):
 
     @classmethod
     @abstractmethod
-    def create_from_config(cls, config: InputConfig) -> 'BaseInputPlugin':
+    def create_from_config(cls, config: InputConfig) -> Self:
         """Create instance of configured plugin from config."""
         ...
 

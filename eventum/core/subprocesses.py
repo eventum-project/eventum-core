@@ -14,9 +14,9 @@ from setproctitle import getproctitle, setproctitle
 import eventum.logging_config
 from eventum.core import settings
 from eventum.core.batcher import Batcher
-from eventum.core.models.application_config import (EventConfig,
-                                                    InputConfigMapping,
-                                                    OutputConfigMapping)
+from eventum.core.models.event_config import EventConfig
+from eventum.core.models.input_config import InputConfigMapping
+from eventum.core.models.output_config import OutputConfigMapping
 from eventum.core.models.time_mode import TimeMode
 from eventum.core.plugins.event.base import (BaseEventPlugin,
                                              EventPluginConfigurationError,

@@ -3,15 +3,15 @@ import random
 import subprocess
 from collections import deque
 from copy import deepcopy
-from typing import Any, Iterator, assert_never
+from typing import Any, Iterator, Self, assert_never
 
 from jinja2 import (Environment, Template, TemplateError, TemplateNotFound,
                     TemplateRuntimeError, TemplateSyntaxError)
 
-from eventum.core.models.application_config import (CSVSampleConfig,
-                                                    ItemsSampleConfig,
-                                                    JinjaEventConfig,
-                                                    TemplatePickingMode)
+from eventum.core.models.event_config import (CSVSampleConfig,
+                                              ItemsSampleConfig,
+                                              JinjaEventConfig,
+                                              TemplatePickingMode)
 from eventum.core.plugins.event.base import (BaseEventPlugin,
                                              EventPluginConfigurationError,
                                              EventPluginRuntimeError)
@@ -273,7 +273,7 @@ class JinjaEventPlugin(BaseEventPlugin):
     def create_from_config(
         cls,
         config: JinjaEventConfig        # type: ignore
-    ) -> 'JinjaEventPlugin':
+    ) -> Self:
         return JinjaEventPlugin(config)
 
 

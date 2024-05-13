@@ -4,14 +4,14 @@ import logging
 import os
 import random
 import ssl
-from typing import Iterable
+from typing import Iterable, Self
 
 import aiohttp
 
 import eventum.logging_config
 from eventum.core.credentials_manager import get_credentials_manager
-from eventum.core.models.application_config import (OpensearchOutputConfig,
-                                                    OutputFormat)
+from eventum.core.models.output_config import (OpensearchOutputConfig,
+                                               OutputFormat)
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
                                               OutputPluginConfigurationError,
                                               OutputPluginRuntimeError,
@@ -189,7 +189,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
     def create_from_config(
         cls,
         config: OpensearchOutputConfig      # type: ignore
-    ) -> 'OpensearchOutputPlugin':
+    ) -> Self:
         credentials_manager = get_credentials_manager()
 
         service = cls._KEYRING_SERVICE_NAME

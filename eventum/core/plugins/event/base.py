@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import Self
 
-from eventum.core.models.application_config import EventConfig
+from eventum.core.models.event_config import EventConfig
 
 
 class EventPluginError(Exception):
@@ -25,6 +26,6 @@ class BaseEventPlugin(ABC):
 
     @classmethod
     @abstractmethod
-    def create_from_config(cls, config: EventConfig) -> 'BaseEventPlugin':
+    def create_from_config(cls, config: EventConfig) -> Self:
         """Create instance of configured plugin from config."""
         ...
