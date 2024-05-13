@@ -29,7 +29,7 @@ Eventum supports two time modes:
 - **Live mode** - in this case, each event will be published as the present time passes event timestamp
 
 ## Scheduling
-With the variety of input plugins you can flexibly adjust when to generate the events. For example, in case when events linearly spaced in time you can use **Timer input plugin** for live mode and **Linspace input plugin** for sample mode. For more detailed uncomplicated scheduling the **Cron input plugin** is a great choice. If you need maximum flexibility, then just use **Time patterns input plugin**. There are many others plugins, you can explore all them [here](./index.md).
+With the variety of input plugins you can flexibly adjust when to generate the events. For example, in case when events linearly spaced in time you can use **Timer input plugin** for live mode and **Linspace input plugin** for sample mode. For more detailed uncomplicated scheduling the **Cron input plugin** is a great choice. If you want maximum flexibility, then just use **Time patterns input plugin** which offers you to operate probability distribution functions and mix them if needed. There are many others plugins, you can explore all them [here](./index.md).
 
 
 ## Stateful templates
@@ -111,7 +111,7 @@ Output:
 ```
 
 ## Use modules in templates
-You are able to write any python function and run it from template just referencing to it. For example there is default [module `rand`](./index.md) with different functions for generating random values.
+You are able to write any python function and run it from template just referencing to it. For example there is default module named **[`rand`](./index.md)** with different functions for generating random values.
 
 ```javascript
 // highlight-next-line
