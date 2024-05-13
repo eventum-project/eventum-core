@@ -43,7 +43,7 @@ class CronInputPlugin(LiveInputPlugin):
                 time.sleep(wait_seconds)
 
             for _ in range(self._count):
-                on_event(datetime64(timestamp))
+                on_event(datetime64(timestamp.replace(tzinfo=None)))
 
     @classmethod
     def create_from_config(
