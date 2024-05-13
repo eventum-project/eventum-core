@@ -28,6 +28,10 @@ Eventum supports two time modes:
 - **Sample mode** - it is applicable when you want to generate events without reference to the present time (e.g. create a dataset)
 - **Live mode** - in this case, each event will be published as the present time passes event timestamp
 
+## Scheduling
+With the variety of input plugins you can flexibly adjust when to generate the events. For example, in case when events linearly spaced in time you can use **Timer input plugin** for live mode and **Linspace input plugin** for sample mode. For more detailed uncomplicated scheduling the **Cron input plugin** is a great choice. If you need maximum flexibility, then just use **Time patterns input plugin**. There are many others plugins, you can explore all them [here](./index.md).
+
+
 ## Stateful templates
 In the default event plugin Eventum uses Jinja template engine. With basic use of Jinja, we cannot access variables from previous template renders. But with **[State API](./index.md)** of **Jinja event plugin** it is easy to achieve it.
 
@@ -84,7 +88,7 @@ Output:
 }
 ```
 
-In the above example, sample `computers` is accessed by it's alias which is set along with the csv file path in application configuration.
+In the above example, sample `computers` is accessed by its alias which is set along with the csv file path in application configuration.
 
 ## Connect to reality
 Eventum is not only about synthetic data. You can run subprocesses and obtain their result in templates using **[Subprocess API](./index.md)**.
@@ -107,7 +111,7 @@ Output:
 ```
 
 ## Use modules in templates
-You are able to write any python function and run it from template just referencing to it. For example there is default [module `rand`](./index.md) with different function for generating random values.
+You are able to write any python function and run it from template just referencing to it. For example there is default [module `rand`](./index.md) with different functions for generating random values.
 
 ```javascript
 // highlight-next-line
@@ -135,7 +139,10 @@ class network:
 ...
 ```
 
-The only think you need to do to make this work is to put your python module to `jinja_modules` directory of Jinja event plugin. All modules in this directory are accessible from all templates.  
+The only think you need to do to make this work is to put your python module to `jinja_modules` directory of Jinja event plugin. All modules in this directory are accessible from all templates.
+
+## Send events anywhere
+...
 
 ## Designing with Eventum Studio
 
