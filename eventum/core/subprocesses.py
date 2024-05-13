@@ -67,7 +67,7 @@ def start_input_subprocess(
     queue: Queue,
     is_done: EventClass,
 ) -> None:
-    plugin_name, input_conf = config.popitem()
+    plugin_name, input_conf = next(iter(config.items()))
 
     logger.info(f'Initializing "{plugin_name}" input plugin')
 
@@ -192,18 +192,21 @@ def start_event_subprocess(
 
 @subprocess('output')
 def start_output_subprocess(
-    config: OutputConfigMapping,
+    config: list[OutputConfigMapping],
     queue: Queue,
     processed_events: SynchronizedBase,
     is_done: EventClass
 ) -> None:
-    plugins_list_fmt = ", ".join([f'"{plugin}"' for plugin in config.keys()])
+    plugins_list_fmt = ", ".join(
+        [f'"{next(iter(mapping.keys()))}"' for mapping in config]
+    )
 
     logger.info(f'Initializing [{plugins_list_fmt}] output plugins')
 
     output_plugins: list[BaseOutputPlugin] = []
 
-    for plugin_name, output_conf in config.items():
+    for mapping in config:
+        plugin_name, output_conf = next(iter(mapping.items()))
         try:
             plugin_module = importlib.import_module(
                 f'eventum.core.plugins.output.{plugin_name}'

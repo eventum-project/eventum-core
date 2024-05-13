@@ -10,6 +10,10 @@ input:
   #   repeat: true
   sample:
     count: 10
+  # linspace:
+  #   start: '2024-05-01T00:00:00'
+  #   end: '2024-05-01T00:00:00'
+  #   count: 31 
 
 event:
   params: { }
@@ -35,8 +39,6 @@ event:
     #   template: host_mem.json.jinja
     #   chance: 1
 
-  subprocesses: { }
-
 output:
-  stdout:
-    format: json-lines
+  - stdout:
+      format: json-lines
