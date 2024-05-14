@@ -4,6 +4,7 @@ import streamlit as st
 from pydantic import ValidationError
 
 import eventum.core.models.time_pattern_config as models
+from eventum.core.models.errors_prettier import prettify_errors
 from eventum.repository.manage import ContentUpdateError, save_time_pattern
 from eventum.studio.components.component import BaseComponent
 from eventum.studio.notifiers import NotificationLevel, default_notifier
@@ -336,8 +337,11 @@ class TimePatternConfigurator(BaseComponent):
             )
         except ValidationError as e:
             default_notifier(
-                f'Field validation fail for "{e.title}"',
-                NotificationLevel.ERROR
+                message=(
+                    'Failed to validate parameters in time pattern: '
+                    f'{prettify_errors(e.errors())}'
+                ),
+                level=NotificationLevel.ERROR
             )
             return
         except ContentUpdateError as e:

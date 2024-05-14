@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from yaml import YAMLError
 
 from eventum.core.models.application_config import ApplicationConfig
+from eventum.core.models.errors_prettier import prettify_errors
 from eventum.core.models.time_pattern_config import TimePatternConfig
 from eventum.utils.fs import (load_object_from_yaml, load_sample_from_csv,
                               save_object_as_yaml, validate_jinja_filename,
@@ -146,7 +147,9 @@ def load_time_pattern(path: str) -> TimePatternConfig:
     try:
         return TimePatternConfig.model_validate(data)
     except ValidationError as e:
-        raise ContentReadError(str(e)) from e
+        raise ContentReadError(
+            f'Failed to validate configuration: {prettify_errors(e.errors())}'
+        ) from e
 
 
 def load_template(path: str) -> str:
@@ -199,7 +202,9 @@ def load_app_config(path: str) -> ApplicationConfig:
     try:
         return ApplicationConfig.model_validate(data)
     except ValidationError as e:
-        raise ContentReadError(str(e)) from e
+        raise ContentReadError(
+            f'Failed to validate configuration: {prettify_errors(e.errors())}'
+        ) from e
 
 
 def get_templates_environment() -> Environment:

@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from streamlit_elements import editor, elements  # type: ignore
 
 import eventum.core.models.event_config as models
+from eventum.core.models.errors_prettier import prettify_errors
 from eventum.core.plugins.event.base import (EventPluginConfigurationError,
                                              EventPluginRuntimeError)
 from eventum.core.plugins.event.jinja import (JinjaEventPlugin, State,
@@ -52,6 +53,16 @@ class TemplateRenderer(BaseComponent):
             )
             return
 
+        if not isinstance(config_data, dict):
+            default_notifier(
+                message=(
+                    'Failed to render template due to invalid configuration: '
+                    f'Key-value mapping expected, but got {type(config_data)}'
+                ),
+                level=NotificationLevel.ERROR
+            )
+            return
+
         temp_path = write_temporary_file(self._props['template_content'])
         template_path = f'{temp_path}.jinja'
         os.rename(temp_path, template_path)
@@ -66,11 +77,11 @@ class TemplateRenderer(BaseComponent):
                 },
                 **config_data
             )
-        except (TypeError, ValidationError) as e:
+        except ValidationError as e:
             default_notifier(
                 message=(
-                    'Failed to render template due to invalid '
-                    f'configuration: {e}'
+                    'Failed to render template due to invalid configuration: '
+                    f'{prettify_errors(e.errors())}'
                 ),
                 level=NotificationLevel.ERROR
             )
