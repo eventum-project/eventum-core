@@ -41,7 +41,7 @@ class TemplateStateViewer(BaseComponent):
                 data=self._props['subprocess_commands_history'],
                 use_container_width=True,
                 hide_index=True,
-                column_config={1: "#", 2: "Command"}
+                column_config={1: "#", 2: "Command"}    # type: ignore
             )
 
         _, col2 = st.columns([3, 1])

@@ -82,7 +82,7 @@ class FileOutputPlugin(BaseOutputPlugin):
             ) from e
 
         if self._flush:
-            await self._file.flush()
+            await self._file.flush()        # type: ignore
 
         return 1
 
@@ -112,16 +112,16 @@ class FileOutputPlugin(BaseOutputPlugin):
             ) from e
 
         if self._flush:
-            await self._file.flush()
+            await self._file.flush()        # type: ignore
 
         return len(fmt_events)
 
     @classmethod
     def create_from_config(
         cls,
-        config: FileOutputConfig        # type: ignore
+        config: FileOutputConfig        # type: ignore[override]
     ) -> Self:
-        return FileOutputPlugin(
+        return cls(
             filepath=config.path,
             format=config.format,
             flush=config.flush

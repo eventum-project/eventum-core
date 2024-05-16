@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Callable, Self
 
-from numpy import datetime64, linspace
+from numpy import datetime64, linspace, timedelta64
 
 from eventum.core import settings
 from eventum.core.models.input_config import LinspaceInputConfig
@@ -36,10 +36,14 @@ class LinspaceInputPlugin(BaseSampleInputPlugin):
         self._endpoint = endpoint
 
     def sample(self, on_event: Callable[[datetime64], Any]) -> None:
-        start = self._start.astimezone(settings.TIMEZONE).replace(tzinfo=None)
-        end = self._end.astimezone(settings.TIMEZONE).replace(tzinfo=None)
+        start = datetime64(
+            self._start.astimezone(settings.TIMEZONE).replace(tzinfo=None)
+        )
+        end = datetime64(
+            self._end.astimezone(settings.TIMEZONE).replace(tzinfo=None)
+        )
 
-        timedelta = end - start
+        timedelta = timedelta64(end - start)
         space = linspace(
             start=0,
             stop=1,
@@ -54,9 +58,9 @@ class LinspaceInputPlugin(BaseSampleInputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: LinspaceInputConfig     # type: ignore
+        config: LinspaceInputConfig     # type: ignore[override]
     ) -> Self:
-        return LinspaceInputPlugin(
+        return cls(
             start=config.start,
             end=config.end,
             count=config.count,

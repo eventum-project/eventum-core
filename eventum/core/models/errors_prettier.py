@@ -1,7 +1,9 @@
 from typing import Iterable
 
+from pydantic_core import ErrorDetails
 
-def prettify_errors(errors: list[dict]) -> str:
+
+def prettify_errors(errors: list[ErrorDetails]) -> str:
     """Format pydantic dictionary gotten from `e.errors()` to pretty
     human readable string."""
 

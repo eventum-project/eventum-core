@@ -188,7 +188,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: OpensearchOutputConfig      # type: ignore
+        config: OpensearchOutputConfig      # type: ignore[override]
     ) -> Self:
         credentials_manager = get_credentials_manager()
 
@@ -204,7 +204,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
                 f'service "{service}" and user "{config.user}"'
             )
 
-        return OpensearchOutputPlugin(
+        return cls(
             hosts=config.hosts,
             user=config.user,
             password=password,

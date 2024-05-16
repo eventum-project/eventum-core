@@ -88,9 +88,9 @@ class StdoutOutputPlugin(BaseOutputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: StdOutOutputConfig      # type: ignore
+        config: StdOutOutputConfig      # type: ignore[override]
     ) -> Self:
-        return StdoutOutputPlugin(format=config.format)
+        return cls(format=config.format)
 
 
 def load_plugin():

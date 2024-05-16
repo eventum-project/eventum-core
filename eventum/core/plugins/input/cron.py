@@ -46,8 +46,11 @@ class CronInputPlugin(LiveInputPlugin):
                 on_event(datetime64(timestamp.replace(tzinfo=None)))
 
     @classmethod
-    def create_from_config(cls, config: CronInputConfig) -> Self:
-        return CronInputPlugin(
+    def create_from_config(
+        cls,
+        config: CronInputConfig     # type: ignore[override]
+    ) -> Self:
+        return cls(
             expression=config.expression,
             count=config.count
         )

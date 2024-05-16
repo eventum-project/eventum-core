@@ -47,9 +47,9 @@ class TimerInputPlugin(LiveInputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: TimerInputConfig
+        config: TimerInputConfig      # type: ignore[override]
     ) -> Self:
-        return TimerInputPlugin(
+        return cls(
             seconds=config.seconds,
             count=config.count,
             repeat=config.repeat

@@ -38,6 +38,7 @@ types-python-crontab = "^3.0.0.20240106"
 types-pyyaml = "^6.0.12.20240311"
 pandas-stubs = "^2.2.1.240316"
 types-aiofiles = "^23.2.0.20240403"
+types-croniter = "^2.0.0.20240423"
 
 [build-system]
 requires = ["poetry-core"]

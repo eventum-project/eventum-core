@@ -330,7 +330,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: str     # type: ignore
+        config: str     # type: ignore[override]
     ) -> Self:
         try:
             pattern_config = load_time_pattern(config)
@@ -339,7 +339,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 f'Failed to load time pattern config: {e}'
             ) from e
 
-        return TimePatternInputPlugin(config=pattern_config)
+        return cls(config=pattern_config)
 
 
 class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
@@ -427,7 +427,7 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
                  f'Failed to load time pattern config: {e}'
             ) from e
 
-        return TimePatternPoolInputPlugin(configs=configs)
+        return cls(configs=configs)
 
 
 def load_plugin():

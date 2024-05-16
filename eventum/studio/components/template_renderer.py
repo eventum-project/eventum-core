@@ -73,7 +73,9 @@ class TemplateRenderer(BaseComponent):
             config = models.JinjaEventConfig(
                 mode=models.TemplatePickingMode.ALL,
                 templates={
-                    'template': models.TemplateConfig(template=template_name)
+                    'template': models.TemplateConfig(      # type: ignore
+                        template=template_name
+                    )
                 },
                 **config_data
             )
@@ -201,8 +203,7 @@ class TemplateRenderer(BaseComponent):
             return {}
 
         if locals:
-            for value in locals.values():
-                return value.as_dict()
+            return next(iter(locals.values())).as_dict()
         else:
             return {}
 

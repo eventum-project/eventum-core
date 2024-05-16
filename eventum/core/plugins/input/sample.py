@@ -31,9 +31,9 @@ class SampleInputPlugin(BaseSampleInputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: SampleInputConfig       # type: ignore
+        config: SampleInputConfig       # type: ignore[override]
     ) -> Self:
-        return SampleInputPlugin(count=config.count)
+        return cls(count=config.count)
 
 
 def load_plugin():

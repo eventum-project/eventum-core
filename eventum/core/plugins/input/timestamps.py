@@ -53,9 +53,9 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: TimestampsInputConfig       # type: ignore
+        config: TimestampsInputConfig       # type: ignore[override]
     ) -> Self:
-        return TimestampsInputPlugin(timestamps=config)
+        return cls(timestamps=config)
 
 
 def load_plugin():

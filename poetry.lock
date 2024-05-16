@@ -2381,6 +2381,17 @@ files = [
 ]
 
 [[package]]
+name = "types-croniter"
+version = "2.0.0.20240423"
+description = "Typing stubs for croniter"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-croniter-2.0.0.20240423.tar.gz", hash = "sha256:73c0e068c6ac5abc8ffed2d9828c8a38ebae9a2d32af8fcd6bc5c680c79b64b6"},
+    {file = "types_croniter-2.0.0.20240423-py3-none-any.whl", hash = "sha256:30f8e4d7ff39c39a3cabc17bfc5186a49f6d4807d9c7177e5fa9b0c2cfe3b073"},
+]
+
+[[package]]
 name = "types-python-crontab"
 version = "3.0.0.20240106"
 description = "Typing stubs for python-crontab"
@@ -2651,4 +2662,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "a94cf5ec8fbec4a1e127c9e31ed971010da7a75702eaad50a99b8f4505b2f3cb"
+content-hash = "543a88f9961115cb14cae4984efd1a2a5f2bf0f09f0fdb79ea5e6c96a942de08"

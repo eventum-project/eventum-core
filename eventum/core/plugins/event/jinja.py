@@ -27,7 +27,9 @@ class SubprocessManager:
     _HISTORY_SIZE = 10
 
     def __init__(self) -> None:
-        self._commands_history = deque(maxlen=self._HISTORY_SIZE)
+        self._commands_history: deque[tuple[int, str]] = deque(
+            maxlen=self._HISTORY_SIZE
+        )
         self._commands_counter = 1
 
     def _save_command_in_history(self, command: str) -> None:
@@ -46,8 +48,10 @@ class SubprocessManager:
             stdout, stderr = proc.communicate()
             return stdout.decode()
 
+        return None
+
     @property
-    def commands_history(self) -> tuple[tuple[int, str]]:
+    def commands_history(self) -> tuple[tuple[int, str], ...]:
         """Get history of running commands."""
         return tuple(self._commands_history)
 
@@ -58,6 +62,8 @@ class SubprocessManagerMock(SubprocessManager):
 
         if block:
             return '<SUBPROCESS MOCK RESULT>'
+
+        return None
 
 
 class State:
@@ -242,7 +248,7 @@ class JinjaEventPlugin(BaseEventPlugin):
     @property
     def shared_vars(self) -> State:
         """Get state of shared variables. The returned state is a copy."""
-        return deepcopy(self._env.globals['shared'])
+        return deepcopy(self._env.globals['shared'])    # type: ignore
 
     @shared_vars.setter
     def shared_vars(self, value: State) -> None:
@@ -252,17 +258,17 @@ class JinjaEventPlugin(BaseEventPlugin):
     @property
     def local_vars(self) -> dict[str, State]:
         """Get state of local variables. The returned state is a copy."""
-        return deepcopy(self._template_states)
+        return deepcopy(self._template_states)      # type: ignore
 
     @local_vars.setter
     def local_vars(self, value: dict[str, State]) -> None:
         """Set state of local variables."""
-        self._template_states = value
+        self._template_states = value               # type: ignore
 
     @property
     def subprocess_manager(self) -> SubprocessManager:
         """Get `SubprocessManager`."""
-        return self._env.globals['subprocess']
+        return self._env.globals['subprocess']      # type: ignore
 
     @subprocess_manager.setter
     def subprocess_manager(self, value: SubprocessManager) -> None:
@@ -272,9 +278,9 @@ class JinjaEventPlugin(BaseEventPlugin):
     @classmethod
     def create_from_config(
         cls,
-        config: JinjaEventConfig        # type: ignore
+        config: JinjaEventConfig        # type: ignore[override]
     ) -> Self:
-        return JinjaEventPlugin(config)
+        return cls(config)
 
 
 def load_plugin():
