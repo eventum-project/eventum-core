@@ -67,7 +67,8 @@ def start_input_subprocess(
     queue: Queue,
     is_done: EventClass,
 ) -> None:
-    plugin_name, input_conf = next(iter(config.items()))
+    plugin_name = config.get_name()
+    input_conf = config.get_value()
 
     logger.info(f'Initializing "{plugin_name}" input plugin')
 
@@ -111,7 +112,7 @@ def start_input_subprocess(
                     assert_never(time_mode)
     except AttributeError:
         logger.error(
-            f'Specified input plugin does not support "{time_mode}" mode'
+            f'"{plugin_name}" input plugin does not support "{time_mode}" mode'
         )
         _terminate_subprocess(is_done, 1, queue)
     except InputPluginRuntimeError as e:
@@ -198,15 +199,17 @@ def start_output_subprocess(
     is_done: EventClass
 ) -> None:
     plugins_list_fmt = ", ".join(
-        [f'"{next(iter(mapping.keys()))}"' for mapping in config]
+        [f'"{item.get_name()}"' for item in config]
     )
 
     logger.info(f'Initializing [{plugins_list_fmt}] output plugins')
 
     output_plugins: list[BaseOutputPlugin] = []
 
-    for mapping in config:
-        plugin_name, output_conf = next(iter(mapping.items()))
+    for item in config:
+        plugin_name = item.get_name()
+        output_conf = item.get_value()
+
         try:
             plugin_module = importlib.import_module(
                 f'eventum.core.plugins.output.{plugin_name}'

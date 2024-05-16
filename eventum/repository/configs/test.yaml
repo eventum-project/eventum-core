@@ -8,12 +8,14 @@ input:
   #   seconds: 1
   #   count: 1
   #   repeat: true
-  sample:
-    count: 10
-  # linspace:
-  #   start: '2024-05-01T00:00:00'
-  #   end: '2024-05-01T00:00:00'
-  #   count: 31 
+  # sample:
+  #   count: 10
+  linspace:
+    start: '2024-05-01T00:00:00Z'
+    end: '2024-05-31T00:00:00Z'
+    count: 31
+    endpoint: true
+    
 
 event:
   params: { }
@@ -40,5 +42,7 @@ event:
     #   chance: 1
 
 output:
-  - stdout:
-      format: json-lines
+  - file:
+      path: /home/nikita/new
+  - stdout: { }
+      
