@@ -12,7 +12,6 @@ from eventum.core.models.input_config import (CronInputConfig,
                                               SampleInputConfig,
                                               TimerInputConfig)
 from eventum.core.models.output_config import (FileOutputConfig,
-                                               NullOutputConfig,
                                                OpensearchOutputConfig,
                                                OutputFormat,
                                                StdOutOutputConfig)
@@ -246,10 +245,6 @@ def test_std_out_output_config():
     StdOutOutputConfig(format=OutputFormat.JSON_LINES)
 
 
-def test_null_output_config():
-    NullOutputConfig()
-
-
 def test_file_output_config():
     FileOutputConfig(path='/tmp/test.out')
     FileOutputConfig(
@@ -379,7 +374,7 @@ def test_application_config_with_empty_input():
 
 
 def test_application_config_with_empty_output():
-    config = ApplicationConfig(
+    ApplicationConfig(
         input={'sample': SampleInputConfig(count=100)},
         event=JinjaEventConfig(
             params={},
@@ -389,16 +384,3 @@ def test_application_config_with_empty_output():
         ),
         output=[]
     )
-    assert 'null' in config.output
-
-    config = ApplicationConfig(
-        input={'sample': SampleInputConfig(count=100)},
-        event=JinjaEventConfig(
-            params={},
-            samples={},
-            mode=TemplatePickingMode.ALL,
-            templates={'test': TemplateConfig(template='test.json.jinja')}
-        ),
-        output=None
-    )
-    assert 'null' in config.output

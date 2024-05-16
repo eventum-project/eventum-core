@@ -7,9 +7,9 @@ import numpy as np
 
 from eventum.core.models.event_config import (JinjaEventConfig, TemplateConfig,
                                               TemplatePickingMode)
-from eventum.core.models.input_config import SampleInputConfig
+from eventum.core.models.input_config import (InputConfigMapping,
+                                              SampleInputConfig)
 from eventum.core.models.time_mode import TimeMode
-from eventum.core.plugins.output.null import NullOutputPlugin
 from eventum.core.settings import EVENTS_BATCH_TIMEOUT, OUTPUT_BATCH_TIMEOUT
 from eventum.core.subprocesses import (start_event_subprocess,
                                        start_input_subprocess,
@@ -23,7 +23,7 @@ def test_input_subprocess():
     proc_input = Process(
         target=start_input_subprocess,
         args=(
-            {'sample': SampleInputConfig(count=10)},
+            InputConfigMapping(sample=SampleInputConfig(count=10)),
             TimeMode.SAMPLE,
             queue,
             is_done
@@ -109,7 +109,7 @@ def test_output_subprocess():
     proc_output = Process(
         target=start_output_subprocess,
         args=(
-            {'null': NullOutputPlugin()},
+            [],
             event_queue,
             processed_event,
             is_done
