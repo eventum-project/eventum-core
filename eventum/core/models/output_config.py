@@ -11,13 +11,6 @@ class OutputConfigModel(BaseModel, extra='forbid'):
     """Base model class for all input config models."""
 
 
-def init_none_config() -> None:
-    return None
-
-
-NullOutputConfig = init_none_config
-
-
 class OutputFormat(StrEnum):
     ORIGINAL = 'original'
     JSON_LINES = 'json-lines'
