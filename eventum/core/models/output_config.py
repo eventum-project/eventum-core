@@ -1,8 +1,14 @@
 import os
 from enum import StrEnum
-from typing import Any, Literal, TypeAlias
+from typing import Any, TypeAlias
 
 from pydantic import BaseModel, Field, field_validator
+
+from eventum.core.models.mutex_model import MutexModel
+
+
+class OutputConfigModel(BaseModel, extra='forbid'):
+    """Base model class for all input config models."""
 
 
 def init_none_config() -> None:
@@ -17,7 +23,7 @@ class OutputFormat(StrEnum):
     JSON_LINES = 'json-lines'
 
 
-class FileOutputConfig(BaseModel):
+class FileOutputConfig(OutputConfigModel):
     path: str
     format: OutputFormat = OutputFormat.ORIGINAL
     flush: bool = False
@@ -29,7 +35,7 @@ class FileOutputConfig(BaseModel):
         raise ValueError('Path must be absolute')
 
 
-class OpensearchOutputConfig(BaseModel):
+class OpensearchOutputConfig(OutputConfigModel):
     hosts: list[str] = Field(..., min_length=1)
     user: str = Field(..., min_length=1)
     index: str = Field(..., min_length=1)
@@ -37,24 +43,16 @@ class OpensearchOutputConfig(BaseModel):
     ca_cert_path: str | None = None
 
 
-class StdOutOutputConfig(BaseModel):
+class StdOutOutputConfig(OutputConfigModel):
     format: OutputFormat = OutputFormat.ORIGINAL
 
 
-FileOutputConfigMapping: TypeAlias = dict[
-    Literal['file'], FileOutputConfig
-]
-OpensearchOutputConfigMapping: TypeAlias = dict[
-    Literal['opensearch'], OpensearchOutputConfig
-]
-StdOutOutputConfigMapping: TypeAlias = dict[
-    Literal['stdout'], StdOutOutputConfig
-]
-
 OutputConfig: TypeAlias = (
-    FileOutputConfig | OpensearchOutputConfig | StdOutOutputConfig | None
+    FileOutputConfig | OpensearchOutputConfig | StdOutOutputConfig
 )
-OutputConfigMapping: TypeAlias = (
-    FileOutputConfigMapping | OpensearchOutputConfigMapping
-    | StdOutOutputConfigMapping
-)
+
+
+class OutputConfigMapping(MutexModel):
+    file: FileOutputConfig | None = None
+    opensearch: OpensearchOutputConfig | None = None
+    stdout: StdOutOutputConfig | None = None

@@ -1,15 +1,20 @@
 import os
 from datetime import datetime
-from typing import Annotated, Any, Literal, TypeAlias
+from typing import Annotated, Any, TypeAlias
 
 from croniter import croniter
 from pydantic import (BaseModel, BeforeValidator, Field, field_validator,
                       model_validator)
 
+from eventum.core.models.mutex_model import MutexModel
 from eventum.utils.fs import validate_yaml_filename
 
 
-class CronInputConfig(BaseModel):
+class InputConfigModel(BaseModel, extra='forbid'):
+    """Base model class for all input config models."""
+
+
+class CronInputConfig(InputConfigModel):
     expression: str
     count: int = Field(..., gt=0)
 
@@ -20,7 +25,7 @@ class CronInputConfig(BaseModel):
         raise ValueError('Invalid cron expression')
 
 
-class LinspaceInputConfig(BaseModel):
+class LinspaceInputConfig(InputConfigModel):
     start: datetime
     end: datetime
     count: int = Field(..., ge=1)
@@ -33,11 +38,11 @@ class LinspaceInputConfig(BaseModel):
         raise ValueError('Start time must be earlier than end time')
 
 
-class SampleInputConfig(BaseModel):
+class SampleInputConfig(InputConfigModel):
     count: int = Field(..., gt=0)
 
 
-class TimerInputConfig(BaseModel):
+class TimerInputConfig(InputConfigModel):
     seconds: int = Field(..., ge=1)
     count: int = Field(..., ge=1)
     repeat: bool
@@ -78,31 +83,16 @@ TimestampsInputConfig = Annotated[
 ]
 
 
-CronInputConfigMapping: TypeAlias = dict[
-    Literal['cron'], CronInputConfig
-]
-LinspaceInputConfigMapping: TypeAlias = dict[
-    Literal['linspace'], LinspaceInputConfig
-]
-SampleInputConfigMapping: TypeAlias = dict[
-    Literal['sample'], SampleInputConfig
-]
-TimerInputConfigMapping: TypeAlias = dict[
-    Literal['timer'], TimerInputConfig
-]
-TimePatternsInputConfigMapping: TypeAlias = dict[
-    Literal['time_patterns'], TimePatternsInputConfig
-]
-TimestampsInputConfigMapping: TypeAlias = dict[
-    Literal['timestamps'], TimestampsInputConfig
-]
-
 InputConfig: TypeAlias = (
     CronInputConfig | LinspaceInputConfig | SampleInputConfig
     | TimerInputConfig | TimePatternsInputConfig | TimestampsInputConfig
 )
-InputConfigMapping: TypeAlias = (
-    CronInputConfigMapping | LinspaceInputConfigMapping
-    | SampleInputConfigMapping | TimerInputConfigMapping
-    | TimePatternsInputConfigMapping | TimestampsInputConfigMapping
-)
+
+
+class InputConfigMapping(MutexModel):
+    cron: CronInputConfig | None = None
+    linspace: LinspaceInputConfig | None = None
+    sample: SampleInputConfig | None = None
+    timer: TimerInputConfig | None = None
+    time_patterns: TimePatternsInputConfig | None = None
+    timestamps: TimestampsInputConfig | None = None

@@ -1,16 +1,16 @@
 from abc import ABC
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class MutexModel(BaseModel, ABC, extra='forbid'):
-    def _validate_mutual_exclusion(self):
+    @model_validator(mode='after')
+    def validate_mutual_exclusion(self):
         """Validate that only one field is passed and rest fields is `None`."""
         values = [
             self.__getattribute__(field) for field in self.model_fields.keys()
         ]
-        print(values)
 
         if values.count(None) == (len(values) - 1):
             return self
