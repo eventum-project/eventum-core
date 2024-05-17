@@ -2,9 +2,11 @@ import os
 from enum import StrEnum
 from typing import Any, TypeAlias
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
+from eventum.core.credentials_manager import get_credentials_manager
 from eventum.core.models.mutex_model import MutexModel
+from eventum.core.settings import KEYRING_SERVICE_NAME
 
 
 class OutputConfigModel(BaseModel, extra='forbid'):
@@ -31,9 +33,36 @@ class FileOutputConfig(OutputConfigModel):
 class OpensearchOutputConfig(OutputConfigModel):
     hosts: list[str] = Field(..., min_length=1)
     user: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1)
     index: str = Field(..., min_length=1)
     verify_ssl: bool
     ca_cert_path: str | None = None
+
+    @model_validator(mode='after')
+    def set_password(self):
+        if self.password.startswith('${') and self.password.endswith('}'):
+            token = self.password[2:-1]
+
+            try:
+                credentials_manager = get_credentials_manager()
+                password = credentials_manager.get_password(
+                    service=KEYRING_SERVICE_NAME,
+                    username=token
+                )
+            except ValueError as e:
+                raise ValueError(
+                    f'Failed to load password from keyring: {e}'
+                ) from e
+
+            if password is None:
+                raise ValueError(
+                    f'Token "{token}" for opensearch password '
+                    'not found in keyring'
+                )
+
+            self.password = password
+
+        return self
 
 
 class StdOutOutputConfig(OutputConfigModel):

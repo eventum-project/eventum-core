@@ -268,6 +268,7 @@ def test_opensearch_output_config():
     OpensearchOutputConfig(
         hosts=['https://localhost:9200'],
         user='admin',
+        password='pass',
         index='test',
         verify_ssl=True,
         ca_cert_path='ca-cert.pem'
@@ -275,6 +276,7 @@ def test_opensearch_output_config():
     OpensearchOutputConfig(
         hosts=['https://localhost:9200'],
         user='admin',
+        password='pass',
         index='test',
         verify_ssl=False
     )
@@ -285,6 +287,7 @@ def test_opensearch_output_config_with_invalid_hosts():
         OpensearchOutputConfig(
             hosts=[],
             user='admin',
+            password='pass',
             index='test',
             verify_ssl=False
         )
@@ -295,6 +298,18 @@ def test_opensearch_output_config_with_invalid_user():
         OpensearchOutputConfig(
             hosts=['https://localhost:9200'],
             user='',
+            password='pass',
+            index='test',
+            verify_ssl=False
+        )
+
+
+def test_opensearch_output_config_with_invalid_password():
+    with pytest.raises(ValidationError):
+        OpensearchOutputConfig(
+            hosts=['https://localhost:9200'],
+            user='admin',
+            password='',
             index='test',
             verify_ssl=False
         )
@@ -305,6 +320,7 @@ def test_opensearch_output_config_with_invalid_index():
         OpensearchOutputConfig(
             hosts=['https://localhost:9200'],
             user='admin',
+            password='pass',
             index='',
             verify_ssl=False
         )

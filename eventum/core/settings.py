@@ -28,6 +28,7 @@ JINJA_MODULES = [
     'rand'
 ]
 
+
 # ========== Queues batching parameters ==========
 
 # Batch size / timeout (in seconds) for input-to-event plugins
@@ -38,3 +39,9 @@ EVENTS_BATCH_TIMEOUT = 1.0
 # Batch size / timeout (in seconds) for output plugins.
 OUTPUT_BATCH_SIZE = 10000
 OUTPUT_BATCH_TIMEOUT = 1.0
+
+
+# ========== Security parameters ==========
+
+# Service name for keyring credentials storage
+KEYRING_SERVICE_NAME = 'eventum'

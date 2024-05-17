@@ -44,5 +44,9 @@ event:
 output:
   - file:
       path: /home/nikita/new
-  - stdout: { }
-      
+  - opensearch:
+      hosts: ["https://127.0.0.1:9200"]
+      user: admin
+      password: ${os_pwd}
+      index: 'test'
+      verify_ssl: false

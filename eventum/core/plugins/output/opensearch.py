@@ -9,7 +9,6 @@ from typing import Iterable, Self
 import aiohttp
 
 import eventum.logging_config
-from eventum.core.credentials_manager import get_credentials_manager
 from eventum.core.models.output_config import (OpensearchOutputConfig,
                                                OutputFormat)
 from eventum.core.plugins.output.base import (BaseOutputPlugin, FormatError,
@@ -190,24 +189,10 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
         cls,
         config: OpensearchOutputConfig      # type: ignore[override]
     ) -> Self:
-        credentials_manager = get_credentials_manager()
-
-        service = cls._KEYRING_SERVICE_NAME
-        password = credentials_manager.get_password(
-            service=service,
-            username=config.user
-        )
-
-        if password is None:
-            raise OutputPluginConfigurationError(
-                'Failed to get password from keyring for '
-                f'service "{service}" and user "{config.user}"'
-            )
-
         return cls(
             hosts=config.hosts,
             user=config.user,
-            password=password,
+            password=config.password,
             index=config.index,
             verify_ssl=config.verify_ssl,
             ca_cert_path=config.ca_cert_path
