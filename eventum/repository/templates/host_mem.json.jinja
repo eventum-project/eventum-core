@@ -1,7 +1,0 @@
-{% set hostname = shared.get('hostname') %}
-
-{
-    "@timestamp": "{{ timestamp }}",
-    "hostname": "{{ hostname }}",
-    "mem": "{{ range(4, 8)|random }} GiB"
-}
