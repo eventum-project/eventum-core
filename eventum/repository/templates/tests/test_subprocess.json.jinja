@@ -1,6 +1,0 @@
-{% set value = subprocess.run('echo "Hello, World!"', True)|trim %}
-
-{
-    "@timestamp": "{{ timestamp }}",
-    "value": "{{ value }}"
-}
