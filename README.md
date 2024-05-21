@@ -1,0 +1,2 @@
+# EventumPlugins
+Plugins for Eventum
