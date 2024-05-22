@@ -2,16 +2,15 @@ import time
 from datetime import datetime
 from typing import Any, Callable
 
-from numpy import array, datetime64
-from numpy.typing import NDArray
-from pydantic import Field
-from pytz.tzinfo import DstTzInfo
-
 from eventum_plugins.input.base import (InputPluginBaseConfig,
                                         LiveInputPluginMixin,
                                         SampleInputPluginMixin)
 from eventum_plugins.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum_plugins.utils.timeseries import get_future_slice
+from numpy import array, datetime64
+from numpy.typing import NDArray
+from pydantic import Field
+from pytz.tzinfo import DstTzInfo
 
 
 class TimestampsInputConfig(InputPluginBaseConfig):

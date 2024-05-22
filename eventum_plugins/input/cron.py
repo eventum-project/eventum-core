@@ -3,12 +3,11 @@ from datetime import datetime
 from typing import Any, Callable
 
 from croniter import croniter
+from eventum_plugins.input.base import (InputPluginBaseConfig,
+                                        LiveInputPluginMixin)
 from numpy import datetime64
 from pydantic import Field, field_validator
 from pytz.tzinfo import DstTzInfo
-
-from eventum_plugins.input.base import (InputPluginBaseConfig,
-                                        LiveInputPluginMixin)
 
 
 class CronInputConfig(InputPluginBaseConfig):
