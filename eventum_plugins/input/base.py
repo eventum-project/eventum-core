@@ -17,6 +17,12 @@ class InputPluginRuntimeError(InputPluginError):
     """Exception for input plugin runtime errors."""
 
 
+class PerformanceError(InputPluginRuntimeError):
+    """Exception for input plugin errors related with insufficient
+    performance.
+    """
+
+
 class InputPluginBaseConfig(BaseModel, extra='forbid', frozen=True):
     """Base config model for input plugins"""
 

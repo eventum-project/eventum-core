@@ -17,7 +17,7 @@ from pytz.tzinfo import DstTzInfo
 from eventum_plugins.input.base import (InputPluginBaseConfig,
                                         InputPluginConfigurationError,
                                         InputPluginRuntimeError,
-                                        LiveInputPluginMixin,
+                                        LiveInputPluginMixin, PerformanceError,
                                         SampleInputPluginMixin)
 from eventum_plugins.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum_plugins.utils.relative_time import parse_relative_time
@@ -355,7 +355,7 @@ class TimePatternInputPlugin(LiveInputPluginMixin, SampleInputPluginMixin):
         required_eps = self._get_required_eps()
 
         if actual_eps < required_eps:
-            raise InputPluginRuntimeError(
+            raise PerformanceError(
                 'Not enough performance to produce distributions in time: '
                 f'actual EPS is {round(actual_eps)} but {round(required_eps)} '
                 'is required'
