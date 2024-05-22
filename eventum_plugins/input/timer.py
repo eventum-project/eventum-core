@@ -1,4 +1,3 @@
-from datetime import datetime
 import time
 from typing import Any, Callable
 
@@ -8,6 +7,7 @@ from pytz.tzinfo import DstTzInfo
 
 from eventum_plugins.input.base import (InputPluginBaseConfig,
                                         LiveInputPluginMixin)
+from eventum_plugins.utils.numpy_time import get_now
 
 
 class TimerInputConfig(InputPluginBaseConfig):
@@ -34,9 +34,7 @@ class TimerInputPlugin(LiveInputPluginMixin):
 
             time.sleep(self._seconds)
 
-            timestamp = datetime64(
-                datetime.now(tz=self._tz).replace(tzinfo=None)
-            )
+            timestamp = get_now(tz=self._tz)
             for _ in range(self._count):
                 on_event(timestamp)
 

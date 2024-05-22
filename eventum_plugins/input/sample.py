@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any, Callable
 
 from numpy import datetime64
@@ -7,6 +6,7 @@ from pytz.tzinfo import DstTzInfo
 
 from eventum_plugins.input.base import (InputPluginBaseConfig,
                                         SampleInputPluginMixin)
+from eventum_plugins.utils.numpy_time import get_now
 
 
 class SampleInputConfig(InputPluginBaseConfig):
@@ -25,9 +25,7 @@ class SampleInputPlugin(SampleInputPluginMixin):
         self._tz = tz
 
     def sample(self, on_event: Callable[[datetime64], Any]) -> None:
-        timestamp = datetime64(
-            datetime.now(tz=self._tz).replace(tzinfo=None)
-        )
+        timestamp = get_now(tz=self._tz)
 
         for _ in range(self._count):
             on_event(timestamp)
