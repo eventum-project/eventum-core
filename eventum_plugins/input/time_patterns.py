@@ -400,7 +400,7 @@ class TimePatternInputPlugin(LiveInputPluginMixin, SampleInputPluginMixin):
 
         now = get_now(tz=self._tz)
         if start < now:
-            timestamps = get_future_slice(timestamps=timestamps, now=now)
+            timestamps = get_future_slice(timestamps=timestamps, after=now)
 
         # thread worker definitions
 
@@ -480,7 +480,7 @@ class TimePatternPoolInputPlugin(LiveInputPluginMixin, SampleInputPluginMixin):
                 )
             )
 
-        self._time_patterns: tuple[TimePatternInputPlugin] = tuple(
+        self._time_patterns: tuple[TimePatternInputPlugin, ...] = tuple(
             time_patterns
         )
         self._size = len(self._time_patterns)
