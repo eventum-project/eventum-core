@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Callable, Self
+from typing import Any, Callable
 
 from eventum_plugins.input.base import (InputPluginBaseConfig,
                                         SampleInputPluginMixin)
@@ -54,4 +54,5 @@ class LinspaceInputPlugin(SampleInputPluginMixin):
             on_event(ts)
 
 
-EXPORT_PLUGIN = LinspaceInputPlugin
+PLUGIN_CLASS = LinspaceInputPlugin
+CONFIG_CLASS = LinspaceInputConfig

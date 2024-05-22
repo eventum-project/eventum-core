@@ -51,4 +51,5 @@ class CronInputPlugin(LiveInputPluginMixin):
                 on_event(datetime64(timestamp.replace(tzinfo=None)))
 
 
-EXPORT_PLUGIN = CronInputPlugin
+PLUGIN_CLASS = CronInputPlugin
+CONFIG_CLASS = CronInputConfig
