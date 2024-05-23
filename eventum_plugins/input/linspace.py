@@ -1,14 +1,13 @@
 from datetime import datetime
 from typing import Any, Callable
 
-from eventum_plugins.input.base import (InputPluginBaseConfig,
-                                        SampleInputPluginMixin)
+from eventum_plugins.input.base import InputPluginBaseConfig, SampleInputPlugin
 from numpy import datetime64, linspace, timedelta64
 from pydantic import Field, model_validator
 from pytz.tzinfo import DstTzInfo
 
 
-class LinspaceInputConfig(InputPluginBaseConfig):
+class LinspaceInputConfig(InputPluginBaseConfig, frozen=True):
     start: datetime
     end: datetime
     count: int = Field(..., ge=1)
@@ -21,7 +20,7 @@ class LinspaceInputConfig(InputPluginBaseConfig):
         raise ValueError('Start time must be earlier than end time')
 
 
-class LinspaceInputPlugin(SampleInputPluginMixin):
+class LinspaceInputPlugin(SampleInputPlugin):
     """Input plugin for generating specified count of events linearly
     spaced in time.
     """

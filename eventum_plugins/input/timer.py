@@ -1,21 +1,20 @@
 import time
 from typing import Any, Callable
 
-from eventum_plugins.input.base import (InputPluginBaseConfig,
-                                        LiveInputPluginMixin)
+from eventum_plugins.input.base import InputPluginBaseConfig, LiveInputPlugin
 from eventum_plugins.utils.numpy_time import get_now
 from numpy import datetime64
 from pydantic import Field
 from pytz.tzinfo import DstTzInfo
 
 
-class TimerInputConfig(InputPluginBaseConfig):
+class TimerInputConfig(InputPluginBaseConfig, frozen=True):
     seconds: int = Field(..., ge=1)
     count: int = Field(..., ge=1)
     repeat: bool
 
 
-class TimerInputPlugin(LiveInputPluginMixin):
+class TimerInputPlugin(LiveInputPlugin):
     """Input plugin for generating events after specified number of
     seconds.
     """

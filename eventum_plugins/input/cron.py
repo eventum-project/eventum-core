@@ -3,14 +3,13 @@ from datetime import datetime
 from typing import Any, Callable
 
 from croniter import croniter
-from eventum_plugins.input.base import (InputPluginBaseConfig,
-                                        LiveInputPluginMixin)
+from eventum_plugins.input.base import InputPluginBaseConfig, LiveInputPlugin
 from numpy import datetime64
 from pydantic import Field, field_validator
 from pytz.tzinfo import DstTzInfo
 
 
-class CronInputConfig(InputPluginBaseConfig):
+class CronInputConfig(InputPluginBaseConfig, frozen=True):
     expression: str
     count: int = Field(..., gt=0)
 
@@ -21,7 +20,7 @@ class CronInputConfig(InputPluginBaseConfig):
         raise ValueError('Invalid cron expression')
 
 
-class CronInputPlugin(LiveInputPluginMixin):
+class CronInputPlugin(LiveInputPlugin):
     """Input plugin for generating events at moments defined by cron
     expression.
     """

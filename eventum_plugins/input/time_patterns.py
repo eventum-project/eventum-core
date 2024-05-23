@@ -13,8 +13,8 @@ from eventum_content_manager.manage import (ContentManagementError,
 from eventum_plugins.input.base import (InputPluginBaseConfig,
                                         InputPluginConfigurationError,
                                         InputPluginRuntimeError,
-                                        LiveInputPluginMixin, PerformanceError,
-                                        SampleInputPluginMixin)
+                                        LiveInputPlugin, PerformanceError,
+                                        SampleInputPlugin)
 from eventum_plugins.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum_plugins.utils.relative_time import parse_relative_time
 from eventum_plugins.utils.timeseries import get_future_slice
@@ -57,28 +57,28 @@ def _check_relative_time(obj: Any) -> str:
 RelativeTime = Annotated[str, AfterValidator(_check_relative_time)]
 
 
-class OscillatorConfig(InputPluginBaseConfig):
+class OscillatorConfig(InputPluginBaseConfig, frozen=True):
     period: int = Field(..., ge=1)
     unit: TimeUnit
     start: time | datetime | TimeKeyword | RelativeTime
     end: time | datetime | TimeKeyword | RelativeTime
 
 
-class MultiplierConfig(InputPluginBaseConfig):
+class MultiplierConfig(InputPluginBaseConfig, frozen=True):
     ratio: int = Field(..., ge=1)
 
 
-class RandomizerConfig(InputPluginBaseConfig):
+class RandomizerConfig(InputPluginBaseConfig, frozen=True):
     deviation: float = Field(..., ge=0, le=1)
     direction: RandomizerDirection
 
 
-class BetaDistributionParameters(InputPluginBaseConfig):
+class BetaDistributionParameters(InputPluginBaseConfig, frozen=True):
     a: float = Field(..., ge=0)
     b: float = Field(..., ge=0)
 
 
-class TriangularDistributionParameters(InputPluginBaseConfig):
+class TriangularDistributionParameters(InputPluginBaseConfig, frozen=True):
     left: float = Field(..., ge=0, lt=1)
     mode: float = Field(..., ge=0, le=1)
     right: float = Field(..., gt=0, le=1)
@@ -95,7 +95,7 @@ class TriangularDistributionParameters(InputPluginBaseConfig):
         )
 
 
-class UniformDistributionParameters(InputPluginBaseConfig):
+class UniformDistributionParameters(InputPluginBaseConfig, frozen=True):
     low: float = Field(..., ge=0, lt=1)
     high: float = Field(..., gt=0, le=1)
 
@@ -115,7 +115,7 @@ DistributionParameters: TypeAlias = (
 )
 
 
-class SpreaderConfig(InputPluginBaseConfig):
+class SpreaderConfig(InputPluginBaseConfig, frozen=True):
     distribution: Distribution
     parameters: DistributionParameters
 
@@ -139,7 +139,7 @@ class SpreaderConfig(InputPluginBaseConfig):
         )
 
 
-class TimePatternConfig(InputPluginBaseConfig):
+class TimePatternConfig(InputPluginBaseConfig, frozen=True):
     label: str = Field(..., min_length=1)
     oscillator: OscillatorConfig
     multiplier: MultiplierConfig
@@ -147,11 +147,11 @@ class TimePatternConfig(InputPluginBaseConfig):
     spreader: SpreaderConfig
 
 
-class TimePatternsInputConfig(InputPluginBaseConfig):
+class TimePatternsInputConfig(InputPluginBaseConfig, frozen=True):
     patterns: tuple[str] = Field(..., min_length=1)
 
 
-class TimePatternInputPlugin(LiveInputPluginMixin, SampleInputPluginMixin):
+class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     """Input plugin for generating events with specific pattern of
     distribution in time.
     """
@@ -455,7 +455,7 @@ class TimePatternInputPlugin(LiveInputPluginMixin, SampleInputPluginMixin):
                 start += self._period_duration
 
 
-class TimePatternPoolInputPlugin(LiveInputPluginMixin, SampleInputPluginMixin):
+class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
     """Input plugin for combining multiple `TimePatternInputPlugin`
     plugins.
     """

@@ -2,9 +2,8 @@ import time
 from datetime import datetime
 from typing import Any, Callable
 
-from eventum_plugins.input.base import (InputPluginBaseConfig,
-                                        LiveInputPluginMixin,
-                                        SampleInputPluginMixin)
+from eventum_plugins.input.base import (InputPluginBaseConfig, LiveInputPlugin,
+                                        SampleInputPlugin)
 from eventum_plugins.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum_plugins.utils.timeseries import get_future_slice
 from numpy import array, datetime64
@@ -13,11 +12,11 @@ from pydantic import Field
 from pytz.tzinfo import DstTzInfo
 
 
-class TimestampsInputConfig(InputPluginBaseConfig):
+class TimestampsInputConfig(InputPluginBaseConfig, frozen=True):
     source: tuple[datetime] = Field(..., min_length=1)
 
 
-class TimestampsInputPlugin(LiveInputPluginMixin, SampleInputPluginMixin):
+class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
     """Input plugin for generating events in specified timestamps."""
 
     def __init__(self, config: TimestampsInputConfig, tz: DstTzInfo) -> None:

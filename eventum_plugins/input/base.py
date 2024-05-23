@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any, Callable, TypeAlias
 
 from numpy import datetime64
@@ -23,12 +23,12 @@ class PerformanceError(InputPluginRuntimeError):
     """
 
 
-class InputPluginBaseConfig(BaseModel, extra='forbid', frozen=True):
+class InputPluginBaseConfig(ABC, BaseModel, extra='forbid', frozen=True):
     """Base config model for input plugins"""
 
 
-class LiveInputPluginMixin:
-    """Mixin for input plugins that can be used in live mode."""
+class LiveInputPlugin(ABC):
+    """Base class for input plugins that can be used in live mode."""
 
     @abstractmethod
     def live(self, on_event: Callable[[datetime64], Any]) -> None:
@@ -41,8 +41,8 @@ class LiveInputPluginMixin:
         ...
 
 
-class SampleInputPluginMixin:
-    """Mixin for input plugin that can be used in sample mode."""
+class SampleInputPlugin(ABC):
+    """Base class for input plugin that can be used in sample mode."""
 
     @abstractmethod
     def sample(self, on_event: Callable[[datetime64], Any]) -> None:
@@ -57,4 +57,4 @@ class SampleInputPluginMixin:
         ...
 
 
-InputPlugin: TypeAlias = (LiveInputPluginMixin | SampleInputPluginMixin)
+InputPlugin: TypeAlias = (LiveInputPlugin | SampleInputPlugin)
