@@ -390,13 +390,13 @@ pytz = ">2021.1"
 
 [[package]]
 name = "eventum-content-manager"
-version = "1.0.4"
+version = "1.0.5"
 description = "Content manager for Eventum"
 optional = false
 python-versions = "<4.0,>=3.11"
 files = [
-    {file = "eventum_content_manager-1.0.4-py3-none-any.whl", hash = "sha256:a77e034c587846e112df4d884c9f7787b68324d6eaf15528994f2edb2cbf69c3"},
-    {file = "eventum_content_manager-1.0.4.tar.gz", hash = "sha256:1d06ea95744f7dca4beea046c207108651ffc2a6d2bb48a0d848a7d4ebceb814"},
+    {file = "eventum_content_manager-1.0.5-py3-none-any.whl", hash = "sha256:8aa22989c345570e825fe015165a6254e1abd0674a21f5585124c97631b9f7bf"},
+    {file = "eventum_content_manager-1.0.5.tar.gz", hash = "sha256:1d0d4ada968d2c3ac2eb98ed1a95e4b187ffd3012ffd31d2e7514973ab19634f"},
 ]
 
 [package.dependencies]
