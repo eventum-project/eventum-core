@@ -6,7 +6,7 @@ from eventum_plugins.output.base import (BaseOutputPlugin,
                                          OutputFormat, OutputPluginBaseConfig)
 
 
-class StdOutOutputConfig(OutputPluginBaseConfig):
+class StdOutOutputConfig(OutputPluginBaseConfig, frozen=True):
     format: OutputFormat = OutputFormat.ORIGINAL
 
 
@@ -16,7 +16,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
     def __init__(self, config: StdOutOutputConfig) -> None:
         super().__init__(format=config.format)
 
-        self._writer = None
+        self._writer: asyncio.StreamWriter
 
     async def _open(self) -> None:
         loop = asyncio.get_event_loop()
@@ -24,7 +24,7 @@ class StdoutOutputPlugin(BaseOutputPlugin):
             protocol_factory=asyncio.streams.FlowControlMixin,
             pipe=sys.stdout
         )
-        self._writer = asyncio.StreamWriter(        # type: ignore
+        self._writer = asyncio.StreamWriter(
             transport=w_transport,
             protocol=w_protocol,
             reader=None,
@@ -32,23 +32,19 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         )
 
     async def _close(self) -> None:
-        if self._writer is None:
-            return
-
         self._writer.close()
-        self._writer = None
 
     async def _write(self, event: str) -> int:
-        self._writer.write(event.encode())          # type: ignore
-        await self._writer.drain()                  # type: ignore
+        self._writer.write(event.encode())
+        await self._writer.drain()
 
         return 1
 
-    async def _write_many(self, encoded_events: Iterable[str]) -> int:
-        encoded_events = [event.encode() for event in encoded_events]
+    async def _write_many(self, events: Iterable[str]) -> int:
+        encoded_events = [event.encode() for event in events]
 
-        self._writer.writelines(encoded_events)     # type: ignore
-        await self._writer.drain()                  # type: ignore
+        self._writer.writelines(encoded_events)
+        await self._writer.drain()
 
         return len(encoded_events)
 

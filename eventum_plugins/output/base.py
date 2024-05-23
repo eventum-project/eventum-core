@@ -43,13 +43,15 @@ class BaseOutputPlugin(ABC):
 
     async def open(self) -> None:
         """Open target for async writing."""
-        await self._open()
-        self._is_opened = True
+        if not self._is_opened:
+            await self._open()
+            self._is_opened = True
 
     async def close(self) -> None:
         """Close target and release acquired resources."""
-        await self._close()
-        self._is_opened = False
+        if self._is_opened:
+            await self._close()
+            self._is_opened = False
 
     async def write(self, event: str) -> int:
         """Write single event to output stream. `1` is returned if
