@@ -1,9 +1,10 @@
 import asyncio
+import os
 import sys
 from typing import Iterable
 
-from eventum_plugins.output.base import (BaseOutputPlugin,
-                                         OutputFormat, OutputPluginBaseConfig)
+from eventum_plugins.output.base import (BaseOutputPlugin, OutputFormat,
+                                         OutputPluginBaseConfig)
 
 
 class StdOutOutputConfig(OutputPluginBaseConfig, frozen=True):
@@ -35,13 +36,13 @@ class StdoutOutputPlugin(BaseOutputPlugin):
         self._writer.close()
 
     async def _write(self, event: str) -> int:
-        self._writer.write(event.encode())
+        self._writer.write(f'{event}{os.linesep}'.encode())
         await self._writer.drain()
 
         return 1
 
     async def _write_many(self, events: Iterable[str]) -> int:
-        encoded_events = [event.encode() for event in events]
+        encoded_events = [f'{event}{os.linesep}'.encode() for event in events]
 
         self._writer.writelines(encoded_events)
         await self._writer.drain()
