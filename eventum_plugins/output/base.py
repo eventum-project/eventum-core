@@ -37,7 +37,7 @@ class OutputFormat(StrEnum):
 
 class BaseOutputPlugin(ABC):
     """Base class for all output plugins."""
-    def __init__(self, format: OutputFormat) -> None:
+    def __init__(self, format: OutputFormat | None = None) -> None:
         self._format = format
         self._is_opened = False
 
@@ -110,6 +110,9 @@ class BaseOutputPlugin(ABC):
 
     def _format_event(self, event: str) -> str:
         """Format `event` to configured `format`"""
+        if self._format is None:
+            return event
+
         try:
             match self._format:
                 case OutputFormat.ORIGINAL:
@@ -119,7 +122,7 @@ class BaseOutputPlugin(ABC):
                 case val:
                     assert_never(val)
         except Exception as e:
-            logger.warning(
+            logger.error(
                 f'Failed to format event to "{self._format}" format: {e}'
                 f'{os.linesep}'
                 'Original unformatted event: '
