@@ -44,7 +44,7 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
             wait_seconds = timedelta_to_seconds(timestamp - now)
 
             if wait_seconds > 0:
-                time.sleep(wait_seconds)    # type: ignore
+                time.sleep(wait_seconds)    # type: ignore[arg-type]
                 now = get_now(tz=self._tz)
 
             on_event(timestamp)

@@ -41,7 +41,7 @@ def parse_relative_time(expression: str) -> timedelta:
         case '-':
             sign = -1
         case char:
-            assert_never(char)  # type: ignore
+            raise ValueError(f'Unexpected sign "{char}"')
 
     return timedelta(
         **{

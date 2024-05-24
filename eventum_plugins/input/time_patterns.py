@@ -116,22 +116,23 @@ DistributionParameters: TypeAlias = (
 
 
 class SpreaderConfig(InputPluginBaseConfig, frozen=True):
+    _DISTRIBUTION_PARAMETERS_MAP = {
+        Distribution.UNIFORM: UniformDistributionParameters,
+        Distribution.TRIANGULAR: TriangularDistributionParameters,
+        Distribution.BETA: BetaDistributionParameters
+    }
+
     distribution: Distribution
     parameters: DistributionParameters
 
     @model_validator(mode='after')
     def validate_parameters_model(self):
-        match self.distribution:
-            case Distribution.UNIFORM:
-                expected_params_model = UniformDistributionParameters
-            case Distribution.TRIANGULAR:
-                expected_params_model = TriangularDistributionParameters
-            case Distribution.BETA:
-                expected_params_model = BetaDistributionParameters
-            case distribution:
-                assert_never(distribution)
+        if self.distribution not in self._DISTRIBUTION_PARAMETERS_MAP:
+            raise NotImplementedError
 
-        if isinstance(self.parameters, expected_params_model):
+        expected_model = self._DISTRIBUTION_PARAMETERS_MAP[self.distribution]
+
+        if isinstance(self.parameters, expected_model):
             return self
 
         raise ValueError(
@@ -226,19 +227,20 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         period where each point is expressed as time from the beginning
         of the period.
         """
+        params = self._config.spreader.parameters
         match self._config.spreader.distribution:
             case Distribution.UNIFORM:
-                low = self._config.spreader.parameters.low      # type: ignore
-                high = self._config.spreader.parameters.high    # type: ignore
+                low = params.low        # type: ignore[union-attr]
+                high = params.high      # type: ignore[union-attr]
                 array = np.sort(np.random.uniform(low, high, size))
             case Distribution.TRIANGULAR:
-                left = self._config.spreader.parameters.left    # type: ignore
-                mode = self._config.spreader.parameters.mode    # type: ignore
-                right = self._config.spreader.parameters.right  # type: ignore
+                left = params.left      # type: ignore[union-attr]
+                mode = params.mode      # type: ignore[union-attr]
+                right = params.right    # type: ignore[union-attr]
                 array = np.sort(np.random.triangular(left, mode, right, size))
             case Distribution.BETA:
-                a = self._config.spreader.parameters.a          # type: ignore
-                b = self._config.spreader.parameters.b          # type: ignore
+                a = params.a            # type: ignore[union-attr]
+                b = params.b            # type: ignore[union-attr]
                 array = np.sort(np.random.beta(a, b, size))
             case val:
                 assert_never(val)
