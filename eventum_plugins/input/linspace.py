@@ -1,10 +1,11 @@
 from datetime import datetime
 from typing import Any, Callable
 
-from eventum_plugins.input.base import InputPluginBaseConfig, SampleInputPlugin
 from numpy import datetime64, linspace, timedelta64
 from pydantic import Field, model_validator
 from pytz.tzinfo import DstTzInfo
+
+from eventum_plugins.input.base import InputPluginBaseConfig, SampleInputPlugin
 
 
 class LinspaceInputConfig(InputPluginBaseConfig, frozen=True):

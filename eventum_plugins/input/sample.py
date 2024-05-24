@@ -1,12 +1,13 @@
 from typing import Any, Callable
 
+from numpy import datetime64
+from pydantic import Field
+from pytz.tzinfo import DstTzInfo
+
 from eventum_plugins.input.base import InputPluginBaseConfig
 from eventum_plugins.input.base import \
     SampleInputPlugin as BaseSampleInputPlugin
 from eventum_plugins.utils.numpy_time import get_now
-from numpy import datetime64
-from pydantic import Field
-from pytz.tzinfo import DstTzInfo
 
 
 class SampleInputConfig(InputPluginBaseConfig, frozen=True):

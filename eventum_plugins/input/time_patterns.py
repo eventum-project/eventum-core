@@ -10,6 +10,10 @@ from typing import Annotated, Any, Callable, TypeAlias, assert_never
 import numpy as np
 from eventum_content_manager.manage import (ContentManagementError,
                                             load_time_pattern)
+from numpy.typing import NDArray
+from pydantic import AfterValidator, Field, model_validator
+from pytz.tzinfo import DstTzInfo
+
 from eventum_plugins.input.base import (InputPluginBaseConfig,
                                         InputPluginConfigurationError,
                                         InputPluginRuntimeError,
@@ -18,9 +22,6 @@ from eventum_plugins.input.base import (InputPluginBaseConfig,
 from eventum_plugins.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum_plugins.utils.relative_time import parse_relative_time
 from eventum_plugins.utils.timeseries import get_future_slice
-from numpy.typing import NDArray
-from pydantic import AfterValidator, Field, model_validator
-from pytz.tzinfo import DstTzInfo
 
 
 class TimeUnit(StrEnum):

@@ -1,6 +1,5 @@
 import re
 from datetime import timedelta
-from typing import assert_never
 
 
 def parse_relative_time(expression: str) -> timedelta:
