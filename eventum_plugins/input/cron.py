@@ -14,7 +14,7 @@ class CronInputConfig(InputPluginBaseConfig, frozen=True):
     count: int = Field(..., gt=0)
 
     @field_validator('expression')
-    def validate_expression(cls, v: Any):
+    def validate_expression(cls, v: str):
         if croniter.is_valid(v):
             return v
         raise ValueError('Invalid cron expression')

@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Iterable
+from typing import Iterable
 
 import aiofiles
 from aiofiles.threadpool.text import AsyncTextIOWrapper
@@ -14,13 +14,13 @@ from eventum_plugins.output.base import (BaseOutputPlugin, OutputFormat,
 logger = logging.getLogger(__name__)
 
 
-class FileOutputConfig(OutputPluginBaseConfig):
+class FileOutputConfig(OutputPluginBaseConfig, frozen=True):
     path: str
     format: OutputFormat = OutputFormat.ORIGINAL
     flush: bool = False
 
     @field_validator('path')
-    def validate_path(cls, v: Any):
+    def validate_path(cls, v: str):
         if os.path.isabs(v):
             return v
         raise ValueError('Path must be absolute')
