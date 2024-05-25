@@ -32,14 +32,14 @@ class CronInputPlugin(LiveInputPlugin):
         self._tz = tz
 
     def live(self, on_event: Callable[[datetime64], Any]) -> None:
-        self._cron = croniter(
+        cron = croniter(
             expr_format=self._expression,
             start_time=datetime.now(tz=self._tz),
             ret_type=datetime
         )
 
         while True:
-            timestamp: datetime = self._cron.get_next()
+            timestamp: datetime = cron.get_next()
             now = datetime.now(tz=self._tz)
             wait_seconds = (timestamp - now).total_seconds()
 

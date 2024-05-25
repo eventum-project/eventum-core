@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, TypeAlias
+from typing import Any, Callable
 
 from numpy import datetime64
 from pydantic import BaseModel
+from pytz.tzinfo import DstTzInfo
 
 
 class InputPluginError(Exception):
@@ -27,7 +28,15 @@ class InputPluginBaseConfig(ABC, BaseModel, extra='forbid', frozen=True):
     """Base config model for input plugins"""
 
 
-class LiveInputPlugin(ABC):
+class BaseInputPlugin(ABC):
+    """Base class for all input plugins."""
+
+    @abstractmethod
+    def __init__(self, config: Any, tz: DstTzInfo) -> None:
+        ...
+
+
+class LiveInputPlugin(BaseInputPlugin):
     """Base class for input plugins that can be used in live mode."""
 
     @abstractmethod
@@ -41,7 +50,7 @@ class LiveInputPlugin(ABC):
         ...
 
 
-class SampleInputPlugin(ABC):
+class SampleInputPlugin(BaseInputPlugin):
     """Base class for input plugin that can be used in sample mode."""
 
     @abstractmethod
@@ -55,6 +64,3 @@ class SampleInputPlugin(ABC):
         timestamps.
         """
         ...
-
-
-InputPlugin: TypeAlias = (LiveInputPlugin | SampleInputPlugin)
