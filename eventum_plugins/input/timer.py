@@ -28,14 +28,14 @@ class TimerInputPlugin(LiveInputPlugin):
 
     def live(self, on_event: Callable[[datetime64], Any]) -> None:
         while True:
-            if not self._repeat:
-                break
-
             time.sleep(self._seconds)
 
             timestamp = get_now(tz=self._tz)
             for _ in range(self._count):
                 on_event(timestamp)
+
+            if not self._repeat:
+                break
 
 
 PLUGIN_CLASS = TimerInputPlugin
