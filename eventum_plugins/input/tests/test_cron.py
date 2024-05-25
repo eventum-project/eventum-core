@@ -1,9 +1,11 @@
 from datetime import datetime
+
+import pytest
 from freezegun import freeze_time
 from numpy import datetime64
 from pydantic import ValidationError
-import pytest
 from pytz import timezone
+
 from eventum_plugins.input.cron import CronInputConfig, CronInputPlugin
 
 
