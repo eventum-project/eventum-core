@@ -10,7 +10,7 @@ from eventum_plugins.utils.numpy_time import get_now
 
 
 class TimerInputConfig(InputPluginBaseConfig, frozen=True):
-    seconds: int = Field(..., ge=1)
+    seconds: float = Field(..., ge=0.1)
     count: int = Field(..., ge=1)
     repeat: bool
 
