@@ -49,7 +49,26 @@ def get_plugins_to_config_mapping(
     return mapping
 
 
-InputConfigMapping = create_model(      # type: ignore[call-overload]
+def load_plugin_class(
+    plugin_type: Literal['input', 'output'],
+    plugin_name: str
+) -> BaseModel:
+    """Get plugin class. Raise `ValueError` if plugin with specified
+    name is not found."""
+    try:
+        module = importlib.import_module(
+            name=f'eventum_plugins.{plugin_type}.{plugin_name}'
+        )
+        return module.PLUGIN_CLASS
+    except (ModuleNotFoundError, AttributeError):
+        raise ValueError(
+            f'{plugin_type.capitalize()} plugin "{plugin_name}" is not found'
+        )
+
+
+InputConfigMapping: type[
+    MutexFieldsModel
+] = create_model(               # type: ignore[call-overload]
     'InputConfigMapping',
     __base__=MutexFieldsModel,
     __cls_kwargs__={'frozen': True},
@@ -61,7 +80,9 @@ InputConfigMapping = create_model(      # type: ignore[call-overload]
     }
 )
 
-OutputConfigMapping = create_model(     # type: ignore[call-overload]
+OutputConfigMapping: type[
+    MutexFieldsModel
+] = create_model(               # type: ignore[call-overload]
     'OutputConfigMapping',
     __base__=MutexFieldsModel,
     __cls_kwargs__={'frozen': True},
