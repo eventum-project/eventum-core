@@ -1,0 +1,8 @@
+label: Invalid time pattern
+multiplier:
+  ratio: 100
+oscillator:
+  end: +1s
+  period: 1
+  start: now
+  unit: seconds

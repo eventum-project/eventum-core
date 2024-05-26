@@ -11,7 +11,7 @@ import numpy as np
 from eventum_content_manager.manage import (ContentManagementError,
                                             load_time_pattern)
 from numpy.typing import NDArray
-from pydantic import AfterValidator, Field, model_validator
+from pydantic import AfterValidator, Field, ValidationError, model_validator
 from pytz.tzinfo import DstTzInfo
 
 from eventum_plugins.input.base import (InputPluginBaseConfig,
@@ -469,15 +469,22 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
 
         for config_path in config.configs:
             try:
-                time_pattern_config = load_time_pattern(path=config_path)
+                time_pattern_obj = load_time_pattern(path=config_path)
+                time_pattern = TimePatternConfig.model_validate(
+                    obj=time_pattern_obj
+                )
             except ContentManagementError as e:
                 raise InputPluginConfigurationError(
                     f'Failed to load time pattern "{config_path}": {e}'
                 )
+            except ValidationError as e:
+                raise InputPluginConfigurationError(
+                    f'Bad config structure for "{config_path}": {e}'
+                )
 
             time_patterns.append(
                 TimePatternInputPlugin(
-                    config=time_pattern_config,
+                    config=time_pattern,
                     tz=self._tz
                 )
             )

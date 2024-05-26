@@ -1,0 +1,16 @@
+label: Valid time pattern
+multiplier:
+  ratio: 1000
+oscillator:
+  end: +1s
+  period: 1
+  start: now
+  unit: seconds
+randomizer:
+  deviation: 0.0
+  direction: Mixed
+spreader:
+  distribution: Beta
+  parameters:
+    a: 5
+    b: 5
