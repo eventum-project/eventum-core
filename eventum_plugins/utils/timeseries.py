@@ -18,7 +18,7 @@ def get_future_slice(
     left = 0
     right = length - 1
 
-    while (right - left) >= 1:
+    while left <= right:
         middle = (left + right) // 2
         if timestamps[middle] <= after:
             left = middle + 1
