@@ -1,9 +1,10 @@
 import importlib
 from abc import ABC
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 from eventum_plugins.utils.modules import get_module_names
 from pydantic import BaseModel, Field, create_model, model_validator
+from pytz.tzinfo import DstTzInfo
 
 
 class MutexFieldsModel(ABC, BaseModel, extra='forbid', frozen=True):
@@ -49,10 +50,20 @@ def get_plugins_to_config_mapping(
     return mapping
 
 
+class PluggableAsInput(Protocol):
+    def __init__(self, config: Any, tz: DstTzInfo) -> None:
+        pass
+
+
+class PluggableAsOutput(Protocol):
+    def __init__(self, config: Any) -> None:
+        pass
+
+
 def load_plugin_class(
     plugin_type: Literal['input', 'output'],
     plugin_name: str
-) -> BaseModel:
+) -> type[PluggableAsInput] | type[PluggableAsOutput]:
     """Get plugin class. Raise `ValueError` if plugin with specified
     name is not found."""
     try:
