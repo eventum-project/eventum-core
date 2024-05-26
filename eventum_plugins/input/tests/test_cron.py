@@ -48,7 +48,7 @@ def test_cron_live():
         events.append(event)
         raise InterruptedError
 
-    with freeze_time('2024-01-01T00:00:59.900Z', tz_offset=0, tick=True):
+    with freeze_time('2024-01-01T00:00:59.500Z', tz_offset=0, tick=True):
         try:
             plugin.live(on_event=on_event)
         except InterruptedError:
