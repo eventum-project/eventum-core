@@ -150,7 +150,7 @@ class TimePatternConfig(InputPluginBaseConfig, frozen=True):
 
 
 class TimePatternsInputConfig(InputPluginBaseConfig, frozen=True):
-    patterns: tuple[str] = Field(..., min_length=1)
+    patterns: tuple[str, ...] = Field(..., min_length=1)
 
 
 class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):

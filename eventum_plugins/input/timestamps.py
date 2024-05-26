@@ -14,7 +14,7 @@ from eventum_plugins.utils.timeseries import get_future_slice
 
 
 class TimestampsInputConfig(InputPluginBaseConfig, frozen=True):
-    source: tuple[datetime] = Field(..., min_length=1)
+    source: tuple[datetime, ...] = Field(..., min_length=1)
 
 
 class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):

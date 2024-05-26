@@ -44,7 +44,7 @@ class CSVSampleConfig(EventPluginBaseConfig, frozen=True):
 
 class ItemsSampleConfig(EventPluginBaseConfig, frozen=True):
     type: SampleType
-    source: tuple[str] = Field(..., min_length=1)
+    source: tuple[str, ...] = Field(..., min_length=1)
 
     @field_validator('type')
     def validate_type(cls, v: Any):

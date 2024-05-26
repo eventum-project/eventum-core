@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class OpensearchOutputConfig(OutputPluginBaseConfig, frozen=True):
-    hosts: tuple[str] = Field(..., min_length=1)
+    hosts: tuple[str, ...] = Field(..., min_length=1)
     user: str = Field(..., min_length=1)
     password: str = Field(..., min_length=1)
     index: str = Field(..., min_length=1)
