@@ -57,11 +57,12 @@ class FileOutputPlugin(BaseOutputPlugin):
         )
 
     async def _close(self) -> None:
+        await self._file.flush()
         await self._file.close()
 
     async def _write(self, event: str) -> int:
         try:
-            await self._file.write(event)
+            await self._file.write(event + os.linesep)
         except OSError as e:
             raise OutputPluginRuntimeError(
                 f'Failed to write event to file: {e}'
@@ -74,7 +75,7 @@ class FileOutputPlugin(BaseOutputPlugin):
 
     async def _write_many(self, events: Iterable[str]) -> int:
         try:
-            await self._file.writelines(events)
+            await self._file.writelines(map(lambda e: e + os.linesep, events))
         except OSError as e:
             raise OutputPluginRuntimeError(
                 f'Failed to write events to file: {e}'
