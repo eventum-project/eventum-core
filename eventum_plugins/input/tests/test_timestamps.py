@@ -29,21 +29,20 @@ def test_timestamps_live():
     config = TimestampsInputConfig(
         source=(
             datetime.fromisoformat('2024-01-01T00:00:00.000Z'),
-            datetime.fromisoformat('2024-01-01T00:00:00.050Z'),
-            datetime.fromisoformat('2024-01-01T00:00:00.100Z'),
+            datetime.fromisoformat('2024-01-01T00:00:00.500Z'),
+            datetime.fromisoformat('2024-01-01T00:00:01.000Z'),
         )
     )
     plugin = TimestampsInputPlugin(config=config, tz=timezone('UTC'))
 
     events = []
 
-    with freeze_time('2024-01-01T00:00:00.000Z', tz_offset=0, tick=True):
+    with freeze_time('2024-01-01T00:00:00.300Z', tz_offset=0, tick=True):
         plugin.live(on_event=events.append)
 
     assert events == [
-        datetime64(datetime.fromisoformat('2024-01-01T00:00:00.000')),
-        datetime64(datetime.fromisoformat('2024-01-01T00:00:00.050')),
-        datetime64(datetime.fromisoformat('2024-01-01T00:00:00.100')),
+        datetime64(datetime.fromisoformat('2024-01-01T00:00:00.500')),
+        datetime64(datetime.fromisoformat('2024-01-01T00:00:01.000')),
     ]
 
 
