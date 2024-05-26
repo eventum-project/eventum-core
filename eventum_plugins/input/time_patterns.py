@@ -150,7 +150,7 @@ class TimePatternConfig(InputPluginBaseConfig, frozen=True):
 
 
 class TimePatternsInputConfig(InputPluginBaseConfig, frozen=True):
-    patterns: tuple[str, ...] = Field(..., min_length=1)
+    configs: tuple[str, ...] = Field(..., min_length=1)
 
 
 class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
@@ -467,12 +467,12 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
         self._tz = tz
         time_patterns: list[TimePatternInputPlugin] = []
 
-        for tp_path in config.patterns:
+        for config_path in config.configs:
             try:
-                time_pattern_config = load_time_pattern(path=tp_path)
+                time_pattern_config = load_time_pattern(path=config_path)
             except ContentManagementError as e:
                 raise InputPluginConfigurationError(
-                    f'Failed to load time pattern "{tp_path}": {e}'
+                    f'Failed to load time pattern "{config_path}": {e}'
                 )
 
             time_patterns.append(
