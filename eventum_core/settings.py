@@ -1,11 +1,17 @@
-from pydantic import BaseModel, Field
-from pytz import timezone
-from pytz.tzinfo import DstTzInfo
+from enum import StrEnum
+from typing import Any
+from pydantic import BaseModel, Field, field_validator
+from pytz import all_timezones_set
+
+
+class TimeMode(StrEnum):
+    SAMPLE = 'sample'
+    LIVE = 'live'
 
 
 class Settings(BaseModel, extra='forbid', frozen=True):
     # Time zone used in input plugins to generate timestamps.
-    timezone: DstTzInfo = timezone('UTC')
+    timezone: str = 'UTC'
 
     # The name of variable in template with original event timestamp.
     timestamp_field_name: str = Field('timestamp', min_length=1)
@@ -21,6 +27,13 @@ class Settings(BaseModel, extra='forbid', frozen=True):
 
     # Service name for keyring credentials storage
     keyring_service_name: str = Field('eventum', min_length=1)
+
+    @field_validator('timezone')
+    def validate_timezone(cls, v: Any):
+        if v in all_timezones_set:
+            return v
+
+        raise ValueError(f'Unknown time zone "{v}"')
 
 
 DEFAULT_SETTINGS = Settings()

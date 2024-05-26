@@ -1,6 +1,5 @@
 import logging
 import signal
-from enum import StrEnum
 from multiprocessing import Event, Process, Queue, Value
 from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
@@ -14,20 +13,15 @@ from pydantic import BaseModel
 from setproctitle import getproctitle, setproctitle
 
 import eventum_core.logging_config
-import eventum_core.settings as settings
 from eventum_core.plugins_connector import (InputConfigMapping,
                                             OutputConfigMapping)
+from eventum_core.settings import DEFAULT_SETTINGS, Settings, TimeMode
 from eventum_core.subprocesses import (start_event_subprocess,
                                        start_input_subprocess,
                                        start_output_subprocess)
 
 eventum_core.logging_config.apply()
 logger = logging.getLogger(__name__)
-
-
-class TimeMode(StrEnum):
-    SAMPLE = 'sample'
-    LIVE = 'live'
 
 
 class ApplicationConfig(BaseModel, extra='forbid', frozen=True):
@@ -45,7 +39,7 @@ class Application:
         self,
         config: ApplicationConfig,
         time_mode: TimeMode,
-        settings: settings.Settings = settings.DEFAULT_SETTINGS,
+        settings: Settings = DEFAULT_SETTINGS,
     ) -> None:
         self._config = config
         self._time_mode = time_mode

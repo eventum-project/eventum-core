@@ -17,15 +17,15 @@ from eventum_plugins.output.base import (BaseOutputPlugin,
                                          OutputPluginConfigurationError,
                                          OutputPluginRuntimeError)
 from numpy.typing import NDArray
+from pytz import timezone
 from setproctitle import getproctitle, setproctitle
 
 import eventum_core.logging_config
-from eventum_core.app import TimeMode
 from eventum_core.batcher import Batcher
 from eventum_core.plugins_connector import (InputConfigMapping,
                                             OutputConfigMapping,
                                             load_plugin_class)
-from eventum_core.settings import Settings
+from eventum_core.settings import Settings, TimeMode
 
 eventum_core.logging_config.apply()
 logger = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ def start_input_subprocess(
         )
         input_plugin: LiveInputPlugin | SampleInputPlugin = plugin_class(
             config=input_conf,
-            tz=settings.timezone
+            tz=timezone(settings.timezone)
         )
     except ValueError as e:
         logger.error(f'Failed to load input plugin: {e}')
