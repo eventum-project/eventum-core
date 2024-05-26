@@ -35,19 +35,15 @@ class StdoutOutputPlugin(BaseOutputPlugin):
     async def _close(self) -> None:
         self._writer.close()
 
-    async def _write(self, event: str) -> int:
+    async def _write(self, event: str) -> None:
         self._writer.write(f'{event}{os.linesep}'.encode())
         await self._writer.drain()
 
-        return 1
-
-    async def _write_many(self, events: Iterable[str]) -> int:
+    async def _write_many(self, events: Iterable[str]) -> None:
         encoded_events = [f'{event}{os.linesep}'.encode() for event in events]
 
         self._writer.writelines(encoded_events)
         await self._writer.drain()
-
-        return len(encoded_events)
 
 
 PLUGIN_CLASS = StdoutOutputPlugin

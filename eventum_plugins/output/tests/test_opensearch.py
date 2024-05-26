@@ -4,6 +4,7 @@ import re
 import pytest
 from aioresponses import aioresponses
 
+from eventum_plugins.output.base import OutputPluginRuntimeError
 from eventum_plugins.output.opensearch import (OpensearchOutputConfig,
                                                OpensearchOutputPlugin)
 
@@ -75,12 +76,11 @@ async def test_opensearch_write(config, write_response):
             status=201,
             body=write_response
         )
-        written = await plugin.write(
+        await plugin.write(
             '{"@timestamp": "2024-01-01T00:00:00.000Z", "value": 1}'
         )
         await plugin.close()
 
-        assert written == 1
         m.assert_called()
 
         (method, url), requests = m.requests.popitem()
@@ -102,7 +102,7 @@ async def test_opensearch_write_many(config, write_many_response):
             status=200,
             body=write_many_response
         )
-        written = await plugin.write_many(
+        await plugin.write_many(
             [
                 '{"@timestamp": "2024-01-01T00:00:00.000Z", "value": 1}',
                 '{"@timestamp": "2024-01-01T00:00:01.000Z", "value": 2}'
@@ -110,7 +110,6 @@ async def test_opensearch_write_many(config, write_many_response):
         )
         await plugin.close()
 
-        assert written == 2
         m.assert_called()
 
         (method, url), requests = m.requests.popitem()
@@ -122,3 +121,25 @@ async def test_opensearch_write_many(config, write_many_response):
             '{"index": {"_index": "test_index"}}\n'
             '{"@timestamp": "2024-01-01T00:00:01.000Z", "value": 2}\n'
         )
+
+
+@pytest.mark.asyncio
+async def test_opensearch_invalid_data(config, write_response):
+    plugin = OpensearchOutputPlugin(config=config)
+    await plugin.open()
+
+    with aioresponses() as m:
+        m.post(
+            url=re.compile(r'https://localhost:9200/.*'),
+            status=201,
+            body=write_response
+        )
+
+        with pytest.raises(OutputPluginRuntimeError):
+            await plugin.write(
+                '{"@timestamp": "2024-01-01T00:00:00.000Z", "val CORRUPTED...'
+            )
+
+        await plugin.close()
+
+        m.assert_not_called()

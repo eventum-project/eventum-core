@@ -60,7 +60,7 @@ class FileOutputPlugin(BaseOutputPlugin):
         await self._file.flush()
         await self._file.close()
 
-    async def _write(self, event: str) -> int:
+    async def _write(self, event: str) -> None:
         try:
             await self._file.write(event + os.linesep)
         except OSError as e:
@@ -71,9 +71,7 @@ class FileOutputPlugin(BaseOutputPlugin):
         if self._flush:
             await self._file.flush()
 
-        return 1
-
-    async def _write_many(self, events: Iterable[str]) -> int:
+    async def _write_many(self, events: Iterable[str]) -> None:
         try:
             await self._file.writelines(map(lambda e: e + os.linesep, events))
         except OSError as e:
@@ -83,8 +81,6 @@ class FileOutputPlugin(BaseOutputPlugin):
 
         if self._flush:
             await self._file.flush()
-
-        return len(list(events))
 
 
 PLUGIN_CLASS = FileOutputPlugin

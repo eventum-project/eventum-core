@@ -42,7 +42,8 @@ class BaseOutputPlugin(ABC):
         self._is_opened = False
 
     async def __aenter__(self) -> Self:
-        self.open()
+        await self.open()
+        return self
 
     async def __aexit__(
         self,
@@ -50,7 +51,7 @@ class BaseOutputPlugin(ABC):
         exc: BaseException | None,
         tb: Any
     ) -> None:
-        self.close()
+        await self.close()
 
     async def open(self) -> None:
         """Open target for async writing."""
@@ -64,26 +65,17 @@ class BaseOutputPlugin(ABC):
             await self._close()
             self._is_opened = False
 
-    async def write(self, event: str) -> int:
-        """Write single event to output stream. `1` is returned if
-        event is successfully written else `0`.
-        """
+    async def write(self, event: str) -> None:
+        """Write single event to output stream."""
         if not self._is_opened:
             raise OutputPluginRuntimeError(
                 'Output plugin is not opened for writing to target'
             )
 
-        try:
-            fmt_event = self._format_event(event=event)
-        except FormatError:
-            return 0
+        await self._write(self._format_event(event=event))
 
-        return await self._write(fmt_event)
-
-    async def write_many(self, events: Iterable[str]) -> int:
-        """Write many events to output stream. Number of successfully
-        written events is returned.
-        """
+    async def write_many(self, events: Iterable[str]) -> None:
+        """Write many events to output stream."""
         if not self._is_opened:
             raise OutputPluginRuntimeError(
                 'Output plugin is not opened for writing to target'
@@ -91,15 +83,9 @@ class BaseOutputPlugin(ABC):
 
         fmt_events = []
         for event in events:
-            try:
-                fmt_events.append(self._format_event(event=event))
-            except FormatError:
-                continue
+            fmt_events.append(self._format_event(event=event))
 
-        if len(fmt_events) == 0:
-            return 0
-
-        return await self._write_many(events)
+        await self._write_many(events)
 
     async def _open(self) -> None:
         """Perform open operation."""
@@ -110,12 +96,12 @@ class BaseOutputPlugin(ABC):
         ...
 
     @abstractmethod
-    async def _write(self, event: str) -> int:
+    async def _write(self, event: str) -> None:
         """Perform write operation."""
         ...
 
     @abstractmethod
-    async def _write_many(self, events: Iterable[str]) -> int:
+    async def _write_many(self, events: Iterable[str]) -> None:
         """Perform bulk write operation."""
         ...
 

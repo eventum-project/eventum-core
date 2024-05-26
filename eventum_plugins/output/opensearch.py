@@ -75,7 +75,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
     async def _close(self) -> None:
         await self._session.close()
 
-    async def _write(self, event: str) -> int:
+    async def _write(self, event: str) -> None:
         host = random.choice(self._hosts)
         url = f'{host}/{self._index}/_doc/'
 
@@ -96,8 +96,6 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
                 f'HTTP {response.status} - {text}'
             )
 
-        return 1
-
     async def _perform_bulk(self, host: str, bulk_data: str) -> None:
         """Index bulk data to specified host."""
         try:
@@ -117,17 +115,15 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
                 f'HTTP {response.status} - {text}'
             )
 
-    async def _write_many(self, events: Iterable[str]) -> int:
+    async def _write_many(self, events: Iterable[str]) -> None:
         bulks_count = len(self._hosts)
         bulks = [""] * bulks_count
-        bulk_sizes = [0] * bulks_count
 
         for i, event in enumerate(events):
             bulk_item = json.dumps({"index": {"_index": self._index}}) + '\n'
             bulk_item += event + '\n'
 
             bulks[i % bulks_count] += bulk_item
-            bulk_sizes[i % bulks_count] += 1
 
         results = await asyncio.gather(
             *[
@@ -137,19 +133,18 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
             return_exceptions=True
         )
 
-        total_indexed = 0
-        for result, size in zip(results, bulk_sizes):
+        successful_count = 0
+        for result in results:
             if isinstance(result, OutputPluginRuntimeError):
                 logger.error(str(result))
             else:
-                total_indexed += size
+                successful_count += 1
 
-        if total_indexed == 0:
+        if successful_count < len(results):
             raise OutputPluginRuntimeError(
-                'All hosts failed to index events during bulk request'
+                'Bulk indexing did not complete with success: only'
+                f'{successful_count}/{len(results)} nodes indexed events'
             )
-
-        return total_indexed
 
 
 PLUGIN_CLASS = OpensearchOutputPlugin
