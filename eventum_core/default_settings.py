@@ -1,32 +1,15 @@
-from datetime import UTC
+from pytz import timezone
 
 # ========== Input parameters ==========
 
-# Precision (in seconds) of publishing events in time.
-# This parameter does not affect the timestamps value but affect how
-# often they are published by input plugin.
-# Parameter is only actual in live mode for timestamps and patterns
-# input plugins.
-TIME_PRECISION = 0.1
-
 # Time zone used in input plugins to generate timestamps.
-TIMEZONE = UTC
+TIMEZONE = timezone('UTC')
 
 
 # ========== Event parameters ==========
 
 # The name of variable in template with original event timestamp.
 TIMESTAMP_FIELD_NAME = 'timestamp'
-
-# Extensions that will be loaded to Jinja Environment
-JINJA_EXTENSIONS = [
-    'jinja2.ext.do'
-]
-
-# Modules that will be loaded to Jinja Environment
-JINJA_MODULES = [
-    'rand'
-]
 
 
 # ========== Queues batching parameters ==========
