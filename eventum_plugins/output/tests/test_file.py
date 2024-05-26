@@ -1,15 +1,16 @@
 import os
-
-import pytest
-from eventum_plugins.output.file import FileOutputConfig, FileOutputPlugin
 import tempfile
 from uuid import uuid4
 
-pytest_plugins = ('pytest_asyncio',)
+import pytest
+
+from eventum_plugins.output.file import FileOutputConfig, FileOutputPlugin
+
+pytest_plugins = ('pytest_asyncio', )
 
 
 @pytest.mark.asyncio
-async def test_write():
+async def test_file_write():
     path = os.path.join(tempfile.gettempdir(), str(uuid4()))
     plugin = FileOutputPlugin(config=FileOutputConfig(path=path))
 
@@ -25,7 +26,7 @@ async def test_write():
 
 
 @pytest.mark.asyncio
-async def test_write_many():
+async def test_file_write_many():
     path = os.path.join(tempfile.gettempdir(), str(uuid4()))
     plugin = FileOutputPlugin(config=FileOutputConfig(path=path))
     events = ['Test event', 'Test event 2', 'Test event 3']

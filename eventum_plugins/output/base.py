@@ -3,7 +3,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from enum import StrEnum
-from typing import Iterable, assert_never
+from typing import Any, Iterable, Self, assert_never
 
 from pydantic import BaseModel
 
@@ -40,6 +40,17 @@ class BaseOutputPlugin(ABC):
     def __init__(self, format: OutputFormat | None = None) -> None:
         self._format = format
         self._is_opened = False
+
+    async def __aenter__(self) -> Self:
+        self.open()
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: Any
+    ) -> None:
+        self.close()
 
     async def open(self) -> None:
         """Open target for async writing."""
