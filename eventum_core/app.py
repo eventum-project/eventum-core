@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from setproctitle import getproctitle, setproctitle
 
 import eventum_core.logging_config
+import eventum_core.settings as settings
 from eventum_core.plugins_connector import (InputConfigMapping,
                                             OutputConfigMapping)
 from eventum_core.subprocesses import (start_event_subprocess,
@@ -43,10 +44,12 @@ class Application:
     def __init__(
         self,
         config: ApplicationConfig,
-        time_mode: TimeMode
+        time_mode: TimeMode,
+        settings: settings.Settings = settings.DEFAULT_SETTINGS,
     ) -> None:
         self._config = config
         self._time_mode = time_mode
+        self._settings = settings
 
         # For all queues: The None element indicates that no more new
         # elements will be put in that queue
@@ -67,6 +70,7 @@ class Application:
             args=(
                 self._config.input,
                 self._time_mode,
+                self._settings,
                 self._input_queue,
                 self._is_input_done
             )
@@ -75,6 +79,7 @@ class Application:
             target=start_event_subprocess,
             args=(
                 self._config.event,
+                self._settings,
                 self._input_queue,
                 self._event_queue,
                 self._is_event_done
@@ -84,6 +89,7 @@ class Application:
             target=start_output_subprocess,
             args=(
                 self._config.output,
+                self._settings,
                 self._event_queue,
                 self._processed_events,
                 self._is_output_done
