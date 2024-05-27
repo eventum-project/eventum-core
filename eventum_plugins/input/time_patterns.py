@@ -12,7 +12,7 @@ from eventum_content_manager.manage import (ContentManagementError,
                                             load_time_pattern)
 from numpy.typing import NDArray
 from pydantic import AfterValidator, Field, ValidationError, model_validator
-from pytz.tzinfo import DstTzInfo
+from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input.base import (InputPluginBaseConfig,
                                         InputPluginConfigurationError,
@@ -167,7 +167,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
     _REQUIRED_EPS_RESERVE_RATIO = 1.15
     PUBLISH_PRECISION_SECONDS = 0.01
 
-    def __init__(self, config: TimePatternConfig, tz: DstTzInfo) -> None:
+    def __init__(self, config: TimePatternConfig, tz: BaseTzInfo) -> None:
         self._config = config
         self._tz = tz
         self._randomizer_factors = self._generate_randomizer_factors()
@@ -463,7 +463,11 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
     plugins.
     """
 
-    def __init__(self, config: TimePatternsInputConfig, tz: DstTzInfo) -> None:
+    def __init__(
+        self,
+        config: TimePatternsInputConfig,
+        tz: BaseTzInfo
+    ) -> None:
         self._tz = tz
         time_patterns: list[TimePatternInputPlugin] = []
 

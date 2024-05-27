@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 from numpy import datetime64
 from pydantic import Field
-from pytz.tzinfo import DstTzInfo
+from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input.base import InputPluginBaseConfig
 from eventum_plugins.input.base import \
@@ -21,7 +21,7 @@ class SampleInputPlugin(BaseSampleInputPlugin):
     of time when sample generating process was started.
     """
 
-    def __init__(self, config: SampleInputConfig, tz: DstTzInfo) -> None:
+    def __init__(self, config: SampleInputConfig, tz: BaseTzInfo) -> None:
         self._count = config.count
         self._tz = tz
 

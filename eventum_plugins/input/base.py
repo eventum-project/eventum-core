@@ -3,7 +3,7 @@ from typing import Any, Callable
 
 from numpy import datetime64
 from pydantic import BaseModel
-from pytz.tzinfo import DstTzInfo
+from pytz.tzinfo import BaseTzInfo
 
 
 class InputPluginError(Exception):
@@ -32,7 +32,7 @@ class BaseInputPlugin(ABC):
     """Base class for all input plugins."""
 
     @abstractmethod
-    def __init__(self, config: Any, tz: DstTzInfo) -> None:
+    def __init__(self, config: Any, tz: BaseTzInfo) -> None:
         ...
 
 

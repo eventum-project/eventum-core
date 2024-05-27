@@ -3,7 +3,7 @@ from typing import Any, Callable
 
 from numpy import datetime64, timedelta64
 from pydantic import Field
-from pytz.tzinfo import DstTzInfo
+from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input.base import InputPluginBaseConfig, LiveInputPlugin
 from eventum_plugins.utils.numpy_time import get_now, timedelta_to_seconds
@@ -20,7 +20,7 @@ class TimerInputPlugin(LiveInputPlugin):
     seconds.
     """
 
-    def __init__(self, config: TimerInputConfig, tz: DstTzInfo) -> None:
+    def __init__(self, config: TimerInputConfig, tz: BaseTzInfo) -> None:
         self._seconds = config.seconds
         self._count = config.count
         self._repeat = config.repeat

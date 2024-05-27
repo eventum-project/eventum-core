@@ -3,7 +3,7 @@ from typing import Any, Callable
 
 from numpy import datetime64, linspace, timedelta64
 from pydantic import Field, model_validator
-from pytz.tzinfo import DstTzInfo
+from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input.base import InputPluginBaseConfig, SampleInputPlugin
 
@@ -26,7 +26,7 @@ class LinspaceInputPlugin(SampleInputPlugin):
     spaced in time.
     """
 
-    def __init__(self, config: LinspaceInputConfig, tz: DstTzInfo) -> None:
+    def __init__(self, config: LinspaceInputConfig, tz: BaseTzInfo) -> None:
         self._start = config.start
         self._end = config.end
         self._count = config.count

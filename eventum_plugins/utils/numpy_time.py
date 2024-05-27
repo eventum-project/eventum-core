@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from numpy import datetime64, float64, timedelta64
-from pytz.tzinfo import DstTzInfo
+from pytz.tzinfo import BaseTzInfo
 
 
-def get_now(tz: DstTzInfo) -> datetime64:
+def get_now(tz: BaseTzInfo) -> datetime64:
     """Get current time in UTC timezone."""
     return datetime64(datetime.now(tz).replace(tzinfo=None))
 

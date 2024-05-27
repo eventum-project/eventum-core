@@ -5,7 +5,7 @@ from typing import Any, Callable
 from croniter import croniter
 from numpy import datetime64
 from pydantic import Field, field_validator
-from pytz.tzinfo import DstTzInfo
+from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input.base import InputPluginBaseConfig, LiveInputPlugin
 
@@ -26,7 +26,7 @@ class CronInputPlugin(LiveInputPlugin):
     expression.
     """
 
-    def __init__(self, config: CronInputConfig, tz: DstTzInfo) -> None:
+    def __init__(self, config: CronInputConfig, tz: BaseTzInfo) -> None:
         self._expression = config.expression
         self._count = config.count
         self._tz = tz

@@ -5,7 +5,7 @@ from typing import Any, Callable
 from numpy import array, datetime64
 from numpy.typing import NDArray
 from pydantic import Field
-from pytz.tzinfo import DstTzInfo
+from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input.base import (InputPluginBaseConfig, LiveInputPlugin,
                                         SampleInputPlugin)
@@ -20,7 +20,7 @@ class TimestampsInputConfig(InputPluginBaseConfig, frozen=True):
 class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
     """Input plugin for generating events in specified timestamps."""
 
-    def __init__(self, config: TimestampsInputConfig, tz: DstTzInfo) -> None:
+    def __init__(self, config: TimestampsInputConfig, tz: BaseTzInfo) -> None:
         self._timestamps: NDArray[datetime64] = array(
             [
                 ts.astimezone(tz=tz).replace(tzinfo=None)
