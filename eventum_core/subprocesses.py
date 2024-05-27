@@ -16,6 +16,7 @@ from eventum_plugins.input.base import (InputPluginConfigurationError,
 from eventum_plugins.output.base import (BaseOutputPlugin,
                                          OutputPluginConfigurationError,
                                          OutputPluginRuntimeError)
+from jinja2 import BaseLoader
 from numpy.typing import NDArray
 from pytz import timezone
 from setproctitle import getproctitle, setproctitle
@@ -130,6 +131,7 @@ def start_input_subprocess(
 @subprocess('event')
 def start_event_subprocess(
     config: JinjaEventConfig,
+    loader: BaseLoader | None,
     settings: Settings,
     input_queue: Queue,
     event_queue: Queue,
@@ -138,7 +140,7 @@ def start_event_subprocess(
     logger.info('Initializing "jinja" event plugin')
 
     try:
-        event_plugin = JinjaEventPlugin(config=config)
+        event_plugin = JinjaEventPlugin(config=config, loader=loader)
     except EventPluginConfigurationError as e:
         logger.error(f'Failed to initialize event plugin: {e}')
         _terminate_subprocess(is_done, 1, event_queue)

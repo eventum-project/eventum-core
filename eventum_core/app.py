@@ -73,6 +73,7 @@ class Application:
             target=start_event_subprocess,
             args=(
                 self._config.event,
+                None,
                 self._settings,
                 self._input_queue,
                 self._event_queue,
@@ -125,7 +126,7 @@ class Application:
             lambda signal, frame: self._terminate_application_on_crash(signal)
         )
 
-    def start(self, interactive: bool = True) -> None:
+    def start(self) -> None:
         logger.info('Application is started')
 
         self._proc_input.start()
