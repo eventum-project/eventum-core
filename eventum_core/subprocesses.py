@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import signal
+from datetime import datetime
 from multiprocessing import Queue
 from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
@@ -153,6 +154,10 @@ def start_event_subprocess(
 
     logger.info('Event plugin is successfully initialized')
 
+    timezone_as_string = datetime.now(
+        tz=timezone(settings.timezone)
+    ).strftime('%z')
+
     with Batcher(
         size=settings.output_batch_size,
         timeout=settings.output_batch_timeout,
@@ -166,7 +171,10 @@ def start_event_subprocess(
             try:
                 for timestamp in timestamps_batch:
                     for event in event_plugin.render(
-                        **{settings.timestamp_field_name: timestamp}
+                        **{
+                            settings.timestamp_field_name: timestamp,
+                            settings.timezone_field_name: timezone_as_string
+                        }
                     ):
                         batcher.add(event)
             except EventPluginRuntimeError as e:

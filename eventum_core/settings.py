@@ -14,6 +14,9 @@ class Settings(BaseModel, extra='forbid', frozen=True):
     # Time zone used in input plugins to generate timestamps.
     timezone: str = 'UTC'
 
+    # The name of variable in template with timezone value (e.g. "+0300").
+    timezone_field_name = 'tz'
+
     # The name of variable in template with original event timestamp.
     timestamp_field_name: str = Field('timestamp', min_length=1)
 
