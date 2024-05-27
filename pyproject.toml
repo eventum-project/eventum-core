@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "eventum-cli"
+version = "1.0.0"
+description = "Command line interface for Eventum"
+license = "Apache-2.0"
+authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
+readme = "README.md"
+repository = "https://github.com/Eventum-Generatives/EventumCLI"
+documentation = "https://eventum-generatives.github.io/Website/"
+keywords = ["generator", "testing", "data", "cli"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Testing :: Traffic Generation"
+
+]
+packages = [
+  {include = "eventum_cli"},
+  {include = "eventum_cli/py.typed"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+eventum-content-manager = "^1.0.5"
+eventum-core = "^1.0.1"
+keyring = "^24.3.1"
+keyrings-cryptfile = "^1.3.9"
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.12.0"
+pytest = "^8.0.1"
+mypy = "^1.9.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
