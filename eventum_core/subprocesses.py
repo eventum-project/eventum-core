@@ -5,15 +5,14 @@ from datetime import datetime
 from multiprocessing import Queue
 from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
-from typing import Callable, NoReturn, Optional, assert_never
+from typing import Callable, NoReturn, Optional
 
 import numpy as np
 from eventum_plugins.event.base import (EventPluginConfigurationError,
                                         EventPluginRuntimeError)
 from eventum_plugins.event.jinja import JinjaEventConfig, JinjaEventPlugin
 from eventum_plugins.input.base import (InputPluginConfigurationError,
-                                        InputPluginRuntimeError,
-                                        LiveInputPlugin, SampleInputPlugin)
+                                        InputPluginRuntimeError)
 from eventum_plugins.output.base import (BaseOutputPlugin,
                                          OutputPluginConfigurationError,
                                          OutputPluginRuntimeError)
@@ -22,14 +21,12 @@ from numpy.typing import NDArray
 from pytz import timezone
 from setproctitle import getproctitle, setproctitle
 
-import eventum_core.logging_config
 from eventum_core.batcher import Batcher
-from eventum_core.plugins_connector import (InputConfigMapping,
-                                            OutputConfigMapping,
-                                            load_plugin_class)
+from eventum_core.plugins_connector import (MutexFieldsModel,
+                                            load_input_plugin_class,
+                                            load_output_plugin_class)
 from eventum_core.settings import Settings, TimeMode
 
-eventum_core.logging_config.apply()
 logger = logging.getLogger(__name__)
 
 
@@ -63,23 +60,20 @@ def _terminate_subprocess(
 
 @subprocess('input')
 def start_input_subprocess(
-    config: InputConfigMapping,         # type: ignore[valid-type]
+    config: MutexFieldsModel,
     settings: Settings,
     time_mode: TimeMode,
     queue: Queue,
     is_done: EventClass,
 ) -> None:
-    plugin_name = config.get_name()     # type: ignore[attr-defined]
-    input_conf = config.get_value()     # type: ignore[attr-defined]
+    plugin_name = config.get_name()
+    input_conf = config.get_value()
 
     logger.info(f'Initializing "{plugin_name}" input plugin')
 
     try:
-        plugin_class = load_plugin_class(
-            plugin_type='input',
-            plugin_name=plugin_name
-        )
-        input_plugin: LiveInputPlugin | SampleInputPlugin = plugin_class(
+        plugin_class = load_input_plugin_class(plugin_name=plugin_name)
+        input_plugin = plugin_class(
             config=input_conf,
             tz=timezone(settings.timezone)
         )
@@ -104,13 +98,8 @@ def start_input_subprocess(
             timeout=settings.events_batch_timeout,
             callback=queue.put
         ) as batcher:
-            match time_mode:
-                case TimeMode.LIVE:
-                    input_plugin.live(on_event=batcher.add)
-                case TimeMode.SAMPLE:
-                    input_plugin.sample(on_event=batcher.add)
-                case _:
-                    assert_never(time_mode)
+            plugin_mode = input_plugin.__getattribute__(time_mode.value)
+            plugin_mode.__call__(on_event=batcher.add)
     except AttributeError:
         logger.error(
             f'"{plugin_name}" input plugin does not support "{time_mode}" mode'
@@ -192,7 +181,7 @@ def start_event_subprocess(
 
 @subprocess('output')
 def start_output_subprocess(
-    config: list[OutputConfigMapping],  # type: ignore[valid-type]
+    config: list[MutexFieldsModel],
     settings: Settings,
     queue: Queue,
     processed_events: SynchronizedBase,
@@ -207,14 +196,11 @@ def start_output_subprocess(
     output_plugins: list[BaseOutputPlugin] = []
 
     for item in config:
-        plugin_name = item.get_name()       # type: ignore[attr-defined]
-        output_conf = item.get_value()      # type: ignore[attr-defined]
+        plugin_name = item.get_name()
+        output_conf = item.get_value()
 
         try:
-            plugin_class = load_plugin_class(
-                plugin_type='output',
-                plugin_name=plugin_name
-            )
+            plugin_class = load_output_plugin_class(plugin_name=plugin_name)
             output_plugins.append(plugin_class(config=output_conf))
         except ValueError as e:
             logger.error(f'Failed to load output plugin: {e}')
@@ -265,7 +251,9 @@ def start_output_subprocess(
                 ]
             )
 
-            processed_events.value += len(events_batch)
+            processed_events.value += len(      # type: ignore[attr-defined]
+                events_batch
+            )
 
         await asyncio.gather(
             *[plugin.close() for plugin in output_plugins]

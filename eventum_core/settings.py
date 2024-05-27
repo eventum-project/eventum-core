@@ -15,7 +15,7 @@ class Settings(BaseModel, extra='forbid', frozen=True):
     timezone: str = 'UTC'
 
     # The name of variable in template with timezone value (e.g. "+0300").
-    timezone_field_name = 'tz'
+    timezone_field_name: str = 'tz'
 
     # The name of variable in template with original event timestamp.
     timestamp_field_name: str = Field('timestamp', min_length=1)
@@ -40,4 +40,4 @@ class Settings(BaseModel, extra='forbid', frozen=True):
         raise ValueError(f'Unknown time zone "{v}"')
 
 
-DEFAULT_SETTINGS = Settings()
+DEFAULT_SETTINGS = Settings()   # type: ignore[call-arg]

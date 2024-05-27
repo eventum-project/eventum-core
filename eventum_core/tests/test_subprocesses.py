@@ -47,7 +47,7 @@ def test_input_subprocess():
 
     elements = []
     while True:
-        batch = queue.get_nowait()
+        batch = queue.get(timeout=0.1)
 
         if batch is None:
             break
@@ -100,7 +100,7 @@ def test_event_subprocess():
 
     total_events = 0
     while True:
-        batch = event_queue.get_nowait()
+        batch = event_queue.get(timeout=0.1)
 
         if batch is None:
             break

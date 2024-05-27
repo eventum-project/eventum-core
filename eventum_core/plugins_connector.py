@@ -1,10 +1,11 @@
 import importlib
 from abc import ABC
-from typing import Any, Literal, Protocol
+from typing import Any, Literal
 
+from eventum_plugins.input.base import BaseInputPlugin
+from eventum_plugins.output.base import BaseOutputPlugin
 from eventum_plugins.utils.modules import get_module_names
 from pydantic import BaseModel, Field, create_model, model_validator
-from pytz.tzinfo import DstTzInfo
 
 
 class MutexFieldsModel(ABC, BaseModel, extra='forbid', frozen=True):
@@ -50,20 +51,10 @@ def get_plugins_to_config_mapping(
     return mapping
 
 
-class PluggableAsInput(Protocol):
-    def __init__(self, config: Any, tz: DstTzInfo) -> None:
-        pass
-
-
-class PluggableAsOutput(Protocol):
-    def __init__(self, config: Any) -> None:
-        pass
-
-
-def load_plugin_class(
+def _load_plugin_class(
     plugin_type: Literal['input', 'output'],
     plugin_name: str
-) -> type[PluggableAsInput] | type[PluggableAsOutput]:
+) -> type[BaseInputPlugin] | type[BaseOutputPlugin]:
     """Get plugin class. Raise `ValueError` if plugin with specified
     name is not found."""
     try:
@@ -77,9 +68,27 @@ def load_plugin_class(
         )
 
 
+def load_input_plugin_class(plugin_name: str) -> type[BaseInputPlugin]:
+    """Get input plugin class. Raise `ValueError` if plugin with
+    specified name is not found."""
+    return _load_plugin_class(      # type: ignore[return-value]
+        plugin_type='input',
+        plugin_name=plugin_name
+    )
+
+
+def load_output_plugin_class(plugin_name: str) -> type[BaseOutputPlugin]:
+    """Get output plugin class. Raise `ValueError` if plugin with
+    specified name is not found."""
+    return _load_plugin_class(      # type: ignore[return-value]
+        plugin_type='output',
+        plugin_name=plugin_name
+    )
+
+
 InputConfigMapping: type[
     MutexFieldsModel
-] = create_model(               # type: ignore[call-overload]
+] = create_model(                   # type: ignore[call-overload]
     'InputConfigMapping',
     __base__=MutexFieldsModel,
     __cls_kwargs__={'frozen': True},
@@ -93,7 +102,7 @@ InputConfigMapping: type[
 
 OutputConfigMapping: type[
     MutexFieldsModel
-] = create_model(               # type: ignore[call-overload]
+] = create_model(                   # type: ignore[call-overload]
     'OutputConfigMapping',
     __base__=MutexFieldsModel,
     __cls_kwargs__={'frozen': True},
