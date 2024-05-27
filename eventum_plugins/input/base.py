@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import Any, Callable, TypeAlias
 
 from numpy import datetime64
 from pydantic import BaseModel
@@ -64,3 +64,6 @@ class SampleInputPlugin(BaseInputPlugin):
         timestamps.
         """
         ...
+
+
+InputPlugin: TypeAlias = (SampleInputPlugin | LiveInputPlugin)

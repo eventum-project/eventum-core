@@ -37,9 +37,15 @@ class OutputFormat(StrEnum):
 
 class BaseOutputPlugin(ABC):
     """Base class for all output plugins."""
-    def __init__(self, format: OutputFormat | None = None) -> None:
-        self._format = format
+    def __init__(self, config: Any) -> None:
         self._is_opened = False
+        self._format: OutputFormat | None = None
+
+    def _set_formatter(self, format: OutputFormat | None) -> None:
+        """Set the format to which events will be converted before
+        they are passed to `_write` and `_write_many` methods.
+        """
+        self._format = format
 
     async def __aenter__(self) -> Self:
         await self.open()

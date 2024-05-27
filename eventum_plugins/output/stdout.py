@@ -15,7 +15,8 @@ class StdoutOutputPlugin(BaseOutputPlugin):
     """Output plugin for writing events to stdout."""
 
     def __init__(self, config: StdOutOutputConfig) -> None:
-        super().__init__(format=config.format)
+        super().__init__(config)
+        self._set_formatter(format=config.format)
 
         self._writer: asyncio.StreamWriter
 

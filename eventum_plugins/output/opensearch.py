@@ -44,7 +44,8 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
     def __init__(self, config: OpensearchOutputConfig) -> None:
         # Format is JSON_LINES here because we need to validate that
         # string is a valid json document that OpenSearch can index
-        super().__init__(format=OutputFormat.JSON_LINES)
+        super().__init__(config)
+        self._set_formatter(format=OutputFormat.JSON_LINES)
 
         self._hosts = config.hosts
         self._user = config.user

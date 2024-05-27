@@ -29,7 +29,9 @@ class FileOutputConfig(OutputPluginBaseConfig, frozen=True):
 class FileOutputPlugin(BaseOutputPlugin):
     """Output plugin for writing events to file."""
     def __init__(self, config: FileOutputConfig) -> None:
-        super().__init__(config.format)
+        super().__init__(config)
+        self._set_formatter(format=config.format)
+
         self._filepath = config.path
         self._flush = config.flush
 
