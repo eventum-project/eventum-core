@@ -1,13 +1,14 @@
 import json
 import os
 import re
+from collections import defaultdict
 from enum import StrEnum
 from functools import lru_cache
 from typing import Any, assert_never
 
-import keyrings.cryptfile.cryptfile as crypt
+import keyrings.cryptfile.cryptfile as crypt    # type: ignore[import-untyped]
 from jinja2 import BaseLoader, Environment, TemplateError
-from pwinput import pwinput
+from pwinput import pwinput                     # type: ignore[import-untyped]
 
 KEYRING_PASS_ENV_VAR = 'EVENTUM_KEYRING_PASSWORD'
 KEYRING_SERVICE_NAME = 'eventum'
@@ -38,15 +39,10 @@ def get_secret(name: str) -> str:
     keyring = crypt.CryptFileKeyring()
     keyring.keyring_key = get_keyring_password()
 
-    try:
-        value = keyring.get_password(
-            service=KEYRING_SERVICE_NAME,
-            username=name
-        )
-    except ValueError as e:
-        if str(e) == 'MAC check failed':
-            raise ValueError('Wrong keyring password provided')
-        raise e
+    value = keyring.get_password(
+        service=KEYRING_SERVICE_NAME,
+        username=name
+    )
 
     if value is None:
         raise ValueError(
@@ -61,7 +57,7 @@ def extract_tokens(config: dict) -> list[str]:
     """Extract tokens from config."""
     raw_content = json.dumps(config, ensure_ascii=False)
     tokens: list[str] = re.findall(
-        pattern=r'{{\s*?(\S*?)\s*?}}', string=raw_content
+        pattern=r'\${\s*?(\S*?)\s*?}', string=raw_content
     )
     return tokens
 
@@ -73,7 +69,7 @@ def substitute_tokens(config: dict, params: dict[str, Any]) -> dict:
         return config
 
     available_sources = tuple(el.value for el in TokenValueSource)
-    source_to_tokens_map = dict.fromkeys(available_sources)
+    source_to_tokens_map: dict[str, dict] = defaultdict(lambda: dict())
 
     for token in tokens:
         parts = token.split('.')
@@ -108,7 +104,11 @@ def substitute_tokens(config: dict, params: dict[str, Any]) -> dict:
 
         source_to_tokens_map[source][name] = value
 
-    template = Environment(loader=BaseLoader).from_string(
+    template = Environment(
+        loader=BaseLoader(),
+        variable_start_string='${',
+        variable_end_string='}'
+    ).from_string(
         source=json.dumps(config, ensure_ascii=False),
         globals=source_to_tokens_map
     )
