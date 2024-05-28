@@ -61,8 +61,8 @@ class Application:
             target=start_input_subprocess,
             args=(
                 self._config.input,
-                self._time_mode,
                 self._settings,
+                self._time_mode,
                 self._input_queue,
                 self._is_input_done
             )
