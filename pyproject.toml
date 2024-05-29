@@ -43,3 +43,6 @@ flake8 = "^7.0.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+eventum = "eventum_cli.__main__:main"
