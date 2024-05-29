@@ -70,8 +70,7 @@ def display_progress_bar(
         enrich_print=False,
         file=sys.stderr,
         refresh_secs=update_interval,
-        title='Processing events',
-        spinner='crab'
+        title='Processing events'
     ) as bar:
         while not check_done_callback():
             processed = get_value_callback() - bar.current
