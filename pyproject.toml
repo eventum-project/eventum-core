@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eventum-core"
-version = "1.0.2"
+version = "1.0.3"
 description = "Flexible event generator"
 license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
@@ -37,6 +37,7 @@ isort = "^5.12.0"
 pytest = "^8.0.1"
 mypy = "^1.9.0"
 types-pytz = "^2024.1.0.20240417"
+flake8 = "^7.0.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -56,6 +56,7 @@ class Application:
         self._is_output_done: EventClass = Event()
 
         self._processed_events: SynchronizedBase = Value('Q', 0)
+        self._is_done = False
 
         self._proc_input = Process(
             target=start_input_subprocess,
@@ -94,6 +95,11 @@ class Application:
         """Get currently processed events."""
         return self._processed_events.value     # type: ignore[attr-defined]
 
+    @property
+    def is_done(self) -> bool:
+        """Get current app state."""
+        return self._is_done
+
     def _terminate_application_on_crash(
         self,
         signal_number: int | None = None
@@ -108,6 +114,7 @@ class Application:
                 f'Signal {signal.Signals(signal_number).name} is received'
             )
 
+        self._is_done = True
         logger.info('Application shut down')
         exit(1)
 
@@ -177,6 +184,7 @@ class Application:
             self._proc_input.join()
             self._proc_event.join()
             self._proc_output.join()
+            self._is_done = True
 
         logger.info('Application shut down')
         exit(0)
