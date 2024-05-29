@@ -6,9 +6,9 @@ from enum import StrEnum
 from functools import lru_cache
 from typing import Any, assert_never
 
-import keyrings.cryptfile.cryptfile as crypt    # type: ignore[import-untyped]
+import keyrings.cryptfile.cryptfile as crypt  # type: ignore[import-untyped]
 from jinja2 import BaseLoader, Environment, TemplateError
-from pwinput import pwinput                     # type: ignore[import-untyped]
+from pwinput import pwinput  # type: ignore[import-untyped]
 
 KEYRING_PASS_ENV_VAR = 'EVENTUM_KEYRING_PASSWORD'
 KEYRING_SERVICE_NAME = 'eventum'

@@ -2,7 +2,12 @@ import argparse
 import json
 import logging
 import os
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable
 
+from alive_progress import alive_bar  # type: ignore[import-untyped]
 from eventum_content_manager.manage import (ContentManagementError,
                                             load_app_config)
 from eventum_core.app import Application, ApplicationConfig
@@ -49,6 +54,32 @@ def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
         default='{ }',
         help='Parameters to use in config, json string'
     )
+
+
+def display_progress_bar(
+    get_value_callback: Callable[[], int],
+    check_done_callback: Callable[[], bool],
+    update_interval: float
+) -> None:
+    """Display progress bar. This function should be submitted to
+    background thread. The provided callbacks are used to retrieve
+    current progress value and stop thread condition.
+    """
+    with alive_bar(
+        0,
+        enrich_print=False,
+        file=sys.stderr,
+        refresh_secs=update_interval,
+        title='Processing events',
+        spinner='crab'
+    ) as bar:
+        while not check_done_callback():
+            processed = get_value_callback() - bar.current
+
+            for _ in range(processed):
+                bar()
+
+            time.sleep(update_interval)
 
 
 def main() -> None:
@@ -118,7 +149,18 @@ def main() -> None:
         settings=settings
     )
 
-    app.start()
+    if args.interactive:
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            task = executor.submit(
+                display_progress_bar,
+                get_value_callback=lambda: app.processed_events,
+                check_done_callback=lambda: app.is_done,
+                update_interval=0.05
+            )
+            app.start()
+            task.result()
+    else:
+        app.start()
 
 
 if __name__ == '__main__':
