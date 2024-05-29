@@ -83,9 +83,9 @@ def display_progress_bar(
 
 def main() -> None:
     argparser = argparse.ArgumentParser(
-        prog="eventum",
-        description="Flexible event generation tool",
-        epilog="Repository: https://github.com/rnv812/Eventum",
+        prog='eventum',
+        description='Flexible event generator',
+        epilog='Documentation: https://eventum-generatives.github.io/Website/',
     )
 
     _initialize_argparser(argparser)
