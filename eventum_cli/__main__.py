@@ -14,10 +14,11 @@ from eventum_core.app import Application, ApplicationConfig
 from eventum_core.settings import Settings, TimeMode
 from pydantic import ValidationError
 
+import eventum_cli.logging_config as logging_config
 from eventum_cli.config_finalizer import substitute_tokens
 from eventum_cli.validation_prettier import prettify_errors
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = None
 
 
 def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
@@ -53,6 +54,11 @@ def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
         type=parse_as_dict,
         default='{ }',
         help='Parameters to use in config, json string'
+    )
+    argparser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Enable all informational messages in output'
     )
 
 
@@ -91,6 +97,13 @@ def main() -> None:
     _initialize_argparser(argparser)
 
     args = argparser.parse_args()
+
+    if args.verbose:
+        logging_config.apply(stderr_level=logging.INFO)
+    else:
+        logging_config.apply()
+
+    logger = logging.getLogger(__name__)
 
     logger.info('Eventum CLI is started')
     logger.info(f'Resolving location of config file "{args.config}"')

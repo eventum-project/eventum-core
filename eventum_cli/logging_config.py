@@ -2,48 +2,66 @@ import logging.config
 import logging.handlers
 import platform
 
-LOGGING_CONFIG = {
-    'version': 1,
-    'formatters': {
-        'file-formatter': {
-            'format': (
-                '%(name)s %(levelname)s: %(message)s'
-            )
+
+def apply(
+    stderr_level: int = logging.WARNING,
+    syslog_level: int = logging.INFO
+):
+    config = {
+        'version': 1,
+        'formatters': {
+            'syslog-formatter': {
+                'format': (
+                    '%(name)s %(levelname)s: %(message)s'
+                )
+            },
+            'stderr-formatter': {
+                'format': (
+                    '%(name)s: %(message)s'
+                )
+            },
         },
-        'stderr-formatter': {
-            'format': (
-                '%(name)s: %(message)s'
-            )
+        'handlers': {
+            'stderr': {
+                'level': logging._levelToName[stderr_level],
+                'formatter': 'stderr-formatter',
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://sys.stderr'
+            },
+            'syslog': {
+                'level': logging._levelToName[syslog_level],
+                'formatter': 'syslog-formatter',
+                'class': 'logging.handlers.NTEventLogHandler',
+                'appname': 'eventum-core'
+            } if platform.system() == 'Windows' else {
+                'level': logging._levelToName[syslog_level],
+                'formatter': 'syslog-formatter',
+                'class': 'logging.handlers.SysLogHandler',
+                'address': '/dev/log'
+            }
         },
-    },
-    'disable_existing_loggers': True,
-    'handlers': {
-        'stderr': {
-            'level': 'WARNING',
-            'formatter': 'stderr-formatter',
-            'class': 'logging.StreamHandler',
-            'stream': 'ext://sys.stderr'
-        },
-        'system-log': {
-            'level': 'INFO',
-            'formatter': 'file-formatter',
-            'class': 'logging.handlers.NTEventLogHandler',
-            'appname': 'eventum-core'
-        } if platform.system() == 'Windows' else {
-            'level': 'INFO',
-            'formatter': 'file-formatter',
-            'class': 'logging.handlers.SysLogHandler',
-            'address': '/dev/log'
-        }
-    },
-    'loggers': {
-        'eventum_core': {
-            'handlers': ['system-log', 'stderr'],
-            'level': 'INFO',
+        'loggers': {
+            'eventum_cli': {
+                'handlers': ['syslog', 'stderr'],
+                'level': 'INFO',
+            },
+            '__main__': {
+                'handlers': ['syslog', 'stderr'],
+                'level': 'INFO',
+            },
+            'eventum_core': {
+                'handlers': ['syslog', 'stderr'],
+                'level': 'INFO',
+            },
+            'eventum_plugins': {
+                'handlers': ['syslog', 'stderr'],
+                'level': 'INFO',
+            },
+            'eventum_content_manager': {
+                'handlers': ['syslog', 'stderr'],
+                'level': 'INFO',
+            },
         }
     }
-}
 
-
-def apply():
-    logging.config.dictConfig(config=LOGGING_CONFIG)
+    logging.config.dictConfig(config=config)
