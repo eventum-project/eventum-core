@@ -12,7 +12,7 @@ from eventum_content_manager.manage import (EVENT_TEMPLATES_DIR,
                                             load_csv_sample)
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateRuntimeError,
-                    TemplateSyntaxError)
+                    TemplateSyntaxError, Undefined)
 from pydantic import Field, field_validator
 
 from eventum_plugins.event.base import (BaseEventPlugin, EventPluginBaseConfig,
@@ -126,6 +126,9 @@ class State:
 
     def set(self, key: str, value: Any) -> None:
         """Set variable value to state."""
+        if isinstance(value, Undefined):
+            value = None
+
         self._state[key] = value
 
     def get(self, key: str, default: Any | None = None) -> Any:
