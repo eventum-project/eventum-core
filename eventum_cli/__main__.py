@@ -18,7 +18,7 @@ import eventum_cli.logging_config as logging_config
 from eventum_cli.config_finalizer import substitute_tokens
 from eventum_cli.validation_prettier import prettify_errors
 
-logger: logging.Logger = None
+logger: logging.Logger | None = None
 
 
 def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
