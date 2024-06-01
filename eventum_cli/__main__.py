@@ -7,6 +7,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 
+import pkg_resources
 from alive_progress import alive_bar  # type: ignore[import-untyped]
 from eventum_content_manager.manage import (ContentManagementError,
                                             load_app_config)
@@ -18,6 +19,7 @@ import eventum_cli.logging_config as logging_config
 from eventum_cli.config_finalizer import substitute_tokens
 from eventum_cli.validation_prettier import prettify_errors
 
+VERSION = pkg_resources.get_distribution('eventum_cli').version
 logger: logging.Logger | None = None
 
 
@@ -59,6 +61,11 @@ def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
         '-v', '--verbose',
         action='store_true',
         help='Enable all informational messages in output'
+    )
+    argparser.add_argument(
+        '-V', '--version',
+        action='version',
+        version=f'eventum-cli {VERSION}'
     )
 
 
