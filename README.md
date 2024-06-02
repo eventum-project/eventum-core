@@ -2,7 +2,7 @@
 
 ## What is Eventum
 
-**[Eventum](https://rnv812.github.io/Eventum)** is a flexible event generator that provides synthetic data for various purposes.
+**[Eventum](https://eventum-generatives.github.io/Website/)** is a flexible event generator that provides synthetic data for various purposes.
 
 The most popular tasks where Eventum is used are:
 - Generation of datasets
