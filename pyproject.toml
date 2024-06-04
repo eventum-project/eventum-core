@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eventum-cli"
-version = "1.0.5"
+version = "1.0.6"
 description = "Command line interface for Eventum"
 license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
@@ -25,8 +25,8 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-eventum-content-manager = "^1.0.5"
-eventum-core = "^1.0.3"
+eventum-content-manager = "^1.0.6"
+eventum-core = "^1.0.7"
 keyring = "^24.3.1"
 keyrings-cryptfile = "^1.3.9"
 jinja2 = "^3.1.4"

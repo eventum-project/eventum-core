@@ -5,9 +5,9 @@ import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
+from importlib.metadata import version
 from typing import Callable
 
-import pkg_resources
 from alive_progress import alive_bar  # type: ignore[import-untyped]
 from eventum_content_manager.manage import (ContentManagementError,
                                             load_app_config)
@@ -19,7 +19,7 @@ import eventum_cli.logging_config as logging_config
 from eventum_cli.config_finalizer import substitute_tokens
 from eventum_cli.validation_prettier import prettify_errors
 
-VERSION = pkg_resources.get_distribution('eventum_cli').version
+VERSION = version('eventum_cli')
 logger: logging.Logger | None = None
 
 
