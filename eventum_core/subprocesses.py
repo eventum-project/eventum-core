@@ -12,7 +12,8 @@ import numpy as np
 from eventum_plugins.event.base import (EventPluginConfigurationError,
                                         EventPluginRuntimeError)
 from eventum_plugins.event.jinja import JinjaEventConfig, JinjaEventPlugin
-from eventum_plugins.input.base import (InputPluginConfigurationError,
+from eventum_plugins.input.base import (BaseInputPlugin,
+                                        InputPluginConfigurationError,
                                         InputPluginRuntimeError)
 from eventum_plugins.output.base import (BaseOutputPlugin,
                                          OutputPluginConfigurationError,
@@ -73,7 +74,7 @@ def start_input_subprocess(
 
     logger.info(f'Initializing [{plugins_list_fmt}] input plugins')
 
-    input_plugins: list[BaseOutputPlugin] = []
+    input_plugins: list[BaseInputPlugin] = []
     input_plugin_names: list[str] = []
 
     for item in config:
@@ -130,9 +131,12 @@ def start_input_subprocess(
                 )
 
             all_success = True
-            for plugin_name, task in zip(input_plugin_names, submitted_tasks):
+            for plugin_name, task in zip(       # type: ignore[assignment]
+                input_plugin_names,
+                submitted_tasks
+            ):
                 try:
-                    task.result()
+                    task.result()   # type: ignore[attr-defined]
                 except InputPluginRuntimeError as e:
                     logger.error(
                         f'Error occurred during "{plugin_name}" input plugin '
