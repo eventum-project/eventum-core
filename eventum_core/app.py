@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 
 class ApplicationConfig(BaseModel, extra='forbid', frozen=True):
-    input: tuple[InputConfigMapping]        # type: ignore[valid-type]
+    input: tuple[InputConfigMapping, ...]       # type: ignore[valid-type]
     event: JinjaEventConfig
-    output: tuple[OutputConfigMapping]      # type: ignore[valid-type]
+    output: tuple[OutputConfigMapping, ...]     # type: ignore[valid-type]
 
 
 class Application:
