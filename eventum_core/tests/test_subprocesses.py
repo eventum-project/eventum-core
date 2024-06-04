@@ -25,7 +25,7 @@ def test_input_subprocess():
     proc_input = Process(
         target=start_input_subprocess,
         args=(
-            InputConfigMapping(sample=SampleInputConfig(count=10)),
+            [InputConfigMapping(sample=SampleInputConfig(count=10))],
             Settings(events_batch_timeout=0),
             TimeMode.SAMPLE,
             queue,

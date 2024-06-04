@@ -1,8 +1,5 @@
 from threading import Condition, RLock, Thread
-from typing import Any, Callable
-
-import numpy as np
-from numpy.typing import NDArray
+from typing import Any, Callable, Iterable
 
 
 class Batcher:
@@ -14,7 +11,7 @@ class Batcher:
         self,
         size: int,
         timeout: float,
-        callback: Callable[[NDArray[Any]], Any]
+        callback: Callable[[Iterable], Any]
     ) -> None:
         self._size = size
         self._timeout = timeout
@@ -62,7 +59,7 @@ class Batcher:
     def _flush_batch(self, batch):
         """Perform callback on current batch."""
         if batch:
-            self._callback(np.array(batch))
+            self._callback(batch)
 
     def add(self, element: Any) -> None:
         """Add element to current batch."""

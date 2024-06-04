@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 
 class ApplicationConfig(BaseModel, extra='forbid', frozen=True):
-    input: InputConfigMapping           # type: ignore[valid-type]
+    input: tuple[InputConfigMapping]        # type: ignore[valid-type]
     event: JinjaEventConfig
-    output: list[OutputConfigMapping]   # type: ignore[valid-type]
+    output: tuple[OutputConfigMapping]      # type: ignore[valid-type]
 
 
 class Application:
@@ -45,8 +45,12 @@ class Application:
 
         # For all queues: The None element indicates that no more new
         # elements will be put in that queue
-        self._input_queue: Queue[NDArray[np.datetime64]] = Queue()
-        self._event_queue: Queue[NDArray[np.str_]] = Queue()
+        self._input_queue: Queue[NDArray[np.datetime64]] = Queue(
+            maxsize=settings.input_queue_max_size
+        )
+        self._event_queue: Queue[NDArray[np.str_]] = Queue(
+            maxsize=settings.event_queue_max_size
+        )
 
         # Regardless of whether the process ended with an error or not
         # this flag must be set at the end of its execution.

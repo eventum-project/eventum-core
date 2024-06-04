@@ -1,11 +1,12 @@
 import asyncio
 import logging
 import signal
+from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
 from multiprocessing import Queue
 from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
-from typing import Callable, NoReturn, Optional
+from typing import Callable, Iterable, NoReturn, Optional
 
 import numpy as np
 from eventum_plugins.event.base import (EventPluginConfigurationError,
@@ -60,62 +61,96 @@ def _terminate_subprocess(
 
 @subprocess('input')
 def start_input_subprocess(
-    config: MutexFieldsModel,
+    config: Iterable[MutexFieldsModel],
     settings: Settings,
     time_mode: TimeMode,
     queue: Queue,
     is_done: EventClass,
 ) -> None:
-    plugin_name = config.get_name()
-    input_conf = config.get_value()
+    plugins_list_fmt = ", ".join(
+        [f'"{item.get_name()}"' for item in config]
+    )
 
-    logger.info(f'Initializing "{plugin_name}" input plugin')
+    logger.info(f'Initializing [{plugins_list_fmt}] input plugins')
 
-    try:
-        plugin_class = load_input_plugin_class(plugin_name=plugin_name)
-        input_plugin = plugin_class(
-            config=input_conf,
-            tz=timezone(settings.timezone)
-        )
-    except ValueError as e:
-        logger.error(f'Failed to load input plugin: {e}')
-        _terminate_subprocess(is_done, 1, queue)
-    except InputPluginConfigurationError as e:
-        logger.error(f'Failed to initialize input plugin: {e}')
-        _terminate_subprocess(is_done, 1, queue)
-    except Exception as e:
-        logger.error(
-            'Unexpected error occurred during initializing '
-            f'input plugin: {e}'
-        )
-        _terminate_subprocess(is_done, 1, queue)
+    input_plugins: list[BaseOutputPlugin] = []
+    input_plugin_names: list[str] = []
 
-    logger.info('Input plugin is successfully initialized')
+    for item in config:
+        plugin_name = item.get_name()
+        input_conf = item.get_value()
 
-    try:
+        try:
+            plugin_class = load_input_plugin_class(plugin_name=plugin_name)
+            input_plugins.append(
+                plugin_class(
+                    config=input_conf,
+                    tz=timezone(settings.timezone)
+                )
+            )
+            input_plugin_names.append(plugin_name)
+        except ValueError as e:
+            logger.error(f'Failed to load "{plugin_name}" input plugin: {e}')
+            _terminate_subprocess(is_done, 1, queue)
+        except InputPluginConfigurationError as e:
+            logger.error(
+                f'Failed to initialize "{plugin_name}" input plugin: {e}'
+            )
+            _terminate_subprocess(is_done, 1, queue)
+        except Exception as e:
+            logger.error(
+                'Unexpected error occurred during initializing '
+                f'"{plugin_name}" input plugin: {e}'
+            )
+            _terminate_subprocess(is_done, 1, queue)
+
+    logger.info('Input plugins are successfully initialized')
+
+    plugin_tasks: list[Callable] = []
+    for plugin_name, plugin in zip(input_plugin_names, input_plugins):
+        if hasattr(plugin, time_mode.value):
+            plugin_tasks.append(plugin.__getattribute__(time_mode.value))
+        else:
+            logger.error(
+                f'"{plugin_name}" input plugin does not support '
+                f'"{time_mode}" mode'
+            )
+            _terminate_subprocess(is_done, 1, queue)
+
+    with ThreadPoolExecutor(max_workers=len(plugin_tasks)) as executor:
         with Batcher(
             size=settings.events_batch_size,
             timeout=settings.events_batch_timeout,
-            callback=queue.put
+            callback=lambda batch: queue.put(np.array(batch))
         ) as batcher:
-            plugin_mode = input_plugin.__getattribute__(time_mode.value)
-            plugin_mode.__call__(on_event=batcher.add)
-    except AttributeError:
-        logger.error(
-            f'"{plugin_name}" input plugin does not support "{time_mode}" mode'
-        )
-        _terminate_subprocess(is_done, 1, queue)
-    except InputPluginRuntimeError as e:
-        logger.error(f'Error occurred during input plugin execution: {e}')
-        _terminate_subprocess(is_done, 1, queue)
-    except Exception as e:
-        logger.error(
-            f'Unexpected error occurred during input plugin execution: {e}'
-        )
-        _terminate_subprocess(is_done, 1, queue)
+            submitted_tasks: list[Future] = []
+            for task in plugin_tasks:
+                submitted_tasks.append(
+                    executor.submit(task, on_event=batcher.add)
+                )
 
-    logger.info('Stopping input plugin')
-    _terminate_subprocess(is_done, 0, queue)
+            all_success = True
+            for plugin_name, task in zip(input_plugin_names, submitted_tasks):
+                try:
+                    task.result()
+                except InputPluginRuntimeError as e:
+                    logger.error(
+                        f'Error occurred during "{plugin_name}" input plugin '
+                        f'execution: {e}'
+                    )
+                    all_success = False
+                except Exception as e:
+                    logger.error(
+                        f'Unexpected error occurred during "{plugin_name}" '
+                        f'input plugin execution: {e}'
+                    )
+                    all_success = False
+
+            if not all_success:
+                logger.info('Stopping input plugins')
+                _terminate_subprocess(is_done, 0, queue)
+            else:
+                _terminate_subprocess(is_done, 1, queue)
 
 
 @subprocess('event')
@@ -150,7 +185,7 @@ def start_event_subprocess(
     with Batcher(
         size=settings.output_batch_size,
         timeout=settings.output_batch_timeout,
-        callback=event_queue.put
+        callback=lambda batch: event_queue.put(batch)
     ) as batcher:
         while True:
             timestamps_batch = input_queue.get()
@@ -181,7 +216,7 @@ def start_event_subprocess(
 
 @subprocess('output')
 def start_output_subprocess(
-    config: list[MutexFieldsModel],
+    config: Iterable[MutexFieldsModel],
     settings: Settings,
     queue: Queue,
     processed_events: SynchronizedBase,
@@ -203,7 +238,7 @@ def start_output_subprocess(
             plugin_class = load_output_plugin_class(plugin_name=plugin_name)
             output_plugins.append(plugin_class(config=output_conf))
         except ValueError as e:
-            logger.error(f'Failed to load output plugin: {e}')
+            logger.error(f'Failed to load "{plugin_name}" output plugin: {e}')
             _terminate_subprocess(is_done, 1)
         except OutputPluginConfigurationError as e:
             logger.error(
