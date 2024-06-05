@@ -21,7 +21,7 @@ from eventum_plugins.input.base import (InputPluginBaseConfig,
                                         SampleInputPlugin)
 from eventum_plugins.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum_plugins.utils.relative_time import parse_relative_time
-from eventum_plugins.utils.timeseries import get_future_slice
+from eventum_plugins.utils.timeseries import get_future_slice, get_past_slice
 
 
 class TimeUnit(StrEnum):
@@ -369,15 +369,15 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         )
 
         while start < end:
-            for timestamp in self._get_period_timeseries(
-                start=start,
-                size=self._period_size,
-                duration=self._period_duration
+            for timestamp in get_past_slice(
+                timestamps=self._get_period_timeseries(
+                    start=start,
+                    size=self._period_size,
+                    duration=self._period_duration
+                ),
+                before=end
             ):
-                if timestamp <= end:
-                    on_event(timestamp)
-                else:
-                    break
+                on_event(timestamp)
 
             start += self._period_duration
 
