@@ -551,8 +551,13 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 for i, (task, queue) in enumerate(zip(tasks, queues)):
                     if task.done() and queue.empty():
                         # get result to propagate exceptions
-                        tasks.pop(i).result()
-                        queues.pop(i)
+                        tasks[i].result()
+
+                        tasks[i] = None     # type: ignore[call-overload]
+                        queues[i] = None    # type: ignore[call-overload]
+
+                tasks = [task for task in tasks if task is not None]
+                queues = [queue for queue in queues if queue is not None]
 
 
 PLUGIN_CLASS = TimePatternPoolInputPlugin
