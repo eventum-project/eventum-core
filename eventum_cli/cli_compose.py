@@ -1,10 +1,11 @@
 import argparse
 import json
 import logging
+import signal
 import time
-from concurrent.futures import Future, ProcessPoolExecutor
 from importlib.metadata import version
-from typing import TypedDict
+from multiprocessing import Process
+from typing import Iterable, NoReturn, TypedDict
 
 from eventum_content_manager.manage import (ContentManagementError,
                                             load_app_config,
@@ -20,7 +21,7 @@ from eventum_cli.resolver import resolve_config_path
 from eventum_cli.validation_prettier import prettify_errors
 
 VERSION = version('eventum_cli')
-logger: logging.Logger | None = None
+logger = logging.getLogger(__name__)
 
 
 class ComposeGeneratorConfig(BaseModel, frozen=True, extra='forbid'):
@@ -30,19 +31,38 @@ class ComposeGeneratorConfig(BaseModel, frozen=True, extra='forbid'):
     settings: dict
 
 
+class ComposeConfig(BaseModel, frozen=True, extra='forbid'):
+    generators: dict[str, ComposeGeneratorConfig] = Field(..., min_length=1)
+
+
 class ApplicationKwargs(TypedDict):
     config: ApplicationConfig
     time_mode: TimeMode
     settings: Settings
 
 
-class ComposeConfig(BaseModel, frozen=True, extra='forbid'):
-    generators: dict[str, ComposeGeneratorConfig] = Field(..., min_length=1)
-
-
 def run_app(*args, **kwargs) -> None:
     """Run the application with specified arguments."""
     Application(*args, **kwargs).start()
+
+
+def terminate_running_apps(
+    processes: Iterable[Process],
+    signal_number: int | None = None
+) -> NoReturn:
+    """Callback for signals handling that terminates started
+    applications.
+    """
+    for proc in processes:
+        proc.terminate()
+
+    if signal_number is not None:
+        logger.info(
+            f'Signal {signal.Signals(signal_number).name} is received'
+        )
+
+    logger.info('Processes shut down')
+    exit(1)
 
 
 def _initialize_argparser(argparser: argparse.ArgumentParser) -> None:
@@ -162,35 +182,49 @@ def main() -> None:
             }
         )
 
-    logger.info(
-        f'Starting {list(config.generators.keys())} generators in process pool'
-    )
+    logger.info(f'Starting {list(config.generators.keys())} generators')
 
-    tasks: list[tuple[str, Future]] = []
-    with ProcessPoolExecutor(max_workers=len(apps_kwargs)) as executor:
-        for name, kwargs in zip(config.generators.keys(), apps_kwargs):
-            tasks.append(
-                (name, executor.submit(run_app, **kwargs))
+    app_processes: list[Process] = []
+    for kwargs in apps_kwargs:
+        app_processes.append(Process(target=run_app, kwargs=kwargs))
+
+    for proc in app_processes:
+        proc.start()
+
+    for reg_signal in [signal.SIGINT, signal.SIGTERM]:
+        signal.signal(
+            reg_signal,
+            lambda signalnum, stack_frame: (
+                terminate_running_apps(
+                    processes=app_processes,
+                    signal_number=signalnum
+                )
             )
+        )
 
-        try:
-            while tasks:
-                for i, (name, task) in enumerate(tasks):
-                    if task.done():
-                        try:
-                            task.result()
-                            logger.info(
-                                f'Generator "{name}" has ended successfully'
-                            )
-                        except Exception as e:
-                            logger.error(
-                                f'Generator "{name}" has ended with error: {e}'
-                            )
+    active_processes: dict[str, Process] = {
+        name: proc
+        for name, proc in zip(config.generators.keys(), app_processes)
+    }
 
-                        tasks[i] = None
+    while active_processes:
+        done_processes: list[str] = []
+        for name, proc in active_processes.items():
+            if not proc.is_alive():
+                if proc.exitcode == 0:
+                    logger.info(
+                        f'Generator "{name}" exited with code {proc.exitcode}'
+                    )
+                else:
+                    logger.error(
+                        f'Generator "{name}" exited with code {proc.exitcode}'
+                    )
+                proc.join()
+                done_processes.append(name)
 
-                tasks = [task for task in tasks if task is not None]
-                time.sleep(0.1)
-        except KeyboardInterrupt:
-            logger.error('Stopping generators ...')
-            exit(1)
+        for name in done_processes:
+            active_processes.pop(name)
+
+        time.sleep(0.1)
+
+    logger.info('All process exited')
