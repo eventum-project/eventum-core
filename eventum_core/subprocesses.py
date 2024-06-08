@@ -39,7 +39,7 @@ def subprocess(name: str) -> Callable:
         def wrapper(*args, **kwargs):
             setproctitle(f'{getproctitle()} [{name}]')
 
-            signal.signal(signal.SIGINT, lambda signal, stack_frame: exit(0))
+            signal.signal(signal.SIGINT, lambda signal, stack_frame: exit(1))
 
             result = f(*args, **kwargs)
             return result
