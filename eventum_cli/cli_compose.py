@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import time
 from concurrent.futures import Future, ProcessPoolExecutor
 from importlib.metadata import version
 from typing import TypedDict
@@ -172,19 +173,24 @@ def main() -> None:
                 (name, executor.submit(run_app, **kwargs))
             )
 
-        while tasks:
-            for i, (name, task) in enumerate(tasks):
-                if task.done():
-                    try:
-                        task.result()
-                        logger.info(
-                            f'Generator "{name}" has ended successfully'
-                        )
-                    except Exception as e:
-                        logger.error(
-                            f'Generator "{name}" has ended with error: {e}'
-                        )
+        try:
+            while tasks:
+                for i, (name, task) in enumerate(tasks):
+                    if task.done():
+                        try:
+                            task.result()
+                            logger.info(
+                                f'Generator "{name}" has ended successfully'
+                            )
+                        except Exception as e:
+                            logger.error(
+                                f'Generator "{name}" has ended with error: {e}'
+                            )
 
-                    tasks[i] = None
+                        tasks[i] = None
 
-            tasks = [task for task in tasks if task is not None]
+                tasks = [task for task in tasks if task is not None]
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            logger.error('Stopping generators ...')
+            exit(1)
