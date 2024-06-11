@@ -91,7 +91,7 @@ class BaseOutputPlugin(ABC):
         for event in events:
             fmt_events.append(self._format_event(event=event))
 
-        await self._write_many(events)
+        await self._write_many(fmt_events)
 
     async def _open(self) -> None:
         """Perform open operation."""
