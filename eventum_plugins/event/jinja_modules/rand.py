@@ -80,6 +80,13 @@ class string:
         return ''.join(random.choices(ascii_letters, k=size))
 
     @staticmethod
+    def digits(size: int) -> str:
+        """Return string of specified `size` that contains random digits
+        characters.
+        """
+        return ''.join(random.choices(digits, k=size))
+
+    @staticmethod
     def punctuation(size: int) -> str:
         """Return string of specified `size` that contains random ASCII
         punctuation characters.
