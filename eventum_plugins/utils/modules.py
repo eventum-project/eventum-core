@@ -3,6 +3,7 @@ import pkgutil
 
 
 def get_module_names(package_name: str) -> list[str]:
+    """Get modules list of specified package."""
     package = importlib.import_module(package_name)
 
     module_names = []
