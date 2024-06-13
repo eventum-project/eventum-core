@@ -36,7 +36,8 @@ class TimerInputPlugin(LiveInputPlugin):
                 timestamp - get_now(tz=self._tz)
             )
 
-            time.sleep(sleep_seconds)   # type: ignore[arg-type]
+            if sleep_seconds > 0:
+                time.sleep(sleep_seconds)   # type: ignore[arg-type]
 
             for _ in range(self._count):
                 on_event(timestamp)
