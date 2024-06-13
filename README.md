@@ -9,6 +9,11 @@ Package includes next types of plugins for Eventum:
 
 Current list of implemented plugins and their description: https://eventum-generatives.github.io/Website/docs/plugins/
 
+## Installation
+```bash
+pip install eventum-plugins
+```
+
 ## Developing
 When developing new plugins you should follow next clauses:
 1. Plugin is a separate module within a package
