@@ -338,6 +338,5 @@ class JinjaEventPlugin(BaseEventPlugin):
         self._env.globals['subprocess'] = value
 
 
-def load_plugin():
-    """Return class of plugin from current module."""
-    return JinjaEventPlugin
+PLUGIN_CLASS = JinjaEventPlugin
+CONFIG_CLASS = JinjaEventConfig
