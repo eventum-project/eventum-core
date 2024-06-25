@@ -200,7 +200,7 @@ def start_event_subprocess(
                 for timestamp in timestamps_batch:
                     for event in event_plugin.render(
                         **{
-                            settings.timestamp_field_name: timestamp,
+                            settings.timestamp_field_name: str(timestamp),
                             settings.timezone_field_name: timezone_as_string
                         }
                     ):
