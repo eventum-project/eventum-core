@@ -4,20 +4,33 @@ import random
 import uuid
 from string import (ascii_letters, ascii_lowercase, ascii_uppercase, digits,
                     punctuation)
-from typing import Any, Sequence
+from typing import Sequence, TypeVar
+
+T = TypeVar('T')
 
 
-def choice(items: Sequence) -> Any:
+def shuffle(items: Sequence[T]) -> list[T] | str:
+    """Shuffle sequence elements."""
+    seq = list(items)
+    random.shuffle(seq)
+
+    if isinstance(items, str):
+        return ''.join(seq)     # type: ignore[arg-type]
+    else:
+        return seq
+
+
+def choice(items: Sequence[T]) -> T:
     """Return random item from non empty sequence."""
     return random.choice(items)
 
 
-def choices(items: Sequence, n: int) -> list:
+def choices(items: Sequence[T], n: int) -> list[T]:
     """Return `n` random items from non empty sequence."""
     return random.choices(items, k=n)
 
 
-def weighted_choice(items: Sequence, weights: Sequence[float]) -> Any:
+def weighted_choice(items: Sequence[T], weights: Sequence[float]) -> T:
     """Return random item from non empty sequence with `weights`
     probability.
     """
@@ -25,10 +38,10 @@ def weighted_choice(items: Sequence, weights: Sequence[float]) -> Any:
 
 
 def weighted_choices(
-    items: Sequence,
+    items: Sequence[T],
     weights: Sequence[float],
     n: int
-) -> list:
+) -> list[T]:
     """Return `n` random items from non empty sequence with `weights`
     probability.
     """
@@ -195,7 +208,7 @@ class crypto:
 class datetime:
     @staticmethod
     def timestamp(start: str, end: str) -> str:
-        """Return random timestamp im range [start; end]."""
+        """Return random timestamp in range [start; end]."""
         start_date = dt.datetime.fromisoformat(start)
         end_date = dt.datetime.fromisoformat(end)
 
