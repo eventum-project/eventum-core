@@ -1,18 +1,24 @@
 import logging.config
 import logging.handlers
-import platform
+import os
+import pathlib
+
+LOG_DIR = os.path.join(pathlib.Path.home(), '.eventum', 'logs')
+LOG_PATH = os.path.join(LOG_DIR, 'eventum.log')
+
+MiB = 1024 * 1024
 
 
 def apply(
     stderr_level: int = logging.WARNING,
-    syslog_level: int = logging.INFO
+    file_level: int = logging.INFO
 ):
     config = {
         'version': 1,
         'formatters': {
-            'syslog-formatter': {
+            'file-formatter': {
                 'format': (
-                    '%(name)s %(levelname)s: %(message)s'
+                    '%(asctime)s %(name)s [%(levelname)s]: %(message)s'
                 )
             },
             'stderr-formatter': {
@@ -28,40 +34,40 @@ def apply(
                 'class': 'logging.StreamHandler',
                 'stream': 'ext://sys.stderr'
             },
-            'syslog': {
-                'level': logging._levelToName[syslog_level],
-                'formatter': 'syslog-formatter',
-                'class': 'logging.handlers.NTEventLogHandler',
-                'appname': 'eventum-core'
-            } if platform.system() == 'Windows' else {
-                'level': logging._levelToName[syslog_level],
-                'formatter': 'syslog-formatter',
-                'class': 'logging.handlers.SysLogHandler',
-                'address': '/dev/log'
+            'file': {
+                'level': logging._levelToName[file_level],
+                'formatter': 'file-formatter',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': LOG_PATH,
+                'maxBytes': 5 * MiB,
+                'backupCount': 10
             }
         },
         'loggers': {
             'eventum_cli': {
-                'handlers': ['syslog', 'stderr'],
+                'handlers': ['file', 'stderr'],
                 'level': 'INFO',
             },
             '__main__': {
-                'handlers': ['syslog', 'stderr'],
+                'handlers': ['file', 'stderr'],
                 'level': 'INFO',
             },
             'eventum_core': {
-                'handlers': ['syslog', 'stderr'],
+                'handlers': ['file', 'stderr'],
                 'level': 'INFO',
             },
             'eventum_plugins': {
-                'handlers': ['syslog', 'stderr'],
+                'handlers': ['file', 'stderr'],
                 'level': 'INFO',
             },
             'eventum_content_manager': {
-                'handlers': ['syslog', 'stderr'],
+                'handlers': ['file', 'stderr'],
                 'level': 'INFO',
             },
         }
     }
+
+    if not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR, exist_ok=True)
 
     logging.config.dictConfig(config=config)
