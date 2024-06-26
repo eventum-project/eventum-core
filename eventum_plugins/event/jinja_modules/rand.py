@@ -1,3 +1,4 @@
+import datetime as dt
 import ipaddress
 import random
 import uuid
@@ -189,3 +190,18 @@ class crypto:
     def sha256() -> str:
         """Return random SHA-256 hash."""
         return '{:64x}'.format(random.getrandbits(256))
+
+
+class datetime:
+    @staticmethod
+    def timestamp(start: str, end: str) -> str:
+        """Return random timestamp im range [start; end]."""
+        start_date = dt.datetime.fromisoformat(start)
+        end_date = dt.datetime.fromisoformat(end)
+
+        delta_seconds = (end_date - start_date).total_seconds()
+
+        return (
+            start_date
+            + dt.timedelta(seconds=random.uniform(0, delta_seconds))
+        ).isoformat()
