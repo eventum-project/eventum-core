@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import signal
+import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
 from multiprocessing import Queue
@@ -98,10 +99,10 @@ def start_input_subprocess(
                 f'Failed to initialize "{plugin_name}" input plugin: {e}'
             )
             _terminate_subprocess(is_done, 1, queue)
-        except Exception as e:
+        except Exception:
             logger.error(
                 'Unexpected error occurred during initializing '
-                f'"{plugin_name}" input plugin: {e}'
+                f'"{plugin_name}" input plugin:\n{traceback.format_exc()}'
             )
             _terminate_subprocess(is_done, 1, queue)
 
@@ -143,10 +144,10 @@ def start_input_subprocess(
                         f'execution: {e}'
                     )
                     all_success = False
-                except Exception as e:
+                except Exception:
                     logger.error(
                         f'Unexpected error occurred during "{plugin_name}" '
-                        f'input plugin execution: {e}'
+                        f'input plugin execution:\n{traceback.format_exc()}'
                     )
                     all_success = False
 
@@ -173,10 +174,10 @@ def start_event_subprocess(
     except EventPluginConfigurationError as e:
         logger.error(f'Failed to initialize event plugin: {e}')
         _terminate_subprocess(is_done, 1, event_queue)
-    except Exception as e:
+    except Exception:
         logger.error(
             f'Unexpected error occurred during initializing '
-            f'event plugin: {e}'
+            f'event plugin:\n{traceback.format_exc()}'
         )
         _terminate_subprocess(is_done, 1, event_queue)
 
@@ -208,9 +209,10 @@ def start_event_subprocess(
             except EventPluginRuntimeError as e:
                 logger.error(f'Failed to produce event: {e}')
                 _terminate_subprocess(is_done, 1, event_queue)
-            except Exception as e:
+            except Exception:
                 logger.error(
-                    f'Unexpected error occurred during producing event: {e}'
+                    f'Unexpected error occurred during producing event:\n'
+                    f'{traceback.format_exc()}'
                 )
                 _terminate_subprocess(is_done, 1, event_queue)
 
@@ -249,10 +251,10 @@ def start_output_subprocess(
                 f'Failed to initialize "{plugin_name}" output plugin: {e}'
             )
             _terminate_subprocess(is_done, 1)
-        except Exception as e:
+        except Exception:
             logger.error(
                 'Unexpected error occurred during initializing '
-                f'"{plugin_name}" output plugin: {e}'
+                f'"{plugin_name}" output plugin:\n{traceback.format_exc()}'
             )
             _terminate_subprocess(is_done, 1)
 
