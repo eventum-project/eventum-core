@@ -118,22 +118,24 @@ def main() -> None:
     config_path = resolve_config_path(args.config)
 
     try:
-        raw_config_data = load_app_config(config_path)
+        config_data = load_app_config(
+            path=config_path,
+            preprocessor=(
+                lambda content: substitute_tokens(
+                    content=content,
+                    params=args.params
+                )
+            )
+        )
     except ContentManagementError as e:
         logger.error(f'Failed to load config file: {e}')
         exit(1)
-
-    try:
-        final_config_data = substitute_tokens(
-            config=raw_config_data,
-            params=args.params
-        )
     except ValueError as e:
         logger.error(f'Failed to substitute tokens to config: {e}')
         exit(1)
 
     try:
-        config = ApplicationConfig.model_validate(final_config_data)
+        config = ApplicationConfig.model_validate(config_data)
     except ValidationError as e:
         error_message = prettify_errors(e.errors())
         logger.error(f'Failed to read config file: {error_message}')

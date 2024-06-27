@@ -134,19 +134,21 @@ def main() -> None:
         config_path = resolve_config_path(generator_config.config)
 
         try:
-            raw_config_data = load_app_config(config_path)
+            config_data = load_app_config(
+                path=config_path,
+                preprocessor=(
+                    lambda content: substitute_tokens(
+                        content=content,
+                        params=generator_config.params
+                    )
+                )
+            )
         except ContentManagementError as e:
             logger.error(
                 f'Failed to load config file '
                 f'for generator "{generator_name}": {e}'
             )
             exit(1)
-
-        try:
-            final_config_data = substitute_tokens(
-                config=raw_config_data,
-                params=generator_config.params
-            )
         except ValueError as e:
             logger.error(
                 'Failed to substitute tokens to config'
@@ -155,7 +157,7 @@ def main() -> None:
             exit(1)
 
         try:
-            app_config = ApplicationConfig.model_validate(final_config_data)
+            app_config = ApplicationConfig.model_validate(config_data)
         except ValidationError as e:
             error_message = prettify_errors(e.errors())
             logger.error(

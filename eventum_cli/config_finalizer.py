@@ -53,20 +53,13 @@ def get_secret(name: str) -> str:
     return value
 
 
-def extract_tokens(config: dict) -> list[str]:
-    """Extract tokens from config."""
-    raw_content = json.dumps(config, ensure_ascii=False)
-    tokens: list[str] = re.findall(
-        pattern=r'\${\s*?(\S*?)\s*?}', string=raw_content
+def substitute_tokens(content: str, params: dict[str, Any]) -> str:
+    tokens = re.findall(
+        pattern=r'\${\s*?(\S*?)\s*?}', string=content
     )
-    return tokens
-
-
-def substitute_tokens(config: dict, params: dict[str, Any]) -> dict:
-    tokens = extract_tokens(config)
 
     if not tokens:
-        return config
+        return content
 
     available_sources = tuple(el.value for el in TokenValueSource)
     source_to_tokens_map: dict[str, dict] = defaultdict(lambda: dict())
@@ -109,13 +102,12 @@ def substitute_tokens(config: dict, params: dict[str, Any]) -> dict:
         variable_start_string='${',
         variable_end_string='}'
     ).from_string(
-        source=json.dumps(config, ensure_ascii=False),
+        source=content,
         globals=source_to_tokens_map
     )
 
     try:
-        rendered_config = template.render()
-        return json.loads(rendered_config)
+        return template.render()
     except TemplateError as e:
         raise ValueError(f'Failed to render config with token values: {e}')
     except json.JSONDecodeError as e:
