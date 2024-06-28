@@ -206,8 +206,11 @@ def start_event_subprocess(
                         }
                     ):
                         batcher.add(event)
-            except EventPluginRuntimeError as e:
-                logger.error(f'Failed to produce event: {e}')
+            except EventPluginRuntimeError:
+                logger.error(
+                    f'Failed to produce event:\n'
+                    f'{traceback.format_exc()}'
+                )
                 _terminate_subprocess(is_done, 1, event_queue)
             except Exception:
                 logger.error(

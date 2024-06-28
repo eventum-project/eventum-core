@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eventum-core"
-version = "1.0.10"
+version = "1.0.11"
 description = "Flexible event generator"
 license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
