@@ -72,7 +72,7 @@ class JinjaEventConfig(EventPluginBaseConfig, frozen=True):
     params: dict
     samples: dict[str, ItemsSampleConfig | CSVSampleConfig]
     mode: TemplatePickingMode
-    templates: dict[str, TemplateConfig] = Field(..., min_length=1)
+    templates: list[dict[str, TemplateConfig]] = Field(..., min_length=1)
 
 
 class SubprocessManager:
@@ -207,7 +207,8 @@ class JinjaEventPlugin(BaseEventPlugin):
         """Load templates specified in config."""
         templates: list[Template] = []
 
-        for template_conf in self._config.templates.values():
+        for template_item in self._config.templates:
+            template_conf = list(template_item.values())[0]
             try:
                 template = self._env.get_template(template_conf.template)
                 if template.name is None:
@@ -269,8 +270,8 @@ class JinjaEventPlugin(BaseEventPlugin):
                 return random.choices(
                     population=self._templates,
                     weights=[
-                        template_conf.chance
-                        for template_conf in self._config.templates.values()
+                        list(template_item.values())[0].chance
+                        for template_item in self._config.templates
                     ],
                     k=1
                 )[0]

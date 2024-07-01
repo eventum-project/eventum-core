@@ -19,9 +19,9 @@ def test_rendering():
             params={},
             samples={},
             mode=TemplatePickingMode.ALL,
-            templates={
+            templates=[{
                 'test': TemplateConfig(template='test.jinja')
-            }
+            }]
         ),
         loader=DictLoader(mapping={'test.jinja': '1 + 1 = {{ 1 + 1 }}'})
     ).render()
@@ -36,9 +36,9 @@ def test_rendering_parameters():
             params={'passed_parameter': 'value of parameter'},
             samples={},
             mode=TemplatePickingMode.ALL,
-            templates={
+            templates=[{
                 'test': TemplateConfig(template='test.jinja')
-            }
+            }]
         ),
         loader=DictLoader(mapping={'test.jinja': '{{ test_param }}'})
     ).render(test_param='test value')
@@ -58,9 +58,9 @@ def test_items_sample():
                 )
             },
             mode=TemplatePickingMode.ALL,
-            templates={
+            templates=[{
                 'test': TemplateConfig(template='test.jinja')
-            }
+            }]
         ),
         loader=DictLoader(
             mapping={'test.jinja': '{{ samples.test_sample[0] }}'}
@@ -82,9 +82,9 @@ def test_csv_sample():
                 )
             },
             mode=TemplatePickingMode.ALL,
-            templates={
+            templates=[{
                 'test': TemplateConfig(template='test.jinja')
-            }
+            }]
         ),
         loader=DictLoader(
             mapping={'test.jinja': '{{ samples.test_sample[0] }}'}
@@ -101,9 +101,9 @@ def test_subprocess():
             params={},
             samples={},
             mode=TemplatePickingMode.ALL,
-            templates={
+            templates=[{
                 'test': TemplateConfig(template='test.jinja')
-            }
+            }]
         ),
         loader=DictLoader(
             mapping={
