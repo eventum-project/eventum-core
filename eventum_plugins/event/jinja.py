@@ -169,6 +169,7 @@ class JinjaEventPlugin(BaseEventPlugin):
             for template in self._templates
         }
         self._spinning_template_index = self._get_spinning_template_index()
+        self._template_chance_weights = self._get_template_chance_weights()
 
     def _load_samples(
         self
@@ -258,6 +259,13 @@ class JinjaEventPlugin(BaseEventPlugin):
             for i, _ in enumerate((self._templates)):
                 yield i
 
+    def _get_template_chance_weights(self) -> list[float]:
+        """Get chance weights of templates"""
+        return [
+            list(template_item.values())[0].chance
+            for template_item in self._config.templates
+        ]
+
     def _pick_template(self) -> Template | list[Template]:
         """Pick template(s) depending on picking mode."""
 
@@ -269,10 +277,7 @@ class JinjaEventPlugin(BaseEventPlugin):
             case TemplatePickingMode.CHANCE:
                 return random.choices(
                     population=self._templates,
-                    weights=[
-                        list(template_item.values())[0].chance
-                        for template_item in self._config.templates
-                    ],
+                    weights=self._template_chance_weights,
                     k=1
                 )[0]
             case TemplatePickingMode.SPIN:
