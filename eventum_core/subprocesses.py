@@ -276,6 +276,11 @@ def start_output_subprocess(
         except OutputPluginRuntimeError as e:
             logger.error(f'Output plugin failed to write events: {e}')
             return
+        except Exception:
+            logger.error(
+                f'Unexpected error occurred during '
+                f'output plugin execution:\n{traceback.format_exc()}'
+            )
 
     async def run_loop() -> None:
         await asyncio.gather(
