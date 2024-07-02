@@ -4,15 +4,15 @@ import os
 import pathlib
 
 LOG_DIR = os.path.join(pathlib.Path.home(), '.eventum', 'logs')
-LOG_PATH = os.path.join(LOG_DIR, 'eventum.log')
-
 MiB = 1024 * 1024
 
 
 def apply(
     stderr_level: int = logging.WARNING,
-    file_level: int = logging.INFO
+    file_level: int = logging.INFO,
+    log_filename: str = 'eventum.log'
 ):
+    log_path = os.path.join(LOG_DIR, log_filename)
     config = {
         'version': 1,
         'formatters': {
@@ -38,7 +38,7 @@ def apply(
                 'level': logging._levelToName[file_level],
                 'formatter': 'file-formatter',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': LOG_PATH,
+                'filename': log_path,
                 'maxBytes': 5 * MiB,
                 'backupCount': 10
             }

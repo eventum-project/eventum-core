@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import os
 import signal
 import time
 from importlib.metadata import version
@@ -99,10 +100,16 @@ def main() -> None:
 
     args = argparser.parse_args()
 
+    config_basename, _ = os.path.splitext(os.path.basename(args.config))
+    log_filename = f'compose-{config_basename}.log'
+
     if args.verbose:
-        logging_config.apply(stderr_level=logging.INFO)
+        logging_config.apply(
+            stderr_level=logging.INFO,
+            log_filename=log_filename
+        )
     else:
-        logging_config.apply()
+        logging_config.apply(log_filename=log_filename)
 
     logger = logging.getLogger(__name__)
 
