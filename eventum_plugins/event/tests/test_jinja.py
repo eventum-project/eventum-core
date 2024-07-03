@@ -19,9 +19,7 @@ def test_rendering():
             params={},
             samples={},
             mode=TemplatePickingMode.ALL,
-            templates=[{
-                'test': TemplateConfig(template='test.jinja')
-            }]
+            templates=[{'test': TemplateConfig(template='test.jinja')}]
         ),
         loader=DictLoader(mapping={'test.jinja': '1 + 1 = {{ 1 + 1 }}'})
     ).render()
@@ -36,9 +34,7 @@ def test_rendering_parameters():
             params={'passed_parameter': 'value of parameter'},
             samples={},
             mode=TemplatePickingMode.ALL,
-            templates=[{
-                'test': TemplateConfig(template='test.jinja')
-            }]
+            templates=[{'test': TemplateConfig(template='test.jinja')}]
         ),
         loader=DictLoader(mapping={'test.jinja': '{{ test_param }}'})
     ).render(test_param='test value')
@@ -58,9 +54,7 @@ def test_items_sample():
                 )
             },
             mode=TemplatePickingMode.ALL,
-            templates=[{
-                'test': TemplateConfig(template='test.jinja')
-            }]
+            templates=[{'test': TemplateConfig(template='test.jinja')}]
         ),
         loader=DictLoader(
             mapping={'test.jinja': '{{ samples.test_sample[0] }}'}
@@ -82,9 +76,7 @@ def test_csv_sample():
                 )
             },
             mode=TemplatePickingMode.ALL,
-            templates=[{
-                'test': TemplateConfig(template='test.jinja')
-            }]
+            templates=[{'test': TemplateConfig(template='test.jinja')}]
         ),
         loader=DictLoader(
             mapping={'test.jinja': '{{ samples.test_sample[0] }}'}
@@ -101,9 +93,7 @@ def test_subprocess():
             params={},
             samples={},
             mode=TemplatePickingMode.ALL,
-            templates=[{
-                'test': TemplateConfig(template='test.jinja')
-            }]
+            templates=[{'test': TemplateConfig(template='test.jinja')}]
         ),
         loader=DictLoader(
             mapping={
@@ -116,3 +106,122 @@ def test_subprocess():
 
     assert len(events) == 1
     assert events.pop() == 'Hello, World!'
+
+
+def test_templates_picking_all():
+    events = JinjaEventPlugin(
+        config=JinjaEventConfig(
+            params={},
+            samples={},
+            mode=TemplatePickingMode.ALL,
+            templates=[
+                {'a': TemplateConfig(template='a.jinja')},
+                {'b': TemplateConfig(template='b.jinja')},
+                {'c': TemplateConfig(template='c.jinja')}
+            ]
+        ),
+        loader=DictLoader(
+            mapping={
+                'a.jinja': 'a',
+                'b.jinja': 'b',
+                'c.jinja': 'c'
+            }
+        )
+    ).render()
+
+    assert events == ['a', 'b', 'c']
+
+
+def test_templates_picking_any():
+    plugin = JinjaEventPlugin(
+        config=JinjaEventConfig(
+            params={},
+            samples={},
+            mode=TemplatePickingMode.ANY,
+            templates=[
+                {'a': TemplateConfig(template='a.jinja')},
+                {'b': TemplateConfig(template='b.jinja')},
+                {'c': TemplateConfig(template='c.jinja')}
+            ]
+        ),
+        loader=DictLoader(
+            mapping={
+                'a.jinja': 'a',
+                'b.jinja': 'b',
+                'c.jinja': 'c'
+            }
+        )
+    )
+
+    events = plugin.render()
+    assert len(events) == 1
+
+    events = []
+    for _ in range(100):
+        events.extend(plugin.render())
+
+    for event in ['a', 'b', 'c']:
+        assert event in events
+
+
+def test_templates_picking_spin():
+    plugin = JinjaEventPlugin(
+        config=JinjaEventConfig(
+            params={},
+            samples={},
+            mode=TemplatePickingMode.SPIN,
+            templates=[
+                {'a': TemplateConfig(template='a.jinja')},
+                {'b': TemplateConfig(template='b.jinja')},
+                {'c': TemplateConfig(template='c.jinja')}
+            ]
+        ),
+        loader=DictLoader(
+            mapping={
+                'a.jinja': 'a',
+                'b.jinja': 'b',
+                'c.jinja': 'c'
+            }
+        )
+    )
+
+    events = plugin.render()
+    assert len(events) == 1
+    assert 'a' in events
+
+    events = plugin.render()
+    assert len(events) == 1
+    assert 'b' in events
+
+    events = plugin.render()
+    assert len(events) == 1
+    assert 'c' in events
+
+    events = plugin.render()
+    assert len(events) == 1
+    assert 'a' in events
+
+
+def test_templates_picking_chance():
+    events = JinjaEventPlugin(
+        config=JinjaEventConfig(
+            params={},
+            samples={},
+            mode=TemplatePickingMode.CHANCE,
+            templates=[
+                {'a': TemplateConfig(template='a.jinja', chance=0.000001)},
+                {'b': TemplateConfig(template='b.jinja', chance=999999)},
+                {'c': TemplateConfig(template='c.jinja', chance=0.000001)}
+            ]
+        ),
+        loader=DictLoader(
+            mapping={
+                'a.jinja': 'a',
+                'b.jinja': 'b',
+                'c.jinja': 'c'
+            }
+        )
+    ).render()
+
+    assert len(events) == 1
+    assert 'b' in events
