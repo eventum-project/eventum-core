@@ -116,6 +116,30 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
                 f'HTTP {response.status} - {text}'
             )
 
+        try:
+            result = json.loads(text)
+        except json.JSONDecodeError as e:
+            raise OutputPluginRuntimeError(
+                f'Failed to decode bulk response ({host}): {e}'
+            )
+
+        errors = []
+        try:
+            if result['errors']:
+                for item in result['items']:
+                    if 'index' in item and 'error' in item['index']:
+                        errors.append(item['index']['error'])
+        except KeyError as e:
+            raise OutputPluginRuntimeError(
+                f'Failed to process bulk response ({host}): {e}'
+            )
+
+        if errors:
+            raise OutputPluginRuntimeError(
+                'Failed to index some of the events:\n'
+                f'{json.dumps(errors, indent=2, ensure_ascii=False)}'
+            )
+
     async def _write_many(self, events: Iterable[str]) -> None:
         bulks_count = len(self._hosts)
         bulks = [""] * bulks_count
@@ -143,7 +167,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
 
         if successful_count < len(results):
             raise OutputPluginRuntimeError(
-                'Bulk indexing did not complete with success: only'
+                'Bulk indexing did not complete with success: only '
                 f'{successful_count}/{len(results)} nodes indexed events'
             )
 
