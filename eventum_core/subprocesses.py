@@ -151,7 +151,7 @@ def start_input_subprocess(
                     )
                     all_success = False
 
-            if not all_success:
+            if all_success:
                 logger.info('Stopping input plugins')
                 _terminate_subprocess(is_done, 0, queue)
             else:
