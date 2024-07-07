@@ -17,6 +17,9 @@ class Settings(BaseModel, extra='forbid', frozen=True):
     # The name of variable in template with timezone value (e.g. "+03:00")
     timezone_field_name: str = 'tz'
 
+    # The name of variable in template with input plugin tags
+    tags_field_name: str = 'tags'
+
     # The name of variable in template with original event timestamp
     timestamp_field_name: str = Field('timestamp', min_length=1)
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eventum-core"
-version = "1.0.12"
+version = "1.1.3"
 description = "Flexible event generator"
 license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
@@ -28,8 +28,8 @@ python = "^3.11"
 pydantic = "^2.6.2"
 setproctitle = "^1.3.3"
 jinja2 = "^3.1.3"
-eventum-content-manager = "^1.0.5"
-eventum-plugins = "^1.0.1"
+eventum-content-manager = "^1.1.0"
+eventum-plugins = "^1.1.0"
 pytz = "^2024.1"
 
 [tool.poetry.group.dev.dependencies]

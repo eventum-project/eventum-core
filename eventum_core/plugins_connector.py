@@ -29,7 +29,7 @@ class MutexFieldsModel(ABC, BaseModel, extra='forbid', frozen=True):
         )).pop()
 
     def get_value(self) -> Any:
-        """Get value if used parameter."""
+        """Get value of used parameter."""
         return self.__getattribute__(self.get_name())
 
 

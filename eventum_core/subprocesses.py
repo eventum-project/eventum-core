@@ -19,7 +19,6 @@ from eventum_plugins.input.base import (BaseInputPlugin,
 from eventum_plugins.output.base import (BaseOutputPlugin,
                                          OutputPluginConfigurationError,
                                          OutputPluginRuntimeError)
-from jinja2 import BaseLoader
 from numpy.typing import NDArray
 from pytz import timezone
 from setproctitle import getproctitle, setproctitle
@@ -123,21 +122,32 @@ def start_input_subprocess(
         with Batcher(
             size=settings.events_batch_size,
             timeout=settings.events_batch_timeout,
-            callback=lambda batch: queue.put(np.array(batch))
+            callback=lambda batch: queue.put(
+                np.array(
+                    batch,
+                    dtype=[('timestamp', 'datetime64[us]'), ('input_id', 'i8')]
+                )
+            )
         ) as batcher:
             submitted_tasks: list[Future] = []
-            for task in plugin_tasks:
+            for plugin_id, plugin_task in enumerate(plugin_tasks):
                 submitted_tasks.append(
-                    executor.submit(task, on_event=batcher.add)
+                    executor.submit(
+                        plugin_task,
+                        on_event=(
+                            lambda timestamp, plugin_id=plugin_id:
+                            batcher.add((timestamp, plugin_id))
+                        )
+                    )
                 )
 
             all_success = True
-            for plugin_name, task in zip(       # type: ignore[assignment]
+            for plugin_name, plugin_task in zip(    # type: ignore[assignment]
                 input_plugin_names,
                 submitted_tasks
             ):
                 try:
-                    task.result()   # type: ignore[attr-defined]
+                    plugin_task.result()   # type: ignore[attr-defined]
                 except InputPluginRuntimeError as e:
                     logger.error(
                         f'Error occurred during "{plugin_name}" input plugin '
@@ -161,7 +171,7 @@ def start_input_subprocess(
 @subprocess('event')
 def start_event_subprocess(
     config: JinjaEventConfig,
-    loader: BaseLoader | None,
+    input_tags: dict[int, tuple[str, ...]],
     settings: Settings,
     input_queue: Queue,
     event_queue: Queue,
@@ -170,7 +180,7 @@ def start_event_subprocess(
     logger.info('Initializing "jinja" event plugin')
 
     try:
-        event_plugin = JinjaEventPlugin(config=config, loader=loader)
+        event_plugin = JinjaEventPlugin(config=config)
     except EventPluginConfigurationError as e:
         logger.error(f'Failed to initialize event plugin: {e}')
         _terminate_subprocess(is_done, 1, event_queue)
@@ -193,16 +203,17 @@ def start_event_subprocess(
         callback=lambda batch: event_queue.put(batch)
     ) as batcher:
         while True:
-            timestamps_batch = input_queue.get()
-            if timestamps_batch is None:
+            batch = input_queue.get()
+            if batch is None:
                 break
 
             try:
-                for timestamp in timestamps_batch:
+                for timestamp, input_id in batch:
                     for event in event_plugin.render(
                         **{
                             settings.timestamp_field_name: str(timestamp),
-                            settings.timezone_field_name: timezone_as_string
+                            settings.timezone_field_name: timezone_as_string,
+                            settings.tags_field_name: input_tags[input_id]
                         }
                     ):
                         batcher.add(event)

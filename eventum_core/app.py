@@ -4,7 +4,7 @@ from multiprocessing import Event, Process, Queue, Value
 from multiprocessing.sharedctypes import SynchronizedBase
 from multiprocessing.synchronize import Event as EventClass
 from time import sleep
-from typing import NoReturn
+from typing import Any, NoReturn
 
 import numpy as np
 from eventum_plugins.event.jinja import JinjaEventConfig
@@ -45,7 +45,10 @@ class Application:
 
         # For all queues: The None element indicates that no more new
         # elements will be put in that queue
-        self._input_queue: Queue[NDArray[np.datetime64]] = Queue(
+        # For input queue dtype=[
+        #   ('timestamp', 'datetime64[us]'), ('input_id', 'i8')
+        # ]
+        self._input_queue: Queue[NDArray[Any]] = Queue(
             maxsize=settings.input_queue_max_size
         )
         self._event_queue: Queue[NDArray[np.str_]] = Queue(
@@ -76,7 +79,7 @@ class Application:
             target=start_event_subprocess,
             args=(
                 self._config.event,
-                None,
+                self._get_input_tags(),
                 self._settings,
                 self._input_queue,
                 self._event_queue,
@@ -103,6 +106,16 @@ class Application:
     def is_done(self) -> bool:
         """Get current app state."""
         return self._is_done
+
+    def _get_input_tags(self) -> dict[int, tuple[str]]:
+        """Return dictionary where keys are input plugin indices and
+        values are input plugin tags.
+        """
+        return {
+            plugin_id: plugin_conf.get_value(   # type: ignore[attr-defined]
+            ).tags
+            for plugin_id, plugin_conf in enumerate(self._config.input)
+        }
 
     def _terminate_application_on_crash(
         self,
