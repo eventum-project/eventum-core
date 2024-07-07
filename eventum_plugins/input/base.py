@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, TypeAlias
 
 from numpy import datetime64
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from pytz.tzinfo import BaseTzInfo
 
 
@@ -26,7 +26,7 @@ class PerformanceError(InputPluginRuntimeError):
 
 class InputPluginBaseConfig(ABC, BaseModel, extra='forbid', frozen=True):
     """Base config model for input plugins"""
-    tags: list[str] = Field(default_factory=lambda: list())
+    tags: tuple[str, ...] = tuple()
 
 
 class BaseInputPlugin(ABC):
