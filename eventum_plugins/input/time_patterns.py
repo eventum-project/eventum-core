@@ -11,7 +11,8 @@ import numpy as np
 from eventum_content_manager.manage import (ContentManagementError,
                                             load_time_pattern)
 from numpy.typing import NDArray
-from pydantic import AfterValidator, Field, ValidationError, model_validator
+from pydantic import (AfterValidator, BaseModel, Field, ValidationError,
+                      model_validator)
 from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input.base import (InputPluginBaseConfig,
@@ -58,28 +59,28 @@ def _check_relative_time(obj: Any) -> str:
 RelativeTime = Annotated[str, AfterValidator(_check_relative_time)]
 
 
-class OscillatorConfig(InputPluginBaseConfig, frozen=True):
+class OscillatorConfig(BaseModel, extra='forbid', frozen=True):
     period: int = Field(..., ge=1)
     unit: TimeUnit
     start: time | datetime | TimeKeyword | RelativeTime
     end: time | datetime | TimeKeyword | RelativeTime
 
 
-class MultiplierConfig(InputPluginBaseConfig, frozen=True):
+class MultiplierConfig(BaseModel, extra='forbid', frozen=True):
     ratio: int = Field(..., ge=1)
 
 
-class RandomizerConfig(InputPluginBaseConfig, frozen=True):
+class RandomizerConfig(BaseModel, extra='forbid', frozen=True):
     deviation: float = Field(..., ge=0, le=1)
     direction: RandomizerDirection
 
 
-class BetaDistributionParameters(InputPluginBaseConfig, frozen=True):
+class BetaDistributionParameters(BaseModel, extra='forbid', frozen=True):
     a: float = Field(..., ge=0)
     b: float = Field(..., ge=0)
 
 
-class TriangularDistributionParameters(InputPluginBaseConfig, frozen=True):
+class TriangularDistributionParameters(BaseModel, extra='forbid', frozen=True):
     left: float = Field(..., ge=0, lt=1)
     mode: float = Field(..., ge=0, le=1)
     right: float = Field(..., gt=0, le=1)
@@ -96,7 +97,7 @@ class TriangularDistributionParameters(InputPluginBaseConfig, frozen=True):
         )
 
 
-class UniformDistributionParameters(InputPluginBaseConfig, frozen=True):
+class UniformDistributionParameters(BaseModel, extra='forbid', frozen=True):
     low: float = Field(..., ge=0, lt=1)
     high: float = Field(..., gt=0, le=1)
 
@@ -116,7 +117,7 @@ DistributionParameters: TypeAlias = (
 )
 
 
-class SpreaderConfig(InputPluginBaseConfig, frozen=True):
+class SpreaderConfig(BaseModel, extra='forbid', frozen=True):
     _DISTRIBUTION_PARAMETERS_MAP = {
         Distribution.UNIFORM: UniformDistributionParameters,
         Distribution.TRIANGULAR: TriangularDistributionParameters,
@@ -141,7 +142,7 @@ class SpreaderConfig(InputPluginBaseConfig, frozen=True):
         )
 
 
-class TimePatternConfig(InputPluginBaseConfig, frozen=True):
+class TimePatternConfig(BaseModel, extra='forbid', frozen=True):
     label: str = Field(..., min_length=1)
     oscillator: OscillatorConfig
     multiplier: MultiplierConfig
