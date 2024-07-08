@@ -1,3 +1,4 @@
+import mimesis.enums as enums  # noqa
 from mimesis import Generic, Locale
 from mimesis.builtins import (BrazilSpecProvider, DenmarkSpecProvider,
                               ItalySpecProvider, NetherlandsSpecProvider,
