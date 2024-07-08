@@ -667,6 +667,21 @@ files = [
 ]
 
 [[package]]
+name = "mimesis"
+version = "17.0.0"
+description = "Mimesis: Fake Data Generator."
+optional = false
+python-versions = "<4.0,>=3.10"
+files = [
+    {file = "mimesis-17.0.0-py3-none-any.whl", hash = "sha256:a088a14075c6d0356fea15e7687afb8f900a412daa80f2f3fe20f1771532402f"},
+    {file = "mimesis-17.0.0.tar.gz", hash = "sha256:57fd7c2762c668054f2ebb85f71d484fa2fd55647d2a02bac4f2e97b81f22d8d"},
+]
+
+[package.extras]
+factory = ["factory-boy (>=3.3.0,<4.0.0)"]
+pytest = ["pytest (>=7.2,<8.0)"]
+
+[[package]]
 name = "multidict"
 version = "6.0.5"
 description = "multidict implementation"
@@ -1497,4 +1512,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "ec2f8ff2ae20920cfdce221e28fdddbdff62ef4dc1ca20ee6ef1c8e82af4d4ea"
+content-hash = "19982d418a10605e2e66f0ccc1b094d2edb24d9f15e72b061eac4d6f9e68915e"
