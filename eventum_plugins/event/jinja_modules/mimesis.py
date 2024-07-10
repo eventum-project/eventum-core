@@ -1,6 +1,4 @@
 import mimesis.enums as enums  # noqa
-import mimesis.locales as locales  # noqa
-import mimesis.providers as providers  # noqa
 import mimesis.random as random  # noqa
 from mimesis import Generic, Locale
 from mimesis.builtins import (BrazilSpecProvider, DenmarkSpecProvider,
