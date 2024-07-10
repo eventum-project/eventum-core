@@ -32,6 +32,7 @@ croniter = "^2.0.5"
 eventum-content-manager = "^1.0.3"
 pytz = "^2024.1"
 mimesis = "^17.0.0"
+faker = "^26.0.0"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
