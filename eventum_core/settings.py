@@ -31,11 +31,11 @@ class Settings(BaseModel, extra='forbid', frozen=True):
     output_batch_size: int = Field(10_000, ge=1)
     output_batch_timeout: float = Field(1.0, ge=0)
 
-    # Max size of input queue
-    input_queue_max_size: int = Field(10_000_000, ge=1)
+    # Max size of input queue (number of batches)
+    input_queue_max_size: int = Field(100, ge=1)
 
-    # Max size of event queue
-    event_queue_max_size: int = Field(1_000_000, ge=1)
+    # Max size of event queue (number of batches)
+    event_queue_max_size: int = Field(100, ge=1)
 
     @field_validator('timezone')
     def validate_timezone(cls, v: Any):
