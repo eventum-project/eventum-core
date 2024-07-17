@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eventum-plugins"
-version = "1.1.1"
+version = "1.2.0"
 description = "Plugins for Eventum"
 license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
@@ -31,6 +31,8 @@ aiofiles = "^23.2.1"
 croniter = "^2.0.5"
 eventum-content-manager = "^1.0.3"
 pytz = "^2024.1"
+mimesis = "^17.0.0"
+faker = "^26.0.0"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
