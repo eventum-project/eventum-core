@@ -9,7 +9,6 @@ import numpy as np
 from eventum_plugins.input.base import (BaseInputPlugin,
                                         InputPluginConfigurationError,
                                         InputPluginRuntimeError)
-from numpy.typing import NDArray
 from pytz import timezone
 
 from eventum_core.batcher import Batcher
@@ -41,7 +40,7 @@ class InputProcessManager():
         config: Iterable[InputConfigMapping],   # type: ignore[valid-type]
         settings: Settings,
         time_mode: TimeMode,
-        downstream_queue: Queue[NDArray]
+        downstream_queue: Queue
     ) -> None:
         self._config = list(config)
         self._settings = settings
@@ -51,8 +50,27 @@ class InputProcessManager():
         self._process = Process(target=self._start_process)
 
     def start(self) -> None:
-        """Start input process"""
+        """Start input process."""
         self._process.start()
+
+    def join(self) -> None:
+        """Wait until input process terminates."""
+        self._process.join()
+
+    def is_alive(self) -> bool:
+        """Return whether input process is alive."""
+        return self._process.is_alive()
+
+    def terminate(self) -> None:
+        """Terminate input subprocess."""
+        self._process.terminate()
+
+    @property
+    def exit_code(self) -> int | None:
+        """Return input process exit code or `None` if it has yet to
+        stop.
+        """
+        return self._process.exitcode
 
     def get_plugin_names(self) -> list[str]:
         """Get plugin names in order specified in config."""
