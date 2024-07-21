@@ -42,7 +42,7 @@ class InputPluginRunner:
 
     def run(self, on_event: Callable[[np.datetime64], Any],) -> None:
         """Run configured input plugin with specified `on_event`
-        callback.
+        callback with blocking execution.
         """
         self._task(on_event=on_event)
 
