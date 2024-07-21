@@ -2,8 +2,9 @@ import logging
 from typing import Any, Callable
 
 import numpy as np
-from eventum_core.settings import TimeMode
 from eventum_plugins.input.base import BaseInputPlugin
+
+from eventum_core.settings import TimeMode
 
 logger = logging.getLogger(__name__)
 

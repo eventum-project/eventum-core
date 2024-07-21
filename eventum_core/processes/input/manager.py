@@ -6,6 +6,12 @@ from multiprocessing import Process, Queue
 from typing import Iterable
 
 import numpy as np
+from eventum_plugins.input.base import (BaseInputPlugin,
+                                        InputPluginConfigurationError,
+                                        InputPluginRuntimeError)
+from numpy.typing import NDArray
+from pytz import timezone
+
 from eventum_core.batcher import Batcher
 from eventum_core.plugins_connector import (InputConfigMapping,
                                             PluginNotFoundError,
@@ -14,11 +20,6 @@ from eventum_core.processes.input.pool_runner import InputPluginPoolRunner
 from eventum_core.processes.input.runner import (InputPluginRunner,
                                                  UnsupportedTimeModeError)
 from eventum_core.settings import Settings, TimeMode
-from eventum_plugins.input.base import (BaseInputPlugin,
-                                        InputPluginConfigurationError,
-                                        InputPluginRuntimeError)
-from numpy.typing import NDArray
-from pytz import timezone
 
 logger = logging.getLogger(__name__)
 

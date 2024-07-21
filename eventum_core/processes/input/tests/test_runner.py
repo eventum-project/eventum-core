@@ -1,9 +1,10 @@
 import pytest
+from eventum_plugins.input.sample import SampleInputConfig, SampleInputPlugin
+from pytz import timezone
+
 from eventum_core.processes.input.runner import (InputPluginRunner,
                                                  UnsupportedTimeModeError)
 from eventum_core.settings import TimeMode
-from eventum_plugins.input.sample import SampleInputConfig, SampleInputPlugin
-from pytz import timezone
 
 
 @pytest.fixture
@@ -21,10 +22,10 @@ def test_runner(plugin):
         name='sample'
     )
 
-    events = []
-    runner.run(on_event=events.append)
+    timestamps = []
+    runner.run(on_event=timestamps.append)
 
-    assert len(events) == 10
+    assert len(timestamps) == 10
 
 
 def test_runner_with_improper_mode(plugin):

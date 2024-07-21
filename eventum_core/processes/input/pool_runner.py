@@ -3,6 +3,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any, Callable, Iterable
 
 import numpy as np
+
 from eventum_core.processes.input.runner import InputPluginRunner
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class InputPluginPoolRunner:
         (including due to errors) `on_done` callback is called with
         corresponding future passed to it. So it is expected to call
         `result()` method to obtain result or propagate exception.
+        Execution is blocked until all runners have completed.
         """
         with ThreadPoolExecutor(max_workers=len(self._runners)) as executor:
             for id, runner in enumerate(self._runners, 0):
