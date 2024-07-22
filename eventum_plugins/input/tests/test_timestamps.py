@@ -67,6 +67,7 @@ def test_timestamps_sample():
         datetime64(datetime.fromisoformat('2024-01-01T00:00:00.100')),
     ]
 
+
 @pytest.fixture
 def timestamps_filename():
     filename = tempfile.mktemp()
