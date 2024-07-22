@@ -46,16 +46,13 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 raise PluginConfigurationError(
                     f'Failed to parse timestamps: {e}'
                 ) from None
-
-            self._timestamps: NDArray[datetime64] = array(
-                timestamps,
-                dtype='datetime64'
-            )
         else:
-            self._timestamps: NDArray[datetime64] = array(
-                [convert_to_naive(ts, tz) for ts in config.source],
-                dtype='datetime64'
-            )
+            timestamps = [convert_to_naive(ts, tz) for ts in config.source]
+
+        self._timestamps: NDArray[datetime64] = array(
+            timestamps,
+            dtype='datetime64'
+        )
         self._tz = tz
 
     def _read_timestamps_from_file(self, filename: str) -> list[str]:
