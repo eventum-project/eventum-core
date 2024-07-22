@@ -1,27 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, TypeAlias
+from typing import Any, Callable
 
 from numpy import datetime64
 from pydantic import BaseModel
 from pytz.tzinfo import BaseTzInfo
-
-
-class InputPluginError(Exception):
-    """Base exception for all input plugin errors."""
-
-
-class InputPluginConfigurationError(InputPluginError):
-    """Exception for input plugin configuration errors."""
-
-
-class InputPluginRuntimeError(InputPluginError):
-    """Exception for input plugin runtime errors."""
-
-
-class PerformanceError(InputPluginRuntimeError):
-    """Exception for input plugin errors related with insufficient
-    performance.
-    """
 
 
 class InputPluginBaseConfig(ABC, BaseModel, extra='forbid', frozen=True):
@@ -65,6 +47,3 @@ class SampleInputPlugin(BaseInputPlugin):
         timestamps.
         """
         ...
-
-
-InputPlugin: TypeAlias = (SampleInputPlugin | LiveInputPlugin)

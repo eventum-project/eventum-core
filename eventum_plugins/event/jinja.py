@@ -15,9 +15,9 @@ from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateSyntaxError, Undefined)
 from pydantic import Field, field_validator
 
-from eventum_plugins.event.base import (BaseEventPlugin, EventPluginBaseConfig,
-                                        EventPluginConfigurationError,
-                                        EventPluginRuntimeError)
+from eventum_plugins.event.base import BaseEventPlugin, EventPluginBaseConfig
+from eventum_plugins.exceptions import (PluginConfigurationError,
+                                        PluginRuntimeError)
 from eventum_plugins.utils.modules import get_module_names
 
 
@@ -191,7 +191,7 @@ class JinjaEventPlugin(BaseEventPlugin):
                             delimiter=value.delimiter
                         )
                     except ContentManagementError as e:
-                        raise EventPluginConfigurationError(
+                        raise PluginConfigurationError(
                             f'Failed to load sample: {e}'
                         ) from e
 
@@ -213,20 +213,20 @@ class JinjaEventPlugin(BaseEventPlugin):
             try:
                 template = self._env.get_template(template_conf.template)
                 if template.name is None:
-                    raise EventPluginConfigurationError(
+                    raise PluginConfigurationError(
                         'Template must have a name'
                     )
                 templates.append(template)
             except TemplateNotFound as e:
-                raise EventPluginConfigurationError(
+                raise PluginConfigurationError(
                     f'Failed to load template: {e}'
                 ) from e
             except TemplateSyntaxError as e:
-                raise EventPluginConfigurationError(
+                raise PluginConfigurationError(
                     f'Bad syntax in template "{template_conf.template}": {e}'
                 ) from e
             except TemplateError as e:
-                raise EventPluginConfigurationError(
+                raise PluginConfigurationError(
                     f'Error in "{template_conf.template}" template: {e}'
                 ) from e
 
@@ -305,7 +305,7 @@ class JinjaEventPlugin(BaseEventPlugin):
                     )
                 )
             except TemplateRuntimeError as e:
-                raise EventPluginRuntimeError(
+                raise PluginRuntimeError(
                     f'Failed to render template: {e}'
                 ) from e
 

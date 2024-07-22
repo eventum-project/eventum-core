@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from pydantic import ValidationError
 from pytz import timezone
 
-from eventum_plugins.input.base import InputPluginConfigurationError
+from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.time_patterns import (TimePatternPoolInputPlugin,
                                                  TimePatternsInputConfig)
 
@@ -36,7 +36,7 @@ def test_invalid_config_structure():
             os.path.join(STATIC_FILES_DIR, 'time_pattern_invalid.yml'),
         )
     )
-    with pytest.raises(InputPluginConfigurationError):
+    with pytest.raises(PluginConfigurationError):
         TimePatternPoolInputPlugin(config=config, tz=timezone('UTC'))
 
 

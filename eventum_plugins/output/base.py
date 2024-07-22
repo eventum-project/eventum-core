@@ -7,22 +7,12 @@ from typing import Any, Iterable, Self, assert_never
 
 from pydantic import BaseModel
 
+from eventum_plugins.exceptions import PluginRuntimeError
+
 logger = logging.getLogger(__name__)
 
 
-class OutputPluginError(Exception):
-    """Base exception for all output plugin errors."""
-
-
-class OutputPluginConfigurationError(OutputPluginError):
-    """Exception for output plugin configuration errors."""
-
-
-class OutputPluginRuntimeError(OutputPluginError):
-    """Exception for output plugin runtime errors."""
-
-
-class FormatError(OutputPluginRuntimeError):
+class FormatError(PluginRuntimeError):
     """Exception for formatting errors."""
 
 
@@ -74,7 +64,7 @@ class BaseOutputPlugin(ABC):
     async def write(self, event: str) -> None:
         """Write single event to output stream."""
         if not self._is_opened:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 'Output plugin is not opened for writing to target'
             )
 
@@ -83,7 +73,7 @@ class BaseOutputPlugin(ABC):
     async def write_many(self, events: Iterable[str]) -> None:
         """Write many events to output stream."""
         if not self._is_opened:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 'Output plugin is not opened for writing to target'
             )
 

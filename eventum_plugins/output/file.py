@@ -6,10 +6,10 @@ import aiofiles
 from aiofiles.threadpool.text import AsyncTextIOWrapper
 from pydantic import field_validator
 
+from eventum_plugins.exceptions import (PluginConfigurationError,
+                                        PluginRuntimeError)
 from eventum_plugins.output.base import (BaseOutputPlugin, OutputFormat,
-                                         OutputPluginBaseConfig,
-                                         OutputPluginConfigurationError,
-                                         OutputPluginRuntimeError)
+                                         OutputPluginBaseConfig)
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +43,11 @@ class FileOutputPlugin(BaseOutputPlugin):
         try:
             with open(self._filepath, 'a') as f:
                 if not f.writable():
-                    raise OutputPluginConfigurationError(
+                    raise PluginConfigurationError(
                         f'File "{self._filepath}" is not writable'
                     )
         except OSError as e:
-            raise OutputPluginConfigurationError(
+            raise PluginConfigurationError(
                 f'Failed to open file "{self._filepath}": {e}'
             )
 
@@ -66,7 +66,7 @@ class FileOutputPlugin(BaseOutputPlugin):
         try:
             await self._file.write(event + os.linesep)
         except OSError as e:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 f'Failed to write event to file: {e}'
             ) from e
 
@@ -77,7 +77,7 @@ class FileOutputPlugin(BaseOutputPlugin):
         try:
             await self._file.writelines(map(lambda e: e + os.linesep, events))
         except OSError as e:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 f'Failed to write events to file: {e}'
             ) from e
 

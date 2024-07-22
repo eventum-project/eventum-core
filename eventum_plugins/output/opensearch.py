@@ -9,9 +9,9 @@ from typing import Iterable
 import aiohttp
 from pydantic import Field, field_validator
 
+from eventum_plugins.exceptions import PluginRuntimeError
 from eventum_plugins.output.base import (BaseOutputPlugin, OutputFormat,
-                                         OutputPluginBaseConfig,
-                                         OutputPluginRuntimeError)
+                                         OutputPluginBaseConfig)
 
 logger = logging.getLogger(__name__)
 
@@ -87,12 +87,12 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
             )
             text = await response.text()
         except aiohttp.ClientError as e:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 f'Failed to index event to opensearch ({host}): {e}'
             )
 
         if response.status != 201:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 f'Failed to index event to opensearch ({host}): '
                 f'HTTP {response.status} - {text}'
             )
@@ -106,12 +106,12 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
             )
             text = await response.text()
         except aiohttp.ClientError as e:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 f'Failed to perform bulk indexing to opensearch ({host}): {e}'
             )
 
         if response.status != 200:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 f'Failed to perform bulk indexing to opensearch ({host}): '
                 f'HTTP {response.status} - {text}'
             )
@@ -119,7 +119,7 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
         try:
             result = json.loads(text)
         except json.JSONDecodeError as e:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 f'Failed to decode bulk response ({host}): {e}'
             )
 
@@ -130,12 +130,12 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
                     if 'index' in item and 'error' in item['index']:
                         errors.append(item['index']['error'])
         except KeyError as e:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 f'Failed to process bulk response ({host}): {e}'
             )
 
         if errors:
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 'Failed to index some of the events:\n'
                 f'{json.dumps(errors, indent=2, ensure_ascii=False)}'
             )
@@ -160,13 +160,13 @@ class OpensearchOutputPlugin(BaseOutputPlugin):
 
         successful_count = 0
         for result in results:
-            if isinstance(result, OutputPluginRuntimeError):
+            if isinstance(result, PluginRuntimeError):
                 logger.error(str(result))
             else:
                 successful_count += 1
 
         if successful_count < len(results):
-            raise OutputPluginRuntimeError(
+            raise PluginRuntimeError(
                 'Bulk indexing did not complete with success: only '
                 f'{successful_count}/{len(results)} nodes indexed events'
             )

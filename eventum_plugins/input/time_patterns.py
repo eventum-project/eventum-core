@@ -15,10 +15,9 @@ from pydantic import (AfterValidator, BaseModel, Field, ValidationError,
                       model_validator)
 from pytz.tzinfo import BaseTzInfo
 
-from eventum_plugins.input.base import (InputPluginBaseConfig,
-                                        InputPluginConfigurationError,
-                                        InputPluginRuntimeError,
-                                        LiveInputPlugin, PerformanceError,
+from eventum_plugins.exceptions import (PluginConfigurationError,
+                                        PluginRuntimeError)
+from eventum_plugins.input.base import (InputPluginBaseConfig, LiveInputPlugin,
                                         SampleInputPlugin)
 from eventum_plugins.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum_plugins.utils.relative_time import parse_relative_time
@@ -281,7 +280,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
             case TimeKeyword.NOW:
                 start = now
             case TimeKeyword.NEVER as val:
-                raise InputPluginRuntimeError(
+                raise PluginRuntimeError(
                     f'Value of "start" cannot be "{val}"'
                 )
             case str() as val:
@@ -307,7 +306,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
                 assert_never(val)
 
         if end is never and not allow_never_end:
-            raise InputPluginRuntimeError(
+            raise PluginRuntimeError(
                 f'Value "{TimeKeyword.NEVER}" for "end" parameter '
                 'is not allowed here'
             )
@@ -316,7 +315,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         end = end.replace(tzinfo=None)
 
         if start >= end:
-            raise InputPluginRuntimeError(
+            raise PluginRuntimeError(
                 '"start" time must be earlier than "end" time'
             )
 
@@ -358,7 +357,7 @@ class TimePatternInputPlugin(LiveInputPlugin, SampleInputPlugin):
         required_eps = self._get_required_eps()
 
         if actual_eps < required_eps:
-            raise PerformanceError(
+            raise PluginRuntimeError(
                 'Not enough performance to produce distributions in time: '
                 f'actual EPS is {round(actual_eps)} but {round(required_eps)} '
                 'is required'
@@ -479,11 +478,11 @@ class TimePatternPoolInputPlugin(LiveInputPlugin, SampleInputPlugin):
                     obj=time_pattern_obj
                 )
             except ContentManagementError as e:
-                raise InputPluginConfigurationError(
+                raise PluginConfigurationError(
                     f'Failed to load time pattern "{config_path}": {e}'
                 )
             except ValidationError as e:
-                raise InputPluginConfigurationError(
+                raise PluginConfigurationError(
                     f'Bad config structure for "{config_path}": {e}'
                 )
 

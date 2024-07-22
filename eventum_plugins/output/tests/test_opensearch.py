@@ -4,7 +4,7 @@ import re
 import pytest
 from aioresponses import aioresponses
 
-from eventum_plugins.output.base import OutputPluginRuntimeError
+from eventum_plugins.exceptions import PluginRuntimeError
 from eventum_plugins.output.opensearch import (OpensearchOutputConfig,
                                                OpensearchOutputPlugin)
 
@@ -135,7 +135,7 @@ async def test_opensearch_invalid_data(config, write_response):
             body=write_response
         )
 
-        with pytest.raises(OutputPluginRuntimeError):
+        with pytest.raises(PluginRuntimeError):
             await plugin.write(
                 '{"@timestamp": "2024-01-01T00:00:00.000Z", "val CORRUPTED...'
             )
