@@ -5,22 +5,35 @@ from numpy import datetime64
 from pydantic import BaseModel
 from pytz.tzinfo import BaseTzInfo
 
+from eventum_plugins.registry import PluginType, PluginsRegistry
 
-class InputPluginBaseConfig(ABC, BaseModel, extra='forbid', frozen=True):
+
+class InputPluginConfig(ABC, BaseModel, extra='forbid', frozen=True):
     """Base config model for input plugins"""
     tags: tuple[str, ...] = tuple()
 
 
-class BaseInputPlugin(ABC):
+class InputPlugin(ABC):
     """Base class for all input plugins."""
+
+    def __init_subclass__(cls, config_cls: type, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        plugin_name = cls.__module__.split('.')[-1]
+        PluginsRegistry().register_plugin(
+            type=PluginType.INPUT,
+            name=plugin_name,
+            cls=cls,
+            config_cls=config_cls
+        )
 
     @abstractmethod
     def __init__(self, config: Any, tz: BaseTzInfo) -> None:
         ...
 
 
-class LiveInputPlugin(BaseInputPlugin):
-    """Base class for input plugins that can be used in live mode."""
+class LiveInputPluginMixin(ABC):
+    """Input plugin mixin that adds live mode."""
 
     @abstractmethod
     def live(self, on_event: Callable[[datetime64], Any]) -> None:
@@ -33,8 +46,8 @@ class LiveInputPlugin(BaseInputPlugin):
         ...
 
 
-class SampleInputPlugin(BaseInputPlugin):
-    """Base class for input plugin that can be used in sample mode."""
+class SampleInputPluginMixin(ABC):
+    """Input plugin mixin that adds sample mode."""
 
     @abstractmethod
     def sample(self, on_event: Callable[[datetime64], Any]) -> None:

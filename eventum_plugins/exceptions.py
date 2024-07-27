@@ -1,5 +1,13 @@
+class PluginLoadError(Exception):
+    """Exception for plugin loading errors."""
+
+
+class PluginNotFoundError(PluginLoadError):
+    """Exception for errors when plugin with a given name is not found."""
+
+
 class PluginError(Exception):
-    """Base exception for all plugin errors."""
+    """Base exception for plugin errors."""
 
 
 class PluginConfigurationError(PluginError):
