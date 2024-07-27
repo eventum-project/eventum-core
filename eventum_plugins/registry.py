@@ -32,7 +32,7 @@ class PluginsRegistry(metaclass=Singleton):
         """Register plugin in registry."""
         self._plugins[type][name] = PluginInfo(
             name=name,
-            type=PluginType,
+            type=type,
             cls=cls,
             config_cls=config_cls
         )
