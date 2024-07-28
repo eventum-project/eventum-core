@@ -5,7 +5,7 @@ from pytz.tzinfo import BaseTzInfo
 
 
 def get_now(tz: BaseTzInfo) -> datetime64:
-    """Get current time in UTC timezone."""
+    """Get current datetime in specified timezone."""
     return datetime64(datetime.now(tz).replace(tzinfo=None))
 
 

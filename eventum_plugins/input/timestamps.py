@@ -1,22 +1,30 @@
+import logging
 import os
 import time
 from datetime import datetime
 from typing import Any, Callable
 
-from numpy import array, datetime64
+from numpy import array, datetime64, sort
 from numpy.typing import NDArray
 from pydantic import Field, field_validator
 from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.exceptions import PluginConfigurationError
-from eventum_plugins.input.base import (InputPluginBaseConfig, LiveInputPlugin,
-                                        SampleInputPlugin)
+from eventum_plugins.input._base import (InputPlugin, InputPluginConfig,
+                                         LiveInputPluginMixin,
+                                         SampleInputPluginMixin)
 from eventum_plugins.utils.datetime import convert_to_naive
 from eventum_plugins.utils.numpy_time import get_now, timedelta_to_seconds
 from eventum_plugins.utils.timeseries import get_future_slice
 
+logger = logging.getLogger(__name__)
 
-class TimestampsInputConfig(InputPluginBaseConfig, frozen=True):
+
+class TimestampsInputPluginConfig(InputPluginConfig, frozen=True):
+    """
+    `source` - list of timestamps or path to file with new line
+    separated timestamps
+    """
     source: tuple[datetime, ...] | str = Field(..., min_length=1)
 
     @field_validator('source')
@@ -30,15 +38,22 @@ class TimestampsInputConfig(InputPluginBaseConfig, frozen=True):
         return v
 
 
-class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
+class TimestampsInputPlugin(
+    LiveInputPluginMixin,
+    SampleInputPluginMixin,
+    InputPlugin,
+    config_cls=TimestampsInputPluginConfig
+):
     """Input plugin for generating events in specified timestamps."""
 
-    def __init__(self, config: TimestampsInputConfig, tz: BaseTzInfo) -> None:
-        # if `source` is of type string we consider it as filename
-        # with list of timestamps
+    def __init__(
+        self,
+        config: TimestampsInputPluginConfig,
+        tz: BaseTzInfo
+    ) -> None:
         if isinstance(config.source, str):
             try:
-                timestamps: list[datetime] = [
+                self._timestamps: list[datetime] = [
                     convert_to_naive(datetime.fromisoformat(ts), tz)
                     for ts in self._read_timestamps_from_file(config.source)
                 ]
@@ -47,43 +62,43 @@ class TimestampsInputPlugin(LiveInputPlugin, SampleInputPlugin):
                     f'Failed to parse timestamps: {e}'
                 ) from None
         else:
-            timestamps = [convert_to_naive(ts, tz) for ts in config.source]
+            self._timestamps = [
+                convert_to_naive(ts, tz) for ts in config.source
+            ]
 
-        self._timestamps: NDArray[datetime64] = array(
-            timestamps,
-            dtype='datetime64'
-        )
         self._tz = tz
 
     def _read_timestamps_from_file(self, filename: str) -> list[str]:
         """Read timestamp from specified file."""
         try:
             with open(filename) as f:
-                return f.read().strip().split(os.linesep)
+                return [line.strip() for line in f.readlines() if line.strip()]
         except OSError as e:
             raise PluginConfigurationError(
                 f'Failed to load timestamps file: {e}'
             ) from None
 
-    def sample(self, on_event: Callable[[datetime64], Any]) -> None:
-        for timestamp in self._timestamps:
-            on_event(timestamp)
+    def sample(self, on_events: Callable[[NDArray[datetime64]], Any]) -> None:
+        timestamps = sort(array(self._timestamps, dtype='datetime64[us]'))
+        on_events(timestamps)
 
-    def live(self, on_event: Callable[[datetime64], Any]) -> None:
+    def live(self, on_events: Callable[[NDArray[datetime64]], Any]) -> None:
+        timestamps = sort(array(self._timestamps, dtype='datetime64[us]'))
+
         now = get_now(tz=self._tz)
         future_timestamps = get_future_slice(
-            timestamps=self._timestamps,
+            timestamps=timestamps,
             after=now
         )
+        if future_timestamps.size == 0:
+            logger.warning('All timestamps are in past, nothing to generate')
+            return
+
         for timestamp in future_timestamps:
+            now = get_now(tz=self._tz)
             wait_seconds = timedelta_to_seconds(timestamp - now)
 
             if wait_seconds > 0:
                 time.sleep(wait_seconds)    # type: ignore[arg-type]
-                now = get_now(tz=self._tz)
 
-            on_event(timestamp)
-
-
-PLUGIN_CLASS = TimestampsInputPlugin
-CONFIG_CLASS = TimestampsInputConfig
+            on_events(array([timestamp], dtype='datetime64[us]'))
