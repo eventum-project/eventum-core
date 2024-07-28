@@ -1,6 +1,7 @@
-from eventum_plugins.registry import PluginsRegistry
-from eventum_plugins.enums import PluginType
 import pytest
+
+from eventum_plugins.enums import PluginType
+from eventum_plugins.registry import PluginsRegistry
 
 
 def test_registry():

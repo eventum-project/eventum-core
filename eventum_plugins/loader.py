@@ -1,9 +1,8 @@
 import importlib
 
 from eventum_plugins.exceptions import PluginLoadError, PluginNotFoundError
-from eventum_plugins.registry import PluginInfo, PluginType, PluginsRegistry
+from eventum_plugins.registry import PluginInfo, PluginsRegistry, PluginType
 from eventum_plugins.utils.modules import get_module_names
-
 
 INPUT_PLUGINS_PACKAGE = 'eventum_plugins.input'
 EVENT_PLUGINS_PACKAGE = 'eventum_plugins.event'

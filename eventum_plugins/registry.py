@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from eventum_plugins.enums import PluginType
 from eventum_plugins.metaclasses import Singleton
 
