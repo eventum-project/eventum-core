@@ -3,14 +3,20 @@ from datetime import datetime
 from typing import Any, Callable
 
 from croniter import croniter
-from numpy import datetime64
+from numpy import datetime64, full
+from numpy.typing import NDArray
 from pydantic import Field, field_validator
 from pytz.tzinfo import BaseTzInfo
 
-from eventum_plugins.input.base import InputPluginBaseConfig, LiveInputPlugin
+from eventum_plugins.input._base import (InputPlugin, InputPluginConfig,
+                                         LiveInputPluginMixin)
 
 
-class CronInputConfig(InputPluginBaseConfig, frozen=True):
+class CronInputPluginConfig(InputPluginConfig, frozen=True):
+    """
+    `expression` - cron expression (e.g. */5 * * * *)
+    `count` - number of events to generate each interval
+    """
     expression: str
     count: int = Field(..., gt=0)
 
@@ -21,17 +27,21 @@ class CronInputConfig(InputPluginBaseConfig, frozen=True):
         raise ValueError('Invalid cron expression')
 
 
-class CronInputPlugin(LiveInputPlugin):
+class CronInputPlugin(
+    LiveInputPluginMixin,
+    InputPlugin,
+    config_cls=CronInputPluginConfig
+):
     """Input plugin for generating events at moments defined by cron
     expression.
     """
 
-    def __init__(self, config: CronInputConfig, tz: BaseTzInfo) -> None:
+    def __init__(self, config: CronInputPluginConfig, tz: BaseTzInfo) -> None:
         self._expression = config.expression
         self._count = config.count
         self._tz = tz
 
-    def live(self, on_event: Callable[[datetime64], Any]) -> None:
+    def live(self, on_events: Callable[[NDArray[datetime64]], Any]) -> None:
         cron = croniter(
             expr_format=self._expression,
             start_time=datetime.now(tz=self._tz),
@@ -46,9 +56,5 @@ class CronInputPlugin(LiveInputPlugin):
             if wait_seconds > 0:
                 time.sleep(wait_seconds)
 
-            for _ in range(self._count):
-                on_event(datetime64(timestamp.replace(tzinfo=None)))
-
-
-PLUGIN_CLASS = CronInputPlugin
-CONFIG_CLASS = CronInputConfig
+            ts = datetime64(timestamp.replace(tzinfo=None))
+            on_events(full(self._count, ts, dtype='datetime64[us]'))

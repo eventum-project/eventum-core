@@ -2,13 +2,15 @@ from datetime import datetime
 from typing import Any, Callable
 
 from numpy import datetime64, linspace, timedelta64
+from numpy.typing import NDArray
 from pydantic import Field, model_validator
 from pytz.tzinfo import BaseTzInfo
 
-from eventum_plugins.input.base import InputPluginBaseConfig, SampleInputPlugin
+from eventum_plugins.input._base import (InputPlugin, InputPluginConfig,
+                                         SampleInputPluginMixin)
 
 
-class LinspaceInputConfig(InputPluginBaseConfig, frozen=True):
+class LinspaceInputPluginConfig(InputPluginConfig, frozen=True):
     start: datetime
     end: datetime
     count: int = Field(..., ge=1)
@@ -21,38 +23,43 @@ class LinspaceInputConfig(InputPluginBaseConfig, frozen=True):
         raise ValueError('Start time must be earlier than end time')
 
 
-class LinspaceInputPlugin(SampleInputPlugin):
+class LinspaceInputPlugin(
+    SampleInputPluginMixin,
+    InputPlugin,
+    config_cls=LinspaceInputPluginConfig
+):
     """Input plugin for generating specified count of events linearly
     spaced in time.
     """
 
-    def __init__(self, config: LinspaceInputConfig, tz: BaseTzInfo) -> None:
+    def __init__(
+        self,
+        config: LinspaceInputPluginConfig,
+        tz: BaseTzInfo
+    ) -> None:
         self._start = config.start
         self._end = config.end
         self._count = config.count
         self._endpoint = config.endpoint
         self._tz = tz
 
-    def sample(self, on_event: Callable[[datetime64], Any]) -> None:
+    def sample(self, on_events: Callable[[NDArray[datetime64]], Any]) -> None:
         start = datetime64(
-            self._start.astimezone(self._tz).replace(tzinfo=None)
+            value=self._start.astimezone(self._tz).replace(tzinfo=None),
+            format='us'
         )
         end = datetime64(
-            self._end.astimezone(self._tz).replace(tzinfo=None)
+            value=self._end.astimezone(self._tz).replace(tzinfo=None),
+            format='us'
         )
 
-        timedelta = timedelta64(end - start)
+        timedelta = timedelta64(value=(end - start), format='us')
         space = linspace(
             start=0,
             stop=1,
             num=self._count,
             endpoint=self._endpoint,
         )
-        timestamps = [start + delta for delta in space * timedelta]
 
-        for ts in timestamps:
-            on_event(ts)
-
-
-PLUGIN_CLASS = LinspaceInputPlugin
-CONFIG_CLASS = LinspaceInputConfig
+        timestamps = start + (timedelta * space)
+        on_events(timestamps)
