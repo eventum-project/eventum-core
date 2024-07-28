@@ -11,6 +11,12 @@ from eventum_plugins.input._base import (InputPlugin, InputPluginConfig,
 
 
 class LinspaceInputPluginConfig(InputPluginConfig, frozen=True):
+    """
+    `start` - start time of interval
+    `end` - end time of interval
+    `count` - number of events within interval
+    `endpoint` - whether to include end point of interval
+    """
     start: datetime
     end: datetime
     count: int = Field(..., ge=1)
