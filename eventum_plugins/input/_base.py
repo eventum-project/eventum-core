@@ -17,8 +17,16 @@ class InputPluginConfig(ABC, BaseModel, extra='forbid', frozen=True):
 class InputPlugin(ABC):
     """Base class for all input plugins."""
 
-    def __init_subclass__(cls, config_cls: type, **kwargs):
+    def __init_subclass__(
+        cls,
+        config_cls: type,
+        register: bool = True,
+        **kwargs
+    ):
         super().__init_subclass__(**kwargs)
+
+        if not register:
+            return
 
         plugin_name = cls.__module__.split('.')[-1]
         PluginsRegistry().register_plugin(
