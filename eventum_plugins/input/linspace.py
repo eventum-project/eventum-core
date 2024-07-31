@@ -8,6 +8,7 @@ from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input._base import (InputPlugin, InputPluginConfig,
                                          SampleInputPluginMixin)
+from eventum_plugins.utils.datetime import convert_to_naive
 
 
 class LinspaceInputPluginConfig(InputPluginConfig, frozen=True):
@@ -51,11 +52,11 @@ class LinspaceInputPlugin(
 
     def sample(self, on_events: Callable[[NDArray[datetime64]], Any]) -> None:
         start = datetime64(
-            value=self._start.astimezone(self._tz).replace(tzinfo=None),
+            value=convert_to_naive(self._start, self._tz),
             format='us'
         )
         end = datetime64(
-            value=self._end.astimezone(self._tz).replace(tzinfo=None),
+            value=convert_to_naive(self._end, self._tz),
             format='us'
         )
 
