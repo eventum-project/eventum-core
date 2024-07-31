@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import signal
+import time
 import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
@@ -55,6 +56,7 @@ def _terminate_subprocess(
 ) -> NoReturn:
     """Handle termination of subprocess."""
     if signal_queue is not None:
+        time.sleep(1)
         signal_queue.put(None)
     is_done.set()
     exit(exit_code)
