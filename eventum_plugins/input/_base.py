@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import Any, Iterator
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -45,13 +45,18 @@ class LiveInputPluginMixin(ABC):
     """Input plugin mixin that adds live mode."""
 
     @abstractmethod
-    def live(self, on_events: Callable[[NDArray[datetime64]], Any]) -> None:
-        """Start production of event timestamps in live. Every time
-        events are occurred in process, the `on_events` callable is
-        called with array of corresponding timestamps that are near
-        enough to be placed into single batch. If process has no end
-        time then function execution never ends, otherwise `None` is
-        returned in the end.
+    def live(
+        self,
+        batch_size: int = 1_000_000,
+        batch_delay: float = 0.1
+    ) -> Iterator[NDArray[datetime64]]:
+        """Start production of event timestamps in live. Iteration
+        starts from only actual timestamps that are not in the past.
+        Iteration is blocked until new events occur in real time.
+        Elements of iteration are arrays of timestamps that batched
+        correspondingly to `batch_size` and `batch_delay`. Iteration
+        may or may not be infinite depending on specific plugin and its
+        configuration.
         """
         ...
 
@@ -60,12 +65,14 @@ class SampleInputPluginMixin(ABC):
     """Input plugin mixin that adds sample mode."""
 
     @abstractmethod
-    def sample(self, on_events: Callable[[NDArray[datetime64]], Any]) -> None:
-        """Product sample of events. `on_event` callable is called only
-        once when entire sample of timestamps is done. Since process
-        execution is not tied to real time and there is no any delay
-        between `on_event` calls (like in `live` mode) it is expected to
-        have specific start and end time to generate finite sample of
-        timestamps.
+    def sample(
+        self,
+        batch_size: int = 1_000_000,
+    ) -> Iterator[NDArray[datetime64]]:
+        """Product sample of event timestamps. Iteration is carried out
+        from the first to the last timestamp of generated sample
+        without any delays. Elements of iteration are arrays of
+        timestamps that batched correspondingly to `batch_size`. Number
+        of elements of iteration is always finite.
         """
         ...
