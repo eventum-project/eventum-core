@@ -83,10 +83,8 @@ class TimestampsBatcher:
 
         self._timestamp_arrays_queue: list[NDArray[datetime64]] = list()
         self._partial_batch: NDArray[datetime64] | None = None
-        self._queue_current_bytes = 0
         self._queue_consumed_event = Event()
 
-        self._queue_current_size = 0
         self._lock = RLock()
         self._flush_condition = Condition(self._lock)
 
@@ -107,7 +105,7 @@ class TimestampsBatcher:
                 if (
                     not self._is_closed and (
                         self._batch_size is None
-                        or self._queue_current_size < self._batch_size
+                        or self.queue_current_size < self._batch_size
                     )
                 ):
                     self._flush_condition.wait(timeout=self._batch_delay)
@@ -155,8 +153,8 @@ class TimestampsBatcher:
                 return
 
     def scroll(self) -> Iterator[NDArray[datetime64]]:
-        """Scroll through timestamps batches. After iterating over all
-        accumulated timestamps execution is blocked until `finish`
+        """Scroll through timestamp batches. After iterating over all
+        accumulated timestamps execution is blocked until `close`
         method is called or new events are added and new batch is ready
         to be published.
         """
@@ -193,7 +191,7 @@ class TimestampsBatcher:
 
             if (
                 self._batch_size is not None
-                and self._queue_current_size >= self._batch_size
+                and self.queue_current_size >= self._batch_size
             ):
                 self._flush_condition.notify_all()
 
