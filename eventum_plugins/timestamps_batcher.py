@@ -88,7 +88,7 @@ class TimestampsBatcher:
 
         self._queue_current_size = 0
         self._lock = RLock()
-        self._size_condition = Condition(self._lock)
+        self._flush_condition = Condition(self._lock)
 
         self._is_closed = False
 
@@ -102,13 +102,13 @@ class TimestampsBatcher:
         """Produce batches of timestamps from input queue without
         timestamp value based scheduling.
         """
-        while True:
+        while not self._is_closed:
             with self._lock:
                 if (
                     self._batch_size is None
                     or self._queue_current_size < self._batch_size
                 ):
-                    self._size_condition.wait(timeout=self._batch_delay)
+                    self._flush_condition.wait(timeout=self._batch_delay)
 
                 if not self._timestamp_arrays_queue:
                     continue
@@ -170,6 +170,7 @@ class TimestampsBatcher:
 
         with self._lock:
             self._is_closed = True
+            self._flush_condition.notify_all()
 
     def add(self, timestamps: NDArray[datetime64], block: bool = True) -> None:
         """Add timestamps to batcher."""
@@ -190,7 +191,7 @@ class TimestampsBatcher:
                 self._batch_size is not None
                 and self._queue_current_size >= self._batch_size
             ):
-                self._size_condition.notify_all()
+                self._flush_condition.notify_all()
 
     @property
     def queue_current_bytes(self) -> int:
