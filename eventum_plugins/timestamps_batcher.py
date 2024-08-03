@@ -102,11 +102,13 @@ class TimestampsBatcher:
         """Produce batches of timestamps from input queue without
         timestamp value based scheduling.
         """
-        while not self._is_closed:
+        while True:
             with self._lock:
                 if (
-                    self._batch_size is None
-                    or self._queue_current_size < self._batch_size
+                    not self._is_closed and (
+                        self._batch_size is None
+                        or self._queue_current_size < self._batch_size
+                    )
                 ):
                     self._flush_condition.wait(timeout=self._batch_delay)
 
@@ -132,6 +134,9 @@ class TimestampsBatcher:
 
             for batch in batches:
                 yield batch
+
+            if self._is_closed and not self._timestamp_arrays_queue:
+                break
 
     def _produce_batches_with_scheduling(
         self
@@ -178,13 +183,12 @@ class TimestampsBatcher:
             if self._is_closed:
                 raise BatcherClosedError('Batcher is closed')
 
-            if (
-                timestamps.nbytes > self.queue_bytes_available
-                and block is False
-            ):
-                raise BatcherFullError('Batcher queue is full')
+            if timestamps.nbytes > self.queue_bytes_available:
+                if block is False:
+                    raise BatcherFullError('Batcher queue is full')
+                else:
+                    self._wait_queue_availability(timestamps.nbytes)
 
-            self._wait_queue_availability(timestamps.nbytes)
             self._timestamp_arrays_queue.append(timestamps)
 
             if (
