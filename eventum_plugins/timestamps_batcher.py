@@ -1,4 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 from threading import Condition, Event, RLock
+import time
 from typing import Iterator
 
 from numpy import concatenate, datetime64
@@ -122,11 +124,12 @@ class TimestampsBatcher:
 
             self._timestamp_arrays_queue.append(timestamps)
 
-            if self._is_waiting_first_item:
+            if not self._scheduling and self._is_waiting_first_item:
                 self._wait_first_item_condition.notify_all()
 
             if (
-                self._batch_size is not None
+                not self._scheduling
+                and self._batch_size is not None
                 and self.queue_current_size >= self._batch_size
             ):
                 self._flush_condition.notify_all()
@@ -141,7 +144,12 @@ class TimestampsBatcher:
 
         with self._lock:
             self._is_closed = True
-            self._flush_condition.notify_all()
+
+            if self._is_waiting_first_item:
+                self._wait_first_item_condition.notify_all()
+
+            if not self._scheduling:
+                self._flush_condition.notify_all()
 
     def scroll(self) -> Iterator[NDArray[datetime64]]:
         """Scroll through timestamp batches. After iterating over all
@@ -150,7 +158,9 @@ class TimestampsBatcher:
         to be published.
         """
         if self._scheduling:
-            yield from self._produce_batches_with_scheduling()
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                executor.submit(self._track_past_timestamps)
+                yield from self._produce_batches_with_scheduling()
         else:
             yield from self._produce_batches()
 
@@ -185,7 +195,7 @@ class TimestampsBatcher:
 
                     self._flush_condition.wait(timeout=self._batch_delay)
 
-                if not self._timestamp_arrays_queue and self._is_closed:
+                if self._is_closed and not self._timestamp_arrays_queue:
                     break
 
                 array = concatenate(self._timestamp_arrays_queue)
@@ -211,7 +221,85 @@ class TimestampsBatcher:
     def _produce_batches_with_scheduling(
         self
     ) -> Iterator[NDArray[datetime64]]:
-        raise NotImplementedError
+        """Produce batches of timestamps from input queue with
+        timestamp value based scheduling.
+        """
+        while True:
+            with self._lock:
+                past_timestamps_count = self._past_timestamps_count
+                if (
+                    (
+                        not self._is_closed or self._timestamp_arrays_queue
+                    ) and (
+                        self._batch_size is None
+                        or past_timestamps_count < self._batch_size
+                    )
+                ):
+                    if past_timestamps_count == 0:
+                        self._is_waiting_first_item = True
+                        self._wait_first_item_condition.wait()
+                        self._is_waiting_first_item = False
+
+                    self._flush_condition.wait(timeout=self._batch_delay)
+
+                if self._is_closed and not self._timestamp_arrays_queue:
+                    break
+
+                array = concatenate(self._timestamp_arrays_queue)
+
+                past_timestamps_count = self._past_timestamps_count
+                past_timestamps = array[:past_timestamps_count]
+                future_timestamps = array[past_timestamps_count:]
+
+                if (
+                    self._batch_size is not None
+                    and past_timestamps.size > self._batch_size
+                ):
+                    batches = chunk_array(past_timestamps, self._batch_size)
+                    if len(batches[-1]) < self._batch_size:
+                        self._timestamp_arrays_queue = [
+                            batches.pop(),
+                            future_timestamps
+                        ]
+                    else:
+                        self._timestamp_arrays_queue = [future_timestamps]
+                else:
+                    batches = [array, ]
+                    self._timestamp_arrays_queue = [future_timestamps]
+
+                self._queue_consumed_event.set()
+
+            for batch in batches:
+                yield batch
+
+    def _track_past_timestamps(self) -> None:
+        """Continuously track the number of timestamps in the past."""
+        while True:
+            with self._lock:
+                if self._is_closed and not self._timestamp_arrays_queue:
+                    self._flush_condition.notify_all()
+                    break
+
+                past_count = self._past_timestamps_count
+
+                if past_count > 0:
+                    if self._is_waiting_first_item:
+                        self._wait_first_item_condition.notify_all()
+
+                    if (
+                        (
+                            self._batch_size is not None
+                            and past_count >= self._batch_size
+                        ) or (
+                            self._batch_size is not None
+                            and self._batch_delay is None
+                            and self._is_closed
+                            and past_count == self.queue_current_size
+                        )
+                    ):
+                        self._flush_condition.notify_all()
+
+            time.sleep(0.05)
 
     @property
     def _past_timestamps_count(self) -> int:
