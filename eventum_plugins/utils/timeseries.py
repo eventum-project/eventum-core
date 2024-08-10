@@ -17,5 +17,4 @@ def get_past_slice(
 ) -> NDArray[datetime64]:
     """Get slice of timestamps `before` the moment using binary search."""
     index = searchsorted(a=timestamps, v=before, side='right')
-
     return timestamps[:index]
