@@ -1,6 +1,6 @@
+import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Condition, Event, RLock
-import time
 from typing import Iterator
 
 from numpy import concatenate, datetime64
