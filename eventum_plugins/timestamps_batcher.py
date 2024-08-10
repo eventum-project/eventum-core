@@ -263,15 +263,15 @@ class TimestampsBatcher:
                 ):
                     batches = chunk_array(past_timestamps, self._batch_size)
                     if len(batches[-1]) < self._batch_size:
-                        self._timestamp_arrays_queue = [
-                            batches.pop(),
-                            future_timestamps
-                        ]
+                        self._timestamp_arrays_queue = [batches.pop()]
                     else:
-                        self._timestamp_arrays_queue = [future_timestamps]
+                        self._timestamp_arrays_queue = []
                 else:
-                    batches = [array, ]
-                    self._timestamp_arrays_queue = [future_timestamps]
+                    batches = [past_timestamps, ]
+                    self._timestamp_arrays_queue = []
+
+                if future_timestamps.size > 0:
+                    self._timestamp_arrays_queue.append(future_timestamps)
 
                 self._queue_consumed_event.set()
 
@@ -316,6 +316,7 @@ class TimestampsBatcher:
             return 0
 
         count = 0
+
         for array in self._timestamp_arrays_queue:
             if array.size == 0:
                 continue
