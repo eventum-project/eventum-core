@@ -86,6 +86,12 @@ class TimestampsBatcher:
         self._queue_consumed_event.set()
 
         self._lock = RLock()
+
+        # When `scheduling` is `False`, the first element is considered
+        # to be any element in the queue.
+        #
+        # When `scheduling` is `True`, the first element is considered
+        # to be the element in the queue with the timestamp in the past.
         self._wait_first_item_condition = Condition(self._lock)
         self._flush_condition = Condition(self._lock)
 
