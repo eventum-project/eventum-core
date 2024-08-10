@@ -1,4 +1,6 @@
 class Singleton(type):
+    """Metaclass implementing singleton behavior."""
+
     _instances: dict[type, object] = {}
 
     def __call__(cls, *args, **kwargs):
