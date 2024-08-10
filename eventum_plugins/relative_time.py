@@ -4,7 +4,7 @@ from datetime import timedelta
 
 def parse_relative_time(expression: str) -> timedelta:
     """Parse `expression` representing relative time and return
-    corresponding`timedelta` object. The expression format is next:
+    corresponding `timedelta` object. The expression format is next:
 
     <expression> ::= [<sign>]<term>{<term>}...
     <sign> ::= '+' | '-'
