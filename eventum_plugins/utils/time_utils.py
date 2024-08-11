@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from numpy import datetime64, float64, timedelta64
-from pytz.tzinfo import BaseTzInfo
+from pytz import BaseTzInfo
 
 
 def get_now(tz: BaseTzInfo) -> datetime64:
@@ -14,3 +14,11 @@ def timedelta_to_seconds(delta: timedelta64) -> float64:
     represents seconds.
     """
     return delta / timedelta64(1000000, 'us')
+
+
+def localize(timestamp: datetime, tz: BaseTzInfo) -> datetime:
+    """Convert datetime to naive format for specified timezone."""
+    return (
+        timestamp.astimezone(tz=tz).replace(tzinfo=None)
+        if timestamp.tzinfo else timestamp
+    )

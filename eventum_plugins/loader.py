@@ -1,12 +1,24 @@
 import importlib
+import pkgutil
 
 from eventum_plugins.exceptions import PluginLoadError, PluginNotFoundError
 from eventum_plugins.registry import PluginInfo, PluginsRegistry, PluginType
-from eventum_plugins.utils.modules import get_module_names
 
 INPUT_PLUGINS_PACKAGE = 'eventum_plugins.input'
 EVENT_PLUGINS_PACKAGE = 'eventum_plugins.event'
 OUTPUT_PLUGINS_PACKAGE = 'eventum_plugins.output'
+
+
+def get_module_names(package_name: str) -> list[str]:
+    """Get modules list of specified package."""
+    package = importlib.import_module(package_name)
+
+    module_names = []
+    for module_info in pkgutil.walk_packages(package.__path__):
+        if not module_info.ispkg:
+            module_names.append(module_info.name)
+
+    return module_names
 
 
 def _load_plugin(

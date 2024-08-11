@@ -8,9 +8,8 @@ from numpy.typing import NDArray
 from pytz import timezone
 from pytz.tzinfo import BaseTzInfo
 
-from eventum_plugins.utils.arrays import chunk_array
-from eventum_plugins.utils.numpy_time import get_now
-from eventum_plugins.utils.timeseries import get_past_slice
+from eventum_plugins.utils.array_utils import chunk_array, get_past_slice
+from eventum_plugins.utils.time_utils import get_now
 
 
 class BatcherClosedError(Exception):

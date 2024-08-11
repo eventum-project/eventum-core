@@ -1,6 +1,7 @@
 import numpy as np
 
-from eventum_plugins.utils.timeseries import get_future_slice, get_past_slice
+from eventum_plugins.utils.array_utils import (chunk_array, get_future_slice,
+                                               get_past_slice)
 
 
 def test_get_future_slice():
@@ -47,3 +48,38 @@ def test_get_past_slice():
     # [*****]<
     same_slice = get_past_slice(slice, timestamps[50])
     assert same_slice[-1] == slice[-1]
+
+
+def test_chunking_array():
+    arr = np.array(list(range(1050)))
+    chunks = chunk_array(arr, 100)
+
+    assert len(chunks) == 11
+    assert all([len(chunk) == 100 for chunk in chunks[:-1]])
+    assert len(chunks[-1]) == 50
+
+    assert np.array_equal(arr, np.concatenate(chunks))
+
+
+def test_chunking_even_array():
+    arr = np.array(list(range(1000)))
+    chunks = chunk_array(arr, 100)
+
+    assert len(chunks) == 10
+    assert all([len(chunk) == 100 for chunk in chunks])
+    assert np.array_equal(arr, np.concatenate(chunks))
+
+
+def test_chunking_empty_array():
+    arr = np.array([])
+    chunks = chunk_array(arr, 100)
+
+    assert len(chunks) == 0
+
+
+def test_chunks_allocation():
+    arr = np.array(list(range(100)))
+    chunks = chunk_array(arr, 10)
+
+    arr[0] = -1
+    assert chunks[0][0] == -1
