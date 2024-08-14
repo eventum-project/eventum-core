@@ -1,6 +1,6 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
-from threading import Condition, Event, RLock
+from threading import Condition, RLock
 from typing import Iterator
 
 from numpy import concatenate, datetime64
@@ -32,7 +32,7 @@ class TimestampsBatcher:
         batch_delay: float | None = None,
         scheduling: bool = False,
         timezone: BaseTzInfo = timezone('UTC'),
-        queue_max_bytes: int = 1_073_741_824
+        queue_max_size: int = 1_000_000_000
     ) -> None:
         """
         `batch_size` - maximum size of producing batches, not limited if
@@ -47,8 +47,8 @@ class TimestampsBatcher:
         `timezone` - timezone of incoming timestamps, must be provided
         when `scheduling` is `True`;
 
-        `max_queue_bytes` - maximum size (in bytes) of batcher queue
-        for incoming events;
+        `max_queue_size` - maximum size of batcher queue for incoming
+        events;
         """
         if batch_size is None and batch_delay is None:
             raise ValueError(
@@ -56,10 +56,13 @@ class TimestampsBatcher:
                 'cannot be both `None`'
             )
 
-        if batch_size is not None and batch_size < self.MIN_BATCH_SIZE:
+        if (
+            batch_size is not None
+            and not (self.MIN_BATCH_SIZE <= batch_size <= queue_max_size)
+        ):
             raise ValueError(
-                'Parameter `batch_size` must be greater or equal to '
-                f'{self.MIN_BATCH_SIZE}'
+                'Parameter `batch_size` must be in range '
+                f'[{self.MIN_BATCH_SIZE}; {queue_max_size}]'
             )
 
         if batch_delay is not None and batch_delay < self.MIN_BATCH_DELAY:
@@ -68,31 +71,26 @@ class TimestampsBatcher:
                 f'{self.MIN_BATCH_DELAY}'
             )
 
-        if queue_max_bytes < 8:
-            raise ValueError(
-                '`max_queue_bytes` must be greater or equal to 8'
-            )
+        if queue_max_size < 1:
+            raise ValueError('`queue_max_size` must be greater than 1')
 
         self._batch_size = batch_size
         self._batch_delay = batch_delay
         self._scheduling = scheduling
         self._timezone = timezone
-        self._queue_max_bytes = queue_max_bytes
+        self._queue_max_size = queue_max_size
 
         self._timestamp_arrays_queue: list[NDArray[datetime64]] = list()
-        self._partial_batch: NDArray[datetime64] | None = None
-        self._queue_consumed_event = Event()
-        self._queue_consumed_event.set()
-
         self._lock = RLock()
 
-        # When `scheduling` is `False`, the first element is considered
-        # to be any element in the queue.
+        # When `scheduling` is `False`, the first item is considered
+        # to be any item in the queue.
         #
-        # When `scheduling` is `True`, the first element is considered
-        # to be the element in the queue with the timestamp in the past.
+        # When `scheduling` is `True`, the first item is considered
+        # to be the item in the queue with the timestamp in the past.
         self._wait_first_item_condition = Condition(self._lock)
         self._flush_condition = Condition(self._lock)
+        self._queue_consumed_condition = Condition(self._lock)
 
         self._is_closed = False
         self._is_waiting_first_item = True
@@ -109,35 +107,39 @@ class TimestampsBatcher:
             if self._is_closed:
                 raise BatcherClosedError('Batcher is closed')
 
-            if timestamps.nbytes > self._queue_max_bytes:
-                if block:
-                    arrays = chunk_array(timestamps, self.queue_max_size)
-                    for array in arrays:
+            queue_available_size = self.queue_available_size
+
+            if not block and timestamps.size > queue_available_size:
+                raise BatcherFullError(
+                    'Not enough available size in batcher queue'
+                )
+
+            while timestamps.size > 0:
+                if queue_available_size == 0:
+                    if block:
+                        self._queue_consumed_condition.wait()
+                    else:
+                        raise BatcherFullError(
+                            'Not enough available size in batcher queue'
+                        )
+
+                queue_available_size = self.queue_available_size
+                addition = timestamps[:queue_available_size]
+                timestamps = timestamps[queue_available_size:]
+
+                self._timestamp_arrays_queue.append(addition)
+
+                # With active scheduling first item and flush conditions
+                # are controlled by `_track_past_timestamps`
+                if not self._scheduling:
+                    if self._is_waiting_first_item:
+                        self._wait_first_item_condition.notify_all()
+
+                    if (
+                        self._batch_size is not None
+                        and self.queue_current_size >= self._batch_size
+                    ):
                         self._flush_condition.notify_all()
-                        self.add(array, block=True)
-                else:
-                    raise BatcherFullError(
-                        'Cannot place timestamps array of size greater than '
-                        'batcher input queue maximum size without blocking'
-                    )
-
-            if timestamps.nbytes > self.queue_bytes_available:
-                if block:
-                    self._wait_queue_availability(timestamps.nbytes)
-                else:
-                    raise BatcherFullError('Batcher queue is full')
-
-            self._timestamp_arrays_queue.append(timestamps)
-
-            if not self._scheduling and self._is_waiting_first_item:
-                self._wait_first_item_condition.notify_all()
-
-            if (
-                not self._scheduling
-                and self._batch_size is not None
-                and self.queue_current_size >= self._batch_size
-            ):
-                self._flush_condition.notify_all()
 
     def close(self) -> None:
         """Indicate that no new timestamps are going to be added.
@@ -150,10 +152,10 @@ class TimestampsBatcher:
         with self._lock:
             self._is_closed = True
 
-            if self._is_waiting_first_item:
-                self._wait_first_item_condition.notify_all()
-
             if not self._scheduling:
+                if self._is_waiting_first_item:
+                    self._wait_first_item_condition.notify_all()
+
                 self._flush_condition.notify_all()
 
     def scroll(self) -> Iterator[NDArray[datetime64]]:
@@ -168,17 +170,6 @@ class TimestampsBatcher:
                 yield from self._produce_batches_with_scheduling()
         else:
             yield from self._produce_batches()
-
-    def _wait_queue_availability(self, bytes: int) -> None:
-        """Block thread execution until specified number of bytes is
-        available to be added in batcher queue.
-        """
-        while True:
-            self._queue_consumed_event.wait()
-            self._queue_consumed_event.clear()
-
-            if self.queue_bytes_available >= bytes:
-                return
 
     def _produce_batches(self) -> Iterator[NDArray[datetime64]]:
         """Produce batches of timestamps from input queue without
@@ -218,7 +209,7 @@ class TimestampsBatcher:
                     batches = [array, ]
                     self._timestamp_arrays_queue = []
 
-                self._queue_consumed_event.set()
+                self._queue_consumed_condition.notify_all()
 
             for batch in batches:
                 yield batch
@@ -272,7 +263,7 @@ class TimestampsBatcher:
                 if future_timestamps.size > 0:
                     self._timestamp_arrays_queue.append(future_timestamps)
 
-                self._queue_consumed_event.set()
+                self._queue_consumed_condition.notify_all()
 
             for batch in batches:
                 yield batch
@@ -282,6 +273,9 @@ class TimestampsBatcher:
         while True:
             with self._lock:
                 if self._is_closed and not self._timestamp_arrays_queue:
+                    if self._is_waiting_first_item:
+                        self._wait_first_item_condition.notify_all()
+
                     self._flush_condition.notify_all()
                     break
 
@@ -331,13 +325,6 @@ class TimestampsBatcher:
         return count
 
     @property
-    def queue_current_bytes(self) -> int:
-        """Current size (in bytes) of input queue."""
-        return sum(
-            [arr.nbytes for arr in self._timestamp_arrays_queue]
-        )
-
-    @property
     def queue_current_size(self) -> int:
         """Current size of input queue."""
         return sum(
@@ -345,18 +332,13 @@ class TimestampsBatcher:
         )
 
     @property
-    def queue_bytes_available(self) -> int:
-        """Number of bytes currently available to be added to the
+    def queue_available_size(self) -> int:
+        """Number of elements currently available to be added to the
         input queue.
         """
-        return max(self._queue_max_bytes - self.queue_current_bytes, 0)
-
-    @property
-    def queue_max_bytes(self) -> int:
-        """Maximum size (in bytes) of input queue."""
-        return self._queue_max_bytes
+        return max(self.queue_max_size - self.queue_current_size, 0)
 
     @property
     def queue_max_size(self) -> int:
         """Maximum size of input queue."""
-        return self._queue_max_bytes // 8
+        return self._queue_max_size
