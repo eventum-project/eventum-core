@@ -44,8 +44,8 @@ class TimestampsBatcher:
         `scheduling` - whether to respect timestamp values and publish
         them according to real time;
 
-        `timezone` - timezone of incoming timestamps, must be provided
-        when `scheduling` is `True`;
+        `timezone` - timezone of incoming timestamps, used to track
+        current time when `scheduling` is `True`;
 
         `max_queue_size` - maximum size of batcher queue for incoming
         events;
@@ -102,7 +102,12 @@ class TimestampsBatcher:
         self.close()
 
     def add(self, timestamps: NDArray[datetime64], block: bool = True) -> None:
-        """Add timestamps to batcher."""
+        """Add timestamps to batcher. If it is enough available size to
+        in input queue to put timestamps and block is `True` then method
+        blocks execution until queue can fit timestamps. If `block` is
+        `False` and there isn't enough available size at current moment
+        in input queue, then `BatcherFullError` is raised.
+        """
         with self._lock:
             if self._is_closed:
                 raise BatcherClosedError('Batcher is closed')
@@ -298,7 +303,7 @@ class TimestampsBatcher:
                     ):
                         self._flush_condition.notify_all()
 
-            time.sleep(0.05)
+            time.sleep(self.MIN_BATCH_DELAY / 2)
 
     @property
     def _past_timestamps_count(self) -> int:
