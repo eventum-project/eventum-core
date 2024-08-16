@@ -1,3 +1,4 @@
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Condition, RLock
@@ -108,25 +109,21 @@ class TimestampsBatcher:
         `False` and there isn't enough available size at current moment
         in input queue, then `BatcherFullError` is raised.
         """
+        if timestamps.size == 0:
+            return
+
         with self._lock:
             if self._is_closed:
                 raise BatcherClosedError('Batcher is closed')
 
-            queue_available_size = self.queue_available_size
-
-            if not block and timestamps.size > queue_available_size:
+            if not block and timestamps.size > self.queue_available_size:
                 raise BatcherFullError(
                     'Not enough available size in batcher queue'
                 )
 
             while timestamps.size > 0:
-                if queue_available_size == 0:
-                    if block:
-                        self._queue_consumed_condition.wait()
-                    else:
-                        raise BatcherFullError(
-                            'Not enough available size in batcher queue'
-                        )
+                if self.queue_available_size == 0:
+                    self._queue_consumed_condition.wait()
 
                 queue_available_size = self.queue_available_size
                 addition = timestamps[:queue_available_size]
@@ -139,8 +136,7 @@ class TimestampsBatcher:
                 if not self._scheduling:
                     if self._is_waiting_first_item:
                         self._wait_first_item_condition.notify_all()
-
-                    if (
+                    elif (
                         self._batch_size is not None
                         and self.queue_current_size >= self._batch_size
                     ):
@@ -154,14 +150,17 @@ class TimestampsBatcher:
         if self._is_closed:
             return
 
+        # handle calling `close` method instantly after add method
+        time.sleep(sys.getswitchinterval())
+
         with self._lock:
             self._is_closed = True
 
             if not self._scheduling:
                 if self._is_waiting_first_item:
                     self._wait_first_item_condition.notify_all()
-
-                self._flush_condition.notify_all()
+                else:
+                    self._flush_condition.notify_all()
 
     def scroll(self) -> Iterator[NDArray[datetime64]]:
         """Scroll through timestamp batches. After iterating over all
@@ -182,22 +181,20 @@ class TimestampsBatcher:
         """
         while True:
             with self._lock:
-                queue_current_size = self.queue_current_size
-                if (
-                    not self._is_closed and (
-                        self._batch_size is None
-                        or queue_current_size < self._batch_size
-                    )
-                ):
-                    if queue_current_size == 0:
-                        self._is_waiting_first_item = True
-                        self._wait_first_item_condition.wait()
-                        self._is_waiting_first_item = False
-
-                    self._flush_condition.wait(timeout=self._batch_delay)
+                if not self._is_closed and not self._timestamp_arrays_queue:
+                    self._is_waiting_first_item = True
+                    self._wait_first_item_condition.wait()
+                    self._is_waiting_first_item = False
 
                 if self._is_closed and not self._timestamp_arrays_queue:
                     break
+
+                queue_current_size = self.queue_current_size
+                if (
+                    self._batch_size is None
+                    or queue_current_size < self._batch_size
+                ):
+                    self._flush_condition.wait(timeout=self._batch_delay)
 
                 array = concatenate(self._timestamp_arrays_queue)
 
@@ -229,22 +226,22 @@ class TimestampsBatcher:
             with self._lock:
                 past_timestamps_count = self._past_timestamps_count
                 if (
-                    (
-                        not self._is_closed or self._timestamp_arrays_queue
-                    ) and (
-                        self._batch_size is None
-                        or past_timestamps_count < self._batch_size
-                    )
+                    (not self._is_closed or self._timestamp_arrays_queue)
+                    and past_timestamps_count == 0
                 ):
-                    if past_timestamps_count == 0:
-                        self._is_waiting_first_item = True
-                        self._wait_first_item_condition.wait()
-                        self._is_waiting_first_item = False
-
-                    self._flush_condition.wait(timeout=self._batch_delay)
+                    self._is_waiting_first_item = True
+                    self._wait_first_item_condition.wait()
+                    self._is_waiting_first_item = False
 
                 if self._is_closed and not self._timestamp_arrays_queue:
                     break
+
+                past_timestamps_count = self._past_timestamps_count
+                if (
+                    self._batch_size is None
+                    or past_timestamps_count < self._batch_size
+                ):
+                    self._flush_condition.wait(timeout=self._batch_delay)
 
                 array = concatenate(self._timestamp_arrays_queue)
 
@@ -277,11 +274,12 @@ class TimestampsBatcher:
         """Continuously track the number of timestamps in the past."""
         while True:
             with self._lock:
-                if self._is_closed and not self._timestamp_arrays_queue:
-                    if self._is_waiting_first_item:
-                        self._wait_first_item_condition.notify_all()
-
-                    self._flush_condition.notify_all()
+                if (
+                    self._is_closed
+                    and not self._timestamp_arrays_queue
+                    and self._is_waiting_first_item
+                ):
+                    self._wait_first_item_condition.notify_all()
                     break
 
                 past_count = self._past_timestamps_count
@@ -289,8 +287,7 @@ class TimestampsBatcher:
                 if past_count > 0:
                     if self._is_waiting_first_item:
                         self._wait_first_item_condition.notify_all()
-
-                    if (
+                    elif (
                         (
                             self._batch_size is not None
                             and past_count >= self._batch_size
