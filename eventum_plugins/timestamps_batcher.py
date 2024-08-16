@@ -191,8 +191,10 @@ class TimestampsBatcher:
 
                 queue_current_size = self.queue_current_size
                 if (
-                    self._batch_size is None
-                    or queue_current_size < self._batch_size
+                    not self._is_closed and (
+                        self._batch_size is None
+                        or queue_current_size < self._batch_size
+                    )
                 ):
                     self._flush_condition.wait(timeout=self._batch_delay)
 
