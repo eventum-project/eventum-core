@@ -39,6 +39,7 @@ def timestamps():
     )
 
 
+@pytest.mark.timeout(3)
 def test_size_batching(timestamps):
     batcher = TimestampsBatcher(batch_size=100_000)
     batcher.add(timestamps)
@@ -49,6 +50,7 @@ def test_size_batching(timestamps):
     assert all([batch.size == 100_000 for batch in batches])
 
 
+@pytest.mark.timeout(3)
 def test_uneven_size_batching(timestamps):
     batcher = TimestampsBatcher(batch_size=30_000)
     batcher.add(timestamps)
@@ -62,6 +64,7 @@ def test_uneven_size_batching(timestamps):
     )
 
 
+@pytest.mark.timeout(3)
 def test_accumulating_size_batching(timestamps):
     batcher = TimestampsBatcher(batch_size=5_000_000)
     for _ in range(10):
@@ -73,6 +76,7 @@ def test_accumulating_size_batching(timestamps):
     assert all([batch.size == 5_000_000 for batch in batches])
 
 
+@pytest.mark.timeout(3)
 def test_partial_accumulating_size_batching(timestamps):
     batcher = TimestampsBatcher(batch_size=5_000_000)
     for _ in range(3):
@@ -84,6 +88,7 @@ def test_partial_accumulating_size_batching(timestamps):
     assert batches[0].size == 3_000_000
 
 
+@pytest.mark.timeout(1)
 def test_delay_batching():
     batcher = TimestampsBatcher(batch_size=None, batch_delay=0.1)
 
@@ -112,6 +117,7 @@ def test_delay_batching():
     assert len(batches[1]) == 4
 
 
+@pytest.mark.timeout(1)
 def test_delay_with_size_batching():
     batcher = TimestampsBatcher(batch_size=5, batch_delay=0.1)
 
@@ -141,6 +147,7 @@ def test_delay_with_size_batching():
     assert len(batches[2]) == 4
 
 
+@pytest.mark.timeout(1)
 def test_delay_with_partial_size_batching():
     batcher = TimestampsBatcher(batch_size=12, batch_delay=0.1)
 
@@ -169,6 +176,7 @@ def test_delay_with_partial_size_batching():
     assert len(batches[1]) == 4
 
 
+@pytest.mark.timeout(1)
 def test_delay_with_uneven_size_batching():
     batcher = TimestampsBatcher(batch_size=8, batch_delay=0.1)
 
@@ -198,6 +206,7 @@ def test_delay_with_uneven_size_batching():
     assert len(batches[2]) == 4
 
 
+@pytest.mark.timeout(1)
 def test_carry_over_delay_with_uneven_size_batching():
     batcher = TimestampsBatcher(batch_size=8, batch_delay=0.1)
 
@@ -229,6 +238,7 @@ def timestamps_batch():
     return np.full(1_000, np.datetime64('now', 'us'))
 
 
+@pytest.mark.timeout(3)
 def test_high_throughput_batching(timestamps_batch):
     batcher = TimestampsBatcher(batch_size=10_000, batch_delay=0.1)
 
@@ -248,6 +258,7 @@ def test_high_throughput_batching(timestamps_batch):
     assert np.concatenate(batches).size == 10_000_000
 
 
+@pytest.mark.timeout(3)
 def test_high_throughput_size_batching(timestamps_batch):
     batcher = TimestampsBatcher(batch_size=10_000, batch_delay=None)
 
@@ -267,6 +278,7 @@ def test_high_throughput_size_batching(timestamps_batch):
     assert np.concatenate(batches).size == 10_000_000
 
 
+@pytest.mark.timeout(3)
 def test_high_throughput_delay_batching(timestamps_batch):
     batcher = TimestampsBatcher(batch_size=None, batch_delay=1.0)
 
@@ -353,3 +365,6 @@ def test_blocking_queue_adding():
     assert len(batches) == 11
     assert all([batch.size == 10 for batch in batches[:-1]])
     assert batches[-1].size == 5
+
+# TODO write tests for batcher with active scheduling
+# pip install pytest-timeout
