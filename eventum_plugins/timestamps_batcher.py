@@ -1,4 +1,3 @@
-import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Condition, RLock
@@ -136,6 +135,7 @@ class TimestampsBatcher:
                 if not self._scheduling:
                     if self._is_waiting_first_item:
                         self._wait_first_item_condition.notify_all()
+                        self._is_waiting_first_item = False
                     elif (
                         self._batch_size is not None
                         and self.queue_current_size >= self._batch_size
@@ -150,15 +150,13 @@ class TimestampsBatcher:
         if self._is_closed:
             return
 
-        # handle calling `close` method instantly after add method
-        time.sleep(sys.getswitchinterval())
-
         with self._lock:
             self._is_closed = True
 
             if not self._scheduling:
                 if self._is_waiting_first_item:
                     self._wait_first_item_condition.notify_all()
+                    self._is_waiting_first_item = False
                 else:
                     self._flush_condition.notify_all()
 
@@ -184,7 +182,6 @@ class TimestampsBatcher:
                 if not self._is_closed and not self._timestamp_arrays_queue:
                     self._is_waiting_first_item = True
                     self._wait_first_item_condition.wait()
-                    self._is_waiting_first_item = False
 
                 if self._is_closed and not self._timestamp_arrays_queue:
                     break
@@ -233,7 +230,6 @@ class TimestampsBatcher:
                 ):
                     self._is_waiting_first_item = True
                     self._wait_first_item_condition.wait()
-                    self._is_waiting_first_item = False
 
                 if self._is_closed and not self._timestamp_arrays_queue:
                     break
@@ -289,6 +285,7 @@ class TimestampsBatcher:
                 if past_count > 0:
                     if self._is_waiting_first_item:
                         self._wait_first_item_condition.notify_all()
+                        self._is_waiting_first_item = False
                     elif (
                         (
                             self._batch_size is not None
