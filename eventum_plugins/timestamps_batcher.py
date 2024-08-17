@@ -275,9 +275,10 @@ class TimestampsBatcher:
                 if (
                     self._is_closed
                     and not self._timestamp_arrays_queue
-                    and self._is_waiting_first_item
                 ):
-                    self._wait_first_item_condition.notify_all()
+                    if self._is_waiting_first_item:
+                        self._wait_first_item_condition.notify_all()
+                        self._is_waiting_first_item = False
                     break
 
                 past_count = self._past_timestamps_count
