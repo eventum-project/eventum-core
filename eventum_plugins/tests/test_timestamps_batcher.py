@@ -1,5 +1,6 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
 
 import numpy as np
 import pytest
@@ -298,6 +299,7 @@ def test_high_throughput_delay_batching(timestamps_batch):
     assert np.concatenate(batches).size == 10_000_000
 
 
+@pytest.mark.timeout(1)
 def test_queue_size():
     batcher = TimestampsBatcher(batch_size=10, queue_max_size=10)
     assert batcher.queue_max_size == 10
@@ -335,6 +337,7 @@ def test_queue_size():
     assert batcher.queue_current_size == 0
 
 
+@pytest.mark.timeout(1)
 def test_queue_instant_overflow():
     batcher = TimestampsBatcher(batch_size=10, queue_max_size=10)
     timestamps = np.full(100, np.datetime64('now', 'us'))
@@ -343,6 +346,7 @@ def test_queue_instant_overflow():
         batcher.add(timestamps, block=False)
 
 
+@pytest.mark.timeout(1)
 def test_blocking_queue_adding():
     batcher = TimestampsBatcher(
         batch_size=10,
@@ -366,5 +370,132 @@ def test_blocking_queue_adding():
     assert all([batch.size == 10 for batch in batches[:-1]])
     assert batches[-1].size == 5
 
-# TODO write tests for batcher with active scheduling
-# pip install pytest-timeout
+
+@pytest.mark.timeout(1)
+def test_size_batching_with_scheduling():
+    batcher = TimestampsBatcher(
+        batch_size=10,
+        scheduling=True,
+        timezone=timezone('UTC')
+    )
+    now = np.datetime64('now')
+    timestamps = np.array(
+        [now + np.timedelta64(i, 'ms') for i in range(0, 100)]
+    )
+
+    batcher.add(timestamps)
+    batcher.close()
+
+    batches = list(batcher.scroll())
+    assert len(batches) == 10
+    assert all([batch.size == 10 for batch in batches])
+
+
+@pytest.mark.timeout(1)
+def test_delay_batching_with_scheduling():
+    batcher = TimestampsBatcher(
+        batch_size=None,
+        batch_delay=0.1,
+        scheduling=True,
+        timezone=timezone('UTC')
+    )
+    now = np.datetime64('now')
+    timestamps = np.array(
+        [now + np.timedelta64(i, 'ms') for i in range(0, 100)]
+    )
+
+    batcher.add(timestamps)
+    batcher.close()
+
+    batches = list(batcher.scroll())
+    assert len(batches) == 1
+    assert batches[0].size == 100
+
+
+@pytest.mark.timeout(3)
+def test_size_batching_with_scheduling_and_sparse_timestamps():
+    batcher = TimestampsBatcher(
+        batch_size=10,
+        scheduling=True,
+        timezone=timezone('UTC')
+    )
+    now = np.datetime64(datetime.now(UTC).replace(tzinfo=None))
+    start = time.perf_counter()
+    timestamps = np.array(
+        [now + np.timedelta64(i, 'ms') for i in range(0, 1000, 10)]
+    )
+    assert timestamps.size == 100
+    assert (timestamps[-1] - timestamps[0]) == np.timedelta64(990, 'ms')
+
+    batcher.add(timestamps)
+    batcher.close()
+
+    assert batcher._past_timestamps_count < 100
+
+    batches = list(batcher.scroll())
+    end = time.perf_counter()
+
+    assert len(batches) == 10
+    assert all([batch.size == 10 for batch in batches])
+    assert (end - start) >= 0.990
+
+
+@pytest.mark.timeout(3)
+def test_delay_batching_with_scheduling_and_sparse_timestamps():
+    batcher = TimestampsBatcher(
+        batch_size=None,
+        batch_delay=0.1,
+        scheduling=True,
+        timezone=timezone('UTC')
+    )
+    now = np.datetime64(datetime.now(UTC).replace(tzinfo=None))
+    start = time.perf_counter()
+    timestamps = np.array(
+        [now + np.timedelta64(i, 'ms') for i in range(0, 1000, 10)]
+    )
+    assert timestamps.size == 100
+    assert (timestamps[-1] - timestamps[0]) == np.timedelta64(990, 'ms')
+
+    batcher.add(timestamps)
+    batcher.close()
+
+    assert batcher._past_timestamps_count < 100
+
+    batches = list(batcher.scroll())
+    end = time.perf_counter()
+
+    assert 1 < len(batches) <= 11
+    assert (end - start) >= 0.990
+
+
+@pytest.mark.timeout(3)
+def test_size_and_delay_batching_with_scheduling_and_sparse_timestamps():
+    batcher = TimestampsBatcher(
+        batch_size=10,
+        batch_delay=0.15,
+        scheduling=True,
+        timezone=timezone('UTC')
+    )
+    now = np.datetime64(datetime.now(UTC).replace(tzinfo=None))
+    start = time.perf_counter()
+    timestamps = np.array(
+        [now + np.timedelta64(i, 'ms') for i in range(0, 990, 10)]
+    )
+    out_of_batch = np.array([now + np.timedelta64(1200, 'ms')])
+    assert timestamps.size == 99
+    assert (timestamps[-1] - timestamps[0]) == np.timedelta64(980, 'ms')
+
+    batcher.add(timestamps)
+    batcher.add(out_of_batch)
+    batcher.close()
+
+    assert batcher._past_timestamps_count < 100
+
+    batches = list(batcher.scroll())
+    end = time.perf_counter()
+
+    assert len(batches) == 11
+    assert all([batch.size == 10 for batch in batches[:-2]])
+    assert batches[-2].size == 9
+    assert batches[-1].size == 1
+    assert (end - start) >= 1.2
