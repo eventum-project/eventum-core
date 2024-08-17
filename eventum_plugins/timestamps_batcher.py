@@ -344,3 +344,7 @@ class TimestampsBatcher:
     def queue_max_size(self) -> int:
         """Maximum size of input queue."""
         return self._queue_max_size
+
+    @property
+    def scheduling(self) -> bool:
+        return self._scheduling
