@@ -17,7 +17,9 @@ def timedelta_to_seconds(delta: timedelta64) -> float64:
 
 
 def localize(timestamp: datetime, tz: BaseTzInfo) -> datetime:
-    """Convert datetime to naive format for specified timezone."""
+    """Convert datetime to naive format for specified timezone. If
+    datetime object is naive then it's returned without any conversion.
+    """
     return (
         timestamp.astimezone(tz=tz).replace(tzinfo=None)
         if timestamp.tzinfo else timestamp
