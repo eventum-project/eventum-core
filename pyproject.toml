@@ -47,6 +47,7 @@ pytest-asyncio = "^0.23.7"
 aioresponses = "^0.7.6"
 flake8 = "^7.0.0"
 pytest-timeout = "^2.3.1"
+types-dateparser = "^1.2.0.20240420"
 
 [build-system]
 requires = ["poetry-core"]
