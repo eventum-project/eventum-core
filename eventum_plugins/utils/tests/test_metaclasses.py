@@ -1,4 +1,4 @@
-from eventum_plugins.metaclasses import Singleton
+from eventum_plugins.utils.metaclasses import Singleton
 
 
 class A(metaclass=Singleton):

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from eventum_plugins.enums import PluginType
-from eventum_plugins.metaclasses import Singleton
+from eventum_plugins.utils.metaclasses import Singleton
 
 
 @dataclass(frozen=True)
@@ -19,7 +19,7 @@ class PluginsRegistry(metaclass=Singleton):
 
     def __init__(self) -> None:
         self._plugins: dict[PluginType, dict[str, PluginInfo]] = {
-            type.value: dict()
+            type: dict()
             for type in PluginType
         }
 
