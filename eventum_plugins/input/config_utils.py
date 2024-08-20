@@ -9,8 +9,13 @@ from eventum_plugins.input.fields import HumanDatetimeString
 
 class SupportsDaterange(Protocol):
     """An ABC with attributes `start` and `end` of datetime-like types."""
-    start: datetime | HumanDatetimeString | None
-    end: datetime | HumanDatetimeString | None
+    @property
+    def start(self) -> datetime | HumanDatetimeString | None:
+        pass
+
+    @property
+    def end(self) -> datetime | HumanDatetimeString | None:
+        pass
 
 
 def retrieve_daterange(
@@ -47,7 +52,10 @@ def retrieve_daterange(
         case str():
             start_time = dateparser.parse(
                 config.start,
-                settings={'TIMEZONE': timezone}   # type: ignore[arg-type]
+                settings={                          # type: ignore[arg-type]
+                    'TIMEZONE': timezone.zone,
+                    'RETURN_AS_TIMEZONE_AWARE': True
+                }
             )
             assert isinstance(start_time, datetime)
         case _:
@@ -59,9 +67,11 @@ def retrieve_daterange(
         case str():
             end_time = dateparser.parse(
                 config.end,
-                settings={                  # type: ignore[arg-type]
-                    'TIMEZONE': timezone,
-                    'RELATIVE_BASE': start_time
+                settings={                          # type: ignore[arg-type]
+                    'RELATIVE_BASE': start_time,
+                    'TIMEZONE': timezone.zone,
+                    'RETURN_AS_TIMEZONE_AWARE': True
+
                 }
             )
             assert isinstance(end_time, datetime)
