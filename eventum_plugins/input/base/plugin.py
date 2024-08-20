@@ -113,7 +113,7 @@ class InputPlugin(ABC):
         mode: TimeMode,
         batch_size: int | None = 100_000,
         batch_delay: float | None = 0.1,
-        queue_max_size: int = 1_000_000_000,
+        queue_max_size: int = 100_000_000,
         on_queue_overflow: Literal['block', 'skip'] = 'block'
     ) -> Iterator[NDArray[datetime64]]:
         """Start timestamps generation in background thread and yield
@@ -132,7 +132,7 @@ class InputPlugin(ABC):
         batch_delay : float | None, default=0.1
             Parameter `batch_delay` for underlying batcher
 
-        queue_max_size : int, default=1_000_000_000
+        queue_max_size : int, default=100_000_000
             Parameter `queue_max_size` for underlying batcher
 
         on_queue_overflow : {'block', 'skip'}, default='block'
@@ -152,7 +152,7 @@ class InputPlugin(ABC):
         See Also
         --------
         eventum_plugins.input.batcher.TimestampsBatcher : batcher of
-        timestamps (used as underlying batcher)
+        timestamps that is used as underlying batcher
         """
         batcher = TimestampsBatcher(
             batch_size=batch_size,
