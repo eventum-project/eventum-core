@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 
 import pytz
-from eventum_plugins.input.config_utils import retrieve_daterange
+
 from eventum_plugins.input.base.config import InputPluginConfig
+from eventum_plugins.input.config_utils import retrieve_daterange
 from eventum_plugins.input.fields import HumanDatetimeString
 
 
