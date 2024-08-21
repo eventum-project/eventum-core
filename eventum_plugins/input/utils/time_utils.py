@@ -4,7 +4,7 @@ from numpy import datetime64, float64, timedelta64
 from pytz import BaseTzInfo
 
 
-def get_now(tz: BaseTzInfo) -> datetime64:
+def now(tz: BaseTzInfo) -> datetime64:
     """Get current datetime in specified timezone."""
     return datetime64(datetime.now(tz).replace(tzinfo=None))
 

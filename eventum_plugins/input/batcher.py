@@ -8,8 +8,8 @@ from numpy.typing import NDArray
 from pytz import timezone
 from pytz.tzinfo import BaseTzInfo
 
-from eventum_plugins.utils.array_utils import chunk_array, get_past_slice
-from eventum_plugins.utils.time_utils import get_now
+from eventum_plugins.input.utils.array_utils import chunk_array, get_past_slice
+from eventum_plugins.input.utils.time_utils import now
 
 
 class BatcherClosedError(Exception):
@@ -356,7 +356,7 @@ class TimestampsBatcher:
     @property
     def _past_timestamps_count(self) -> int:
         """Count of timestamps in queue that are in the past."""
-        now = get_now(self._timezone)
+        curr_time = now(self._timezone)
 
         if not self._timestamp_arrays_queue:
             return 0
@@ -367,12 +367,12 @@ class TimestampsBatcher:
             if array.size == 0:
                 continue
 
-            if now < array[0]:
+            if curr_time < array[0]:
                 return count
-            elif now > array[-1]:
+            elif curr_time > array[-1]:
                 count += array.size
             else:
-                past_slice = get_past_slice(array, now)
+                past_slice = get_past_slice(array, curr_time)
                 return count + past_slice.size
 
         return count
