@@ -2,29 +2,16 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from eventum_plugins.input.base.config import InputPluginConfig
-from eventum_plugins.input.config_utils import retrieve_daterange
-from eventum_plugins.input.fields import HumanDatetimeString
-
-
-class TestConfigModule(InputPluginConfig, frozen=True):
-    start: datetime | HumanDatetimeString | None = None
-    end: datetime | HumanDatetimeString | None = None
-    some_field: str = 'some info'
-
-    # disable pytest discovery
-    __test__ = False
+from eventum_plugins.input.tools import normalize_daterange
 
 
 def test_retrieve_daterange():
     expected_start = datetime.fromisoformat('2024-01-01T00:00:00.000Z')
     expected_end = datetime(2077, 1, 1, 0, 0, tzinfo=pytz.timezone('UTC'))
 
-    start, end = retrieve_daterange(
-        TestConfigModule(
-            start=expected_start,
-            end='1st Jan of 2077 year'
-        ),
+    start, end = normalize_daterange(
+        start=expected_start,
+        end='1st Jan of 2077 year',
         timezone=pytz.timezone('UTC')
     )
 
@@ -36,11 +23,9 @@ def test_retrieve_daterange_relative_end():
     expected_start = datetime.fromisoformat('2024-01-01T00:00:00.000Z')
     expected_end = expected_start + timedelta(hours=12, minutes=5)
 
-    start, end = retrieve_daterange(
-        TestConfigModule(
-            start=expected_start,
-            end='after 12 hours and five minute'
-        ),
+    start, end = normalize_daterange(
+        start=expected_start,
+        end='after 12 hours and five minute',
         timezone=pytz.timezone('UTC')
     )
 
@@ -52,11 +37,9 @@ def test_retrieve_daterange_none_values():
     approx_expected_start = datetime.now(tz=pytz.timezone('UTC'))
     enough_for_me = datetime(2100, 1, 1, 0, 0, tzinfo=pytz.timezone('UTC'))
 
-    start, end = retrieve_daterange(
-        TestConfigModule(
-            start=None,
-            end=None
-        ),
+    start, end = normalize_daterange(
+        start=None,
+        end=None,
         timezone=pytz.timezone('UTC')
     )
 
