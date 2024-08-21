@@ -1,18 +1,18 @@
 class PluginLoadError(Exception):
-    """Exception for plugin loading errors."""
+    """Failed to load plugin."""
 
 
 class PluginNotFoundError(PluginLoadError):
-    """Exception for errors when plugin with a given name is not found."""
+    """Failed to load plugin because it is not found."""
 
 
 class PluginError(Exception):
-    """Base exception for plugin errors."""
+    """Error occurred while working with plugin."""
 
 
 class PluginConfigurationError(PluginError):
-    """Exception for plugin configuration errors."""
+    """Configuration for plugin is invalid."""
 
 
 class PluginRuntimeError(PluginError):
-    """Exception for plugin runtime errors."""
+    """Error occurred during plugin execution."""
