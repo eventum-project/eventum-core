@@ -3,17 +3,31 @@ from datetime import timedelta
 
 
 def parse_relative_time(expression: str) -> timedelta:
-    """Parse `expression` representing relative time and return
-    corresponding `timedelta` object. The expression format is next:
+    """Parse expression representing relative time and return
+    corresponding timedelta object.
 
-    <expression> ::= [<sign>]<term>{<term>}...
-    <sign> ::= '+' | '-'
-    <term> ::= <value><unit>
-    <value> ::= <integer>
-    <unit> ::= 'd' | 'h' | 'm' | 's'
+    Parameters
+    ----------
+    expression : str
+        Expression in the following format:
+        ```
+        <expression> ::= [<sign>]<term>{<term>}...
+        <sign> ::= '+' | '-'
+        <term> ::= <value><unit>
+        <value> ::= <integer>
+        <unit> ::= 'd' | 'h' | 'm' | 's'
+        ```
+        Example expressions: `+1d12h`; `1h30m10s`; `-3d4h`; `-1d2h30m`
 
-    Example expressions: '+1d12h'; '1h30m10s'; '-3d4h'; '-1d2h30m';
-    If expression cannot be properly parsed then `ValueError` is raised.
+    Returns
+    -------
+    timedelta
+        Parsed expression represented as timedelta object
+
+    Raises
+    ------
+    ValueError
+        If expression cannot be parsed due to invalid format
     """
     if not expression:
         raise ValueError('Empty expression is provided')
