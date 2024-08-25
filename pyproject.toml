@@ -5,8 +5,8 @@ description = "Command line interface for Eventum"
 license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
 readme = "README.md"
-repository = "https://github.com/Eventum-Generatives/EventumCLI"
-documentation = "https://eventum-generatives.github.io/Website/"
+repository = "https://github.com/eventum-project/eventum-cli"
+documentation = "https://eventum-project.github.io/website/"
 keywords = ["generator", "testing", "data", "cli"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
