@@ -1,3 +1,4 @@
+from enum import StrEnum
 from typing import Annotated
 
 import dateparser
@@ -25,3 +26,19 @@ def _try_parse_relative_time(v: str) -> str:
 
 
 RelativeTimeString = Annotated[str, AfterValidator(_try_parse_relative_time)]
+
+
+class TimeKeyword(StrEnum):
+    NOW = 'now'
+    NEVER = 'never'
+
+
+def _try_parse_time_keyword(v: str) -> str:
+    try:
+        TimeKeyword(v)
+        return v
+    except ValueError:
+        raise ValueError(f'Not valid time keyword "{v}"')
+
+
+TimeKeywordString = Annotated[str, AfterValidator(_try_parse_time_keyword)]
