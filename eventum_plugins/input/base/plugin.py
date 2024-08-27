@@ -51,29 +51,6 @@ class InputPlugin(ABC):
 
     register : bool, default=True
         Whether to register class as implemented plugin
-
-    Examples
-    --------
-    >>> class MyInputPluginConfig(InputPluginConfig):
-    ...     parameter: int = 1
-    ...
-    >>> class MyInputPlugin(InputPlugin, config_cls=MyInputPluginConfig):
-    ...     def __init__(
-    ...         self,
-    ...         id: int,
-    ...         config: MyInputPluginConfig,
-    ...         timezone: BaseTzInfo
-    ...     ) -> None:
-    ...         super().__init__(id, config, timezone)
-    ...
-    ...     def _start(
-    ...         self,
-    ...         mode: TimeMode,
-    ...         batcher: TimestampsBatcher,
-    ...         block: bool
-    ...     ) -> None:
-    ...         # Plugin logic implementation
-    ...         ...
     """
 
     def __init_subclass__(
@@ -108,7 +85,7 @@ class InputPlugin(ABC):
         self._timezone = timezone
 
     @final
-    def start(
+    def generate(
         self,
         mode: TimeMode,
         batch_size: int | None = 100_000,
@@ -164,12 +141,12 @@ class InputPlugin(ABC):
         block = on_queue_overflow == 'block'
 
         with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self._start, mode, batcher, block)
+            future = executor.submit(self._generate, mode, batcher, block)
             yield from batcher.scroll()
             future.result()
 
     @abstractmethod
-    def _start(
+    def _generate(
         self,
         mode: TimeMode,
         batcher: TimestampsBatcher,
