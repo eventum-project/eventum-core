@@ -160,6 +160,8 @@ class InputPlugin(ABC):
                 self._mode,
                 lambda batch: self._batcher.add(batch, self._block_on_overflow)
             )
+            future.add_done_callback(lambda _: self._batcher.close())
+
             yield from self._batcher.scroll()
             future.result()
 
