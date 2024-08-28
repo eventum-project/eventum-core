@@ -4,21 +4,13 @@ from typing import Literal, assert_never
 import dateparser
 from pytz import BaseTzInfo
 
-from eventum_plugins.input.fields import (HumanDatetimeString,
-                                          RelativeTimeString, TimeKeyword,
-                                          TimeKeywordString)
+from eventum_plugins.input.fields import TimeKeyword, VersatileDatetime
 from eventum_plugins.input.relative_time import parse_relative_time
 
 
 def normalize_daterange(
-    start: (
-        datetime | TimeKeywordString | RelativeTimeString
-        | HumanDatetimeString | None
-    ),
-    end: (
-        datetime | TimeKeywordString | RelativeTimeString
-        | HumanDatetimeString | None
-    ),
+    start: VersatileDatetime,
+    end: VersatileDatetime,
     timezone: BaseTzInfo,
     none_start: Literal['now', 'min'] = 'min',
 ) -> tuple[datetime, datetime]:
@@ -26,13 +18,11 @@ def normalize_daterange(
 
     Parameters
     ----------
-    start : datetime | RelativeTimeString | HumanDatetimeString\
-        | TimeKeywordString | None
+    start : VersatileDatetime
         Start of the date range, used as relative base if `end` is
         relative expression
 
-    end : datetime | RelativeTimeString | HumanDatetimeString\
-        | TimeKeywordString | None
+    end : VersatileDatetime
         End of the date range
 
     timezone : BaseTzInfo

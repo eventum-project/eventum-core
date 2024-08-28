@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import StrEnum
 from typing import Annotated
 
@@ -42,3 +43,11 @@ def _try_parse_time_keyword(v: str) -> str:
 
 
 TimeKeywordString = Annotated[str, AfterValidator(_try_parse_time_keyword)]
+
+
+# For proper validation in pydantic models this annotation should be used
+# with union_mode='left_to_right' in Field
+VersatileDatetime = (
+    datetime | TimeKeywordString | RelativeTimeString
+    | HumanDatetimeString | None
+)
