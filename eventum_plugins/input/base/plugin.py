@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 from pytz import BaseTzInfo
 
 from eventum_plugins.enums import PluginType
-from eventum_plugins.exceptions import PluginError
+from eventum_plugins.exceptions import PluginConfigurationError, PluginError
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import TimestampsBatcher
 from eventum_plugins.input.enums import TimeMode
@@ -112,13 +112,17 @@ class InputPlugin(ABC):
         self._mode = mode
         self._timezone = timezone
 
-        self._batcher = TimestampsBatcher(
-            batch_size=batch_size,
-            batch_delay=batch_delay,
-            scheduling=True if mode == TimeMode.LIVE else False,
-            timezone=self._timezone,
-            queue_max_size=queue_max_size
-        )
+        try:
+            self._batcher = TimestampsBatcher(
+                batch_size=batch_size,
+                batch_delay=batch_delay,
+                scheduling=True if mode == TimeMode.LIVE else False,
+                timezone=self._timezone,
+                queue_max_size=queue_max_size
+            )
+        except ValueError as e:
+            raise PluginConfigurationError(f'Wrong batching parameters: {e}')
+
         self._block_on_overflow = on_queue_overflow == 'block'
 
     @final
