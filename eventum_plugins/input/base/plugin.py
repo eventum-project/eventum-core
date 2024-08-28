@@ -1,3 +1,4 @@
+import inspect
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, Iterator, Literal, final
@@ -81,12 +82,23 @@ class InputPlugin(ABC):
         if not register:
             return
 
+        class_module = inspect.getmodule(cls)
+        if class_module is None:
+            raise PluginError(
+                'Cannot inspect module of plugin class definition'
+            )
+
+        if class_module.__name__ == '__main__':
+            raise PluginError(
+                'Plugin can be registered only from external package, '
+                f'but trying to register in module "{cls.__module__}"'
+            )
+
         try:
-            plugin_name = cls.__module__.split('.')[-2]
+            plugin_name = class_module.__name__.split('.')[-2]
         except IndexError:
             raise PluginError(
-                'Plugin can be registered only from its package, '
-                f'but trying to register in module "{cls.__module__}"'
+                f'Cannot extract plugin name from "{class_module.__name__}"'
             )
 
         PluginsRegistry().register_plugin(
