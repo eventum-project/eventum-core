@@ -112,7 +112,7 @@ class InputPlugin(ABC):
         queue_max_size : int, default=100_000_000
             Parameter `queue_max_size` for underlying batcher
 
-        on_queue_overflow : {'block', 'skip'}, default='block'
+        on_queue_overflow : Literal['block', 'skip'], default='block'
             Block or skip adding new timestamps when batcher input
             queue is overflowed
 
