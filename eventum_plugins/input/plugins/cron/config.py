@@ -1,8 +1,6 @@
 
-from dataclasses import Field
-
 from croniter import croniter
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.fields import VersatileDatetime
