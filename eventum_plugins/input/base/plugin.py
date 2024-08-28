@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Iterator, Literal, final
+from typing import Any, Callable, Iterator, Literal, final
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -27,8 +27,24 @@ class InputPlugin(ABC):
         Configuration for a plugin which class (in implemented plugins)
         is subclass of `InputPluginConfig` model
 
+    mode : TimeMode
+            Time mode of timestamps generation.
+
     timezone : BaseTzInfo
         Timezone that is used for generating timestamps
+
+    batch_size : int | None, default=100_000
+        Parameter `batch_size` for underlying batcher
+
+    batch_delay : float | None, default=0.1
+        Parameter `batch_delay` for underlying batcher
+
+    queue_max_size : int, default=100_000_000
+        Parameter `queue_max_size` for underlying batcher
+
+    on_queue_overflow : Literal['block', 'skip'], default='block'
+        Block or skip adding new timestamps when batcher input
+        queue is overflowed
 
     Raises
     ------
@@ -84,43 +100,33 @@ class InputPlugin(ABC):
         self,
         id: int,
         config: InputPluginConfig,
-        timezone: BaseTzInfo
-    ) -> None:
-        self._id = id
-        self._config = config
-        self._timezone = timezone
-
-    @final
-    def generate(
-        self,
         mode: TimeMode,
+        timezone: BaseTzInfo,
         batch_size: int | None = 100_000,
         batch_delay: float | None = 0.1,
         queue_max_size: int = 100_000_000,
         on_queue_overflow: Literal['block', 'skip'] = 'block'
-    ) -> Iterator[NDArray[datetime64]]:
+    ) -> None:
+        self._id = id
+        self._config = config
+        self._mode = mode
+        self._timezone = timezone
+
+        self._batcher = TimestampsBatcher(
+            batch_size=batch_size,
+            batch_delay=batch_delay,
+            scheduling=True if mode == TimeMode.LIVE else False,
+            timezone=self._timezone,
+            queue_max_size=queue_max_size
+        )
+        self._block_on_overflow = on_queue_overflow == 'block'
+
+    @final
+    def generate(self) -> Iterator[NDArray[datetime64]]:
         """Start timestamps generation in background thread and yield
         batches of generated timestamps. In sample mode timestamps
         are yielded immediately, in live mode - respectively to real
         time.
-
-        Parameters
-        ----------
-        mode : TimeMode
-            Time mode of timestamps generation.
-
-        batch_size : int | None, default=100_000
-            Parameter `batch_size` for underlying batcher
-
-        batch_delay : float | None, default=0.1
-            Parameter `batch_delay` for underlying batcher
-
-        queue_max_size : int, default=100_000_000
-            Parameter `queue_max_size` for underlying batcher
-
-        on_queue_overflow : Literal['block', 'skip'], default='block'
-            Block or skip adding new timestamps when batcher input
-            queue is overflowed
 
         Yields
         -------
@@ -131,32 +137,21 @@ class InputPlugin(ABC):
         ------
         PluginRuntimeError
             If any error occurred during timestamps generation
-
-        See Also
-        --------
-        eventum_plugins.input.batcher.TimestampsBatcher : batcher of
-        timestamps that is used as underlying batcher
         """
-        batcher = TimestampsBatcher(
-            batch_size=batch_size,
-            batch_delay=batch_delay,
-            scheduling=True if mode == TimeMode.LIVE else False,
-            timezone=self._timezone,
-            queue_max_size=queue_max_size
-        )
-        block = on_queue_overflow == 'block'
-
         with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self._generate, mode, batcher, block)
-            yield from batcher.scroll()
+            future = executor.submit(
+                self._generate,
+                self._mode,
+                lambda batch: self._batcher.add(batch, self._block_on_overflow)
+            )
+            yield from self._batcher.scroll()
             future.result()
 
     @abstractmethod
     def _generate(
         self,
         mode: TimeMode,
-        batcher: TimestampsBatcher,
-        block: bool
+        on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
         """Start timestamps generation with adding it to batcher. For
         sample mode all timestamps should be added to batcher as fast
@@ -169,12 +164,8 @@ class InputPlugin(ABC):
         mode : TimeMode
             Time mode of timestamps generation
 
-        batcher : TimestampsBatcher
-            Configured batcher that is used to add generated timestamps
-            to it
-
-        block : bool
-            Parameter `block` for `batcher.add` method
+        on_events : Callable[[NDArray[datetime64]], Any]
+            Callback that should be called for generated timestamps
 
         Raises
         ------
