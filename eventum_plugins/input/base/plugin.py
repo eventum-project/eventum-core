@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Iterator, Literal, final
+from typing import Iterator, Literal, final
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -8,6 +8,7 @@ from pytz import BaseTzInfo
 
 from eventum_plugins.enums import PluginType
 from eventum_plugins.exceptions import PluginError
+from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import TimestampsBatcher
 from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.registry import PluginsRegistry
@@ -79,7 +80,12 @@ class InputPlugin(ABC):
             config_cls=config_cls
         )
 
-    def __init__(self, id: int, config: Any, timezone: BaseTzInfo) -> None:
+    def __init__(
+        self,
+        id: int,
+        config: InputPluginConfig,
+        timezone: BaseTzInfo
+    ) -> None:
         self._id = id
         self._config = config
         self._timezone = timezone
