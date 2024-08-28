@@ -68,7 +68,7 @@ def normalize_daterange(
                     )
                     if start_time is None:
                         raise ValueError(
-                            f'Failed to parse expression "{start}" '
+                            f'Cannot parse expression "{start}" '
                             'in parameter "start"'
                         )
             else:
@@ -112,7 +112,7 @@ def normalize_daterange(
                     )
                 if end_time is None:
                     raise ValueError(
-                        f'Failed to parse expression "{end}" '
+                        f'Cannot parse expression "{end}" '
                         'in parameter "end"'
                     )
             else:
