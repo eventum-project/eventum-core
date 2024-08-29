@@ -1,7 +1,7 @@
 import inspect
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable, Iterator, Literal, final
+from typing import Any, Callable, Iterator, Literal, assert_never, final
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -154,10 +154,17 @@ class InputPlugin(ABC):
         PluginRuntimeError
             If any error occurred during timestamps generation
         """
+        match self._mode:
+            case TimeMode.SAMPLE:
+                method = self._generate_sample
+            case TimeMode.LIVE:
+                method = self._generate_live
+            case v:
+                assert_never(v)
+
         with ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(
-                self._generate,
-                self._mode,
+                method,
                 lambda batch: self._batcher.add(batch, self._block_on_overflow)
             )
             future.add_done_callback(lambda _: self._batcher.close())
@@ -166,22 +173,38 @@ class InputPlugin(ABC):
             future.result()
 
     @abstractmethod
-    def _generate(
+    def _generate_sample(
         self,
-        mode: TimeMode,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        """Start timestamps generation with adding it to batcher. For
-        sample mode all timestamps should be added to batcher as fast
-        as it is generated. For live mode timestamps should be added
-        with some delays between adds to avoid overflowing of batcher
-        input queue.
+        """Start timestamps generation in sample mode. `on_events`
+        callback should be called once timestamps are generated.
 
         Parameters
         ----------
-        mode : TimeMode
-            Time mode of timestamps generation
+        on_events : Callable[[NDArray[datetime64]], Any]
+            Callback that should be called for generated timestamps
 
+        Raises
+        ------
+        PluginRuntimeError
+            If any error occurred during timestamps generation
+        """
+        ...
+
+    @abstractmethod
+    def _generate_live(
+        self,
+        on_events: Callable[[NDArray[datetime64]], Any]
+    ) -> None:
+        """Start timestamps generation in live mode. `on_events`
+        callback should be called with some delays but without
+        increasing accumulation of future timestamps. Also it is
+        not necessary to schedule precisely when to call `on_events`
+        callback since timestamps scheduling is implemented internally.
+
+        Parameters
+        ----------
         on_events : Callable[[NDArray[datetime64]], Any]
             Callback that should be called for generated timestamps
 
