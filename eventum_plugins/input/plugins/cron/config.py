@@ -18,7 +18,9 @@ class CronInputPluginConfig(InputPluginConfig, frozen=True):
         End of the generating date range
 
     expression : str
-        Cron expression
+        Cron expression (supports specifying seconds, years, random
+        marks and keywords, see more here:
+        https://pypi.org/project/croniter/#about-second-repeats)
 
     count : int
         Number of events to generate for every interval
