@@ -1,9 +1,9 @@
 import time
 from datetime import datetime
-from typing import Any, Callable, Literal, assert_never
+from typing import Any, Callable, Literal
 
-from croniter import croniter
-from numpy import datetime64, full
+import croniter
+from numpy import array, datetime64, full, repeat
 from numpy.typing import NDArray
 from pytz.tzinfo import BaseTzInfo
 
@@ -48,14 +48,30 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
                 f'Date range normalization failure: {e}'
             )
 
-    def _generate(
+    def _generate_sample(
         self,
-        mode: TimeMode,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        cron = croniter(
+        range = croniter.croniter_range(
+            start=self._start.replace(tzinfo=None),
+            stop=self._end.replace(tzinfo=None),
             expr_format=self._config.expression,
             ret_type=datetime
+
+        )
+        timestamps = repeat(
+            a=array(list(range), dtype='datetime64[us]'),
+            repeats=self._config.count
+        )
+        on_events(timestamps)
+
+    def _generate_live(
+        self,
+        on_events: Callable[[NDArray[datetime64]], Any]
+    ) -> None:
+        cron = croniter.croniter(
+            expr_format=self._config.expression,
+            ret_type=datetime,
         )
 
         start_time = self._start
@@ -63,19 +79,13 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
         while (timestamp := cron.get_next(start_time=start_time)) < self._end:
             timestamp: datetime
 
-            match mode:
-                case TimeMode.LIVE:
-                    now = datetime.now(tz=self._timezone)
-                    wait_seconds = (timestamp - now).total_seconds()
+            now = datetime.now(tz=self._timezone)
+            wait_seconds = (timestamp - now).total_seconds()
 
-                    if wait_seconds > 0:
-                        time.sleep(wait_seconds)
-                    else:
-                        continue
-                case TimeMode.SAMPLE:
-                    pass
-                case v:
-                    assert_never(v)
+            if wait_seconds > 0:
+                time.sleep(wait_seconds)
+            else:
+                continue
 
             on_events(
                 full(
