@@ -29,8 +29,8 @@ def test_plugin_registration():
 
     assert not reg.is_registered(PluginType.INPUT, 'cron')
 
-    from eventum_plugins.input.cron import (CronInputPlugin,
-                                            CronInputPluginConfig)
+    from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
+    from eventum_plugins.input.plugins.cron.plugin import CronInputPlugin
 
     assert reg.is_registered(PluginType.INPUT, 'cron')
 
