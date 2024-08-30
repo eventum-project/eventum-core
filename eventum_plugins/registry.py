@@ -87,7 +87,7 @@ class PluginsRegistry(metaclass=Singleton):
 
         Raises
         ------
-        ValueError`
+        ValueError
             If specified plugin is not found in registry
         """
         try:
