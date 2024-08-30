@@ -1,4 +1,5 @@
 from typing import Self
+
 from pydantic import model_validator
 from pytz import timezone
 
