@@ -17,6 +17,7 @@ class DaterangeValidatorMixin:
         self.start: VersatileDatetime
         self.end: VersatileDatetime
 
+        # raises ValueError if start > end
         normalize_daterange(self.start, self.end, timezone('UTC'))
 
         return self
