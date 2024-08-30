@@ -18,6 +18,12 @@ class DaterangeValidatorMixin:
         self.end: VersatileDatetime
 
         # raises ValueError if start > end
-        normalize_daterange(self.start, self.end, timezone('UTC'))
+        try:
+            normalize_daterange(self.start, self.end, timezone('UTC'))
+        except OverflowError:
+            raise ValueError(
+                'Unable to validate date range due to datetime overflow '
+                'for UTC timezone'
+            ) from None
 
         return self
