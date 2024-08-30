@@ -7,7 +7,6 @@ from numpy import array, datetime64, full, repeat
 from numpy.typing import NDArray
 from pytz.tzinfo import BaseTzInfo
 
-from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.plugin import InputPlugin
 from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
@@ -36,17 +35,12 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
         )
         self._config: CronInputPluginConfig
 
-        try:
-            self._start, self._end = normalize_daterange(
-                start=self._config.start,
-                end=self._config.end,
-                timezone=self._timezone,
-                none_start='now'
-            )
-        except ValueError as e:
-            raise PluginConfigurationError(
-                f'Date range normalization failure: {e}'
-            )
+        self._start, self._end = normalize_daterange(
+            start=self._config.start,
+            end=self._config.end,
+            timezone=self._timezone,
+            none_start='now'
+        )
 
     def _generate_sample(
         self,

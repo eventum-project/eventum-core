@@ -4,9 +4,14 @@ from pydantic import Field, field_validator
 
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.fields import VersatileDatetime
+from eventum_plugins.input.mixins import DaterangeValidatorMixin
 
 
-class CronInputPluginConfig(InputPluginConfig, frozen=True):
+class CronInputPluginConfig(
+    DaterangeValidatorMixin,
+    InputPluginConfig,
+    frozen=True
+):
     """Configuration for `cron` input plugin.
 
     Attributes
