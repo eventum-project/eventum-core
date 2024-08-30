@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, TypeAlias
 
 import dateparser
 from pydantic import AfterValidator
@@ -47,7 +47,7 @@ TimeKeywordString = Annotated[str, AfterValidator(_try_parse_time_keyword)]
 
 # For proper validation in pydantic models this annotation should be used
 # with union_mode='left_to_right' in Field
-VersatileDatetime = (
-    datetime | TimeKeywordString | RelativeTimeString
-    | HumanDatetimeString | None
+VersatileDatetimeStrict: TypeAlias = (
+    datetime | TimeKeywordString | RelativeTimeString | HumanDatetimeString
 )
+VersatileDatetime: TypeAlias = (VersatileDatetimeStrict | None)
