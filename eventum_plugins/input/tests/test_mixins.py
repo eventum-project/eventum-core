@@ -1,5 +1,6 @@
-from pydantic import Field
 import pytest
+from pydantic import Field
+
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.fields import VersatileDatetime
 from eventum_plugins.input.mixins import DaterangeValidatorMixin
