@@ -5,11 +5,14 @@ import pytest
 from eventum_plugins.input.relative_time import parse_relative_time
 
 
-def test_parse_relative_time():
+def test_parse_relative_time_single_unit():
     assert parse_relative_time('1d') == timedelta(days=1)
     assert parse_relative_time('12h') == timedelta(hours=12)
     assert parse_relative_time('15m') == timedelta(minutes=15)
     assert parse_relative_time('30s') == timedelta(seconds=30)
+
+
+def parse_relative_time_multi_units():
     assert parse_relative_time('-1d') == timedelta(days=-1)
     assert parse_relative_time('-15m2s') == timedelta(minutes=-15, seconds=-2)
     assert parse_relative_time('-1d30s') == timedelta(days=-1, seconds=-30)
@@ -26,6 +29,8 @@ def test_parse_relative_time():
         days=15, hours=15, minutes=30, seconds=24
     )
 
+
+def parse_relative_time_invalid_expressions():
     with pytest.raises(ValueError):
         parse_relative_time('16Days minus three hours')
 
