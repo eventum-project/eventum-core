@@ -19,7 +19,7 @@ class CronInputPluginConfig(InputPluginConfig, frozen=True):
 
     expression : str
         Cron expression (supports specifying seconds, years, random
-        marks and keywords, see more here:
+        values and keywords, see more here:
         https://pypi.org/project/croniter/#about-second-repeats)
 
     count : int
