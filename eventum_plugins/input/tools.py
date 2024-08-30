@@ -127,6 +127,6 @@ def normalize_daterange(
             end_time = max
 
     if start_time > end_time:
-        raise ValueError('Start time is later then end time')
+        raise ValueError('Start time is later than end time')
 
     return (start_time, end_time)
