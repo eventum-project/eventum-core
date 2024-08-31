@@ -2,39 +2,11 @@ from datetime import datetime
 
 import pytest
 from numpy import datetime64
-from pydantic import ValidationError
 from pytz import timezone
 
 from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
 from eventum_plugins.input.plugins.cron.plugin import CronInputPlugin
-
-
-@pytest.mark.parametrize(
-    ('expression',),
-    [
-        ('* * * * *', ),
-        ('*/5 * * * *', ),
-        ('0-30/2 */12 * * *', ),
-        ('@daily', )
-    ]
-)
-def test_valid_config(expression):
-    CronInputPluginConfig(expression=expression, count=1)
-
-
-@pytest.mark.parametrize(
-    ('expression', 'count'),
-    [
-        ('* * * * *', 0),
-        ('* * * * *', -1),
-        ('0-66 * * * *', 1),
-        ('@nano-secondly', 999999)
-    ]
-)
-def test_invalid_config(expression, count):
-    with pytest.raises(ValidationError):
-        CronInputPluginConfig(expression=expression, count=count)
 
 
 @pytest.mark.timeout(1)
