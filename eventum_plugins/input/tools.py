@@ -8,7 +8,88 @@ from eventum_plugins.input.fields import TimeKeyword, VersatileDatetime
 from eventum_plugins.input.relative_time import parse_relative_time
 
 
-def normalize_daterange(
+def normalize_versatile_datetime(
+    value: VersatileDatetime,
+    timezone: BaseTzInfo,
+    relative_base: datetime | None = None,
+    none_point: Literal['now', 'min', 'max'] = 'min',
+) -> datetime:
+    """Normalize value representing datetime.
+
+    Parameters
+    ----------
+    value : VersatileDatetime
+        Value to normalize
+
+    timezone : BaseTzInfo
+        Timezone that is used for returned datetime object
+
+    relative_base : datetime | None
+        Base to use when value represents relative time, default is
+        current time
+
+    none_point : Literal['now', 'min', 'max']
+        What time to used when `value` parameter is `None`: 'now' -
+        current time; `min` - minimal value of datetime; `max` -
+        maximal value of datetime
+
+    Returns
+    -------
+    datetime
+        Normalized value as datetime object in specified timezone
+
+    Raises
+    ------
+    ValueError
+        If provided value cannot be parsed as datetime objects
+    """
+    now = datetime.now(tz=timezone)
+    relative_base = relative_base or now
+    min = datetime.min.replace(tzinfo=timezone)
+    max = datetime.max.replace(tzinfo=timezone)
+
+    match value:
+        case datetime():
+            time = value.astimezone(timezone)
+        case str():
+            try:
+                keyword = TimeKeyword(value)
+            except ValueError:
+                try:
+                    timedelta = parse_relative_time(value)
+                    time = relative_base + timedelta
+                except ValueError:
+                    time = dateparser.parse(
+                        value,
+                        settings={              # type: ignore[arg-type]
+                            'RELATIVE_BASE': relative_base,
+                            'TIMEZONE': timezone.zone,
+                            'RETURN_AS_TIMEZONE_AWARE': True
+                        }
+                    )
+                    if time is None:
+                        raise ValueError(f'Cannot parse expression "{value}"')
+            else:
+                match keyword:
+                    case TimeKeyword.NOW:
+                        time = now
+                    case TimeKeyword.NEVER:
+                        time = max
+                    case v:
+                        assert_never(v)
+        case _:
+            match none_point:
+                case 'now':
+                    time = now
+                case 'min':
+                    time = min
+                case 'max':
+                    time = max
+                case v:
+                    assert_never(v)
+
+
+def normalize_versatile_daterange(
     start: VersatileDatetime,
     end: VersatileDatetime,
     timezone: BaseTzInfo,
@@ -19,8 +100,7 @@ def normalize_daterange(
     Parameters
     ----------
     start : VersatileDatetime
-        Start of the date range, used as relative base if `end` is
-        relative expression
+        Start of the date range, used as relative base for `end`
 
     end : VersatileDatetime
         End of the date range
@@ -44,89 +124,26 @@ def normalize_daterange(
         If provided values cannot be parsed as datetime objects or
         date range is improper (e.g. start time is later than end time)
     """
-    now = datetime.now(tz=timezone)
-    min = datetime.min.replace(tzinfo=timezone)
-    max = datetime.max.replace(tzinfo=timezone)
+    try:
+        start = normalize_versatile_datetime(
+            value=start,
+            timezone=timezone,
+            none_point=none_start
+        )
+    except ValueError as e:
+        raise ValueError(f'Cannot parse "start": {e}')
 
-    match start:
-        case datetime():
-            start_time = start.astimezone(timezone)
-        case str():
-            try:
-                keyword = TimeKeyword(start)
-            except ValueError:
-                try:
-                    timedelta = parse_relative_time(start)
-                    start_time = now + timedelta
-                except ValueError:
-                    start_time = dateparser.parse(
-                        start,
-                        settings={              # type: ignore[arg-type]
-                            'TIMEZONE': timezone.zone,
-                            'RETURN_AS_TIMEZONE_AWARE': True
-                        }
-                    )
-                    if start_time is None:
-                        raise ValueError(
-                            f'Cannot parse expression "{start}" '
-                            'in parameter "start"'
-                        )
-            else:
-                match keyword:
-                    case TimeKeyword.NOW:
-                        start_time = now
-                    case TimeKeyword.NEVER:
-                        raise ValueError(
-                            'Parameter "start" cannot be "never"'
-                        )
-                    case v:
-                        assert_never(v)
-        case _:
-            match none_start:
-                case 'min':
-                    start_time = min
-                case 'now':
-                    start_time = now
-                case v:
-                    assert_never(v)
+    try:
+        end = normalize_versatile_datetime(
+            value=end,
+            timezone=timezone,
+            relative_base=start,
+            none_point='max'
+        )
+    except ValueError as e:
+        raise ValueError(f'Cannot parse "end": {e}')
 
-    match end:
-        case datetime():
-            end_time = end.astimezone(timezone)
-        case str():
-            try:
-                keyword = TimeKeyword(end)
-            except ValueError:
-                try:
-                    timedelta = parse_relative_time(end)
-                    end_time = start_time + timedelta
-                except ValueError:
-                    end_time = dateparser.parse(
-                        end,
-                        settings={                  # type: ignore[arg-type]
-                            'RELATIVE_BASE': start_time,
-                            'TIMEZONE': timezone.zone,
-                            'RETURN_AS_TIMEZONE_AWARE': True
+    if start > end:
+        raise ValueError('End time cannot be earlier than start time')
 
-                        }
-                    )
-                if end_time is None:
-                    raise ValueError(
-                        f'Cannot parse expression "{end}" '
-                        'in parameter "end"'
-                    )
-            else:
-                match keyword:
-                    case TimeKeyword.NOW:
-                        end_time = now
-                    case TimeKeyword.NEVER:
-                        end_time = max
-                    case v:
-                        assert_never(v)
-        case _:
-            end_time = max
-
-    if start_time > end_time:
-        raise ValueError('Start time is later than end time')
-
-    return (start_time, end_time)
+    return (start, end)
