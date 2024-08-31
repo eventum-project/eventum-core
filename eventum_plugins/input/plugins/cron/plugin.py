@@ -16,7 +16,7 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
     cron expression.
     """
 
-    def __init__(self, config: CronInputPluginConfig, **kwargs) -> None:
+    def __init__(self, *, config: CronInputPluginConfig, **kwargs) -> None:
         super().__init__(config=config, **kwargs)
 
         self._config: CronInputPluginConfig

@@ -110,6 +110,7 @@ class InputPlugin(ABC):
 
     def __init__(
         self,
+        *,
         id: int,
         config: InputPluginConfig,
         mode: TimeMode,
