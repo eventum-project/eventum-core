@@ -1,8 +1,8 @@
 from pytz import timezone
 
 from eventum_plugins.input.enums import TimeMode
-from eventum_plugins.input.plugins.sample.plugin import SampleInputPlugin
 from eventum_plugins.input.plugins.sample.config import SampleInputPluginConfig
+from eventum_plugins.input.plugins.sample.plugin import SampleInputPlugin
 
 
 def test_sample_sample():
