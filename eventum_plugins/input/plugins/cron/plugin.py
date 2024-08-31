@@ -1,14 +1,12 @@
 import time
 from datetime import datetime
-from typing import Any, Callable, Literal
+from typing import Any, Callable
 
 import croniter
 from numpy import array, datetime64, full, repeat
 from numpy.typing import NDArray
-from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input.base.plugin import InputPlugin
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
 from eventum_plugins.input.tools import normalize_daterange
 
@@ -18,21 +16,9 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
     cron expression.
     """
 
-    def __init__(
-        self,
-        id: int,
-        config: CronInputPluginConfig,
-        mode: TimeMode,
-        timezone: BaseTzInfo,
-        batch_size: int | None = 100_000,
-        batch_delay: float | None = 0.1,
-        queue_max_size: int = 100_000_000,
-        on_queue_overflow: Literal['block', 'skip'] = 'block'
-    ) -> None:
-        super().__init__(
-            id, config, mode, timezone, batch_size, batch_delay,
-            queue_max_size, on_queue_overflow
-        )
+    def __init__(self, config: CronInputPluginConfig, **kwargs) -> None:
+        super().__init__(config=config, **kwargs)
+
         self._config: CronInputPluginConfig
 
         self._start, self._end = normalize_daterange(
@@ -76,6 +62,7 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
             now = datetime.now(tz=self._timezone)
             wait_seconds = (timestamp - now).total_seconds()
 
+            # skip past timestamps
             if wait_seconds > 0:
                 time.sleep(wait_seconds)
             else:
