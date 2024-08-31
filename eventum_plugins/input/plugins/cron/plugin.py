@@ -6,7 +6,10 @@ import croniter
 from numpy import array, datetime64, full, repeat
 from numpy.typing import NDArray
 
+from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.plugin import InputPlugin
+from eventum_plugins.input.enums import TimeMode
+from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
 from eventum_plugins.input.tools import normalize_daterange
 
@@ -20,6 +23,18 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
         super().__init__(config=config, **kwargs)
 
         self._config: CronInputPluginConfig
+
+        mode = kwargs['mode']
+        if (
+            mode == TimeMode.SAMPLE
+            and (
+                self._config.end is None
+                or self._config.end == TimeKeyword.NEVER.value
+            )
+        ):
+            raise PluginConfigurationError(
+                f'End time must be finite for "{mode}" mode'
+            )
 
         self._start, self._end = normalize_daterange(
             start=self._config.start,
