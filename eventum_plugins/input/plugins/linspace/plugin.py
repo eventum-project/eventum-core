@@ -37,10 +37,7 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
         )
 
         start = datetime64(localize(self._start, self._timezone), 'us')
-        timedelta = timedelta64(
-            value=(self._end - self._start),
-            format='us'
-        )
+        timedelta = timedelta64((self._end - self._start), 'us')
 
         timestamps = start + (timedelta * space)
         return timestamps
@@ -49,14 +46,14 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        timestamps = self._generate(on_events)
+        timestamps = self._generate()
         on_events(timestamps)
 
     def _generate_live(
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        timestamps = self._generate(on_events)
+        timestamps = self._generate()
 
         future_timestamps = get_future_slice(
             timestamps=timestamps,
