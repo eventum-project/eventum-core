@@ -17,10 +17,12 @@ class CronInputPluginConfig(
     Attributes
     ----------
     start : VersatileDatetime, default = None
-        Start of the generating date range
+        Start of the generating date range, if not set, current time
+        is used
 
     end : VersatileDatetime, default = None
-        End of the generating date range
+        End of the generating date range, if not set (only for live
+        mode), never end generation
 
     expression : str
         Cron expression (supports specifying seconds, years, random

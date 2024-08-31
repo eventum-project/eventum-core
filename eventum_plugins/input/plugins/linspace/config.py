@@ -14,10 +14,10 @@ class LinspaceInputPluginConfig(
 
     Attributes
     ----------
-    start : VersatileDatetimeStrict, default = None
+    start : VersatileDatetimeStrict
         Start of the generating date range
 
-    end : VersatileDatetimeStrict, default = None
+    end : VersatileDatetimeStrict
         End of the generating date range
 
     count : int
