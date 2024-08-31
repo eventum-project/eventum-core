@@ -13,7 +13,7 @@ def test_now64():
     now = datetime.now().astimezone(tz).replace(tzinfo=None)
 
     expected = datetime64(now, 'us')
-    result = now64(tz=tz)
+    result = now64(timezone=tz)
 
     assert 0 <= ((result - expected) / timedelta64(1000000, 'us')) < 0.5
 
@@ -24,7 +24,7 @@ def test_timedelta64_to_seconds():
 
 def test_to_naive():
     timestamp = datetime(2024, 1, 1, 0, 0, 0, tzinfo=pytz.timezone('UTC'))
-    result = to_naive(timestamp, tz=pytz.timezone('Europe/Moscow'))
+    result = to_naive(timestamp, timezone=pytz.timezone('Europe/Moscow'))
 
     assert result == datetime64(
         timestamp.astimezone(

@@ -26,7 +26,7 @@ class SampleInputPlugin(InputPlugin, config_cls=SampleInputPluginConfig):
         on_events(
             full(
                 shape=self._config.count,
-                fill_value=now64(tz=self._timezone),
+                fill_value=now64(timezone=self._timezone),
                 dtype='datetime64[us]'
             )
         )
@@ -38,7 +38,7 @@ class SampleInputPlugin(InputPlugin, config_cls=SampleInputPluginConfig):
         on_events(
             full(
                 shape=self._config.count,
-                fill_value=now64(tz=self._timezone),
+                fill_value=now64(timezone=self._timezone),
                 dtype='datetime64[us]'
             )
         )
