@@ -126,6 +126,9 @@ def normalize_versatile_daterange(
         If provided values cannot be parsed as datetime objects or
         date range is improper (e.g. start time is later than end time)
     """
+    if start == TimeKeyword.NEVER.value:
+        raise ValueError(f'Start time cannot be "{TimeKeyword.NEVER}"')
+
     try:
         start = normalize_versatile_datetime(
             value=start,
@@ -133,7 +136,7 @@ def normalize_versatile_daterange(
             none_point=none_start
         )
     except ValueError as e:
-        raise ValueError(f'Cannot parse "start": {e}')
+        raise ValueError(f'Cannot parse start time: {e}')
 
     try:
         end = normalize_versatile_datetime(
@@ -143,7 +146,7 @@ def normalize_versatile_daterange(
             none_point='max'
         )
     except ValueError as e:
-        raise ValueError(f'Cannot parse "end": {e}')
+        raise ValueError(f'Cannot parse end time: {e}')
 
     if start > end:
         raise ValueError('End time cannot be earlier than start time')
