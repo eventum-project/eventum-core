@@ -7,7 +7,8 @@ from eventum_plugins.input.base.plugin import InputPlugin
 from eventum_plugins.input.plugins.linspace.config import \
     LinspaceInputPluginConfig
 from eventum_plugins.input.tools import normalize_daterange
-from eventum_plugins.input.utils.time_utils import localize
+from eventum_plugins.input.utils.array_utils import get_future_slice
+from eventum_plugins.input.utils.time_utils import localize, now
 
 
 class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
@@ -27,10 +28,7 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
             none_start='now'
         )
 
-    def _generate(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate(self) -> NDArray[datetime64]:
         space = linspace(
             start=0,
             stop=1,
@@ -45,16 +43,24 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
         )
 
         timestamps = start + (timedelta * space)
-        on_events(timestamps)
+        return timestamps
 
     def _generate_sample(
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        self._generate(on_events)
+        timestamps = self._generate(on_events)
+        on_events(timestamps)
 
     def _generate_live(
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        self._generate(on_events)
+        timestamps = self._generate(on_events)
+
+        future_timestamps = get_future_slice(
+            timestamps=timestamps,
+            after=now()
+        )
+
+        on_events(future_timestamps)
