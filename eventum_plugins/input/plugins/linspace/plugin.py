@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from eventum_plugins.input.base.plugin import InputPlugin
 from eventum_plugins.input.plugins.linspace.config import \
     LinspaceInputPluginConfig
-from eventum_plugins.input.tools import normalize_daterange
+from eventum_plugins.input.tools import normalize_versatile_daterange
 from eventum_plugins.input.utils.array_utils import get_future_slice
 from eventum_plugins.input.utils.time_utils import localize, now
 
@@ -21,7 +21,7 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
 
         self._config: LinspaceInputPluginConfig
 
-        self._start, self._end = normalize_daterange(
+        self._start, self._end = normalize_versatile_daterange(
             start=self._config.start,
             end=self._config.end,
             timezone=self._timezone,

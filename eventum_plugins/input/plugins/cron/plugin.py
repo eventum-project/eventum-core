@@ -11,7 +11,7 @@ from eventum_plugins.input.base.plugin import InputPlugin
 from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
-from eventum_plugins.input.tools import normalize_daterange
+from eventum_plugins.input.tools import normalize_versatile_daterange
 
 
 class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
@@ -36,7 +36,7 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
                 f'End time must be finite for "{mode}" mode'
             )
 
-        self._start, self._end = normalize_daterange(
+        self._start, self._end = normalize_versatile_daterange(
             start=self._config.start,
             end=self._config.end,
             timezone=self._timezone,
