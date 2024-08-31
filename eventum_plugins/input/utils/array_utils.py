@@ -13,7 +13,7 @@ def get_future_slice(
     timestamps : NDArray[datetime64]
         Timestamps array sorted in ascending order
 
-    after: datetime64
+    after : datetime64
         Cutoff moment
 
     Returns
@@ -36,7 +36,7 @@ def get_past_slice(
     timestamps : NDArray[datetime64]
         Timestamps array sorted in ascending order
 
-    before: datetime64
+    before : datetime64
         Cutoff moment
 
     Returns
@@ -58,7 +58,7 @@ def chunk_array(array: NDArray, size: int) -> list[NDArray]:
     array : NDArray
         Array to chunk
 
-    size: int
+    size : int
         Size of one chunk
 
     Returns
