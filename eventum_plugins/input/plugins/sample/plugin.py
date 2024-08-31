@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 
 from eventum_plugins.input.base.plugin import InputPlugin
 from eventum_plugins.input.plugins.sample.config import SampleInputPluginConfig
-from eventum_plugins.input.utils.time_utils import now
+from eventum_plugins.input.utils.time_utils import now64
 
 
 class SampleInputPlugin(InputPlugin, config_cls=SampleInputPluginConfig):
@@ -26,7 +26,7 @@ class SampleInputPlugin(InputPlugin, config_cls=SampleInputPluginConfig):
         on_events(
             full(
                 shape=self._config.count,
-                fill_value=now(tz=self._timezone),
+                fill_value=now64(tz=self._timezone),
                 dtype='datetime64[us]'
             )
         )
@@ -38,7 +38,7 @@ class SampleInputPlugin(InputPlugin, config_cls=SampleInputPluginConfig):
         on_events(
             full(
                 shape=self._config.count,
-                fill_value=now(tz=self._timezone),
+                fill_value=now64(tz=self._timezone),
                 dtype='datetime64[us]'
             )
         )

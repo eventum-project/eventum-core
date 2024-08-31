@@ -8,7 +8,7 @@ from eventum_plugins.input.plugins.linspace.config import \
     LinspaceInputPluginConfig
 from eventum_plugins.input.tools import normalize_versatile_daterange
 from eventum_plugins.input.utils.array_utils import get_future_slice
-from eventum_plugins.input.utils.time_utils import localize, now
+from eventum_plugins.input.utils.time_utils import now64, to_naive
 
 
 class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
@@ -36,7 +36,7 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
             endpoint=self._config.endpoint,
         )
 
-        start = datetime64(localize(self._start, self._timezone), 'us')
+        start = datetime64(to_naive(self._start, self._timezone), 'us')
         timedelta = timedelta64((self._end - self._start), 'us')
 
         timestamps = start + (timedelta * space)
@@ -57,7 +57,7 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
 
         future_timestamps = get_future_slice(
             timestamps=timestamps,
-            after=now()
+            after=now64()
         )
 
         on_events(future_timestamps)

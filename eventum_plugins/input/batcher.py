@@ -9,7 +9,7 @@ from pytz import timezone
 from pytz.tzinfo import BaseTzInfo
 
 from eventum_plugins.input.utils.array_utils import chunk_array, get_past_slice
-from eventum_plugins.input.utils.time_utils import now
+from eventum_plugins.input.utils.time_utils import now64
 
 
 class BatcherClosedError(Exception):
@@ -356,7 +356,7 @@ class TimestampsBatcher:
     @property
     def _past_timestamps_count(self) -> int:
         """Count of timestamps in queue that are in the past."""
-        curr_time = now(self._timezone)
+        curr_time = now64(self._timezone)
 
         if not self._timestamp_arrays_queue:
             return 0

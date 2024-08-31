@@ -43,7 +43,7 @@ def normalize_versatile_datetime(
     ValueError
         If provided value cannot be parsed as datetime objects
     """
-    now = datetime.now(tz=timezone)
+    now = datetime.now().astimezone(timezone)
     relative_base = relative_base or now
     min = datetime.min.replace(tzinfo=timezone)
     max = datetime.max.replace(tzinfo=timezone)
@@ -87,6 +87,8 @@ def normalize_versatile_datetime(
                     time = max
                 case v:
                     assert_never(v)
+
+    return time
 
 
 def normalize_versatile_daterange(

@@ -74,7 +74,7 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
         while (timestamp := cron.get_next(start_time=start_time)) < self._end:
             timestamp: datetime
 
-            now = datetime.now(tz=self._timezone)
+            now = datetime.now().astimezone(self._timezone)
             wait_seconds = (timestamp - now).total_seconds()
 
             # skip past timestamps
