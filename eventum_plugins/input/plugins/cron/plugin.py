@@ -64,14 +64,15 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        cron = croniter.croniter(
+        range = croniter.croniter_range(
+            start=self._start.replace(tzinfo=None),
+            stop=self._end.replace(tzinfo=None),
             expr_format=self._config.expression,
-            ret_type=datetime,
+            ret_type=datetime
+
         )
 
-        start_time = self._start
-
-        while (timestamp := cron.get_next(start_time=start_time)) < self._end:
+        for timestamp in range:
             timestamp: datetime
 
             now = datetime.now().astimezone(self._timezone)
@@ -90,5 +91,3 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
                     dtype='datetime64[us]'
                 )
             )
-
-            start_time = timestamp
