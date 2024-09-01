@@ -57,7 +57,7 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
 
         future_timestamps = get_future_slice(
             timestamps=timestamps,
-            after=now64()
+            after=now64(self._timezone)
         )
 
         on_events(future_timestamps)
