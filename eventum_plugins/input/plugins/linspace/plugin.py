@@ -21,14 +21,13 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
 
         self._config: LinspaceInputPluginConfig
 
-        self._start, self._end = normalize_versatile_daterange(
+    def _generate(self) -> NDArray[datetime64]:
+        start, end = normalize_versatile_daterange(
             start=self._config.start,
             end=self._config.end,
             timezone=self._timezone,
             none_start='now'
         )
-
-    def _generate(self) -> NDArray[datetime64]:
         space = linspace(
             start=0,
             stop=1,
@@ -36,10 +35,10 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
             endpoint=self._config.endpoint,
         )
 
-        start = datetime64(to_naive(self._start, self._timezone), 'us')
-        timedelta = timedelta64((self._end - self._start), 'us')
+        first = datetime64(to_naive(start, self._timezone), 'us')
+        timedelta = timedelta64((end - start), 'us')
 
-        timestamps = start + (timedelta * space)
+        timestamps = first + (timedelta * space)
         return timestamps
 
     def _generate_sample(

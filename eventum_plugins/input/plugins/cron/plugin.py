@@ -36,20 +36,19 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
                 f'End time must be finite for "{mode}" mode'
             )
 
-        self._start, self._end = normalize_versatile_daterange(
+    def _generate_sample(
+        self,
+        on_events: Callable[[NDArray[datetime64]], Any]
+    ) -> None:
+        start, end = normalize_versatile_daterange(
             start=self._config.start,
             end=self._config.end,
             timezone=self._timezone,
             none_start='now'
         )
-
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
         range = croniter.croniter_range(
-            start=self._start.replace(tzinfo=None),
-            stop=self._end.replace(tzinfo=None),
+            start=start.replace(tzinfo=None),
+            stop=end.replace(tzinfo=None),
             expr_format=self._config.expression,
             ret_type=datetime
 
@@ -64,9 +63,15 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
+        start, end = normalize_versatile_daterange(
+            start=self._config.start,
+            end=self._config.end,
+            timezone=self._timezone,
+            none_start='now'
+        )
         range = croniter.croniter_range(
-            start=self._start.replace(tzinfo=None),
-            stop=self._end.replace(tzinfo=None),
+            start=start.replace(tzinfo=None),
+            stop=end.replace(tzinfo=None),
             expr_format=self._config.expression,
             ret_type=datetime
 
