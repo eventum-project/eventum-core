@@ -64,7 +64,7 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
         start, end = normalize_versatile_daterange(
-            start=self._config.start,
+            start=None,             # skip all past timestamps
             end=self._config.end,
             timezone=self._timezone,
             none_start='now'
@@ -83,11 +83,8 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
             now = datetime.now().astimezone(self._timezone)
             wait_seconds = (timestamp - now).total_seconds()
 
-            # skip past timestamps
             if wait_seconds > 0:
                 time.sleep(wait_seconds)
-            else:
-                continue
 
             on_events(
                 full(
