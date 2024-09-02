@@ -62,7 +62,7 @@ class TimerInputPlugin(InputPlugin, config_cls=TimerInputPluginConfig):
             timezone=self._timezone,
             none_point='now'
         )
-        timeout = timedelta(microseconds=self._config.seconds)
+        timeout = timedelta(seconds=self._config.seconds)
 
         # skip past timestamps
         skip_cycles = (datetime.now().astimezone() - start) // timeout
