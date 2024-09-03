@@ -26,7 +26,7 @@ class TimestampsInputPluginConfig(InputPluginConfig, frozen=True):
 
     @field_validator('source')
     def validate_source(v: list[datetime] | str) -> list[datetime] | str:
-        if isinstance(v, str) and os.path.isabs(v):
+        if isinstance(v, str) and not os.path.isabs(v):
             raise ValueError('Path must be absolute')
 
         return v

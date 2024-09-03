@@ -77,15 +77,21 @@ class TimestampsInputPlugin(
                 f'Failed to read timestamps from file: {e}'
             ) from None
 
-    def sample(self, on_events: Callable[[NDArray[datetime64]], Any]) -> None:
+    def _generate_sample(
+        self,
+        on_events: Callable[[NDArray[datetime64]], Any]
+    ) -> None:
         on_events(self._timestamps)
 
-    def live(self, on_events: Callable[[NDArray[datetime64]], Any]) -> None:
+    def _generate_live(
+        self,
+        on_events: Callable[[NDArray[datetime64]], Any]
+    ) -> None:
         future_timestamps = self._timestamps
 
         future_timestamps = get_future_slice(
             timestamps=self._timestamps,
-            after=now64(tz=self._timezone)
+            after=now64(timezone=self._timezone)
         )
 
         on_events(future_timestamps)
