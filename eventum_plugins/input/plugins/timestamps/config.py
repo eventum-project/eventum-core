@@ -1,9 +1,10 @@
 
 
-from datetime import datetime
 import os
+from datetime import datetime
 
 from pydantic import Field, field_validator
+
 from eventum_plugins.input.base.config import InputPluginConfig
 
 
