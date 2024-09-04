@@ -48,6 +48,7 @@ class MultiplierConfig(BaseModel, extra='forbid', frozen=True):
 class RandomizerConfig(BaseModel, extra='forbid', frozen=True):
     deviation: float = Field(..., ge=0, le=1)
     direction: RandomizerDirection
+    sampling: int = Field(1024, ge=256)
 
     # XXX: Remove in 1.3.0
     @field_validator('direction', mode='before')
