@@ -356,7 +356,7 @@ class TimestampsBatcher:
     @property
     def _past_timestamps_count(self) -> int:
         """Count of timestamps in queue that are in the past."""
-        curr_time = now64(self._timezone)
+        now = now64(self._timezone)
 
         if not self._timestamp_arrays_queue:
             return 0
@@ -367,12 +367,12 @@ class TimestampsBatcher:
             if array.size == 0:
                 continue
 
-            if curr_time < array[0]:
+            if now < array[0]:
                 return count
-            elif curr_time > array[-1]:
+            elif now > array[-1]:
                 count += array.size
             else:
-                past_slice = get_past_slice(array, curr_time)
+                past_slice = get_past_slice(array, now)
                 return count + past_slice.size
 
         return count
