@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from math import ceil, floor
+from typing import Literal, assert_never
 
 from numpy import datetime64, timedelta64
 from pytz import BaseTzInfo
@@ -60,3 +62,53 @@ def to_naive(timestamp: datetime, timezone: BaseTzInfo) -> datetime:
         timestamp.astimezone(timezone).replace(tzinfo=None)
         if timestamp.tzinfo else timestamp
     )
+
+
+def skip_periods(
+    start: datetime,
+    moment: datetime,
+    duration: timedelta,
+    ret_timestamp: Literal['last_past', 'first_future']
+) -> datetime:
+    """Get last past or first future timestamp relating to specified
+    moment skipping past periods with constant duration.
+
+    Parameters
+    ----------
+    start : datetime
+        Start timestamp for counting periods
+
+    moment : datetime
+        Timestamps of moment until which to skip
+
+    duration : timedelta
+        Duration of one period
+
+    ret_timestamp : Literal['last_past', 'first_future']
+        Which timestamp to return: last past or first future
+
+    Returns
+    -------
+    datetime
+        Timestamp after skipped past periods
+
+    Raises
+    ------
+    ValueError
+        If duration is less than zero
+    """
+    if duration.total_seconds() <= 0:
+        raise ValueError('Duration must be greater than zero')
+
+    skip_periods = (moment.astimezone() - start.astimezone()) / duration
+
+    if skip_periods <= 0:
+        return start
+
+    match ret_timestamp:
+        case 'last_past':
+            return start + (duration * floor(skip_periods))
+        case 'first_future':
+            return start + (duration * ceil(skip_periods))
+        case v:
+            assert_never(v)

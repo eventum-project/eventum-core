@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
+import pytest
 import pytz
 from numpy import datetime64, timedelta64
 
-from eventum_plugins.input.utils.time_utils import (now64,
+from eventum_plugins.input.utils.time_utils import (now64, skip_periods,
                                                     timedelta64_to_seconds,
                                                     to_naive)
 
@@ -31,3 +32,31 @@ def test_to_naive():
             pytz.timezone('Europe/Moscow')
         ).replace(tzinfo=None)
     )
+
+
+def test_skip_periods():
+    timestamp = skip_periods(
+        start=datetime(2024, 1, 1, 0, 0, 0),
+        moment=datetime(2024, 1, 1, 12, 30, 0),
+        duration=timedelta(hours=1),
+        ret_timestamp='last_past'
+    )
+
+    assert timestamp == datetime(2024, 1, 1, 12, 0, 0)
+
+    timestamp = skip_periods(
+        start=datetime(2024, 1, 1, 0, 0, 0),
+        moment=datetime(2024, 1, 1, 12, 30, 0),
+        duration=timedelta(hours=1),
+        ret_timestamp='first_future'
+    )
+
+    assert timestamp == datetime(2024, 1, 1, 13, 0, 0)
+
+    with pytest.raises(ValueError):
+        timestamp = skip_periods(
+            start=datetime(2024, 1, 1, 0, 0, 0),
+            moment=datetime(2024, 1, 1, 12, 30, 0),
+            duration=timedelta(hours=-1),
+            ret_timestamp='first_future'
+        )
