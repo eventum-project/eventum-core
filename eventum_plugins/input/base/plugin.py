@@ -112,6 +112,15 @@ class InputPlugin(ABC):
                 f'Cannot extract plugin name from "{class_module.__name__}"'
             )
 
+        cls.name = property(
+            lambda _: plugin_name,
+            doc="Name of plugin"
+        )
+        cls.config_cls = property(
+            lambda _: config_cls,
+            doc="Class of plugin config"
+        )
+
         PluginsRegistry().register_plugin(
             type=PluginType.INPUT,
             name=plugin_name,
@@ -226,3 +235,8 @@ class InputPlugin(ABC):
             If any error occurred during timestamps generation
         """
         ...
+
+    @property
+    def id(self) -> int:
+        """ID of the plugin."""
+        return self._id
