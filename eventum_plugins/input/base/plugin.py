@@ -90,9 +90,6 @@ class InputPlugin(ABC):
     ):
         super().__init_subclass__(**kwargs)
 
-        if not register:
-            return
-
         class_module = inspect.getmodule(cls)
         if class_module is None:
             raise PluginError(
@@ -101,8 +98,7 @@ class InputPlugin(ABC):
 
         if class_module.__name__ == '__main__':
             raise PluginError(
-                'Plugin can be registered only from external package, '
-                f'but trying to register in module "{cls.__module__}"'
+                'Plugin can be imported only from external module'
             )
 
         try:
@@ -121,12 +117,13 @@ class InputPlugin(ABC):
             doc="Class of plugin config"
         )
 
-        PluginsRegistry().register_plugin(
-            type=PluginType.INPUT,
-            name=plugin_name,
-            cls=cls,
-            config_cls=config_cls
-        )
+        if register:
+            PluginsRegistry().register_plugin(
+                type=PluginType.INPUT,
+                name=plugin_name,
+                cls=cls,
+                config_cls=config_cls
+            )
 
     def __init__(
         self,
