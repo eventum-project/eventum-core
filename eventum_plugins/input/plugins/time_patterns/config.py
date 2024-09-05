@@ -50,7 +50,7 @@ class RandomizerConfig(BaseModel, extra='forbid', frozen=True):
     direction: RandomizerDirection
     sampling: int = Field(1024, ge=256)
 
-    # XXX: Remove in 1.3.0
+    # XXX: Remove in 2.1.0
     @field_validator('direction', mode='before')
     def convert_to_new_format(v: Any) -> Any:
         if not isinstance(v, str):
@@ -60,7 +60,7 @@ class RandomizerConfig(BaseModel, extra='forbid', frozen=True):
             warn(
                 'Capitalized options in "time_patterns" input plugin config '
                 'are deprecated and their support will be removed in version '
-                f'1.3.0. Use lowercase instead ("{v}" -> "{v.lower()}").',
+                f'2.1. Use lowercase instead ("{v}" -> "{v.lower()}").',
                 DeprecationWarning
             )
             return v.lower()
@@ -134,7 +134,7 @@ class SpreaderConfig(BaseModel, extra='forbid', frozen=True):
             f'Improper parameters model for "{self.distribution}" distribution'
         )
 
-    # XXX: Remove in 1.3.0
+    # XXX: Remove in 2.1.0
     @field_validator('distribution', mode='before')
     def convert_to_new_format(v: Any) -> Any:
         if not isinstance(v, str):
@@ -144,7 +144,7 @@ class SpreaderConfig(BaseModel, extra='forbid', frozen=True):
             warn(
                 'Capitalized options in "time_patterns" input plugin config '
                 'are deprecated and their support will be removed in version '
-                f'1.3.0. Use lowercase instead ("{v}" -> "{v.lower()}").',
+                f'2.1. Use lowercase instead ("{v}" -> "{v.lower()}").',
                 DeprecationWarning
             )
             return v.lower()
