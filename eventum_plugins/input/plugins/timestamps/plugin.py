@@ -1,12 +1,12 @@
 import logging
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, Unpack
 
 from numpy import array, datetime64
 from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
-from eventum_plugins.input.base.plugin import InputPlugin
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
 from eventum_plugins.input.plugins.timestamps.config import \
     TimestampsInputPluginConfig
 from eventum_plugins.input.utils.array_utils import get_future_slice
@@ -25,7 +25,7 @@ class TimestampsInputPlugin(
         self,
         *,
         config: TimestampsInputPluginConfig,
-        **kwargs
+        **kwargs: Unpack[InputPluginKwargs]
     ) -> None:
         super().__init__(config=config, **kwargs)
 

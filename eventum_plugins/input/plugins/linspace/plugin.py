@@ -1,9 +1,9 @@
-from typing import Any, Callable
+from typing import Any, Callable, Unpack
 
 from numpy import datetime64, linspace, timedelta64
 from numpy.typing import NDArray
 
-from eventum_plugins.input.base.plugin import InputPlugin
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
 from eventum_plugins.input.plugins.linspace.config import \
     LinspaceInputPluginConfig
 from eventum_plugins.input.tools import normalize_versatile_daterange
@@ -16,7 +16,12 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
     spaced in specified date range.
     """
 
-    def __init__(self, *, config: LinspaceInputPluginConfig, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        config: LinspaceInputPluginConfig,
+        **kwargs: Unpack[InputPluginKwargs]
+    ) -> None:
         super().__init__(config=config, **kwargs)
 
         self._config: LinspaceInputPluginConfig

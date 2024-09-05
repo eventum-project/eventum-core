@@ -1,7 +1,8 @@
 import inspect
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable, Iterator, Literal, assert_never, final
+from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
+                    TypedDict, assert_never, final)
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -13,6 +14,16 @@ from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import TimestampsBatcher
 from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.registry import PluginsRegistry
+
+
+class InputPluginKwargs(TypedDict):
+    id: Required[int]
+    mode: Required[TimeMode]
+    timezone: Required[BaseTzInfo]
+    batch_size: NotRequired[int | None]
+    batch_delay: NotRequired[float | None]
+    queue_max_size: NotRequired[int]
+    on_queue_overflow: NotRequired[Literal['block', 'skip']]
 
 
 class InputPlugin(ABC):
@@ -110,9 +121,9 @@ class InputPlugin(ABC):
 
     def __init__(
         self,
+        config: InputPluginConfig,
         *,
         id: int,
-        config: InputPluginConfig,
         mode: TimeMode,
         timezone: BaseTzInfo,
         batch_size: int | None = 100_000,

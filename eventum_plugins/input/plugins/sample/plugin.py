@@ -1,9 +1,9 @@
-from typing import Any, Callable
+from typing import Any, Callable, Unpack
 
 from numpy import datetime64, full
 from numpy.typing import NDArray
 
-from eventum_plugins.input.base.plugin import InputPlugin
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
 from eventum_plugins.input.plugins.sample.config import SampleInputPluginConfig
 from eventum_plugins.input.utils.time_utils import now64
 
@@ -14,7 +14,12 @@ class SampleInputPlugin(InputPlugin, config_cls=SampleInputPluginConfig):
     was started.
     """
 
-    def __init__(self, *, config: SampleInputPluginConfig, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        config: SampleInputPluginConfig,
+        **kwargs: Unpack[InputPluginKwargs]
+    ) -> None:
         super().__init__(config=config, **kwargs)
 
         self._config: SampleInputPluginConfig

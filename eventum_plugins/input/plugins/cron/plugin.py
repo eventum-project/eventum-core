@@ -1,13 +1,13 @@
 import time
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, Unpack
 
 import croniter
 from numpy import array, datetime64, full, repeat
 from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
-from eventum_plugins.input.base.plugin import InputPlugin
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
 from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
@@ -19,7 +19,12 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
     cron expression.
     """
 
-    def __init__(self, *, config: CronInputPluginConfig, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        config: CronInputPluginConfig,
+        **kwargs: Unpack[InputPluginKwargs]
+    ) -> None:
         super().__init__(config=config, **kwargs)
 
         self._config: CronInputPluginConfig
