@@ -2,7 +2,8 @@ import numpy as np
 
 from eventum_plugins.input.utils.array_utils import (chunk_array,
                                                      get_future_slice,
-                                                     get_past_slice)
+                                                     get_past_slice,
+                                                     merge_arrays)
 
 
 def test_get_future_slice():
@@ -84,3 +85,19 @@ def test_chunks_allocation():
 
     arr[0] = -1
     assert chunks[0][0] == -1
+
+
+def test_merge_arrays():
+    arrays = []
+
+    values = set()
+    for _ in range(10):
+        arr = np.random.uniform(0, 1000, 1000)
+        values |= set(arr)
+        arrays.append(arr)
+
+    result = merge_arrays(*arrays)
+
+    assert result.size == 10_000
+    assert set(result) == set(values)
+    assert np.all(result[:-1] <= result[1:])
