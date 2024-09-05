@@ -44,7 +44,7 @@ class TimestampsBatcher:
         less then `MIN_BATCH_DELAY` attribute
 
     scheduling : bool, default=False
-        Whether to respect timestamp values and publish hem according
+        Whether to respect timestamp values and publish them according
         to real time
 
     timezone : BaseTzInfo, default=pytz.timezone('UTC')
