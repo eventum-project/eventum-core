@@ -398,4 +398,15 @@ class TimestampsBatcher:
 
     @property
     def scheduling(self) -> bool:
+        """Scheduling status."""
         return self._scheduling
+
+    @property
+    def batch_size(self) -> int | None:
+        """Batch size."""
+        return self._batch_size
+
+    @property
+    def batch_delay(self) -> float | None:
+        """Batch delay."""
+        return self._batch_delay
