@@ -1,10 +1,11 @@
 import logging
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
+from datetime import datetime
 from queue import Empty, Queue
 from typing import Iterable, Iterator
 
-from numpy import datetime64
+from numpy import datetime64, searchsorted
 from numpy.typing import NDArray
 
 from eventum_plugins.input.base.plugin import InputPlugin
@@ -34,11 +35,11 @@ class InputPluginsLiveMerger:
     plugins : Iterable[InputPlugin]
         Input plugins to merge
 
-    delay : float
-        Time (in seconds) to wait newly incoming batches after
-        receiving first batch in a sequence to perform merge
+    target_delay : float
+        Time (in seconds) that indicates how long plugins can delay
+        publishing batches
 
-    batch_size : int
+    batch_size : int | None
         Maximum size of producing batches after merge, not limited if
         value is `None`
 
@@ -57,7 +58,7 @@ class InputPluginsLiveMerger:
     def __init__(
         self,
         plugins: Iterable[InputPlugin],
-        delay: float,
+        target_delay: float,
         batch_size: int | None
     ) -> None:
         plugins = list(plugins)
@@ -68,7 +69,7 @@ class InputPluginsLiveMerger:
                     f'is not in {TimeMode.LIVE} mode'
                 )
 
-        if delay < self.MIN_DELAY:
+        if target_delay < self.MIN_DELAY:
             raise ValueError(
                 'Parameter `delay` must be greater or equal '
                 f'to {self.MIN_DELAY}'
@@ -81,7 +82,7 @@ class InputPluginsLiveMerger:
             )
 
         self._plugins = plugins
-        self._delay = delay
+        self._delay = target_delay
         self._batch_size = batch_size
         self._queue = Queue()
 
@@ -137,22 +138,28 @@ class InputPluginsLiveMerger:
         list[NDArray[datetime64]]
             List of consumed elements
         """
-        elements = []
+        try:
+            item = self._queue.get(timeout=self._delay)
+        except Empty:
+            return []
+
+        elements = [item]
         start_time = time.monotonic()
+        remaining_time = self._delay
 
         while True:
-            elapsed = time.monotonic() - start_time
-            remaining_time = self._delay - elapsed
-
-            if remaining_time <= 0:
-                break
-
             try:
                 item = self._queue.get(timeout=remaining_time)
             except Empty:
                 break
 
             elements.append(item)
+
+            elapsed = time.monotonic() - start_time
+            remaining_time = self._delay - elapsed
+
+            if remaining_time <= 0:
+                break
 
         return elements
 
@@ -173,18 +180,63 @@ class InputPluginsLiveMerger:
                 )
 
             done_count = 0
-            while done_count < len(self._plugins):
-                arrays = []
+            plugins_count = len(self._plugins)
+
+            while done_count < plugins_count:
+                batches = []
                 for element in self._consume_queue():
                     if element is None:
                         done_count += 1
                     else:
-                        arrays.append(element)
+                        batches.append(element)
 
-                if not arrays:
+                if not batches:
                     continue
 
-                sorted_array = merge_arrays(*arrays)
+                # after getting batches within delay time we need to wait for
+                # overlapping batches that are not yet captured
+                # Scheme: :
+                #      capturing starts after first batch is received
+                #      |     capturing ends after the delay has elapsed
+                #      |     | overlapping batch is published after capturing !
+                # -----|     | |   that's why we should wait delay once again
+                #   ----- +++++|   |
+                #      ----- | |   |
+                #
+
+                if done_count < plugins_count:
+                    # finding latest timestamp that will be a cutoff point
+                    latest_timestamp = datetime64(datetime.min)
+                    for batch in batches:
+                        if batch[-1] > latest_timestamp:
+                            latest_timestamp = batch[-1]
+
+                    overlapped_batches = []
+                    for element in self._consume_queue():
+                        if element is None:
+                            done_count += 1
+                        else:
+                            overlapped_batches.append(element)
+
+                    if overlapped_batches:
+                        overlapped_timestamps = merge_arrays(
+                            *overlapped_batches
+                        )
+                        index = searchsorted(
+                            a=overlapped_timestamps,
+                            v=latest_timestamp,
+                            side='right'
+                        )
+                        overlapped_part_batches = overlapped_timestamps[:index]
+                        future_part_batches = overlapped_timestamps[index:]
+
+                        if overlapped_part_batches.size > 0:
+                            batches.append(overlapped_part_batches)
+
+                        if future_part_batches.size > 0:
+                            self._queue.put(future_part_batches)
+
+                sorted_array = merge_arrays(*batches)
 
                 if self._batch_size is None:
                     yield sorted_array
