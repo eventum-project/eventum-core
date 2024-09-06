@@ -75,7 +75,7 @@ class InputPluginsLiveMerger:
                 f'to {self.MIN_DELAY}'
             )
 
-        if batch_size < self.MIN_BATCH_SIZE:
+        if batch_size is not None and batch_size < self.MIN_BATCH_SIZE:
             raise ValueError(
                 'Parameter `batch_size` must be greater or equal '
                 f'to {self.MIN_BATCH_SIZE}'
