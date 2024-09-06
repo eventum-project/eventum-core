@@ -174,12 +174,15 @@ class InputPluginsLiveMerger:
 
             done_count = 0
             while done_count < len(self._plugins):
-                elements = self._consume_queue()
-                done_count += elements.count(None)
+                arrays = []
+                for element in self._consume_queue():
+                    if element is None:
+                        done_count += 1
+                    else:
+                        arrays.append(element)
 
-                arrays = [
-                    element for element in elements if element is not None
-                ]
+                if not arrays:
+                    continue
 
                 sorted_array = merge_arrays(*arrays)
 
