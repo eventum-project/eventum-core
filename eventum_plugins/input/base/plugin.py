@@ -237,3 +237,8 @@ class InputPlugin(ABC):
     def id(self) -> int:
         """ID of the plugin."""
         return self._id
+
+    @property
+    def mode(self) -> TimeMode:
+        """Time mode of the plugin."""
+        return self._mode
