@@ -212,9 +212,10 @@ class InputPluginsLiveMerger:
                             latest_timestamp = batch[-1]
 
                     overlapped_batches = []
+                    future_done_count = 0
                     for element in self._consume_queue():
                         if element is None:
-                            done_count += 1
+                            future_done_count += 1
                         else:
                             overlapped_batches.append(element)
 
@@ -235,6 +236,10 @@ class InputPluginsLiveMerger:
 
                         if future_part_batches.size > 0:
                             self._queue.put(future_part_batches)
+
+                            # restore sentinels to queue
+                            for _ in range(future_done_count):
+                                self._queue.put(None)
 
                 sorted_array = merge_arrays(*batches)
 
