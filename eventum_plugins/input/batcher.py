@@ -1,4 +1,5 @@
 import time
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from threading import Condition, RLock
 from typing import Iterator
@@ -101,7 +102,7 @@ class TimestampsBatcher:
         self._timezone = timezone
         self._queue_max_size = queue_max_size
 
-        self._timestamp_arrays_queue: list[NDArray[datetime64]] = list()
+        self._timestamp_arrays_queue: deque[NDArray[datetime64]] = deque()
         self._lock = RLock()
 
         # When `scheduling` is `False`, the first item is considered
@@ -246,12 +247,13 @@ class TimestampsBatcher:
                 ):
                     batches = chunk_array(array, self._batch_size)
                     if len(batches[-1]) < self._batch_size:
-                        self._timestamp_arrays_queue = [batches.pop(), ]
+                        self._timestamp_arrays_queue.clear()
+                        self._timestamp_arrays_queue.append(batches.pop())
                     else:
-                        self._timestamp_arrays_queue = []
+                        self._timestamp_arrays_queue.clear()
                 else:
                     batches = [array, ]
-                    self._timestamp_arrays_queue = []
+                    self._timestamp_arrays_queue.clear()
 
                 self._queue_consumed_condition.notify_all()
 
@@ -301,12 +303,13 @@ class TimestampsBatcher:
                 ):
                     batches = chunk_array(past_timestamps, self._batch_size)
                     if len(batches[-1]) < self._batch_size:
-                        self._timestamp_arrays_queue = [batches.pop()]
+                        self._timestamp_arrays_queue.clear()
+                        self._timestamp_arrays_queue.append(batches.pop())
                     else:
-                        self._timestamp_arrays_queue = []
+                        self._timestamp_arrays_queue.clear()
                 else:
                     batches = [past_timestamps, ]
-                    self._timestamp_arrays_queue = []
+                    self._timestamp_arrays_queue.clear()
 
                 if future_timestamps.size > 0:
                     self._timestamp_arrays_queue.append(future_timestamps)
