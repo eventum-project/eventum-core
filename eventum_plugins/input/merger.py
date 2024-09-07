@@ -138,27 +138,13 @@ class InputPluginsLiveMerger:
         list[NDArray[datetime64]]
             List of consumed elements
         """
-        try:
-            item = self._queue.get(timeout=self._delay)
-        except Empty:
-            return []
-
-        elements = [item]
-        start_time = time.monotonic()
-        remaining_time = self._delay
-
+        time.sleep(self._delay)
+        elements = []
         while True:
             try:
-                item = self._queue.get(timeout=remaining_time)
+                item = self._queue.get_nowait()
+                elements.append(item)
             except Empty:
-                break
-
-            elements.append(item)
-
-            elapsed = time.monotonic() - start_time
-            remaining_time = self._delay - elapsed
-
-            if remaining_time <= 0:
                 break
 
         return elements
@@ -211,7 +197,7 @@ class InputPluginsLiveMerger:
                         if batch[-1] > latest_timestamp:
                             latest_timestamp = batch[-1]
 
-                    overlapped_batches = []
+                    overlapped_batches: list[NDArray[datetime64]] = []
                     future_done_count = 0
                     for element in self._consume_queue():
                         if element is None:
@@ -220,26 +206,24 @@ class InputPluginsLiveMerger:
                             overlapped_batches.append(element)
 
                     if overlapped_batches:
-                        overlapped_timestamps = merge_arrays(
-                            *overlapped_batches
-                        )
-                        index = searchsorted(
-                            a=overlapped_timestamps,
-                            v=latest_timestamp,
-                            side='right'
-                        )
-                        overlapped_part_batches = overlapped_timestamps[:index]
-                        future_part_batches = overlapped_timestamps[index:]
+                        for overlapped_batch in overlapped_batches:
+                            index = searchsorted(
+                                a=overlapped_batch,
+                                v=latest_timestamp,
+                                side='right'
+                            )
+                            overlapped_part = overlapped_batch[:index]
+                            future_part = overlapped_batch[index:]
 
-                        if overlapped_part_batches.size > 0:
-                            batches.append(overlapped_part_batches)
+                            if overlapped_part.size > 0:
+                                batches.append(overlapped_part)
 
-                        if future_part_batches.size > 0:
-                            self._queue.put(future_part_batches)
+                            if future_part.size > 0:
+                                self._queue.put(future_part)
 
-                            # restore sentinels to queue
-                            for _ in range(future_done_count):
-                                self._queue.put(None)
+                                # restore sentinels to queue
+                                for _ in range(future_done_count):
+                                    self._queue.put(None)
 
                 sorted_array = merge_arrays(*batches)
 
