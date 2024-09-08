@@ -1,9 +1,9 @@
 import logging
+import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
-from queue import Empty, Queue
-from typing import Iterable, Iterator
+from typing import Generic, Iterable, Iterator, TypeVar
 
 from numpy import datetime64, searchsorted
 from numpy.typing import NDArray
@@ -13,6 +13,66 @@ from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.utils.array_utils import chunk_array, merge_arrays
 
 logger = logging.getLogger(__name__)
+
+
+T = TypeVar('T')
+
+
+class AccumulatorClosedError(Exception):
+    """Trying to add batches to a closed `BatchesAccumulator`."""
+
+
+class BatchesAccumulator(Generic[T]):
+    """Thread safe accumulator of batches."""
+
+    def __init__(self):
+        self._lock = threading.RLock()
+        self._batches = []
+        self._is_closed = False
+
+    def add(self, batch: T) -> None:
+        """Add batch to accumulator.
+
+        Parameters
+        ----------
+        batch : T
+            Batch to add
+
+        Raises
+        ------
+        AccumulatorClosedError
+            If accumulator is closed
+        """
+        with self._lock:
+            if self._is_closed:
+                raise AccumulatorClosedError
+
+            self._batches.append(batch)
+
+    def consume(self) -> list[T]:
+        """Get all accumulated batches.
+
+        Returns
+        -------
+        list[T]
+            List of accumulated baches
+        """
+        with self._lock:
+            batches = self._batches
+            self._batches = []
+
+        return batches
+
+    def close(self) -> None:
+        """Close the accumulator."""
+        with self._lock:
+            self._is_closed = True
+
+    @property
+    def closed(self) -> bool:
+        """Closed status of accumulator."""
+        with self._lock:
+            return self._is_closed
 
 
 class InputPluginsLiveMerger:
@@ -84,28 +144,31 @@ class InputPluginsLiveMerger:
         self._plugins = plugins
         self._delay = target_delay
         self._batch_size = batch_size
-        self._queue = Queue()
+        self._active_plugin_ids = [plugin.id for plugin in self._plugins]
+        self._accumulators: dict[
+            int,
+            BatchesAccumulator[NDArray[datetime64]]
+        ] = {plugin.id: BatchesAccumulator() for plugin in self._plugins}
+        self._overlapped_future_part: NDArray[datetime64] | None = None
 
     def _execute_plugin(self, plugin: InputPlugin) -> None:
-        """Execute plugin with putting generating timestamps to queue.
+        """Execute plugin with putting generating timestamps to
+        accumulator.
 
         Parameters
         ----------
         plugin : InputPlugin
             Input plugin to execute
-
-        Notes
-        -----
-        Once plugin execution is done `None` is placed in the queue
-        as sentinel
         """
+        accumulator = self._accumulators[plugin.id]
+
         try:
             for batch in plugin.generate():
-                self._queue.put(batch)
+                accumulator.add(batch)
         except Exception as e:
             raise e
         finally:
-            self._queue.put(None)
+            accumulator.close()
 
     def _handle_done_future(
         self,
@@ -130,22 +193,34 @@ class InputPluginsLiveMerger:
                 f'with ID {plugin.id}: {e}'
             )
 
-    def _consume_queue(self) -> list[NDArray[datetime64] | None]:
-        """Consume elements from queue within configured delay time.
+    def _consume_elements(self) -> list[NDArray[datetime64]]:
+        """Consume elements from accumulators within configured delay
+        time.
 
         Returns
         -------
         list[NDArray[datetime64]]
             List of consumed elements
         """
+        if not self._active_plugin_ids:
+            return []
+
         time.sleep(self._delay)
-        elements = []
-        while True:
-            try:
-                item = self._queue.get_nowait()
-                elements.append(item)
-            except Empty:
-                break
+
+        elements: list[NDArray[datetime64]] = []
+        done_ids: list[int] = []
+
+        for id in self._active_plugin_ids:
+            accumulator = self._accumulators[id]
+
+            if accumulator.closed:
+                done_ids.append(id)
+                continue
+
+            elements.extend(accumulator.consume())
+
+        for id in done_ids:
+            self._active_plugin_ids.remove(id)
 
         return elements
 
@@ -165,16 +240,12 @@ class InputPluginsLiveMerger:
                     self._handle_done_future(future, plugin)
                 )
 
-            done_count = 0
-            plugins_count = len(self._plugins)
+            while self._active_plugin_ids:
+                batches = self._consume_elements()
 
-            while done_count < plugins_count:
-                batches = []
-                for element in self._consume_queue():
-                    if element is None:
-                        done_count += 1
-                    else:
-                        batches.append(element)
+                if self._overlapped_future_part is not None:
+                    batches.append(self._overlapped_future_part)
+                    self._overlapped_future_part = None
 
                 if not batches:
                     continue
@@ -190,42 +261,32 @@ class InputPluginsLiveMerger:
                 #      ----- | |   |
                 #
 
-                if done_count < plugins_count:
+                if self._active_plugin_ids:
                     # finding latest timestamp that will be a cutoff point
                     latest_timestamp = datetime64(datetime.min)
                     for batch in batches:
                         if batch[-1] > latest_timestamp:
                             latest_timestamp = batch[-1]
 
-                    overlapped_batches: list[NDArray[datetime64]] = []
-                    future_done_count = 0
-                    for element in self._consume_queue():
-                        if element is None:
-                            future_done_count += 1
-                        else:
-                            overlapped_batches.append(element)
+                    overlapped_batches = self._consume_elements()
 
                     if overlapped_batches:
-                        for overlapped_batch in overlapped_batches:
-                            index = searchsorted(
-                                a=overlapped_batch,
-                                v=latest_timestamp,
-                                side='right'
-                            )
-                            overlapped_part = overlapped_batch[:index]
-                            future_part = overlapped_batch[index:]
+                        overlapped = merge_arrays(overlapped_batches)
+                        index = searchsorted(
+                            a=overlapped,
+                            v=latest_timestamp,
+                            side='right'
+                        )
+                        overlapped_part = overlapped[:index]
+                        future_part = overlapped[index:]
 
-                            if overlapped_part.size > 0:
-                                batches.append(overlapped_part)
+                        if overlapped_part.size > 0:
+                            batches.append(overlapped_part)
 
-                            if future_part.size > 0:
-                                self._queue.put(future_part)
+                        if future_part.size > 0:
+                            self._overlapped_future_part = future_part
 
-                                # restore sentinels to queue
-                                for _ in range(future_done_count):
-                                    self._queue.put(None)
-
-                sorted_array = merge_arrays(*batches)
+                sorted_array = merge_arrays(batches)
 
                 if self._batch_size is None:
                     yield sorted_array
