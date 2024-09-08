@@ -141,17 +141,21 @@ class InputPluginsLiveMerger:
                 f'to {self.MIN_BATCH_SIZE}'
             )
 
-        self._plugins = plugins
         self._delay = target_delay
         self._batch_size = batch_size
-        self._active_plugin_ids = [plugin.id for plugin in self._plugins]
+        self._plugins = {idx: plugin for idx, plugin in enumerate(plugins)}
         self._accumulators: dict[
             int,
             BatchesAccumulator[NDArray[datetime64]]
-        ] = {plugin.id: BatchesAccumulator() for plugin in self._plugins}
+        ] = {idx: BatchesAccumulator() for idx in self._plugins.keys()}
+        self._active_plugin_indices = list(self._plugins.keys())
         self._overlapped_future_part: NDArray[datetime64] | None = None
 
-    def _execute_plugin(self, plugin: InputPlugin) -> None:
+    def _execute_plugin(
+        self,
+        plugin: InputPlugin,
+        accumulator: BatchesAccumulator
+    ) -> None:
         """Execute plugin with putting generating timestamps to
         accumulator.
 
@@ -159,9 +163,10 @@ class InputPluginsLiveMerger:
         ----------
         plugin : InputPlugin
             Input plugin to execute
-        """
-        accumulator = self._accumulators[plugin.id]
 
+        accumulator : BatchesAccumulator
+            Accumulator for the plugin batches
+        """
         try:
             for batch in plugin.generate():
                 accumulator.add(batch)
@@ -202,25 +207,23 @@ class InputPluginsLiveMerger:
         list[NDArray[datetime64]]
             List of consumed elements
         """
-        if not self._active_plugin_ids:
+        if not self._active_plugin_indices:
             return []
 
         time.sleep(self._delay)
 
         elements: list[NDArray[datetime64]] = []
-        done_ids: list[int] = []
+        done_indices: list[int] = []
 
-        for id in self._active_plugin_ids:
-            accumulator = self._accumulators[id]
-
-            if accumulator.closed:
-                done_ids.append(id)
-                continue
-
+        for idx in self._active_plugin_indices:
+            accumulator = self._accumulators[idx]
             elements.extend(accumulator.consume())
 
-        for id in done_ids:
-            self._active_plugin_ids.remove(id)
+            if accumulator.closed:
+                done_indices.append(idx)
+
+        for idx in done_indices:
+            self._active_plugin_indices.remove(idx)
 
         return elements
 
@@ -233,14 +236,21 @@ class InputPluginsLiveMerger:
             Timestamp batches
         """
         with ThreadPoolExecutor(max_workers=len(self._plugins)) as executor:
-            for plugin in self._plugins:
-                future = executor.submit(self._execute_plugin, plugin)
+            for idx, plugin in self._plugins.items():
+                future = executor.submit(
+                    self._execute_plugin,
+                    plugin,
+                    self._accumulators[idx]
+                )
                 future.add_done_callback(
                     lambda future, plugin=plugin:
                     self._handle_done_future(future, plugin)
                 )
 
-            while self._active_plugin_ids:
+            while (
+                self._active_plugin_indices
+                or self._overlapped_future_part is not None
+            ):
                 batches = self._consume_elements()
 
                 if self._overlapped_future_part is not None:
@@ -261,7 +271,7 @@ class InputPluginsLiveMerger:
                 #      ----- | |   |
                 #
 
-                if self._active_plugin_ids:
+                if self._active_plugin_indices:
                     # finding latest timestamp that will be a cutoff point
                     latest_timestamp = datetime64(datetime.min)
                     for batch in batches:
