@@ -96,7 +96,7 @@ def test_merge_arrays():
         values |= set(arr)
         arrays.append(arr)
 
-    result = merge_arrays(*arrays)
+    result = merge_arrays(arrays)
 
     assert result.size == 10_000
     assert set(result) == set(values)

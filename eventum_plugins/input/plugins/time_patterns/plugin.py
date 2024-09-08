@@ -358,7 +358,7 @@ class TimePatternsInputPlugin(
                 np.concatenate(list(plugin.generate()))
             )
 
-        on_events(merge_arrays(*samples))
+        on_events(merge_arrays(samples))
 
     def _generate_live(
         self,

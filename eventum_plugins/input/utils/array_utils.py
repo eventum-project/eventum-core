@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Sequence
 
 from numpy import concatenate, datetime64, searchsorted, sort
 from numpy.typing import NDArray
@@ -71,12 +71,12 @@ def chunk_array(array: NDArray, size: int) -> list[NDArray]:
     return [array[i:i + size] for i in range(0, array.size, size)]
 
 
-def merge_arrays(*arrays: Iterable[NDArray]) -> NDArray:
+def merge_arrays(arrays: Sequence[NDArray]) -> NDArray:
     """Merge sorted arrays.
 
     Parameters
     ----------
-    arrays : Iterable[NDArray]
+    arrays : Sequence[NDArray]
         Arrays to sort
 
     Returns
@@ -93,6 +93,6 @@ def merge_arrays(*arrays: Iterable[NDArray]) -> NDArray:
         raise ValueError('At least one array must be provided')
 
     return sort(
-        a=concatenate(list(arrays)),
+        a=concatenate(arrays),
         kind='mergesort'
     )
