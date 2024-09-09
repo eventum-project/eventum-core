@@ -101,7 +101,7 @@ class InputPluginsLiveMerger:
 
     batch_size : int | None
         Maximum size of producing batches after merge, not limited if
-        value is `None`
+        value is `None` (within one cycle of elements consuming)
 
     Raises
     ------
