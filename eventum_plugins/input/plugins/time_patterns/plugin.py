@@ -8,10 +8,12 @@ from eventum_content_manager.manage import (ContentManagementError,
 from numpy.typing import NDArray
 from pydantic import ValidationError
 
-from eventum_plugins.exceptions import PluginConfigurationError
+from eventum_plugins.exceptions import (PluginConfigurationError,
+                                        PluginRuntimeError)
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
 from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.fields import TimeKeyword
+from eventum_plugins.input.merger import InputPluginsLiveMerger
 from eventum_plugins.input.plugins.time_patterns.config import (
     Distribution, RandomizerDirection, TimePatternConfig,
     TimePatternsInputPluginConfig)
@@ -364,4 +366,16 @@ class TimePatternsInputPlugin(
         self,
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
-        raise NotImplementedError()  # TODO: Implement
+        try:
+            plugins = InputPluginsLiveMerger(
+                plugins=self._time_patterns,
+                target_delay=self._batcher.batch_delay,
+                batch_size=None
+            )
+        except ValidationError as e:
+            raise PluginRuntimeError(
+                f'Cannot initialize merger for time patterns: {e}'
+            )
+
+        for batch in plugins.generate():
+            on_events(batch)
