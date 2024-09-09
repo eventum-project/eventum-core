@@ -110,6 +110,9 @@ class InputPluginsLiveMerger:
 
     ValueError
         If `delay` or `batch_size` parameters is out of range
+
+    ValueError
+        If number of provided plugins are less than one
     """
 
     MIN_DELAY = 0.1
@@ -122,6 +125,9 @@ class InputPluginsLiveMerger:
         batch_size: int | None
     ) -> None:
         plugins = list(plugins)
+        if not plugins:
+            raise ValueError('At least one plugin must be provided')
+
         for plugin in plugins:
             if plugin.mode != TimeMode.LIVE:
                 raise ValueError(
