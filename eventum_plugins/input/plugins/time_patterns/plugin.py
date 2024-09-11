@@ -139,7 +139,7 @@ class TimePatternInputPlugin(
     def _period_duration(self) -> timedelta:
         """Duration of one period."""
         unit = self._config.oscillator.unit.value
-        value = int(self._config.oscillator.period)
+        value = self._config.oscillator.period
 
         return timedelta(**{unit: value})
 

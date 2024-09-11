@@ -11,10 +11,13 @@ from eventum_plugins.input.mixins import DaterangeValidatorMixin
 
 
 class TimeUnit(StrEnum):
-    SECONDS = 'seconds'
-    MINUTES = 'minutes'
-    HOURS = 'hours'
+    WEEKS = 'weeks'
     DAYS = 'days'
+    HOURS = 'hours'
+    MINUTES = 'minutes'
+    SECONDS = 'seconds'
+    MILLISECONDS = 'milliseconds'
+    MICROSECONDS = 'microseconds'
 
 
 class Distribution(StrEnum):
@@ -35,7 +38,7 @@ class OscillatorConfig(
     extra='forbid',
     frozen=True
 ):
-    period: int = Field(..., ge=1)
+    period: float = Field(..., gt=0)
     unit: TimeUnit
     start: VersatileDatetimeStrict = Field(..., union_mode='left_to_right')
     end: VersatileDatetimeStrict = Field(..., union_mode='left_to_right')
