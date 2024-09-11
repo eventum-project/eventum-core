@@ -16,6 +16,7 @@ STATIC_FILES_DIR = os.path.join(
 )
 
 
+@pytest.mark.timeout(3)
 def test_time_pattern_sample():
     config = TimePatternsInputPluginConfig(
         configs=[
@@ -44,6 +45,7 @@ def test_time_pattern_sample():
     # plt.show()
 
 
+@pytest.mark.timeout(3)
 def test_time_pattern_live():
     config = TimePatternsInputPluginConfig(
         configs=[
