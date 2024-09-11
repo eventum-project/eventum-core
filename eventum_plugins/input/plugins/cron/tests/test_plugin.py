@@ -23,14 +23,14 @@ def test_cron_sample():
         timezone=timezone('UTC')
     )
 
-    events = []
+    timestamps = []
 
     for batch in plugin.generate():
-        events.extend(batch)
+        timestamps.extend(batch)
 
-    assert len(events) == 1440
-    assert events[0] == datetime64('2024-01-01T00:00:00')
-    assert events[-1] == datetime64('2024-01-01T23:59:00')
+    assert len(timestamps) == 1440
+    assert timestamps[0] == datetime64('2024-01-01T00:00:00')
+    assert timestamps[-1] == datetime64('2024-01-01T23:59:00')
 
 
 @pytest.mark.timeout(5)
@@ -49,15 +49,15 @@ def test_cron_live():
         timezone=timezone('UTC')
     )
 
-    events = []
+    timestamps = []
 
     for batch in plugin.generate():
-        events.extend(batch)
+        timestamps.extend(batch)
 
-    assert len(events) == 2
-    assert events[0] == datetime64(
+    assert len(timestamps) == 2
+    assert timestamps[0] == datetime64(
         start.replace(second=start.second + 1, microsecond=0, tzinfo=None)
     )
-    assert events[-1] == datetime64(
+    assert timestamps[-1] == datetime64(
         start.replace(second=start.second + 2, microsecond=0, tzinfo=None)
     )

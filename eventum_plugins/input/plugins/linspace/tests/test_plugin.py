@@ -43,11 +43,11 @@ def test_linspace_sample(start, end, count, endpoint, expected):
         id=1
     )
 
-    events = []
+    timestamps = []
     for batch in plugin.generate():
-        events.extend(batch)
+        timestamps.extend(batch)
 
-    assert events == expected
+    assert timestamps == expected
 
 
 @pytest.mark.timeout(1)
@@ -68,10 +68,10 @@ def test_linspace_live():
         id=1
     )
 
-    events = []
+    timestamps = []
     for batch in plugin.generate():
-        events.extend(batch)
+        timestamps.extend(batch)
 
-    assert len(events) <= 100
-    assert events[-1] == datetime64(end.replace(tzinfo=None))
-    assert events[0] >= datetime64(start.replace(tzinfo=None))
+    assert len(timestamps) <= 100
+    assert timestamps[-1] == datetime64(end.replace(tzinfo=None))
+    assert timestamps[0] >= datetime64(start.replace(tzinfo=None))

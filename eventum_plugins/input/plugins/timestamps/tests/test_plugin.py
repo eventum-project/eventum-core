@@ -28,11 +28,11 @@ def test_timestamps_sample():
         id=1,
         mode=TimeMode.SAMPLE
     )
-    events = []
+    timestamps = []
     for batch in plugin.generate():
-        events.extend(batch)
+        timestamps.extend(batch)
 
-    assert events == [
+    assert timestamps == [
         datetime64('2024-01-01T00:00:00.000'),
         datetime64('2024-01-01T00:00:00.050'),
         datetime64('2024-01-01T00:00:00.100'),
@@ -56,12 +56,12 @@ def test_timestamps_live():
         mode=TimeMode.LIVE
     )
 
-    events = []
+    timestamps = []
 
     for batch in plugin.generate():
-        events.extend(batch)
+        timestamps.extend(batch)
 
-    assert events == [
+    assert timestamps == [
         datetime64((now + timedelta(seconds=0.3)).replace(tzinfo=None)),
         datetime64((now + timedelta(seconds=0.4)).replace(tzinfo=None)),
         datetime64((now + timedelta(seconds=0.5)).replace(tzinfo=None)),
@@ -89,11 +89,11 @@ def test_timestamps_from_file(timestamps_filename):
         mode=TimeMode.SAMPLE
     )
 
-    events = []
+    timestamps = []
     for batch in plugin.generate():
-        events.extend(batch)
+        timestamps.extend(batch)
 
-    assert events == [
+    assert timestamps == [
         datetime64('2024-01-01T00:00:00.000'),
         datetime64('2024-01-01T00:00:00.050'),
         datetime64('2024-01-01T00:00:00.100'),

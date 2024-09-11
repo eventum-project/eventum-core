@@ -16,12 +16,12 @@ def test_sample_sample():
         id=1
     )
 
-    events = []
+    timestamps = []
     for batch in plugin.generate():
-        events.extend(batch)
+        timestamps.extend(batch)
 
-    assert len(events) == 100
-    assert events[0] == events[-1]
+    assert len(timestamps) == 100
+    assert timestamps[0] == timestamps[-1]
 
 
 @pytest.mark.timeout(1)
@@ -34,9 +34,9 @@ def test_sample_live():
         id=1
     )
 
-    events = []
+    timestamps = []
     for batch in plugin.generate():
-        events.extend(batch)
+        timestamps.extend(batch)
 
-    assert len(events) == 100
-    assert events[0] == events[-1]
+    assert len(timestamps) == 100
+    assert timestamps[0] == timestamps[-1]
