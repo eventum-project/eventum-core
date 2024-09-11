@@ -254,7 +254,7 @@ class TimePatternInputPlugin(
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
         start, end = normalize_versatile_daterange(
-            end=self._config.oscillator.start,
+            start=self._config.oscillator.start,
             end=self._config.oscillator.end,
             timezone=self._timezone,
         )
