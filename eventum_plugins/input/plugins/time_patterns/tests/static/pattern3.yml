@@ -1,16 +1,16 @@
 label: Time pattern 1
 oscillator:
-  start: "2024-01-15T00:00:00.000Z"
-  end: +15d
-  period: 15
-  unit: days
+  start: "now"
+  end: +1s
+  period: 1
+  unit: seconds
 multiplier:
   ratio: 100000
 randomizer:
   deviation: 0.1
-  direction: Mixed
+  direction: mixed
 spreader:
   distribution: uniform
   parameters:
-    low: 0.2
-    high: 0.8
+    low: 0.5
+    high: 0.9

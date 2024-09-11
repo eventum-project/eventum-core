@@ -1,9 +1,9 @@
 label: Time pattern 1
 oscillator:
-  start: "2024-01-01T00:00:00.000Z"
-  end: +15d
-  period: 7
-  unit: days
+  start: "now"
+  end: +1s
+  period: 0.25
+  unit: seconds
 multiplier:
   ratio: 50000
 randomizer:
