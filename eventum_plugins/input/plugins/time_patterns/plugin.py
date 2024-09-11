@@ -236,18 +236,22 @@ class TimePatternInputPlugin(
             timezone=self._timezone,
         )
 
+        delta = np.timedelta64(self._period_duration)
+        start = np.datetime64(to_naive(start, self._timezone))
+        end = np.datetime64(to_naive(end, self._timezone))
+
         while start < end:
             timestamps = get_past_slice(
                 timestamps=self._generate_period_timeseries(
-                    start=np.datetime64(to_naive(start)),
+                    start=start,
                     size=self._period_size,
-                    duration=np.timedelta64(self._period_duration)
+                    duration=delta
                 ),
                 before=end
             )
             on_events(timestamps)
 
-            start += self._period_duration
+            start += delta
 
     def _generate_live(
         self,
@@ -266,18 +270,22 @@ class TimePatternInputPlugin(
             ret_timestamp='last_past'
         )
 
+        delta = np.timedelta64(self._period_duration)
+        start = np.datetime64(to_naive(start, self._timezone))
+        end = np.datetime64(to_naive(end, self._timezone))
+
         timestamps = self._generate_period_timeseries(
-            start=np.datetime64(to_naive(start)),
+            start=start,
             size=self._period_size,
-            duration=np.timedelta64(self._period_duration)
+            duration=delta
         )
 
         while start < end:
             timestamps = get_past_slice(
                 timestamps=self._generate_period_timeseries(
-                    start=np.datetime64(to_naive(start)),
+                    start=start,
                     size=self._period_size,
-                    duration=np.timedelta64(self._period_duration)
+                    duration=delta
                 ),
                 before=end
             )
@@ -294,7 +302,7 @@ class TimePatternInputPlugin(
 
             on_events(timestamps)
 
-            start += self._period_duration
+            start += delta
 
 
 class TimePatternsInputPlugin(
