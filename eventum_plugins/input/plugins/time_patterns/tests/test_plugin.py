@@ -19,7 +19,7 @@ STATIC_FILES_DIR = os.path.join(
 @pytest.mark.timeout(3)
 def test_time_pattern_sample():
     config = TimePatternsInputPluginConfig(
-        configs=[
+        patterns=[
             os.path.join(STATIC_FILES_DIR, 'pattern1.yml'),
             os.path.join(STATIC_FILES_DIR, 'pattern2.yml'),
             os.path.join(STATIC_FILES_DIR, 'pattern3.yml')
@@ -48,7 +48,7 @@ def test_time_pattern_sample():
 @pytest.mark.timeout(3)
 def test_time_pattern_live():
     config = TimePatternsInputPluginConfig(
-        configs=[
+        patterns=[
             os.path.join(STATIC_FILES_DIR, 'pattern1.yml'),
             os.path.join(STATIC_FILES_DIR, 'pattern2.yml'),
             os.path.join(STATIC_FILES_DIR, 'pattern3.yml')
@@ -76,7 +76,7 @@ def test_time_pattern_live():
 
 def test_time_pattern_invalid_config():
     config = TimePatternsInputPluginConfig(
-        configs=[
+        patterns=[
             os.path.join(STATIC_FILES_DIR, 'invalid.yml'),
         ]
     )

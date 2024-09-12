@@ -329,19 +329,19 @@ class TimePatternsInputPlugin(
         **kwargs: Unpack[InputPluginKwargs]
     ) -> list[TimePatternInputPlugin]:
         time_patterns: list[TimePatternInputPlugin] = []
-        for config_path in self._config.configs:
+        for pattern_path in self._config.patterns:
             try:
-                time_pattern_obj = load_time_pattern(path=config_path)
+                time_pattern_obj = load_time_pattern(path=pattern_path)
                 time_pattern = TimePatternConfig.model_validate(
                     obj=time_pattern_obj
                 )
             except ContentManagementError as e:
                 raise PluginConfigurationError(
-                    f'Failed to load time pattern "{config_path}": {e}'
+                    f'Failed to load time pattern "{pattern_path}": {e}'
                 )
             except ValidationError as e:
                 raise PluginConfigurationError(
-                    f'Bad config structure for "{config_path}": {e}'
+                    f'Bad config structure for "{pattern_path}": {e}'
                 )
 
             time_patterns.append(

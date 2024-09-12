@@ -3,7 +3,8 @@ from enum import StrEnum
 from typing import Any, TypeAlias
 from warnings import warn
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import (AliasChoices, BaseModel, Field, field_validator,
+                      model_validator)
 
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.fields import VersatileDatetimeStrict
@@ -164,4 +165,35 @@ class TimePatternConfig(BaseModel, extra='forbid', frozen=True):
 
 
 class TimePatternsInputPluginConfig(InputPluginConfig, frozen=True):
-    configs: list[str] = Field(..., min_length=1)
+    """Configuration for `time_patterns` input plugin.
+
+    Attributes
+    ----------
+    patterns : list[str]
+        File paths to time pattern configurations
+
+    ordered_merging : bool, default = False
+        Whether to merge timestamps from different patterns with
+        keeping resulting timestamps sequence ordered (actual only for
+        live mode with usage of multiple configs)
+    """
+
+    # XXX: remove alias in 2.1 release
+    patterns: list[str] = Field(
+        ...,
+        min_length=1,
+        validation_alias=AliasChoices('patterns', 'configs')
+    )
+    ordered_merging: bool = False
+
+    @model_validator(mode='before')
+    def check_deprecated_field_names(data: Any) -> Any:
+        if isinstance(data, dict) and 'configs' in data:
+            warn(
+                'Parameter "configs" is deprecated and currently used '
+                'as alias to field "patterns". Please use "patterns" '
+                'instead. Alias "configs" will be removed in version 2.1.',
+                DeprecationWarning
+            )
+
+        return data
