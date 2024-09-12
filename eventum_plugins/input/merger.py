@@ -280,7 +280,7 @@ class InputPluginsLiveMerger:
                 continue
 
             if self._batch_size is None:
-                batches = concatenate(batches)
+                batches = [concatenate(batches)]
             else:
                 batches = chunk_array(
                     array=concatenate(batches),
