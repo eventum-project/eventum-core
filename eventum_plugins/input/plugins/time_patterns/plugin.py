@@ -378,7 +378,8 @@ class TimePatternsInputPlugin(
             plugins = InputPluginsLiveMerger(
                 plugins=self._time_patterns,
                 target_delay=self._batcher.batch_delay,
-                batch_size=None
+                batch_size=None,
+                ordering=self._config.ordered_merging
             )
         except ValidationError as e:
             raise PluginRuntimeError(
