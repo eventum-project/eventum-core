@@ -29,10 +29,9 @@ class TimerInputPlugin(InputPlugin, config_cls=TimerInputPluginConfig):
 
         self._config: TimerInputPluginConfig
 
-        mode = kwargs['mode']
-        if mode == TimeMode.SAMPLE and self._config.repeat is None:
+        if self._mode == TimeMode.SAMPLE and self._config.repeat is None:
             raise PluginConfigurationError(
-                f'Repeats count must be set for "{mode}" mode'
+                f'Repeats count must be set for "{self._mode}" mode'
             )
 
     def _generate_sample(

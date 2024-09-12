@@ -29,16 +29,15 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
 
         self._config: CronInputPluginConfig
 
-        mode = kwargs['mode']
         if (
-            mode == TimeMode.SAMPLE
+            self._mode == TimeMode.SAMPLE
             and (
                 self._config.end is None
                 or self._config.end == TimeKeyword.NEVER.value
             )
         ):
             raise PluginConfigurationError(
-                f'End time must be finite for "{mode}" mode'
+                f'End time must be finite for "{self._mode}" mode'
             )
 
     def _generate_sample(

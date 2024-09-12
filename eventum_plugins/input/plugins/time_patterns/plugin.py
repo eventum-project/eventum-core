@@ -81,13 +81,12 @@ class TimePatternInputPlugin(
             count=self._config.randomizer.sampling
         )
 
-        mode = kwargs['mode']
         if (
-            mode == TimeMode.SAMPLE
+            self._mode == TimeMode.SAMPLE
             and self._config.oscillator.end == TimeKeyword.NEVER.value
         ):
             raise PluginConfigurationError(
-                f'End time must be finite for "{mode}" mode'
+                f'End time must be finite for "{self._mode}" mode'
             )
 
     def _generate_randomizer_factors(self, count: int) -> Iterator[float]:
@@ -325,14 +324,14 @@ class TimePatternsInputPlugin(
         self._time_patterns = self._init_time_patterns(**kwargs)
 
         if (
-            kwargs['mode'] == TimeMode.LIVE
+            self._mode == TimeMode.LIVE
             and len(self._time_patterns) > 1
-            and kwargs['batch_delay'] is None
+            and self._batcher.batch_delay is None
         ):
             raise PluginConfigurationError(
                 'Batch delay must be set to finite value for merging '
                 'timestamps of multiple time patterns in '
-                f'{kwargs["mode"]} mode'
+                f'{self._mode} mode'
             )
 
     def _init_time_patterns(
