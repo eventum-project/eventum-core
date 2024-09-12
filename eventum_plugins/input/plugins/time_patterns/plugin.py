@@ -324,6 +324,17 @@ class TimePatternsInputPlugin(
         self._config: TimePatternsInputPluginConfig
         self._time_patterns = self._init_time_patterns(**kwargs)
 
+        if (
+            kwargs['mode'] == TimeMode.LIVE
+            and len(self._time_patterns) > 1
+            and kwargs['batch_delay'] is None
+        ):
+            raise PluginConfigurationError(
+                'Batch delay must be set to finite value for merging '
+                'timestamps of multiple time patterns in '
+                f'{kwargs["mode"]} mode'
+            )
+
     def _init_time_patterns(
         self,
         **kwargs: Unpack[InputPluginKwargs]
@@ -374,17 +385,22 @@ class TimePatternsInputPlugin(
         self,
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
-        try:
-            plugins = InputPluginsLiveMerger(
-                plugins=self._time_patterns,
-                target_delay=self._batcher.batch_delay,
-                batch_size=None,
-                ordering=self._config.ordered_merging
-            )
-        except ValidationError as e:
-            raise PluginRuntimeError(
-                f'Cannot initialize merger for time patterns: {e}'
-            )
+        if len(self._time_patterns) > 1:
+            assert self._batcher.batch_delay is not None
+            try:
+                plugin = InputPluginsLiveMerger(
+                    plugins=self._time_patterns,
+                    target_delay=self._batcher.batch_delay,
+                    batch_size=None,
+                    ordering=self._config.ordered_merging
+                )
+            except ValidationError as e:
+                raise PluginRuntimeError(
+                    f'Cannot initialize merger for time patterns: {e}'
+                )
+        else:
+            assert len(self._time_patterns) == 1
+            plugin = self._time_patterns[0]
 
-        for batch in plugins.generate():
+        for batch in plugin.generate():
             on_events(batch)
