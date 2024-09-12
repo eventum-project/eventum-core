@@ -5,7 +5,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
 from typing import Generic, Iterable, Iterator, TypeVar
 
-from numpy import datetime64, searchsorted
+from numpy import concatenate, datetime64, searchsorted
 from numpy.typing import NDArray
 
 from eventum_plugins.input.base.plugin import InputPlugin
@@ -78,9 +78,8 @@ class BatchesAccumulator(Generic[T]):
 class InputPluginsLiveMerger:
     """Merger of live timestamp generation flows of multiple input
     plugins. Timestamp batches generating by provided input plugins
-    are merged with sorting and re-batched, so timestamps in output
-    batches are guaranteed to be sorted within one and across other
-    batches.
+    are merged with re-batching and can be optionally ordered to
+    achieve generation of sorted timestamps sequence.
 
     Attributes
     ----------
@@ -103,6 +102,9 @@ class InputPluginsLiveMerger:
         Maximum size of producing batches after merge, not limited if
         value is `None` (within one cycle of elements consuming)
 
+    ordering : bool
+        Whether to order timestamps during merging
+
     Raises
     ------
     ValueError
@@ -113,6 +115,11 @@ class InputPluginsLiveMerger:
 
     ValueError
         If number of provided plugins are less than one
+
+    Notes
+    -----
+    Using ordering requires additional delays (2 * `target_delay`) for
+    publishing batches.
     """
 
     MIN_DELAY = 0.1
@@ -122,7 +129,8 @@ class InputPluginsLiveMerger:
         self,
         plugins: Iterable[InputPlugin],
         target_delay: float,
-        batch_size: int | None
+        batch_size: int | None,
+        ordering: bool
     ) -> None:
         plugins = list(plugins)
         if not plugins:
@@ -149,6 +157,7 @@ class InputPluginsLiveMerger:
 
         self._delay = target_delay
         self._batch_size = batch_size
+        self._ordering = ordering
         self._plugins = {idx: plugin for idx, plugin in enumerate(plugins)}
         self._accumulators: dict[
             int,
@@ -205,8 +214,7 @@ class InputPluginsLiveMerger:
             )
 
     def _consume_elements(self) -> list[NDArray[datetime64]]:
-        """Consume elements from accumulators within configured delay
-        time.
+        """Consume all currently available elements from accumulators.
 
         Returns
         -------
@@ -215,8 +223,6 @@ class InputPluginsLiveMerger:
         """
         if not self._active_plugin_indices:
             return []
-
-        time.sleep(self._delay)
 
         elements: list[NDArray[datetime64]] = []
         done_indices: list[int] = []
@@ -253,64 +259,105 @@ class InputPluginsLiveMerger:
                     self._handle_done_future(future, plugin)
                 )
 
-            while (
-                self._active_plugin_indices
-                or self._overlapped_future_part is not None
-            ):
-                batches = self._consume_elements()
+            if self._ordering:
+                yield from self._generate_with_ordering()
+            else:
+                yield from self._generate()
 
-                if self._overlapped_future_part is not None:
-                    batches.append(self._overlapped_future_part)
-                    self._overlapped_future_part = None
+    def _generate(self) -> Iterator[NDArray[datetime64]]:
+        """Generate timestamps without ordering.
 
-                if not batches:
-                    continue
+        Yields
+        ------
+        NDArray[datetime64]
+            Timestamp batches
+        """
+        while self._active_plugin_indices:
+            time.sleep(self._delay)
+            batches = self._consume_elements()
 
-                # after getting batches within delay time we need to wait for
-                # overlapping batches that are not yet captured
-                # Scheme: :
-                #      capturing starts after first batch is received
-                #      |     capturing ends after the delay has elapsed
-                #      |     | overlapping batch is published after capturing !
-                # -----|     | |   that's why we should wait delay once again
-                #   ----- +++++|   |
-                #      ----- | |   |
-                #
+            if not batches:
+                continue
 
-                if self._active_plugin_indices:
-                    # finding latest timestamp that will be a cutoff point
-                    latest_timestamp = datetime64(datetime.min)
-                    for batch in batches:
-                        if batch[-1] > latest_timestamp:
-                            latest_timestamp = batch[-1]
+            if self._batch_size is None:
+                batches = concatenate(batches)
+            else:
+                batches = chunk_array(
+                    array=concatenate(batches),
+                    size=self._batch_size
+                )
 
-                    overlapped_batches = self._consume_elements()
+            for batch in batches:
+                yield batch
 
-                    if overlapped_batches:
-                        overlapped = merge_arrays(overlapped_batches)
-                        index = searchsorted(
-                            a=overlapped,
-                            v=latest_timestamp,
-                            side='right'
-                        )
-                        overlapped_part = overlapped[:index]
-                        future_part = overlapped[index:]
+    def _generate_with_ordering(self) -> Iterator[NDArray[datetime64]]:
+        """Generate timestamps with active ordering.
 
-                        if overlapped_part.size > 0:
-                            batches.append(overlapped_part)
+        Yields
+        ------
+        NDArray[datetime64]
+            Timestamp batches
+        """
+        while (
+            self._active_plugin_indices
+            or self._overlapped_future_part is not None
+        ):
+            time.sleep(self._delay)
+            batches = self._consume_elements()
 
-                        if future_part.size > 0:
-                            self._overlapped_future_part = future_part
+            if self._overlapped_future_part is not None:
+                batches.append(self._overlapped_future_part)
+                self._overlapped_future_part = None
 
-                sorted_array = merge_arrays(batches)
+            if not batches:
+                continue
 
-                if self._batch_size is None:
-                    yield sorted_array
-                else:
-                    batches = chunk_array(
-                        array=sorted_array,
-                        size=self._batch_size
+            # after getting batches within delay time we need to wait for
+            # overlapping batches that are not yet captured
+            # Scheme: :
+            #      capturing starts after first batch is received
+            #      |     capturing ends after the delay has elapsed
+            #      |     | overlapping batch is published after capturing !
+            # -----|     | |   that's why we should wait delay once again
+            #   ----- +++++|   |
+            #      ----- | |   |
+            #
+
+            if self._active_plugin_indices:
+                # finding latest timestamp that will be a cutoff point
+                latest_timestamp = datetime64(datetime.min)
+                for batch in batches:
+                    if batch[-1] > latest_timestamp:
+                        latest_timestamp = batch[-1]
+
+                time.sleep(self._delay)
+                overlapped_batches = self._consume_elements()
+
+                if overlapped_batches:
+                    overlapped = merge_arrays(overlapped_batches)
+                    index = searchsorted(
+                        a=overlapped,
+                        v=latest_timestamp,
+                        side='right'
                     )
+                    overlapped_part = overlapped[:index]
+                    future_part = overlapped[index:]
 
-                    for batch in batches:
-                        yield batch
+                    if overlapped_part.size > 0:
+                        batches.append(overlapped_part)
+
+                    if future_part.size > 0:
+                        self._overlapped_future_part = future_part
+
+            sorted_array = merge_arrays(batches)
+
+            if self._batch_size is None:
+                yield sorted_array
+            else:
+                batches = chunk_array(
+                    array=sorted_array,
+                    size=self._batch_size
+                )
+
+                for batch in batches:
+                    yield batch
