@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
+from eventum_plugins.input.batcher import TimestampsBatcher
 from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.merger import InputPluginsLiveMerger
@@ -323,17 +324,6 @@ class TimePatternsInputPlugin(
         self._config: TimePatternsInputPluginConfig
         self._time_patterns = self._init_time_patterns(**kwargs)
 
-        if (
-            self._mode == TimeMode.LIVE
-            and len(self._time_patterns) > 1
-            and self._batcher.batch_delay is None
-        ):
-            raise PluginConfigurationError(
-                'Batch delay must be set to finite value for merging '
-                'timestamps of multiple time patterns in '
-                f'{self._mode} mode'
-            )
-
     def _init_time_patterns(
         self,
         **kwargs: Unpack[InputPluginKwargs]
@@ -353,6 +343,13 @@ class TimePatternsInputPlugin(
                 raise PluginConfigurationError(
                     f'Bad config structure for "{pattern_path}": {e}'
                 )
+
+            # for quick merging of several time patterns in live mode
+            # delay should be minimal
+            if self._mode == TimeMode.LIVE:
+                kwargs = kwargs | {
+                    'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY
+                }
 
             time_patterns.append(
                 TimePatternInputPlugin(
@@ -385,11 +382,10 @@ class TimePatternsInputPlugin(
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
         if len(self._time_patterns) > 1:
-            assert self._batcher.batch_delay is not None
             try:
                 plugin = InputPluginsLiveMerger(
                     plugins=self._time_patterns,
-                    target_delay=self._batcher.batch_delay,
+                    target_delay=TimestampsBatcher.MIN_BATCH_DELAY,
                     batch_size=None,
                     ordering=self._config.ordered_merging
                 )
@@ -398,7 +394,6 @@ class TimePatternsInputPlugin(
                     f'Cannot initialize merger for time patterns: {e}'
                 )
         else:
-            assert len(self._time_patterns) == 1
             plugin = self._time_patterns[0]
 
         for batch in plugin.generate():
