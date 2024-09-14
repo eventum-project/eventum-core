@@ -1,6 +1,6 @@
 import inspect
 from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
                     TypedDict, assert_never, final)
 
@@ -155,6 +155,20 @@ class InputPlugin(ABC):
 
         self._block_on_overflow = on_queue_overflow == 'block'
 
+    def _handle_done_future(self, future: Future) -> None:
+        """Handle future when it is done propagating possible
+        exceptions. Batcher is closed finally.
+
+        Parameters
+        ----------
+        future : Future
+            Done future
+        """
+        try:
+            future.result()
+        finally:
+            self._batcher.close()
+
     @final
     def generate(self) -> Iterator[NDArray[datetime64]]:
         """Start timestamps generation in background thread and yield
@@ -185,7 +199,7 @@ class InputPlugin(ABC):
                 method,
                 lambda batch: self._batcher.add(batch, self._block_on_overflow)
             )
-            future.add_done_callback(lambda _: self._batcher.close())
+            future.add_done_callback(self._handle_done_future)
 
             yield from self._batcher.scroll()
             future.result()
