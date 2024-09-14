@@ -19,7 +19,8 @@ from eventum_plugins.input.plugins.time_patterns.config import (
     Distribution, RandomizerDirection, TimePatternConfig,
     TimePatternsInputPluginConfig)
 from eventum_plugins.input.tools import normalize_versatile_daterange
-from eventum_plugins.input.utils.array_utils import (get_past_slice,
+from eventum_plugins.input.utils.array_utils import (get_future_slice,
+                                                     get_past_slice,
                                                      merge_arrays)
 from eventum_plugins.input.utils.time_utils import (now64, skip_periods,
                                                     timedelta64_to_seconds,
@@ -270,6 +271,9 @@ class TimePatternInputPlugin(
             ret_timestamp='last_past'
         )
 
+        if start >= end:
+            return
+
         delta = np.timedelta64(self._period_duration)
         start = np.datetime64(to_naive(start, self._timezone))
         end = np.datetime64(to_naive(end, self._timezone))
@@ -279,8 +283,30 @@ class TimePatternInputPlugin(
             size=self._period_size,
             duration=delta
         )
+        timestamps = get_future_slice(
+            timestamps=timestamps,
+            after=now64(self._timezone)
+        )
+        timestamps = get_past_slice(
+            timestamps=timestamps,
+            before=end
+        )
 
-        while start < end:
+        while True:
+            if timestamps.size != 0:
+                now = now64(self._timezone)
+                wait_seconds = timedelta64_to_seconds(timestamps[0] - now)
+
+                if wait_seconds > 0:
+                    time.sleep(wait_seconds)
+
+                on_events(timestamps)
+
+            start += delta
+
+            if start >= end:
+                break
+
             timestamps = get_past_slice(
                 timestamps=self._generate_period_timeseries(
                     start=start,
@@ -289,20 +315,6 @@ class TimePatternInputPlugin(
                 ),
                 before=end
             )
-
-            # if period is last by condition but sliced array is empty
-            if timestamps.size == 0:
-                break
-
-            now = now64(self._timezone)
-            wait_seconds = timedelta64_to_seconds(timestamps[0] - now)
-
-            if wait_seconds > 0:
-                time.sleep(wait_seconds)
-
-            on_events(timestamps)
-
-            start += delta
 
 
 class TimePatternsInputPlugin(
