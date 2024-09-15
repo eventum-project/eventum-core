@@ -59,7 +59,7 @@ class InputPlugin(Plugin, config_cls=object, base=True):
     Raises
     ------
     PluginConfigurationError
-        If any error occurred during initializing plugin with the
+        If any error occurs during initializing plugin with the
         provided config
     """
 
@@ -122,7 +122,7 @@ class InputPlugin(Plugin, config_cls=object, base=True):
         Raises
         ------
         PluginRuntimeError
-            If any error occurred during timestamps generation
+            If any error occurs during timestamps generation
         """
         match self._mode:
             case TimeMode.SAMPLE:
@@ -158,7 +158,7 @@ class InputPlugin(Plugin, config_cls=object, base=True):
         Raises
         ------
         PluginRuntimeError
-            If any error occurred during timestamps generation
+            If any error occurs during timestamps generation
         """
         ...
 
@@ -181,7 +181,7 @@ class InputPlugin(Plugin, config_cls=object, base=True):
         Raises
         ------
         PluginRuntimeError
-            If any error occurred during timestamps generation
+            If any error occurs during timestamps generation
         """
         ...
 
