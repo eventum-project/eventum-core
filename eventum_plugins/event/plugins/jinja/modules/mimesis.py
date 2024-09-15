@@ -37,21 +37,21 @@ class _Spec(Mapping):
             return self._dict.__getitem__(spec_name)
         else:
             match spec_name:
-                case 'brazil_spec':
+                case 'brazil':
                     spec = BrazilSpecProvider()
-                case 'denmark_spec':
+                case 'denmark':
                     spec = DenmarkSpecProvider()
-                case 'italy_spec':
+                case 'italy':
                     spec = ItalySpecProvider()
-                case 'netherlands_spec':
+                case 'netherlands':
                     spec = NetherlandsSpecProvider()
-                case 'poland_spec':
+                case 'poland':
                     spec = PolandSpecProvider()
-                case 'russia_spec':
+                case 'russia':
                     spec = RussiaSpecProvider()
-                case 'ukraine_spec':
+                case 'ukraine':
                     spec = UkraineSpecProvider()
-                case 'usa_spec':
+                case 'usa':
                     spec = USASpecProvider()
                 case v:
                     raise ValueError(f'"{v}" is not valid spec')
