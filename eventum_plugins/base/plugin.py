@@ -59,7 +59,7 @@ class Plugin(ABC):
 
         try:
             # expected structure:
-            # eventum_plugins.<plugins_type>.plugins.<plugins_name>.plugin
+            # eventum_plugins.<plugins_type>.plugins.<plugin_name>.plugin
             module_parts = class_module.__name__.split('.')
             plugin_name = module_parts[-2]
             plugin_type_name = module_parts[-4]
