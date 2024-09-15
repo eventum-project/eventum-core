@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
                     TypedDict, assert_never, final)
@@ -24,7 +24,7 @@ class InputPluginKwargs(TypedDict):
     on_queue_overflow: NotRequired[Literal['block', 'skip']]
 
 
-class InputPlugin(ABC, Plugin):
+class InputPlugin(Plugin, config_cls=object, base=True):
     """Base class for all input plugins.
 
     Parameters
