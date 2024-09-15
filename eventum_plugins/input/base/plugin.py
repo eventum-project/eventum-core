@@ -1,4 +1,3 @@
-import inspect
 from abc import ABC, abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
@@ -8,12 +7,11 @@ from numpy import datetime64
 from numpy.typing import NDArray
 from pytz import BaseTzInfo
 
-from eventum_plugins.enums import PluginType
-from eventum_plugins.exceptions import PluginConfigurationError, PluginError
+from eventum_plugins.base.plugin import Plugin
+from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import TimestampsBatcher
 from eventum_plugins.input.enums import TimeMode
-from eventum_plugins.registry import PluginsRegistry
 
 
 class InputPluginKwargs(TypedDict):
@@ -26,7 +24,7 @@ class InputPluginKwargs(TypedDict):
     on_queue_overflow: NotRequired[Literal['block', 'skip']]
 
 
-class InputPlugin(ABC):
+class InputPlugin(ABC, Plugin):
     """Base class for all input plugins.
 
     Parameters
@@ -63,67 +61,7 @@ class InputPlugin(ABC):
     PluginConfigurationError
         If any error occurred during initializing plugin with the
         provided config
-
-    Notes
-    -----
-    All subclasses of this class is considered as implemented plugins
-    that are automatically registered in `PluginsRegistry` via
-    `__init_subclass__`. Therefore some inheritance parameters must be
-    provided.
-
-    Other Parameters
-    ----------------
-    Parameters that can be used in inheritance:
-
-    config_cls : type
-        Model class of config used by plugin
-
-    register : bool, default=True
-        Whether to register class as implemented plugin
     """
-
-    def __init_subclass__(
-        cls,
-        config_cls: type,
-        register: bool = True,
-        **kwargs
-    ):
-        super().__init_subclass__(**kwargs)
-
-        class_module = inspect.getmodule(cls)
-        if class_module is None:
-            raise PluginError(
-                'Cannot inspect module of plugin class definition'
-            )
-
-        if class_module.__name__ == '__main__':
-            raise PluginError(
-                'Plugin can be imported only from external module'
-            )
-
-        try:
-            plugin_name = class_module.__name__.split('.')[-2]
-        except IndexError:
-            raise PluginError(
-                f'Cannot extract plugin name from "{class_module.__name__}"'
-            )
-
-        cls.name = property(
-            lambda _: plugin_name,
-            doc="Name of plugin"
-        )
-        cls.config_cls = property(
-            lambda _: config_cls,
-            doc="Class of plugin config"
-        )
-
-        if register:
-            PluginsRegistry().register_plugin(
-                type=PluginType.INPUT,
-                name=plugin_name,
-                cls=cls,
-                config_cls=config_cls
-            )
 
     def __init__(
         self,
