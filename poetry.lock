@@ -190,6 +190,33 @@ files = [
 ]
 
 [[package]]
+name = "atomics"
+version = "1.0.2"
+description = "Atomic lock-free primitives"
+optional = false
+python-versions = "<4,>=3.6"
+files = [
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-macosx_10_9_universal2.whl", hash = "sha256:5bba08c8ed9dff560a7ce0285b00d72731700e64cb22ce8f9636c88c6dce4d74"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-macosx_10_9_x86_64.whl", hash = "sha256:947b43a4958ed5c9ecfd21793d849cc2869ef003ff380432e01356e6e5b2e55a"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ee035424d0c75d72c2ddc53172ddee37259cbe397c9847868601b509fc8f6ea0"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:a57621b58a881be07c3b0eb3dd34cfcf1a7e9ec84f8f1cffaaa3682a3f6fde65"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:ac1a677e6fd41200951ad6116f23d27285697da05fb622bf669ab7d80d17d0dc"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-manylinux_2_5_i686.manylinux1_i686.manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:d50afc7ca07f59b6cb38aea2d0eb4f7ea4ef6a79184a1f30309699c149a7c2c4"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:6c2ee992777c03ca3530c9f4a2d78a88c65f564a511c9698d42905f57a04344b"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-musllinux_1_1_aarch64.whl", hash = "sha256:123df222d052308257de3b86a9f7400322483955b398c7464898ce0ecd48bf3d"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-musllinux_1_1_i686.whl", hash = "sha256:ca823e5dfbcda305e6084ef99f1a4fab88dda3995378212985cfe5f0a9c8dafa"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-musllinux_1_1_ppc64le.whl", hash = "sha256:ac852fa341bf7562a809176701af0825f449badfd20a1ff2dd6de84fc45a3160"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-musllinux_1_1_s390x.whl", hash = "sha256:c9518fc7255103625444af7eed7a0643f5d93c7ea974a063893f3c4db62e6571"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-musllinux_1_1_x86_64.whl", hash = "sha256:58ecf69d4b67d3792d8bf0ae076f109d8c2cb4185c8d8a62cc672a74d80a09cc"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-win32.whl", hash = "sha256:aa4ee4ff8e4b3f445fe0640f3f2ccfaa61ce099d7cc03415d96d2d7ae05b7a0b"},
+    {file = "atomics-1.0.2-py36.py37.py38.py39.py310.py311-none-win_amd64.whl", hash = "sha256:b0ba7d14a27158425b4b3d6b73d0e9f10bfcf55af2e3fb51a8727e2293ecf338"},
+    {file = "atomics-1.0.2.tar.gz", hash = "sha256:04141e2ed22220ca3faa2057d13f55e4a511e91b5ae8c787fa701e9320217211"},
+]
+
+[package.dependencies]
+cffi = ">=1.10"
+
+[[package]]
 name = "attrs"
 version = "23.2.0"
 description = "Classes Without Boilerplate"
@@ -1958,6 +1985,16 @@ tzdata = {version = "*", markers = "platform_system == \"Windows\""}
 devenv = ["check-manifest", "pytest (>=4.3)", "pytest-cov", "pytest-mock (>=3.3)", "zest.releaser"]
 
 [[package]]
+name = "ultradict"
+version = "0.0.6"
+description = "Sychronized, streaming dictionary that uses shared memory as a backend"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "UltraDict-0.0.6.tar.gz", hash = "sha256:069d1f0d445ee72658e8e19ca55c6b8fe4e7e36c393a9aa86febcdbfc3f1c7a5"},
+]
+
+[[package]]
 name = "yarl"
 version = "1.9.4"
 description = "Yet another URL library"
@@ -2063,4 +2100,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "dd96c6bfde10526db2fddcad624afef7d3639640c414e965915bc1778e67f51c"
+content-hash = "8e80ab23377d469b6b890266619429717f1c89ac8e46346f9016aca66b2bd1fd"
