@@ -173,11 +173,13 @@ class MultiProcessState(State):
                 state: dict = self._load_state()
             else:
                 state = self._state_to_update
-                self._state_to_update = None
-                self._lock.release()    # acquired by get_for_update
 
             state[key] = value
             self._write_state(state)
+
+        if self._state_to_update is not None:
+            self._state_to_update = None
+            self._lock.release()
 
     def get(self, key: str, default: Any = None) -> Any:
         state: dict = self._load_state()
@@ -210,7 +212,7 @@ class MultiProcessState(State):
 
     def destroy(self) -> None:
         """Destroy state with releasing resources. This method should
-        be called after closing state in all related process.
+        be called once after closing state in all related processes.
         """
         self._shm.unlink()
 
@@ -248,11 +250,14 @@ class MultiProcessState(State):
             Loaded object
         """
         with self._lock:
-            size = int.from_bytes(
-                self._shm.buf[:self._HEADER_SIZE]
-            )
+            size = int.from_bytes(self._shm.buf[:self._HEADER_SIZE])
 
-            object = self._decoder.decode(
-                self._shm.buf[self._HEADER_SIZE:self._HEADER_SIZE + size]
-            )
-            return object
+            try:
+                object = self._decoder.decode(
+                    self._shm.buf[self._HEADER_SIZE:self._HEADER_SIZE + size]
+                )
+                return object
+            except msgspec.DecodeError as e:
+                raise RuntimeError(
+                    f'Cannot decode data from shared memory: {e}'
+                ) from None
