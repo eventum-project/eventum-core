@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from multiprocessing.synchronize import RLock
 from multiprocessing.shared_memory import SharedMemory
+from multiprocessing.synchronize import RLock
 from typing import Any
+
 import msgspec
 
 
