@@ -46,13 +46,40 @@ class State(ABC):
         ...
 
     @abstractmethod
+    def get_for_update(self, key: str, default: Any = None) -> Any:
+        """Get value from state for next update with acquiring state lock
+        until next set.
+
+        Parameters
+        ----------
+        key : str
+            Key of the value to get
+
+        default : Any, default=None
+            Default value to return if there is no value in state with
+            specified key
+
+        Returns
+        -------
+        Any
+            Value from the state, or default value if there is no value
+            in state with specified key
+        """
+        ...
+
+    @abstractmethod
+    def cancel_update(self) -> None:
+        """Release state lock acquired by `get_for_update` method."""
+        ...
+
+    @abstractmethod
     def as_dict(self) -> dict:
         """Get dictionary representation of state."""
         ...
 
 
-class SingleProcessState(State):
-    """Key-value state for single process."""
+class SingleThreadState(State):
+    """Key-value state for single thread."""
 
     __slots__ = ('_state', )
 
@@ -67,6 +94,12 @@ class SingleProcessState(State):
             return self._state[key]
         except KeyError:
             return default
+
+    def get_for_update(self, key: str, default: Any = None) -> Any:
+        return self.get(key, default)
+
+    def cancel_update(self) -> None:
+        return
 
     def as_dict(self) -> dict:
         return deepcopy(self._state)
@@ -103,7 +136,7 @@ class MultiProcessState(State):
         If state cannot be created due to other shared memory error
     """
 
-    __slots__ = ('_shm', '_lock', '_encoder', '_decoder')
+    __slots__ = ('_shm', '_lock', '_encoder', '_decoder', '_state_to_update')
     _HEADER_SIZE = 8
 
     def __init__(
@@ -129,13 +162,20 @@ class MultiProcessState(State):
         self._lock = lock
         self._encoder = msgspec.msgpack.Encoder()
         self._decoder = msgspec.msgpack.Decoder()
+        self._state_to_update: dict | None = None
 
         if create:
             self._write_state(dict())
 
     def set(self, key: str, value: Any) -> None:
         with self._lock:
-            state: dict = self._load_state()
+            if self._state_to_update is None:
+                state: dict = self._load_state()
+            else:
+                state = self._state_to_update
+                self._state_to_update = None
+                self._lock.release()    # acquired by get_for_update
+
             state[key] = value
             self._write_state(state)
 
@@ -146,6 +186,19 @@ class MultiProcessState(State):
             return default
         else:
             return state[key]
+
+    def get_for_update(self, key: str, default: Any = None) -> Any:
+        self._lock.acquire()
+        state: dict = self._load_state()
+        self._state_to_update = state
+
+        if key not in state:
+            return default
+        else:
+            return state[key]
+
+    def cancel_update(self) -> None:
+        self._lock.release()
 
     def as_dict(self) -> dict:
         state: dict = self._load_state()
