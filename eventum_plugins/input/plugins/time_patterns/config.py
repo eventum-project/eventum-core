@@ -1,10 +1,8 @@
 
 from enum import StrEnum
-from typing import Any, TypeAlias
-from warnings import warn
+from typing import TypeAlias
 
-from pydantic import (AliasChoices, BaseModel, Field, field_validator,
-                      model_validator)
+from pydantic import BaseModel, Field, model_validator
 
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.fields import VersatileDatetimeStrict
@@ -95,23 +93,6 @@ class RandomizerConfig(BaseModel, extra='forbid', frozen=True):
     deviation: float = Field(..., ge=0, le=1)
     direction: RandomizerDirection
     sampling: int = Field(1024, ge=256)
-
-    # XXX: Remove in 2.1.0
-    @field_validator('direction', mode='before')
-    def convert_to_new_format(v: Any) -> Any:
-        if not isinstance(v, str):
-            return v
-
-        if v[0].isupper():
-            warn(
-                'Capitalized options in "time_patterns" input plugin config '
-                'are deprecated and their support will be removed in version '
-                f'2.1. Use lowercase instead ("{v}" -> "{v.lower()}").',
-                DeprecationWarning
-            )
-            return v.lower()
-
-        return v
 
 
 class BetaDistributionParameters(BaseModel, extra='forbid', frozen=True):
@@ -223,23 +204,6 @@ class SpreaderConfig(BaseModel, extra='forbid', frozen=True):
             f'Improper parameters model for "{self.distribution}" distribution'
         )
 
-    # XXX: Remove in 2.1.0
-    @field_validator('distribution', mode='before')
-    def convert_to_new_format(v: Any) -> Any:
-        if not isinstance(v, str):
-            return v
-
-        if v[0].isupper():
-            warn(
-                'Capitalized options in "time_patterns" input plugin config '
-                'are deprecated and their support will be removed in version '
-                f'2.1. Use lowercase instead ("{v}" -> "{v.lower()}").',
-                DeprecationWarning
-            )
-            return v.lower()
-
-        return v
-
 
 class TimePatternConfig(BaseModel, extra='forbid', frozen=True):
     """Configuration of a single time pattern.
@@ -282,22 +246,5 @@ class TimePatternsInputPluginConfig(InputPluginConfig, frozen=True):
         live mode with usage of multiple configs)
     """
 
-    # XXX: remove alias in 2.1 release
-    patterns: list[str] = Field(
-        ...,
-        min_length=1,
-        validation_alias=AliasChoices('patterns', 'configs')
-    )
+    patterns: list[str] = Field(..., min_length=1)
     ordered_merging: bool = False
-
-    @model_validator(mode='before')
-    def check_deprecated_field_names(data: Any) -> Any:
-        if isinstance(data, dict) and 'configs' in data:
-            warn(
-                'Parameter "configs" is deprecated and currently used '
-                'as alias to field "patterns". Please use "patterns" '
-                'instead. Alias "configs" will be removed in version 2.1.',
-                DeprecationWarning
-            )
-
-        return data
