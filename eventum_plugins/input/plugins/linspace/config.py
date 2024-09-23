@@ -32,7 +32,10 @@ class LinspaceInputPluginConfig(
     endpoint: bool = True
 
     @field_validator('end')
-    def validate_start(v: VersatileDatetimeStrict) -> VersatileDatetimeStrict:
+    def validate_start(
+        cls,
+        v: VersatileDatetimeStrict
+    ) -> VersatileDatetimeStrict:
         if isinstance(v, str) and v == TimeKeyword.NEVER.value:
             raise ValueError(
                 f'Value "{TimeKeyword.NEVER.value}" is not allowed here'
