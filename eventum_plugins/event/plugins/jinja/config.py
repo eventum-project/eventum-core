@@ -1,7 +1,7 @@
 
 
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (BaseModel, Field, RootModel, StringConstraints,
                       field_validator)
@@ -28,6 +28,9 @@ class ItemsSampleConfig(BaseModel, frozen=True, extra='forbid'):
 
 class SampleConfig(RootModel, frozen=True):
     root: CSVSampleConfig | ItemsSampleConfig = Field(discriminator='type')
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.root, name)
 
 
 class TemplatePickingMode(StrEnum):
@@ -128,3 +131,6 @@ class JinjaEventConfig(RootModel, frozen=True):
         | JinjaEventConfigForChanceMode
         | JinjaEventConfigForFSMMode
     ) = Field(discriminator='mode')
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.root, name)
