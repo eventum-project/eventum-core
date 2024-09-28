@@ -1,5 +1,3 @@
-
-
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
@@ -7,6 +5,7 @@ from pydantic import (BaseModel, Field, RootModel, StringConstraints,
                       field_validator)
 
 from eventum_plugins.event.base.config import EventPluginConfig
+from eventum_plugins.event.plugins.jinja.fsm.fields import Condition
 
 
 class SampleType(StrEnum):
@@ -50,10 +49,6 @@ class TemplateConfigForGeneralModes(BaseModel, frozen=True, extra='forbid'):
 
 class TemplateConfigForChanceMode(TemplateConfigForGeneralModes, frozen=True):
     chance: float = Field(..., gt=0.0)
-
-
-class Condition(BaseModel, frozen=True, extra='forbid'):
-    ...
 
 
 class TemplateTransition(BaseModel, frozen=True, extra='forbid'):
