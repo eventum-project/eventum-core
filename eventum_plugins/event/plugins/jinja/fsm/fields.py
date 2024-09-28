@@ -18,11 +18,11 @@ class Gt(BaseModel, frozen=True, extra='forbid'):
     gt: dict[str, float | int] = Field(..., min_length=1, max_length=1)
 
 
-class Gte(BaseModel, frozen=True, extra='forbid'):
+class Ge(BaseModel, frozen=True, extra='forbid'):
     """Check if value is greater or equal to other value using '>='
     operator.
     """
-    gte: dict[str, float | int] = Field(..., min_length=1, max_length=1)
+    ge: dict[str, float | int] = Field(..., min_length=1, max_length=1)
 
 
 class Lt(BaseModel, frozen=True, extra='forbid'):
@@ -30,14 +30,14 @@ class Lt(BaseModel, frozen=True, extra='forbid'):
     lt: dict[str, float | int] = Field(..., min_length=1, max_length=1)
 
 
-class Lte(BaseModel, frozen=True, extra='forbid'):
+class Le(BaseModel, frozen=True, extra='forbid'):
     """Check if value is lower or equal to other value using '<='
     operator.
     """
-    lte: dict[str, float | int] = Field(..., min_length=1, max_length=1)
+    le: dict[str, float | int] = Field(..., min_length=1, max_length=1)
 
 
-ConditionCheck: TypeAlias = In | Eq | Gt | Gte | Lt | Lte
+ConditionCheck: TypeAlias = In | Eq | Gt | Ge | Lt | Le
 
 ConditionLogic: TypeAlias = Union['Or', 'And', 'Not']
 
