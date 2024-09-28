@@ -127,7 +127,7 @@ class Gt(BaseModel, Checkable, frozen=True, extra='forbid'):
         )
 
 
-class Ge(BaseModel, frozen=True, extra='forbid'):
+class Ge(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if value is greater or equal to other value using '>='
     operator.
     """
@@ -147,7 +147,7 @@ class Ge(BaseModel, frozen=True, extra='forbid'):
         )
 
 
-class Lt(BaseModel, frozen=True, extra='forbid'):
+class Lt(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if value is lower than other value using '<' operator."""
     lt: dict[SharedStateFieldName, float | int] = Field(
         ...,
@@ -165,7 +165,7 @@ class Lt(BaseModel, frozen=True, extra='forbid'):
         )
 
 
-class Le(BaseModel, frozen=True, extra='forbid'):
+class Le(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if value is lower or equal to other value using '<='
     operator.
     """
@@ -185,7 +185,7 @@ class Le(BaseModel, frozen=True, extra='forbid'):
         )
 
 
-class LenEq(BaseModel, frozen=True, extra='forbid'):
+class LenEq(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if sequence length is equal to value."""
     len_eq: dict[SharedStateFieldName, int] = Field(
         ...,
@@ -203,7 +203,7 @@ class LenEq(BaseModel, frozen=True, extra='forbid'):
         )
 
 
-class LenGt(BaseModel, frozen=True, extra='forbid'):
+class LenGt(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if sequence length is greater than value."""
     len_gt: dict[SharedStateFieldName, int] = Field(
         ...,
@@ -221,7 +221,7 @@ class LenGt(BaseModel, frozen=True, extra='forbid'):
         )
 
 
-class LenGe(BaseModel, frozen=True, extra='forbid'):
+class LenGe(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if sequence length is greater or equal to value."""
     len_ge: dict[SharedStateFieldName, int] = Field(
         ...,
@@ -239,7 +239,7 @@ class LenGe(BaseModel, frozen=True, extra='forbid'):
         )
 
 
-class LenLt(BaseModel, frozen=True, extra='forbid'):
+class LenLt(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if sequence length is lower than value."""
     len_lt: dict[SharedStateFieldName, int] = Field(
         ...,
@@ -257,7 +257,7 @@ class LenLt(BaseModel, frozen=True, extra='forbid'):
         )
 
 
-class LenLe(BaseModel, frozen=True, extra='forbid'):
+class LenLe(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if sequence length is lower or equal to value."""
     len_le: dict[SharedStateFieldName, int] = Field(
         ...,
@@ -275,7 +275,7 @@ class LenLe(BaseModel, frozen=True, extra='forbid'):
         )
 
 
-class In(BaseModel, frozen=True, extra='forbid'):
+class In(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if value is in sequence."""
     in_: dict[SharedStateFieldName, Any] = Field(
         ...,
@@ -294,7 +294,7 @@ class In(BaseModel, frozen=True, extra='forbid'):
         )
 
 
-class HasTags(BaseModel, frozen=True, extra='forbid'):
+class HasTags(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if event has specific tag."""
     has_tags: str | list[str] = Field(..., min_length=1)
 
@@ -316,7 +316,7 @@ ConditionCheck: TypeAlias = (
 ConditionLogic: TypeAlias = Union['Or', 'And', 'Not']
 
 
-class Or(BaseModel, frozen=True, extra='forbid'):
+class Or(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Logic operator 'or' for combining checks or other logic
     operators.
     """
@@ -326,8 +326,15 @@ class Or(BaseModel, frozen=True, extra='forbid'):
         alias='or'
     )
 
+    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+        for clause in self.or_:
+            if clause.check(timestamp, tags, state):
+                return True
 
-class And(BaseModel, frozen=True, extra='forbid'):
+        return False
+
+
+class And(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Logic operator 'and' for combining checks or other logic
     operators.
     """
@@ -337,12 +344,22 @@ class And(BaseModel, frozen=True, extra='forbid'):
         alias='and'
     )
 
+    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+        for clause in self.and_:
+            if not clause.check(timestamp, tags, state):
+                return False
 
-class Not(BaseModel, frozen=True, extra='forbid'):
+        return True
+
+
+class Not(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Logic operator 'not' for negate checks or other logic
     operators.
     """
     not_: ConditionLogic | ConditionCheck = Field(..., alias='not')
+
+    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+        return not self.not_.check(timestamp, tags, state)
 
 
 Condition: TypeAlias = ConditionLogic | ConditionCheck
