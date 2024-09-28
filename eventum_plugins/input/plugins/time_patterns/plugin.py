@@ -360,6 +360,7 @@ class TimePatternsInputPlugin(
             # delay should be minimal
             if self._mode == TimeMode.LIVE:
                 kwargs = kwargs | {
+                    'batch_size': None,
                     'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY
                 }
 
@@ -393,20 +394,18 @@ class TimePatternsInputPlugin(
         self,
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
-        if len(self._time_patterns) > 1:
-            try:
-                plugin = InputPluginsLiveMerger(
-                    plugins=self._time_patterns,
-                    target_delay=TimestampsBatcher.MIN_BATCH_DELAY,
-                    batch_size=None,
-                    ordering=self._config.ordered_merging
-                )
-            except ValidationError as e:
-                raise PluginRuntimeError(
-                    f'Cannot initialize merger for time patterns: {e}'
-                )
-        else:
-            plugin = self._time_patterns[0]
 
-        for batch in plugin.generate():
+        try:
+            merged_patterns = InputPluginsLiveMerger(
+                plugins=self._time_patterns,
+                target_delay=TimestampsBatcher.MIN_BATCH_DELAY,
+                batch_size=None,
+                ordering=self._config.ordered_merging
+            )
+        except ValidationError as e:
+            raise PluginRuntimeError(
+                f'Cannot initialize merger for time patterns: {e}'
+            )
+
+        for batch in merged_patterns.generate():
             on_events(batch)
