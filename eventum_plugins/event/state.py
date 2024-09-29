@@ -83,8 +83,8 @@ class SingleThreadState(State):
 
     __slots__ = ('_state', )
 
-    def __init__(self) -> None:
-        self._state: dict[str, Any] = dict()
+    def __init__(self, initial: dict[str, Any] | None = None) -> None:
+        self._state: dict[str, Any] = initial or dict()
 
     def set(self, key: str, value: Any) -> None:
         self._state[key] = value
@@ -132,6 +132,9 @@ class MultiProcessState(State):
     ValueError
         If `create` is `False` but state does not exist
 
+    ValueError
+        If `create` is `False` but `initial` is provided
+
     RuntimeError
         If state cannot be created due to other shared memory error
     """
@@ -144,8 +147,13 @@ class MultiProcessState(State):
         name: str,
         create: bool,
         max_bytes: int,
-        lock: RLock
+        lock: RLock,
+        initial: dict[str, Any] | None = None
     ) -> None:
+        if initial is not None and not create:
+            raise ValueError(
+                'Parameter `initial` must be none when `create` is `False`'
+            )
         try:
             self._shm = SharedMemory(name=name, create=create, size=max_bytes)
         except FileExistsError:
@@ -165,7 +173,7 @@ class MultiProcessState(State):
         self._state_to_update: dict | None = None
 
         if create:
-            self._write_state(dict())
+            self._write_state(initial or dict())
 
     def set(self, key: str, value: Any) -> None:
         with self._lock:
