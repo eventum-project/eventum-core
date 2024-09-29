@@ -328,37 +328,31 @@ class TimestampComponents(BaseModel, frozen=True, extra='forbid'):
 
 
 class Before(BaseModel, Checkable, frozen=True, extra='forbid'):
-    """Check if event timestamp components are before specific time."""
-    earlier: TimestampComponents
+    """Check if event timestamp is before specific time."""
+    before: TimestampComponents
 
     def check(self, timestamp: str, tags: list[str], state: State) -> bool:
         dt = datetime.fromisoformat(timestamp)
 
-        for component, value in self.earlier.model_fields.items():
-            if value is None:
-                continue
+        target = dt.replace(
+            **self.before.model_dump(exclude_none=True)
+        )
 
-            if getattr(dt, component) >= value:
-                return False
-
-        return True
+        return dt < target
 
 
 class After(BaseModel, Checkable, frozen=True, extra='forbid'):
-    """Check if event timestamp components are after specific time."""
-    later: TimestampComponents
+    """Check if event timestamp is after specific time."""
+    after: TimestampComponents
 
     def check(self, timestamp: str, tags: list[str], state: State) -> bool:
         dt = datetime.fromisoformat(timestamp)
 
-        for component, value in self.later.model_fields.items():
-            if value is None:
-                continue
+        target = dt.replace(
+            **self.after.model_dump(exclude_none=True)
+        )
 
-            if getattr(dt, component) < value:
-                return False
-
-        return True
+        return dt >= target
 
 
 class Matches(BaseModel, Checkable, frozen=True, extra='forbid'):
