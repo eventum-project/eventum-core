@@ -384,10 +384,9 @@ class Defined(BaseModel, Checkable, frozen=True, extra='forbid'):
 
 
 ConditionCheck: TypeAlias = (
-    Eq | Gt | Ge | Lt | Le
+    Eq | Gt | Ge | Lt | Le | Matches
     | In | LenEq | LenGt | LenGe | LenLt | LenLe
     | Before | After
-    | Matches
     | Defined | HasTags
 )
 
