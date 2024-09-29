@@ -1,9 +1,11 @@
 import logging
+import re
 from abc import ABC, abstractmethod
+from datetime import datetime
 from operator import contains, eq, ge, gt, le, lt
-from typing import Any, Callable, TypeAlias, Union
+from typing import Any, Callable, Self, TypeAlias, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from eventum_plugins.event.plugins.jinja.fsm.operators import (len_eq, len_ge,
                                                                len_gt, len_le,
@@ -307,11 +309,92 @@ class HasTags(BaseModel, Checkable, frozen=True, extra='forbid'):
         return set(target_tags).issubset(set(tags))
 
 
+class TimestampComponents(BaseModel, frozen=True, extra='forbid'):
+    """Time components of timestamp."""
+    year: int | None = Field(None, ge=0, le=10_000)
+    month: int | None = Field(None, ge=1, le=12)
+    day: int | None = Field(None, ge=1, le=31)
+    hour: int | None = Field(None, ge=0, le=24)
+    minute: int | None = Field(None, ge=0, le=60)
+    second: int | None = Field(None, ge=0, le=60)
+    microsecond: int | None = Field(None, ge=0, le=1_000_000)
+
+    @model_validator(mode='after')
+    def validate_specified(self) -> Self:
+        if not any(self.model_fields.values()):
+            raise ValueError('At least one component must be specified')
+
+        return self
+
+
+class Before(BaseModel, Checkable, frozen=True, extra='forbid'):
+    """Check if event timestamp components are before specific time."""
+    earlier: TimestampComponents
+
+    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+        dt = datetime.fromisoformat(timestamp)
+
+        for component, value in self.earlier.model_fields.items():
+            if value is None:
+                continue
+
+            if getattr(dt, component) >= value:
+                return False
+
+        return True
+
+
+class After(BaseModel, Checkable, frozen=True, extra='forbid'):
+    """Check if event timestamp components are after specific time."""
+    later: TimestampComponents
+
+    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+        dt = datetime.fromisoformat(timestamp)
+
+        for component, value in self.later.model_fields.items():
+            if value is None:
+                continue
+
+            if getattr(dt, component) < value:
+                return False
+
+        return True
+
+
+class Matches(BaseModel, Checkable, frozen=True, extra='forbid'):
+    """Check if a string matches a regular expression pattern."""
+    matches: dict[SharedStateFieldName, str] = Field(
+        ...,
+        min_length=1,
+        max_length=1
+    )
+
+    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+        field, pattern = next(iter(self.matches.items()))
+        state_value = state.get(field)
+
+        if not isinstance(state_value, str):
+            return False
+
+        return bool(re.match(pattern, state_value))
+
+
+class Defined(BaseModel, Checkable, frozen=True, extra='forbid'):
+    """Check if state has specified key."""
+    defined: SharedStateFieldName = Field(..., min_length=1)
+
+    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+        return state.get(self.defined) is not None
+
+
 ConditionCheck: TypeAlias = (
     Eq | Gt | Ge | Lt | Le
-    | LenEq | LenGt | LenGe | LenLt | LenLe
-    | In | HasTags
+    | In | LenEq | LenGt | LenGe | LenLt | LenLe
+    | Before | After
+    | Matches
+    | Defined | HasTags
 )
+
 
 ConditionLogic: TypeAlias = Union['Or', 'And', 'Not']
 
