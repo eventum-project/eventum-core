@@ -5,7 +5,7 @@ from datetime import datetime
 from operator import contains, eq, ge, gt, le, lt
 from typing import Any, Callable, Self, TypeAlias, Union
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from eventum_plugins.event.plugins.jinja.fsm.operators import (len_eq, len_ge,
                                                                len_gt, len_le,
@@ -286,6 +286,8 @@ class In(BaseModel, Checkable, frozen=True, extra='forbid'):
         alias='in'
     )
 
+    model_config = ConfigDict(populate_by_name=True)
+
     def check(self, timestamp: str, tags: list[str], state: State) -> bool:
         field, value = next(iter(self.in_.items()))
         return _compare_with_state(
@@ -321,7 +323,7 @@ class TimestampComponents(BaseModel, frozen=True, extra='forbid'):
 
     @model_validator(mode='after')
     def validate_specified(self) -> Self:
-        if not any(self.model_fields.values()):
+        if not any(self.model_dump().values()):
             raise ValueError('At least one component must be specified')
 
         return self
@@ -403,6 +405,8 @@ class Or(BaseModel, Checkable, frozen=True, extra='forbid'):
         alias='or'
     )
 
+    model_config = ConfigDict(populate_by_name=True)
+
     def check(self, timestamp: str, tags: list[str], state: State) -> bool:
         for clause in self.or_:
             if clause.check(timestamp, tags, state):
@@ -421,6 +425,8 @@ class And(BaseModel, Checkable, frozen=True, extra='forbid'):
         alias='and'
     )
 
+    model_config = ConfigDict(populate_by_name=True)
+
     def check(self, timestamp: str, tags: list[str], state: State) -> bool:
         for clause in self.and_:
             if not clause.check(timestamp, tags, state):
@@ -434,6 +440,8 @@ class Not(BaseModel, Checkable, frozen=True, extra='forbid'):
     operators.
     """
     not_: ConditionLogic | ConditionCheck = Field(..., alias='not')
+
+    model_config = ConfigDict(populate_by_name=True)
 
     def check(self, timestamp: str, tags: list[str], state: State) -> bool:
         return not self.not_.check(timestamp, tags, state)
