@@ -3,7 +3,7 @@ import re
 from abc import ABC, abstractmethod
 from datetime import datetime
 from operator import contains, eq, ge, gt, le, lt
-from typing import Any, Callable, Self, TypeAlias, Union
+from typing import Any, Callable, Self, TypeAlias, TypedDict, Union, Unpack
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -15,11 +15,30 @@ from eventum_plugins.event.state import State
 logger = logging.getLogger(__name__)
 
 
+class CheckKwargs(TypedDict):
+    """Kwargs for `check` method of  `Checkable`.
+
+    Attributes
+    ----------
+    timestamp : str
+        Timestamp of event
+
+    tags : list[str]
+        Tags from input plugin that generated event
+
+    state : State
+        Shared state of templates
+    """
+    timestamp: str
+    tags: list[str]
+    state: State
+
+
 class Checkable(ABC):
     """Base class for models used in condition checking."""
 
     @abstractmethod
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         """Check class-specific condition using current state.
 
         Parameters
@@ -37,7 +56,18 @@ class Checkable(ABC):
         -------
         bool
             Result of condition check
+
+        Raises
+        ------
+        KeyError
+            If required kwarg is missing
         """
+        ...
+
+    @property
+    @abstractmethod
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        """List of kwarg names for performing check."""
         ...
 
 
@@ -101,14 +131,18 @@ class Eq(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.eq.items()))
         return _compare_with_state(
             operator=eq,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class Gt(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -119,14 +153,18 @@ class Gt(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.gt.items()))
         return _compare_with_state(
             operator=gt,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class Ge(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -139,14 +177,18 @@ class Ge(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.ge.items()))
         return _compare_with_state(
             operator=ge,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class Lt(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -157,14 +199,18 @@ class Lt(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.lt.items()))
         return _compare_with_state(
             operator=lt,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class Le(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -177,14 +223,18 @@ class Le(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.le.items()))
         return _compare_with_state(
             operator=le,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class LenEq(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -195,14 +245,18 @@ class LenEq(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.len_eq.items()))
         return _compare_with_state(
             operator=len_eq,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class LenGt(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -213,14 +267,18 @@ class LenGt(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.len_gt.items()))
         return _compare_with_state(
             operator=len_gt,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class LenGe(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -231,14 +289,18 @@ class LenGe(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.len_ge.items()))
         return _compare_with_state(
             operator=len_ge,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class LenLt(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -249,14 +311,18 @@ class LenLt(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.len_lt.items()))
         return _compare_with_state(
             operator=len_lt,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class LenLe(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -267,14 +333,18 @@ class LenLe(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.len_le.items()))
         return _compare_with_state(
             operator=len_le,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class Contains(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -287,14 +357,18 @@ class Contains(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.contains.items()))
         return _compare_with_state(
             operator=contains,
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class In(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -308,27 +382,35 @@ class In(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, value = next(iter(self.in_.items()))
         return _compare_with_state(
             operator=lambda a, b: contains(b, a),
-            state=state,
+            state=kwargs['state'],
             field_name=field,
             target_value=value
         )
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 class HasTags(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if event has specific tag."""
     has_tags: str | list[str] = Field(..., min_length=1)
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         if isinstance(self.has_tags, str):
             target_tags = [self.has_tags]
         else:
             target_tags = self.has_tags
 
-        return set(target_tags).issubset(set(tags))
+        return set(target_tags).issubset(set(kwargs['tags']))
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('tags', )
 
 
 class TimestampComponents(BaseModel, frozen=True, extra='forbid'):
@@ -353,8 +435,8 @@ class Before(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if event timestamp is before specific time."""
     before: TimestampComponents
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
-        dt = datetime.fromisoformat(timestamp)
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
+        dt = datetime.fromisoformat(kwargs['timestamp'])
 
         target = dt.replace(
             **self.before.model_dump(exclude_none=True)
@@ -362,19 +444,27 @@ class Before(BaseModel, Checkable, frozen=True, extra='forbid'):
 
         return dt < target
 
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('timestamp', )
+
 
 class After(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if event timestamp is after specific time."""
     after: TimestampComponents
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
-        dt = datetime.fromisoformat(timestamp)
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
+        dt = datetime.fromisoformat(kwargs['timestamp'])
 
         target = dt.replace(
             **self.after.model_dump(exclude_none=True)
         )
 
         return dt >= target
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('timestamp', )
 
 
 class Matches(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -385,22 +475,30 @@ class Matches(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         field, pattern = next(iter(self.matches.items()))
-        state_value = state.get(field)
+        state_value = kwargs['state'].get(field)
 
         if not isinstance(state_value, str):
             return False
 
         return bool(re.match(pattern, state_value))
 
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
+
 
 class Defined(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if state has specified key."""
     defined: SharedStateFieldName = Field(..., min_length=1)
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
-        return state.get(self.defined) is not None
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
+        return kwargs['state'].get(self.defined) is not None
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return ('state', )
 
 
 ConditionCheck: TypeAlias = (
@@ -427,12 +525,20 @@ class Or(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         for clause in self.or_:
-            if clause.check(timestamp, tags, state):
+            if clause.check(**kwargs):
                 return True
 
         return False
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        kwarg_names = set()
+        for clause in self.or_:
+            kwarg_names |= set(clause.required_check_kwargs)
+
+        return tuple(kwarg_names)
 
 
 class And(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -447,12 +553,20 @@ class And(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
         for clause in self.and_:
-            if not clause.check(timestamp, tags, state):
+            if not clause.check(**kwargs):
                 return False
 
         return True
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        kwarg_names = set()
+        for clause in self.and_:
+            kwarg_names |= set(clause.required_check_kwargs)
+
+        return tuple(kwarg_names)
 
 
 class Not(BaseModel, Checkable, frozen=True, extra='forbid'):
@@ -463,8 +577,12 @@ class Not(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
-        return not self.not_.check(timestamp, tags, state)
+    def check(self, **kwargs: Unpack[CheckKwargs]) -> bool:
+        return not self.not_.check(**kwargs)
+
+    @property
+    def required_check_kwargs(self) -> tuple[str, ...]:
+        return self.not_.required_check_kwargs
 
 
 Condition: TypeAlias = ConditionLogic | ConditionCheck
