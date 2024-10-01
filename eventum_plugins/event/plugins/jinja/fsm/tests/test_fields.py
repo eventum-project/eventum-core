@@ -5,7 +5,8 @@ import pytest
 from eventum_plugins.event.plugins.jinja.fsm.fields import (
     After, And, Before, Contains, Defined, Eq, Ge, Gt, HasTags, In, Le, LenEq,
     LenGe, LenGt, LenLe, LenLt, Lt, Matches, Not, Or, TimestampComponents)
-from eventum_plugins.event.state import SingleThreadState as State
+from eventum_plugins.event.plugins.jinja.state import \
+    SingleThreadState as State
 
 
 def test_eq():

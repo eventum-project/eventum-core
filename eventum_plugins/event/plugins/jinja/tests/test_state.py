@@ -2,7 +2,8 @@ from multiprocessing import Process, RLock
 
 import pytest
 
-from eventum_plugins.event.state import MultiProcessState, SingleThreadState
+from eventum_plugins.event.plugins.jinja.state import (MultiProcessState,
+                                                       SingleThreadState)
 
 
 @pytest.fixture
