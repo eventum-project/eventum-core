@@ -3,8 +3,8 @@ from datetime import datetime
 import pytest
 
 from eventum_plugins.event.plugins.jinja.fsm.fields import (
-    After, And, Before, Defined, Eq, Ge, Gt, HasTags, In, Le, LenEq, LenGe,
-    LenGt, LenLe, LenLt, Lt, Matches, Not, Or, TimestampComponents)
+    After, And, Before, Contains, Defined, Eq, Ge, Gt, HasTags, In, Le, LenEq,
+    LenGe, LenGt, LenLe, LenLt, Lt, Matches, Not, Or, TimestampComponents)
 from eventum_plugins.event.state import SingleThreadState as State
 
 
@@ -75,10 +75,16 @@ def test_len_le():
     assert not LenLe(len_le={'field': 2}).check('', [], state)
 
 
-def test_in():
+def test_contains():
     state = State({'field': [5, 10, 15]})
-    assert In(in_={'field': 10}).check('', [], state)
-    assert not In(in_={'field': 2}).check('', [], state)
+    assert Contains(contains={'field': 10}).check('', [], state)
+    assert not Contains(contains={'field': 2}).check('', [], state)
+
+
+def test_in():
+    state = State({'field': 5})
+    assert In(in_={'field': [5, 10, 15]}).check('', [], state)
+    assert not In(in_={'field': [2, 4, 6]}).check('', [], state)
 
 
 def test_has_tags():

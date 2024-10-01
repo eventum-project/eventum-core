@@ -277,6 +277,26 @@ class LenLe(BaseModel, Checkable, frozen=True, extra='forbid'):
         )
 
 
+class Contains(BaseModel, Checkable, frozen=True, extra='forbid'):
+    """Check if sequence value contains element."""
+    contains: dict[SharedStateFieldName, Any] = Field(
+        ...,
+        min_length=1,
+        max_length=1,
+    )
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    def check(self, timestamp: str, tags: list[str], state: State) -> bool:
+        field, value = next(iter(self.contains.items()))
+        return _compare_with_state(
+            operator=contains,
+            state=state,
+            field_name=field,
+            target_value=value
+        )
+
+
 class In(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Check if value is in sequence."""
     in_: dict[SharedStateFieldName, Any] = Field(
@@ -291,7 +311,7 @@ class In(BaseModel, Checkable, frozen=True, extra='forbid'):
     def check(self, timestamp: str, tags: list[str], state: State) -> bool:
         field, value = next(iter(self.in_.items()))
         return _compare_with_state(
-            operator=contains,
+            operator=lambda a, b: contains(b, a),
             state=state,
             field_name=field,
             target_value=value
@@ -385,7 +405,8 @@ class Defined(BaseModel, Checkable, frozen=True, extra='forbid'):
 
 ConditionCheck: TypeAlias = (
     Eq | Gt | Ge | Lt | Le | Matches
-    | In | LenEq | LenGt | LenGe | LenLt | LenLe
+    | LenEq | LenGt | LenGe | LenLt | LenLe
+    | Contains | In
     | Before | After
     | Defined | HasTags
 )
