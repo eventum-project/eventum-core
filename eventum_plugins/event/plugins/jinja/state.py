@@ -121,7 +121,7 @@ class MultiProcessState(State):
     max_bytes : int
         Maximum size of state in bytes
 
-    lock : LockLike
+    lock : RLock
         Lock for synchronization across processes
 
     Raises
