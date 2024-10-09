@@ -1,7 +1,7 @@
 import subprocess as subprocess
 
 
-class SubprocessManager:
+class SubprocessRunner:
     """Class for running any command in subprocess."""
 
     def run(self, command: str, block: bool = False) -> str | None:
