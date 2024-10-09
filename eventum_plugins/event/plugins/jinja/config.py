@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
 from pydantic import (BaseModel, Field, RootModel, StringConstraints,
                       field_validator)
@@ -49,7 +49,7 @@ class ItemsSampleConfig(BaseModel, frozen=True, extra='forbid'):
         List of sample items
     """
     type: Literal[SampleType.ITEMS]
-    source: tuple[Any, ...] = Field(..., min_length=1)
+    source: tuple = Field(..., min_length=1)
 
 
 class SampleConfig(RootModel, frozen=True):
