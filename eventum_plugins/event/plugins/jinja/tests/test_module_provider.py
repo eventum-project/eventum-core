@@ -1,4 +1,5 @@
 import pytest
+
 import eventum_plugins.event.plugins.jinja.modules as modules
 import eventum_plugins.event.plugins.jinja.modules.rand as rand
 from eventum_plugins.event.plugins.jinja.module_provider import ModuleProvider
