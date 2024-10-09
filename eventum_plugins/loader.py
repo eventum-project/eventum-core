@@ -17,8 +17,8 @@ def _load_plugin(
 ) -> PluginInfo:
     """Load specified plugin by importing plugin module, that in
     turns triggers external logic for plugin registration in the
-    provided `registry`. If plugin already loaded (it is present in
-    `registry`), then importing part is skipped.
+    provided `registry`. If plugin already loaded (it is presented
+    in `registry`), then importing part is skipped.
 
     Parameters
     ----------
@@ -147,8 +147,7 @@ def get_input_plugin_names() -> list[str]:
     list[str]
         Names of existing input plugins
     """
-    names = get_subpackage_names(INPUT_PLUGINS_PACKAGE)
-    return [name for name in names if not name.startswith('_')]
+    return get_subpackage_names(INPUT_PLUGINS_PACKAGE)
 
 
 @cache
@@ -160,8 +159,7 @@ def get_event_plugin_names() -> list[str]:
     list[str]
         Names of existing event plugins
     """
-    names = get_subpackage_names(EVENT_PLUGINS_PACKAGE)
-    return [name for name in names if not name.startswith('_')]
+    return get_subpackage_names(EVENT_PLUGINS_PACKAGE)
 
 
 @cache
@@ -173,5 +171,4 @@ def get_output_plugin_names() -> list[str]:
     list[str]
         Names of existing output plugins
     """
-    names = get_subpackage_names(OUTPUT_PLUGINS_PACKAGE)
-    return [name for name in names if not name.startswith('_')]
+    return get_subpackage_names(OUTPUT_PLUGINS_PACKAGE)
