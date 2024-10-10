@@ -6,6 +6,9 @@ from pydantic import (BaseModel, Field, RootModel, StringConstraints,
 
 from eventum_plugins.event.base.config import EventPluginConfig
 from eventum_plugins.event.plugins.jinja.fsm.fields import Condition
+from eventum_plugins.event.plugins.jinja.mixins import (
+    TemplateAliasesUniquenessValidatorMixin,
+    TemplateSingleItemElementsValidatorMixin)
 
 
 class SampleType(StrEnum):
@@ -144,6 +147,8 @@ class JinjaEventConfigCommonFields(BaseModel, frozen=True, extra='forbid'):
 
 
 class JinjaEventConfigForGeneralModes(
+    TemplateSingleItemElementsValidatorMixin,
+    TemplateAliasesUniquenessValidatorMixin,
     EventPluginConfig,
     JinjaEventConfigCommonFields,
     frozen=True
@@ -174,6 +179,8 @@ class JinjaEventConfigForGeneralModes(
 
 
 class JinjaEventConfigForChanceMode(
+    TemplateSingleItemElementsValidatorMixin,
+    TemplateAliasesUniquenessValidatorMixin,
     EventPluginConfig,
     JinjaEventConfigCommonFields,
     frozen=True
@@ -196,6 +203,8 @@ class JinjaEventConfigForChanceMode(
 
 
 class JinjaEventConfigForFSMMode(
+    TemplateSingleItemElementsValidatorMixin,
+    TemplateAliasesUniquenessValidatorMixin,
     EventPluginConfig,
     JinjaEventConfigCommonFields,
     frozen=True
