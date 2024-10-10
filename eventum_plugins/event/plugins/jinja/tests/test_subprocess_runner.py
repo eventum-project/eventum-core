@@ -1,4 +1,5 @@
-from eventum_plugins.event.plugins.jinja.subprocess import SubprocessRunner
+from eventum_plugins.event.plugins.jinja.subprocess_runner import \
+    SubprocessRunner
 
 
 def test_subprocess_block():
