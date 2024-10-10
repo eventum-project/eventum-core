@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import Any, Callable, Unpack
+from typing import Any, Callable, Iterator, Unpack
 
 import croniter
 from numpy import array, datetime64, full, repeat
@@ -73,17 +73,15 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
             timezone=self._timezone,
             none_start='now'
         )
-        range = croniter.croniter_range(
-            start=start.replace(tzinfo=None),
-            stop=end.replace(tzinfo=None),
+        range: Iterator[datetime] = croniter.croniter_range(
+            start=start,
+            stop=end,
             expr_format=self._config.expression,
             ret_type=datetime
 
         )
 
         for timestamp in range:
-            timestamp: datetime
-
             now = datetime.now().astimezone(self._timezone)
             wait_seconds = (timestamp - now).total_seconds()
 
