@@ -81,10 +81,10 @@ class TemplateConfigForGeneralModes(BaseModel, frozen=True, extra='forbid'):
 
     Attributes
     ----------
-    source : TemplatePath | list[TemplatePath]
-        Path or list of paths to templates
+    template : TemplatePath
+        Path to template
     """
-    source: TemplatePath | list[TemplatePath] = Field(..., min_length=1)
+    template: TemplatePath = Field(..., min_length=1)
 
 
 class TemplateConfigForChanceMode(TemplateConfigForGeneralModes, frozen=True):
