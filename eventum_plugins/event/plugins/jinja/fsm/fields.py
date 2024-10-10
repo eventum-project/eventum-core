@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from eventum_plugins.event.plugins.jinja.fsm.operators import (len_eq, len_ge,
                                                                len_gt, len_le,
                                                                len_lt)
-from eventum_plugins.event.state import State
+from eventum_plugins.event.plugins.jinja.state import State
 
 logger = logging.getLogger(__name__)
 
