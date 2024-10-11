@@ -4,7 +4,7 @@ from abc import ABC
 
 from eventum_plugins.enums import PluginType
 from eventum_plugins.exceptions import PluginError
-from eventum_plugins.registry import PluginsRegistry
+from eventum_plugins.registry import PluginInfo, PluginsRegistry
 
 
 class Plugin(ABC):
@@ -84,8 +84,10 @@ class Plugin(ABC):
 
         if register:
             PluginsRegistry().register_plugin(
-                type=plugin_type,
-                name=plugin_name,
-                cls=cls,
-                config_cls=config_cls
+                PluginInfo(
+                    name=plugin_name,
+                    cls=cls,
+                    config_cls=config_cls,
+                    type=plugin_type
+                )
             )

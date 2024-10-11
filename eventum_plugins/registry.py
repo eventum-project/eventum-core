@@ -39,35 +39,15 @@ class PluginsRegistry(metaclass=Singleton):
             for type in PluginType
         }
 
-    def register_plugin(
-        self,
-        type: PluginType,
-        name: str,
-        cls: type,
-        config_cls: type
-    ) -> None:
+    def register_plugin(self, plugin_info: PluginInfo) -> None:
         """Register plugin in registry.
 
         Parameters
         ----------
-        type : PluginType
-            Type of the plugin
-
-        name : str
-            Plugin name
-
-        cls : type
-            Plugin class
-
-        config_cls : type
-            Class of config used to configure plugin
+        plugin_info : PluginInfo
+            Information about plugin
         """
-        self._plugins[type][name] = PluginInfo(
-            name=name,
-            type=type,
-            cls=cls,
-            config_cls=config_cls
-        )
+        self._plugins[plugin_info.type][plugin_info.name] = plugin_info
 
     def get_plugin_info(self, type: PluginType, name: str) -> PluginInfo:
         """Get information about plugin from registry.

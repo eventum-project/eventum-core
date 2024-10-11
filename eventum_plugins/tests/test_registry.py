@@ -1,7 +1,7 @@
 import pytest
 
 from eventum_plugins.enums import PluginType
-from eventum_plugins.registry import PluginsRegistry
+from eventum_plugins.registry import PluginInfo, PluginsRegistry
 
 
 def test_registry():
@@ -12,7 +12,14 @@ def test_registry():
     with pytest.raises(ValueError):
         reg.get_plugin_info(PluginType.INPUT, 'test')
 
-    reg.register_plugin(PluginType.INPUT, 'test', object, object)
+    reg.register_plugin(
+        PluginInfo(
+            name='test',
+            cls=object,
+            config_cls=object,
+            type=PluginType.INPUT
+        )
+    )
 
     assert reg.is_registered(PluginType.INPUT, 'test')
 
