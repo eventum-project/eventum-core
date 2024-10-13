@@ -2,34 +2,82 @@ import importlib
 from functools import cache
 
 from eventum_plugins.exceptions import PluginLoadError, PluginNotFoundError
-from eventum_plugins.registry import PluginInfo, PluginsRegistry, PluginType
+from eventum_plugins.locators import (EventPluginLocator, InputPluginLocator,
+                                      OutputPluginLocator, PluginLocator)
+from eventum_plugins.registry import PluginInfo, PluginsRegistry
 from eventum_plugins.utils.package_utils import get_subpackage_names
 
-INPUT_PLUGINS_PACKAGE = 'eventum_plugins.input.plugins'
-EVENT_PLUGINS_PACKAGE = 'eventum_plugins.event.plugins'
-OUTPUT_PLUGINS_PACKAGE = 'eventum_plugins.output.plugins'
+input_plugin_locator = InputPluginLocator()
+event_plugin_locator = EventPluginLocator()
+output_plugin_locator = OutputPluginLocator()
+
+
+def _construct_plugin_module_name(locator: PluginLocator, name: str) -> str:
+    """Construct absolute name of module with plugin class definition.
+
+    Parameters
+    ----------
+    locator : PluginLocator
+        Locator of the plugin
+
+    name : str
+        Name of the plugin
+
+    Returns
+    -------
+    str
+        Absolute name of module
+    """
+    return f'{locator.get_root_package().__name__}.{name}.plugin'
+
+
+def _trigger_plugin_registration(locator: PluginLocator, name: str) -> None:
+    """Trigger plugin registration by importing it.
+
+    Parameters
+    ----------
+    locator : PluginLocator
+        Locator of the plugin
+
+    name : str
+        Name of the plugin
+
+    Raises
+    ------
+    PluginNotFoundError
+        If specified plugin is not found
+
+    PluginLoadError
+        If specified plugin is found but cannot be imported
+    """
+    try:
+        importlib.import_module(_construct_plugin_module_name(locator, name))
+    except ModuleNotFoundError:
+        raise PluginNotFoundError('Plugin not found')
+    except ImportError as e:
+        raise PluginLoadError(f'Error during importing plugin module: {e}')
 
 
 def _load_plugin(
-    type: PluginType,
+    locator: PluginLocator,
     name: str,
     registry: PluginsRegistry
 ) -> PluginInfo:
     """Load specified plugin by importing plugin module, that in
-    turns triggers external logic for plugin registration in the
-    provided `registry`. If plugin already loaded (it is presented
-    in `registry`), then importing part is skipped.
+    turn must trigger registration of plugin in the provided registry.
+    If plugin is already loaded (it is presented in registry), then
+    importing is skipped.
 
     Parameters
     ----------
-    type : PluginType
-        Type of the plugin
+    locator : PluginLocator
+        Locator of the plugin
 
     name : str
         Name of the plugin
 
     registry : PluginsRegistry
-        Registry that handles plugins registration and stores
+        Registry that handles plugin registration and stores
         required information
 
     Returns
@@ -40,23 +88,16 @@ def _load_plugin(
     Raises
     ------
     PluginNotFoundError
-        If plugin cannot be found
+        If specified plugin is not found
 
     PluginLoadError
-        If plugin is found but cannot be loaded
+        If specified plugin is found but cannot be loaded
     """
-    if not registry.is_registered(type, name):
-        try:
-            importlib.import_module(
-                name=f'eventum_plugins.{type}.plugins.{name}.plugin'
-            )
-        except ModuleNotFoundError:
-            raise PluginNotFoundError('Plugin not found')
-        except ImportError as e:
-            raise PluginLoadError(f'Error during importing plugin module: {e}')
+    if not registry.is_registered(locator, name):
+        _trigger_plugin_registration(locator, name)
 
     try:
-        return registry.get_plugin_info(type, name)
+        return registry.get_plugin_info(locator, name)
     except ValueError:
         raise PluginLoadError(
             'Plugin was imported but was not found in registry'
@@ -80,12 +121,12 @@ def load_input_plugin(name: str) -> PluginInfo:
     Raises
     ------
     PluginNotFoundError
-        If plugin cannot be found
+        If specified plugin is not found
 
     PluginLoadError
         If plugin is found but cannot be loaded
     """
-    return _load_plugin(PluginType.INPUT, name, PluginsRegistry())
+    return _load_plugin(input_plugin_locator, name, PluginsRegistry())
 
 
 @cache
@@ -105,12 +146,12 @@ def load_event_plugin(name: str) -> PluginInfo:
     Raises
     ------
     PluginNotFoundError
-        If plugin cannot be found
+        If specified plugin is not found
 
     PluginLoadError
         If plugin is found but cannot be loaded
     """
-    return _load_plugin(PluginType.EVENT, name, PluginsRegistry())
+    return _load_plugin(event_plugin_locator, name, PluginsRegistry())
 
 
 @cache
@@ -130,15 +171,14 @@ def load_output_plugin(name: str) -> PluginInfo:
     Raises
     ------
     PluginNotFoundError
-        If plugin cannot be found
+        If specified plugin is not found
 
     PluginLoadError
         If plugin is found but cannot be loaded
     """
-    return _load_plugin(PluginType.OUTPUT, name, PluginsRegistry())
+    return _load_plugin(output_plugin_locator, name, PluginsRegistry())
 
 
-@cache
 def get_input_plugin_names() -> list[str]:
     """Get names list of existing input plugins.
 
@@ -147,10 +187,9 @@ def get_input_plugin_names() -> list[str]:
     list[str]
         Names of existing input plugins
     """
-    return get_subpackage_names(INPUT_PLUGINS_PACKAGE)
+    return get_subpackage_names(input_plugin_locator.get_root_package())
 
 
-@cache
 def get_event_plugin_names() -> list[str]:
     """Get names list of existing event plugins.
 
@@ -159,10 +198,9 @@ def get_event_plugin_names() -> list[str]:
     list[str]
         Names of existing event plugins
     """
-    return get_subpackage_names(EVENT_PLUGINS_PACKAGE)
+    return get_subpackage_names(event_plugin_locator.get_root_package())
 
 
-@cache
 def get_output_plugin_names() -> list[str]:
     """Get names list of existing output plugins.
 
@@ -171,4 +209,4 @@ def get_output_plugin_names() -> list[str]:
     list[str]
         Names of existing output plugins
     """
-    return get_subpackage_names(OUTPUT_PLUGINS_PACKAGE)
+    return get_subpackage_names(output_plugin_locator.get_root_package())
