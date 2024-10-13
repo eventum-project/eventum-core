@@ -362,7 +362,7 @@ class TimePatternsInputPlugin(
                 kwargs = kwargs | {
                     'id': f'{kwargs["id"]}-{pattern_path}',
                     'batch_size': None,
-                    'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY,
+                    'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY
                 }
 
             time_patterns.append(
