@@ -1,9 +1,10 @@
 
+import importlib
 import inspect
 from abc import ABC
 
-from eventum_plugins.enums import PluginType
-from eventum_plugins.exceptions import PluginError
+from eventum_plugins.exceptions import PluginRegistrationError
+from eventum_plugins.locators import DynamicLocator
 from eventum_plugins.registry import PluginInfo, PluginsRegistry
 
 
@@ -25,69 +26,56 @@ class Plugin(ABC):
         Model class of config used by plugin
 
     register : bool, default=True
-        Whether to register class as implemented plugin (actual only if
-        `base` is set to `False`)
-
-    base : bool, default=False
-        Whether to dismiss subclass initialization for intermediate
-        class that is used as base class representing category of
-        plugins
+        Whether to register class as implemented plugin
     """
 
     def __init_subclass__(
         cls,
         config_cls: type,
         register: bool = True,
-        base: bool = False,
         **kwargs
     ):
         super().__init_subclass__(**kwargs)
 
-        if base:
+        if not register:
             return
 
         class_module = inspect.getmodule(cls)
         if class_module is None:
-            raise PluginError(
+            raise PluginRegistrationError(
                 'Cannot inspect module of plugin class definition'
             )
 
         if class_module.__name__ == '__main__':
-            raise PluginError(
+            raise PluginRegistrationError(
                 'Plugin can be imported only from external module'
             )
 
         try:
-            # expected structure:
-            # eventum_plugins.<plugins_type>.plugins.<plugin_name>.plugin
+            # expected structure for plugin name extraction:
+            # eventum_plugins.<plugin_type>.plugins.<plugin_name>.plugin
             module_parts = class_module.__name__.split('.')
             plugin_name = module_parts[-2]
-            plugin_type_name = module_parts[-4]
-            plugin_type = PluginType(plugin_type_name)
+            plugin_type_package_name = '.'.join(module_parts[:-2])
         except IndexError:
-            raise PluginError(
-                f'Cannot extract plugin name from "{class_module.__name__}"'
-            )
-        except ValueError:
-            raise PluginError(
-                f'Cannot extract plugin type from "{class_module.__name__}"'
+            raise PluginRegistrationError(
+                'Cannot resolve plugin module name or plugin type package '
+                f'name for module named "{class_module.__name__}"'
             )
 
-        cls.name = property(
-            lambda _: plugin_name,
-            doc="Name of plugin"
-        )
-        cls.config_cls = property(
-            lambda _: config_cls,
-            doc="Class of plugin config"
-        )
-
-        if register:
-            PluginsRegistry().register_plugin(
-                PluginInfo(
-                    name=plugin_name,
-                    cls=cls,
-                    config_cls=config_cls,
-                    type=plugin_type
-                )
+        try:
+            package = importlib.import_module(plugin_type_package_name)
+        except ImportError as e:
+            raise PluginRegistrationError(
+                'Cannot locate plugin type package '
+                f'for module named "{class_module.__name__}": {e}'
             )
+
+        PluginsRegistry().register_plugin(
+            PluginInfo(
+                name=plugin_name,
+                cls=cls,
+                config_cls=config_cls,
+                locator=DynamicLocator(package)
+            )
+        )
