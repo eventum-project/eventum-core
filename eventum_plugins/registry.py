@@ -45,6 +45,10 @@ class PluginsRegistry(metaclass=Singleton):
             Information about plugin
         """
         location = plugin_info.locator.get_root_package().__name__
+
+        if location not in self._registry:
+            self._registry[location] = dict()
+
         self._registry[location][plugin_info.name] = plugin_info
 
     def get_plugin_info(self, locator: PluginLocator, name: str) -> PluginInfo:
