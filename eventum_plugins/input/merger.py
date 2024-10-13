@@ -139,7 +139,7 @@ class InputPluginsLiveMerger:
         for plugin in plugins:
             if plugin.mode != TimeMode.LIVE:
                 raise ValueError(
-                    f'Input plugin "{plugin.name}" with ID {plugin.id} '
+                    f'Input plugin with ID {plugin.id} '
                     f'is not in {TimeMode.LIVE} mode'
                 )
 
@@ -209,7 +209,7 @@ class InputPluginsLiveMerger:
             future.result()
         except Exception as e:
             logger.error(
-                f'Error occurred in "{plugin.name}" plugin '
+                f'Error occurred in plugin '
                 f'with ID {plugin.id}: {e}'
             )
 
