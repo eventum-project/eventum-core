@@ -11,7 +11,7 @@ TimestampsBatch: TypeAlias = NDArray[
 ]
 
 
-class BaseEventPlugin(Plugin, config_cls=object, base=True):
+class BaseEventPlugin(Plugin, config_cls=object, register=False):
     """Base class for all event plugins."""
 
     @abstractmethod
