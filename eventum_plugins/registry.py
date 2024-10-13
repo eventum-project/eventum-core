@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from eventum_plugins.locators import PluginLocator
-from eventum_plugins.utils.metaclasses import Singleton
 
 
 @dataclass(frozen=True)
@@ -28,15 +27,16 @@ class PluginInfo:
     locator: PluginLocator
 
 
-class PluginsRegistry(metaclass=Singleton):
-    """Centralized registry of plugins. Plugins should be registered
-    using this class via singleton object.
+class PluginsRegistry:
+    """Centralized registry of plugins. All plugins should be
+    registered using this class to be visible and accessible via
+    loader.
     """
 
-    def __init__(self) -> None:
-        self._registry: dict[str, dict[str, PluginInfo]] = dict()
+    _registry: dict[str, dict[str, PluginInfo]] = dict()
 
-    def register_plugin(self, plugin_info: PluginInfo) -> None:
+    @classmethod
+    def register_plugin(cls, plugin_info: PluginInfo) -> None:
         """Register plugin in registry.
 
         Parameters
@@ -46,12 +46,13 @@ class PluginsRegistry(metaclass=Singleton):
         """
         location = plugin_info.locator.get_root_package().__name__
 
-        if location not in self._registry:
-            self._registry[location] = dict()
+        if location not in cls._registry:
+            cls._registry[location] = dict()
 
-        self._registry[location][plugin_info.name] = plugin_info
+        cls._registry[location][plugin_info.name] = plugin_info
 
-    def get_plugin_info(self, locator: PluginLocator, name: str) -> PluginInfo:
+    @classmethod
+    def get_plugin_info(cls, locator: PluginLocator, name: str) -> PluginInfo:
         """Get information about plugin from registry.
 
         Parameters
@@ -74,11 +75,12 @@ class PluginsRegistry(metaclass=Singleton):
         """
         plugin_location = locator.get_root_package().__name__
         try:
-            return self._registry[plugin_location][name]
+            return cls._registry[plugin_location][name]
         except KeyError:
             raise ValueError('Plugin is not registered')
 
-    def is_registered(self, locator: PluginLocator, name: str) -> bool:
+    @classmethod
+    def is_registered(cls, locator: PluginLocator, name: str) -> bool:
         """Check whether specified plugin is registered.
 
         Parameters
@@ -95,4 +97,4 @@ class PluginsRegistry(metaclass=Singleton):
             `True` if plugin is registered else `False`
         """
         location = locator.get_root_package().__name__
-        return location in self._registry and name in self._registry[location]
+        return location in cls._registry and name in cls._registry[location]

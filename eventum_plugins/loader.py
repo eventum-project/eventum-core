@@ -58,15 +58,10 @@ def _trigger_plugin_registration(locator: PluginLocator, name: str) -> None:
         raise PluginLoadError(f'Error during importing plugin module: {e}')
 
 
-def _load_plugin(
-    locator: PluginLocator,
-    name: str,
-    registry: PluginsRegistry
-) -> PluginInfo:
-    """Load specified plugin by importing plugin module, that in
-    turn must trigger registration of plugin in the provided registry.
-    If plugin is already loaded (it is presented in registry), then
-    importing is skipped.
+def _load_plugin(locator: PluginLocator, name: str) -> PluginInfo:
+    """Load specified plugin by importing plugin module, that in turn
+    triggers registration of plugin in the registry. If plugin is
+    presented in the registry, then importing is skipped.
 
     Parameters
     ----------
@@ -75,10 +70,6 @@ def _load_plugin(
 
     name : str
         Name of the plugin
-
-    registry : PluginsRegistry
-        Registry that handles plugin registration and stores
-        required information
 
     Returns
     -------
@@ -93,11 +84,11 @@ def _load_plugin(
     PluginLoadError
         If specified plugin is found but cannot be loaded
     """
-    if not registry.is_registered(locator, name):
+    if not PluginsRegistry.is_registered(locator, name):
         _trigger_plugin_registration(locator, name)
 
     try:
-        return registry.get_plugin_info(locator, name)
+        return PluginsRegistry.get_plugin_info(locator, name)
     except ValueError:
         raise PluginLoadError(
             'Plugin was imported but was not found in registry'
@@ -126,7 +117,7 @@ def load_input_plugin(name: str) -> PluginInfo:
     PluginLoadError
         If plugin is found but cannot be loaded
     """
-    return _load_plugin(input_plugin_locator, name, PluginsRegistry())
+    return _load_plugin(input_plugin_locator, name)
 
 
 @cache
@@ -151,7 +142,7 @@ def load_event_plugin(name: str) -> PluginInfo:
     PluginLoadError
         If plugin is found but cannot be loaded
     """
-    return _load_plugin(event_plugin_locator, name, PluginsRegistry())
+    return _load_plugin(event_plugin_locator, name)
 
 
 @cache
@@ -176,7 +167,7 @@ def load_output_plugin(name: str) -> PluginInfo:
     PluginLoadError
         If plugin is found but cannot be loaded
     """
-    return _load_plugin(output_plugin_locator, name, PluginsRegistry())
+    return _load_plugin(output_plugin_locator, name)
 
 
 def get_input_plugin_names() -> list[str]:

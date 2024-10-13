@@ -71,7 +71,7 @@ class Plugin(ABC):
                 f'for module named "{class_module.__name__}": {e}'
             )
 
-        PluginsRegistry().register_plugin(
+        PluginsRegistry.register_plugin(
             PluginInfo(
                 name=plugin_name,
                 cls=cls,
