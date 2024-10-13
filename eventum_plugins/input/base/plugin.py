@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
-                    TypedDict, assert_never, final)
+                    TypedDict, Unpack, assert_never, final)
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -15,7 +15,7 @@ from eventum_plugins.input.enums import TimeMode
 
 
 class InputPluginKwargs(TypedDict):
-    id: Required[int]
+    id: Required[str]
     mode: Required[TimeMode]
     timezone: Required[BaseTzInfo]
     batch_size: NotRequired[int | None]
@@ -24,14 +24,14 @@ class InputPluginKwargs(TypedDict):
     on_queue_overflow: NotRequired[Literal['block', 'skip']]
 
 
-class InputPlugin(Plugin, config_cls=object, base=True):
+class InputPlugin(Plugin, config_cls=object, register=False):
     """Base class for all input plugins.
 
     Parameters
     ----------
-    id : int
-        Arbitrary number for distinction deferent instances of the same
-        plugin class
+    id : str
+        Arbitrary string for distinction different instances of plugins
+        (e.g. in logger)
 
     config : Any
         Configuration for a plugin which class (in implemented plugins)
@@ -49,7 +49,7 @@ class InputPlugin(Plugin, config_cls=object, base=True):
     batch_delay : float | None, default=0.1
         Parameter `batch_delay` for underlying batcher
 
-    queue_max_size : int, default=100_000_000
+    queue_max_size : int, default=1_000_000
         Parameter `queue_max_size` for underlying batcher
 
     on_queue_overflow : Literal['block', 'skip'], default='block'
@@ -65,33 +65,29 @@ class InputPlugin(Plugin, config_cls=object, base=True):
 
     def __init__(
         self,
-        config: InputPluginConfig,
         *,
-        id: int,
-        mode: TimeMode,
-        timezone: BaseTzInfo,
-        batch_size: int | None = 100_000,
-        batch_delay: float | None = 0.1,
-        queue_max_size: int = 100_000_000,
-        on_queue_overflow: Literal['block', 'skip'] = 'block'
+        config: InputPluginConfig,
+        **kwargs: Unpack[InputPluginKwargs]
     ) -> None:
-        self._id = id
+        self._id = kwargs['id']
         self._config = config
-        self._mode = mode
-        self._timezone = timezone
+        self._mode = kwargs['mode']
+        self._timezone = kwargs['timezone']
 
         try:
             self._batcher = TimestampsBatcher(
-                batch_size=batch_size,
-                batch_delay=batch_delay,
-                scheduling=True if mode == TimeMode.LIVE else False,
+                batch_size=kwargs.get('batch_size', 100_000),
+                batch_delay=kwargs.get('batch_delay', 0.1),
+                scheduling=True if self._mode == TimeMode.LIVE else False,
                 timezone=self._timezone,
-                queue_max_size=queue_max_size
+                queue_max_size=kwargs.get('queue_max_size', 1_000_000)
             )
         except ValueError as e:
             raise PluginConfigurationError(f'Wrong batching parameters: {e}')
 
-        self._block_on_overflow = on_queue_overflow == 'block'
+        self._block_on_overflow = kwargs.get(
+            'on_queue_overflow', 'block'
+        ) == 'block'
 
     def _handle_done_future(self, future: Future) -> None:
         """Handle future when it is done propagating possible
@@ -186,7 +182,7 @@ class InputPlugin(Plugin, config_cls=object, base=True):
         ...
 
     @property
-    def id(self) -> int:
+    def id(self) -> str:
         """ID of the plugin."""
         return self._id
 
