@@ -1,4 +1,3 @@
-
 class PluginError(Exception):
     """Error occurred while working with plugin."""
 
