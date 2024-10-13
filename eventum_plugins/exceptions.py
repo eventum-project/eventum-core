@@ -3,6 +3,10 @@ class PluginError(Exception):
     """Error occurred while working with plugin."""
 
 
+class PluginRegistrationError(PluginError):
+    """Failed to register plugin."""
+
+
 class PluginLoadError(PluginError):
     """Failed to load plugin."""
 
