@@ -1,37 +1,30 @@
-import importlib
 import pkgutil
+from types import ModuleType
 
 
-def get_subpackage_names(package_name: str) -> list[str]:
-    """Get subpackage names list of specified package.
+def get_subpackage_names(package: ModuleType) -> list[str]:
+    """Get subpackage names of specified package.
 
     Parameters
     ----------
-    package_name : str
-        Absolute name of the package
+    package : ModuleType
+        Package to inspect
 
     Returns
     -------
     list[str]
-        List of subpackage names without parent part
+        List of subpackage names
 
     Raises
     ------
     ValueError
-        If specified package is not found or not a package
+        If specified package is not a package
     """
-    try:
-        package = importlib.import_module(package_name)
-    except ModuleNotFoundError:
-        raise ValueError(f'Package "{package_name}" not found') from None
-
     if not hasattr(package, '__path__'):
-        raise ValueError(f'"{package_name}" is not a package') from None
+        raise ValueError(f'"{package.__name__}" is not a package') from None
 
-    subpackages = [
+    return [
         module.name
         for module in pkgutil.iter_modules(package.__path__)
         if module.ispkg
     ]
-
-    return subpackages
