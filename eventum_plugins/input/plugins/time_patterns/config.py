@@ -205,7 +205,7 @@ class SpreaderConfig(BaseModel, extra='forbid', frozen=True):
         )
 
 
-class TimePatternConfig(BaseModel, extra='forbid', frozen=True):
+class TimePatternConfig(InputPluginConfig, extra='forbid', frozen=True):
     """Configuration of a single time pattern.
 
     Attributes
