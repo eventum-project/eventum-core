@@ -35,6 +35,11 @@ class PluginsRegistry:
     _registry: dict[str, dict[str, PluginInfo]] = dict()
 
     @classmethod
+    def clear(cls) -> None:
+        """Clear registry by removing all registered plugins from it."""
+        cls._registry = dict()
+
+    @classmethod
     def register_plugin(cls, plugin_info: PluginInfo) -> None:
         """Register plugin in registry.
 
