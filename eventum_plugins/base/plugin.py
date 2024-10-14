@@ -4,7 +4,6 @@ import inspect
 from abc import ABC
 
 from eventum_plugins.exceptions import PluginRegistrationError
-from eventum_plugins.locators import DynamicLocator
 from eventum_plugins.registry import PluginInfo, PluginsRegistry
 
 
@@ -67,7 +66,7 @@ class Plugin(ABC):
             package = importlib.import_module(plugin_type_package_name)
         except ImportError as e:
             raise PluginRegistrationError(
-                'Cannot locate plugin type package '
+                'Cannot import parent package of plugin '
                 f'for module named "{class_module.__name__}": {e}'
             )
 
@@ -76,6 +75,6 @@ class Plugin(ABC):
                 name=plugin_name,
                 cls=cls,
                 config_cls=config_cls,
-                locator=DynamicLocator(package)
+                package=package
             )
         )

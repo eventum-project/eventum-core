@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-
-from eventum_plugins.locators import PluginLocator
+from types import ModuleType
 
 
 @dataclass(frozen=True)
@@ -18,13 +17,13 @@ class PluginInfo:
     config_cls : type
         Class of config used to configure plugin
 
-    locator : PluginLocator
-        Locator of the plugin
+    package : ModuleType
+        Parent package with plugins of specific type
     """
     name: str
     cls: type
     config_cls: type
-    locator: PluginLocator
+    package: ModuleType
 
 
 class PluginsRegistry:
@@ -44,7 +43,7 @@ class PluginsRegistry:
         plugin_info : PluginInfo
             Information about plugin
         """
-        location = plugin_info.locator.get_root_package().__name__
+        location = plugin_info.package.__name__
 
         if location not in cls._registry:
             cls._registry[location] = dict()
@@ -52,13 +51,13 @@ class PluginsRegistry:
         cls._registry[location][plugin_info.name] = plugin_info
 
     @classmethod
-    def get_plugin_info(cls, locator: PluginLocator, name: str) -> PluginInfo:
+    def get_plugin_info(cls, package: ModuleType, name: str) -> PluginInfo:
         """Get information about plugin from registry.
 
         Parameters
         ----------
-        locator : PluginLocator
-            Locator of the plugin
+        package : ModuleType
+            Parent package with plugins of specific type
 
         name : str
             Plugin name
@@ -73,20 +72,19 @@ class PluginsRegistry:
         ValueError
             If specified plugin is not found in registry
         """
-        plugin_location = locator.get_root_package().__name__
         try:
-            return cls._registry[plugin_location][name]
+            return cls._registry[package.__name__][name]
         except KeyError:
             raise ValueError('Plugin is not registered')
 
     @classmethod
-    def is_registered(cls, locator: PluginLocator, name: str) -> bool:
+    def is_registered(cls, package: ModuleType, name: str) -> bool:
         """Check whether specified plugin is registered.
 
         Parameters
         ----------
-        locator : PluginLocator
-            Locator of the plugin
+        package : ModuleType
+            Parent package with plugins of specific type
 
         name : str
             Plugin name
@@ -96,5 +94,5 @@ class PluginsRegistry:
         bool
             `True` if plugin is registered else `False`
         """
-        location = locator.get_root_package().__name__
-        return location in cls._registry and name in cls._registry[location]
+        pkg_name = package.__name__
+        return pkg_name in cls._registry and name in cls._registry[pkg_name]
