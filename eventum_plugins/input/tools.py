@@ -59,16 +59,18 @@ def normalize_versatile_datetime(
                     timedelta = parse_relative_time(value)
                     time = relative_base + timedelta
                 except ValueError:
-                    time = dateparser.parse(
+                    parsed_time = dateparser.parse(
                         value,
-                        settings={              # type: ignore[arg-type]
+                        settings={
                             'RELATIVE_BASE': relative_base,
-                            'TIMEZONE': timezone.zone,
+                            'TIMEZONE': timezone.zone or 'UTC',
                             'RETURN_AS_TIMEZONE_AWARE': True
                         }
                     )
-                    if time is None:
+                    if parsed_time is None:
                         raise ValueError(f'Cannot parse expression "{value}"')
+
+                    time = parsed_time
             else:
                 match keyword:
                     case TimeKeyword.NOW:
@@ -85,8 +87,8 @@ def normalize_versatile_datetime(
                     time = min
                 case 'max':
                     time = max
-                case v:
-                    assert_never(v)
+                case x_none_point:
+                    assert_never(x_none_point)
 
     return time
 
