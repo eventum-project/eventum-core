@@ -8,7 +8,6 @@ from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
 from eventum_plugins.input.tools import normalize_versatile_daterange
@@ -30,14 +29,13 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
         self._config: CronInputPluginConfig
 
         if (
-            self._mode == TimeMode.SAMPLE
-            and (
+            not self._live_mode and (
                 self._config.end is None
                 or self._config.end == TimeKeyword.NEVER.value
             )
         ):
             raise PluginConfigurationError(
-                f'End time must be finite for "{self._mode}" mode'
+                'End time must be finite for sample mode'
             )
 
     def _generate_sample(

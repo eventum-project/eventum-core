@@ -8,7 +8,6 @@ from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.plugins.timer.config import TimerInputPluginConfig
 from eventum_plugins.input.tools import normalize_versatile_datetime
 from eventum_plugins.input.utils.time_utils import to_naive
@@ -29,9 +28,9 @@ class TimerInputPlugin(InputPlugin, config_cls=TimerInputPluginConfig):
 
         self._config: TimerInputPluginConfig
 
-        if self._mode == TimeMode.SAMPLE and self._config.repeat is None:
+        if not self._live_mode and self._config.repeat is None:
             raise PluginConfigurationError(
-                f'Repeats count must be set for "{self._mode}" mode'
+                'Repeats count must be set for sample mode'
             )
 
     def _generate_sample(

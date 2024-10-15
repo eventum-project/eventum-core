@@ -12,7 +12,6 @@ from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
 from eventum_plugins.input.batcher import TimestampsBatcher
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.merger import InputPluginsLiveMerger
 from eventum_plugins.input.plugins.time_patterns.config import (
@@ -84,11 +83,11 @@ class TimePatternInputPlugin(
         )
 
         if (
-            self._mode == TimeMode.SAMPLE
+            not self._live_mode
             and self._config.oscillator.end == TimeKeyword.NEVER.value
         ):
             raise PluginConfigurationError(
-                f'End time must be finite for "{self._mode}" mode'
+                'End time must be finite for sample mode'
             )
 
     def _generate_randomizer_factors(self, count: int) -> Iterator[float]:
@@ -358,7 +357,7 @@ class TimePatternsInputPlugin(
 
             # for quick merging of several time patterns in live mode
             # delay should be minimal
-            if self._mode == TimeMode.LIVE:
+            if self._live_mode:
                 kwargs = kwargs | {
                     'id': f'{kwargs["id"]}-{pattern_path}',
                     'batch_size': None,
@@ -373,11 +372,6 @@ class TimePatternsInputPlugin(
             )
 
         return time_patterns
-
-    @property
-    def count(self) -> int:
-        """Count of time patterns."""
-        return len(self._time_patterns)
 
     def _generate_sample(
         self,
@@ -410,3 +404,8 @@ class TimePatternsInputPlugin(
 
         for batch in merged_patterns.generate():
             on_events(batch)
+
+    @property
+    def count(self) -> int:
+        """Count of time patterns."""
+        return len(self._time_patterns)
