@@ -9,7 +9,6 @@ from numpy import concatenate, datetime64, searchsorted
 from numpy.typing import NDArray
 
 from eventum_plugins.input.base.plugin import InputPlugin
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.utils.array_utils import chunk_array, merge_arrays
 
 logger = logging.getLogger(__name__)
@@ -137,10 +136,9 @@ class InputPluginsLiveMerger:
             raise ValueError('At least one plugin must be provided')
 
         for plugin in plugins:
-            if plugin.mode != TimeMode.LIVE:
+            if not plugin.live_mode:
                 raise ValueError(
-                    f'Input plugin with ID {plugin.id} '
-                    f'is not in {TimeMode.LIVE} mode'
+                    f'Input plugin with ID "{plugin.id}" is not in live mode'
                 )
 
         if target_delay < self.MIN_DELAY:

@@ -179,3 +179,8 @@ class InputPlugin(Plugin, config_cls=object, register=False):
     def id(self) -> str:
         """ID of the plugin."""
         return self._id
+
+    @property
+    def live_mode(self) -> bool:
+        """Status of live mode of the plugin."""
+        return self._live_mode
