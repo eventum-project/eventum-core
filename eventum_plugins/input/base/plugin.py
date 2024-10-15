@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
-                    TypedDict, Unpack, assert_never, final)
+                    TypedDict, Unpack)
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -11,12 +11,11 @@ from eventum_plugins.base.plugin import Plugin
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import TimestampsBatcher
-from eventum_plugins.input.enums import TimeMode
 
 
 class InputPluginKwargs(TypedDict):
     id: Required[str]
-    mode: Required[TimeMode]
+    live_mode: Required[bool]
     timezone: Required[BaseTzInfo]
     batch_size: NotRequired[int | None]
     batch_delay: NotRequired[float | None]
@@ -37,8 +36,8 @@ class InputPlugin(Plugin, config_cls=object, register=False):
         Configuration for a plugin which class (in implemented plugins)
         is subclass of `InputPluginConfig` model
 
-    mode : TimeMode
-            Time mode of timestamps generation.
+    live_mode : bool
+        Wether to use timestamp values to generate in live mode
 
     timezone : BaseTzInfo
         Timezone that is used for generating timestamps
@@ -71,14 +70,14 @@ class InputPlugin(Plugin, config_cls=object, register=False):
     ) -> None:
         self._id = kwargs['id']
         self._config = config
-        self._mode = kwargs['mode']
+        self._live_mode = kwargs['live_mode']
         self._timezone = kwargs['timezone']
 
         try:
             self._batcher = TimestampsBatcher(
                 batch_size=kwargs.get('batch_size', 100_000),
                 batch_delay=kwargs.get('batch_delay', 0.1),
-                scheduling=True if self._mode == TimeMode.LIVE else False,
+                scheduling=self._live_mode,
                 timezone=self._timezone,
                 queue_max_size=kwargs.get('queue_max_size', 1_000_000)
             )
@@ -103,7 +102,6 @@ class InputPlugin(Plugin, config_cls=object, register=False):
         finally:
             self._batcher.close()
 
-    @final
     def generate(self) -> Iterator[NDArray[datetime64]]:
         """Start timestamps generation in background thread and yield
         batches of generated timestamps. In sample mode timestamps
@@ -120,17 +118,13 @@ class InputPlugin(Plugin, config_cls=object, register=False):
         PluginRuntimeError
             If any error occurs during timestamps generation
         """
-        match self._mode:
-            case TimeMode.SAMPLE:
-                method = self._generate_sample
-            case TimeMode.LIVE:
-                method = self._generate_live
-            case v:
-                assert_never(v)
-
         with ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(
-                method,
+                (
+                    self._generate_live
+                    if self._live_mode
+                    else self._generate_sample
+                ),
                 lambda batch: self._batcher.add(batch, self._block_on_overflow)
             )
             future.add_done_callback(self._handle_done_future)
@@ -185,8 +179,3 @@ class InputPlugin(Plugin, config_cls=object, register=False):
     def id(self) -> str:
         """ID of the plugin."""
         return self._id
-
-    @property
-    def mode(self) -> TimeMode:
-        """Time mode of the plugin."""
-        return self._mode
