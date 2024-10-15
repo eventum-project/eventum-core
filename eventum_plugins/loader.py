@@ -29,8 +29,8 @@ def _construct_plugin_module_name(package: ModuleType, name: str) -> str:
     return f'{package.__name__}.{name}.plugin'
 
 
-def _trigger_plugin_registration(package: ModuleType, name: str) -> None:
-    """Trigger plugin registration by importing it.
+def _invoke_plugin(package: ModuleType, name: str) -> None:
+    """Invoke plugin to trigger registration.
 
     Parameters
     ----------
@@ -83,7 +83,7 @@ def _load_plugin(package: ModuleType, name: str) -> PluginInfo:
         If specified plugin is found but cannot be loaded
     """
     if not PluginsRegistry.is_registered(package, name):
-        _trigger_plugin_registration(package, name)
+        _invoke_plugin(package, name)
 
     try:
         return PluginsRegistry.get_plugin_info(package, name)
