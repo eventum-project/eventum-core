@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 from pytz import timezone
 
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.merger import InputPluginsLiveMerger
 from eventum_plugins.input.plugins.linspace.config import \
     LinspaceInputPluginConfig

@@ -4,7 +4,6 @@ import pytest
 from pytz import timezone
 
 from eventum_plugins.exceptions import PluginConfigurationError
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.plugins.time_patterns.config import \
     TimePatternsInputPluginConfig
 from eventum_plugins.input.plugins.time_patterns.plugin import \

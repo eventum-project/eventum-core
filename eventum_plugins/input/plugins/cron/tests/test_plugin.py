@@ -4,7 +4,6 @@ import pytest
 from numpy import datetime64
 from pytz import timezone
 
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
 from eventum_plugins.input.plugins.cron.plugin import CronInputPlugin
 

@@ -4,7 +4,6 @@ import pytest
 from numpy import datetime64, timedelta64
 from pytz import timezone
 
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.plugins.timer.config import TimerInputPluginConfig
 from eventum_plugins.input.plugins.timer.plugin import TimerInputPlugin
 
