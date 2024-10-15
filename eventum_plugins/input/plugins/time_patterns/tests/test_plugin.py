@@ -29,7 +29,7 @@ def test_time_pattern_sample():
         config=config,
         id=1,
         timezone=timezone('UTC'),
-        mode=TimeMode.SAMPLE
+        live_mode=False
     )
 
     timestamps = []
@@ -58,7 +58,7 @@ def test_time_pattern_live():
         config=config,
         id=1,
         timezone=timezone('UTC'),
-        mode=TimeMode.LIVE
+        live_mode=True
     )
 
     timestamps = []
@@ -86,5 +86,5 @@ def test_time_pattern_invalid_config():
             config=config,
             id=1,
             timezone=timezone('UTC'),
-            mode=TimeMode.LIVE
+            live_mode=True
         )

@@ -21,7 +21,7 @@ def test_merger_with_ordering():
             count=100_000,
         ),
         id=1,
-        mode=TimeMode.LIVE,
+        live_mode=True,
         timezone=timezone('UTC'),
         batch_size=100,
         batch_delay=0.1
@@ -34,7 +34,7 @@ def test_merger_with_ordering():
             count=100_000,
         ),
         id=2,
-        mode=TimeMode.LIVE,
+        live_mode=True,
         timezone=timezone('UTC'),
         batch_size=100,
         batch_delay=0.1
@@ -47,7 +47,7 @@ def test_merger_with_ordering():
             count=100_000,
         ),
         id=3,
-        mode=TimeMode.LIVE,
+        live_mode=True,
         timezone=timezone('UTC'),
         batch_size=100,
         batch_delay=0.1
@@ -82,7 +82,7 @@ def test_merger_without_ordering():
             count=100_000,
         ),
         id=1,
-        mode=TimeMode.LIVE,
+        live_mode=True,
         timezone=timezone('UTC'),
         batch_size=3000,
         batch_delay=0.1
@@ -95,7 +95,7 @@ def test_merger_without_ordering():
             count=100_000,
         ),
         id=2,
-        mode=TimeMode.LIVE,
+        live_mode=True,
         timezone=timezone('UTC'),
         batch_size=2000,
         batch_delay=0.1
@@ -108,7 +108,7 @@ def test_merger_without_ordering():
             count=100_000,
         ),
         id=3,
-        mode=TimeMode.LIVE,
+        live_mode=True,
         timezone=timezone('UTC'),
         batch_size=1000,
         batch_delay=0.1
@@ -141,7 +141,7 @@ def test_merger_invalid_params():
             count=100_000,
         ),
         id=1,
-        mode=TimeMode.SAMPLE,
+        live_mode=False,
         timezone=timezone('UTC'),
         batch_size=100,
         batch_delay=0.1
@@ -154,7 +154,7 @@ def test_merger_invalid_params():
             count=100_000,
         ),
         id=1,
-        mode=TimeMode.LIVE,
+        live_mode=True,
         timezone=timezone('UTC'),
         batch_size=100,
         batch_delay=0.1

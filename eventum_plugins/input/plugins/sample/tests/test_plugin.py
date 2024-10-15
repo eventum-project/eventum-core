@@ -12,7 +12,7 @@ def test_sample_sample():
     plugin = SampleInputPlugin(
         config=config,
         timezone=timezone('UTC'),
-        mode=TimeMode.SAMPLE,
+        live_mode=False,
         id=1
     )
 
@@ -30,7 +30,7 @@ def test_sample_live():
     plugin = SampleInputPlugin(
         config=config,
         timezone=timezone('UTC'),
-        mode=TimeMode.LIVE,
+        live_mode=True,
         id=1
     )
 

@@ -21,7 +21,7 @@ def test_timer_sample():
             repeat=86400
         ),
         id=1,
-        mode=TimeMode.SAMPLE,
+        live_mode=False,
         timezone=timezone('UTC')
     )
 
@@ -46,7 +46,7 @@ def test_timer_live():
             repeat=5
         ),
         id=1,
-        mode=TimeMode.LIVE,
+        live_mode=True,
         timezone=timezone('UTC')
     )
     timestamps = []

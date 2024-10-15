@@ -19,7 +19,7 @@ def test_cron_sample():
             start=datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone('UTC')),
             end=datetime(2024, 1, 1, 23, 59, 59, tzinfo=timezone('UTC'))
         ),
-        mode=TimeMode.SAMPLE,
+        live_mode=False,
         timezone=timezone('UTC')
     )
 
@@ -45,7 +45,7 @@ def test_cron_live():
             start=start,
             end='after 2 seconds'
         ),
-        mode=TimeMode.LIVE,
+        live_mode=True,
         timezone=timezone('UTC')
     )
 

@@ -6,7 +6,6 @@ import pytest
 from numpy import datetime64
 from pytz import timezone
 
-from eventum_plugins.input.enums import TimeMode
 from eventum_plugins.input.plugins.timestamps.config import \
     TimestampsInputPluginConfig
 from eventum_plugins.input.plugins.timestamps.plugin import \
@@ -26,7 +25,7 @@ def test_timestamps_sample():
         config=config,
         timezone=timezone('UTC'),
         id=1,
-        mode=TimeMode.SAMPLE
+        live_mode=False
     )
     timestamps = []
     for batch in plugin.generate():
@@ -53,7 +52,7 @@ def test_timestamps_live():
         config=config,
         timezone=timezone('UTC'),
         id=1,
-        mode=TimeMode.LIVE
+        live_mode=True
     )
 
     timestamps = []
@@ -86,7 +85,7 @@ def test_timestamps_from_file(timestamps_filename):
         config=config,
         timezone=timezone('UTC'),
         id=1,
-        mode=TimeMode.SAMPLE
+        live_mode=False
     )
 
     timestamps = []
