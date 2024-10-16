@@ -19,7 +19,7 @@ def test_timer_sample():
             count=3,
             repeat=86400
         ),
-        id=1,
+        id='test',
         live_mode=False,
         timezone=timezone('UTC')
     )
@@ -35,16 +35,16 @@ def test_timer_sample():
 
 @pytest.mark.timeout(1)
 def test_timer_live():
-    now = datetime.now(tz=timezone('UTC'))
-    expected_end = now + timedelta(seconds=0.5)
+    start = datetime.now(tz=timezone('UTC')) + timedelta(seconds=0.5)
+    expected_end = start + timedelta(seconds=0.5)
     plugin = TimerInputPlugin(
         config=TimerInputPluginConfig(
-            start='now',
+            start=start,
             seconds=0.1,
             count=1,
             repeat=5
         ),
-        id=1,
+        id='test',
         live_mode=True,
         timezone=timezone('UTC')
     )

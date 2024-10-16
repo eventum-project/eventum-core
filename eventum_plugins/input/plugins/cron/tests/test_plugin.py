@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 from numpy import datetime64
@@ -11,7 +11,7 @@ from eventum_plugins.input.plugins.cron.plugin import CronInputPlugin
 @pytest.mark.timeout(1)
 def test_cron_sample():
     plugin = CronInputPlugin(
-        id=1,
+        id='test',
         config=CronInputPluginConfig(
             expression='* * * * *',
             count=1,
@@ -34,10 +34,9 @@ def test_cron_sample():
 
 @pytest.mark.timeout(5)
 def test_cron_live():
-    now = datetime.now(tz=timezone('UTC'))
-    start = now.replace(microsecond=now.microsecond + 500)
+    start = datetime.now(tz=timezone('UTC')) + timedelta(seconds=0.5)
     plugin = CronInputPlugin(
-        id=1,
+        id='test',
         config=CronInputPluginConfig(
             expression='* * * * * *',
             count=1,
