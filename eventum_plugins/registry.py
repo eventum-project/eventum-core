@@ -28,16 +28,10 @@ class PluginInfo:
 
 class PluginsRegistry:
     """Centralized registry of plugins. All plugins should be
-    registered using this class to be visible and accessible via
-    loader.
+    registered using this class to be accessible via loader.
     """
 
     _registry: dict[str, dict[str, PluginInfo]] = dict()
-
-    @classmethod
-    def clear(cls) -> None:
-        """Clear registry by removing all registered plugins from it."""
-        cls._registry = dict()
 
     @classmethod
     def register_plugin(cls, plugin_info: PluginInfo) -> None:
@@ -101,3 +95,8 @@ class PluginsRegistry:
         """
         pkg_name = package.__name__
         return pkg_name in cls._registry and name in cls._registry[pkg_name]
+
+    @classmethod
+    def clear(cls) -> None:
+        """Clear registry by removing all registered plugins from it."""
+        cls._registry = dict()
