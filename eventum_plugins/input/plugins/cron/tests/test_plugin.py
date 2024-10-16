@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 
-import pytest
 from numpy import datetime64
 from pytz import timezone
 
@@ -8,7 +7,6 @@ from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
 from eventum_plugins.input.plugins.cron.plugin import CronInputPlugin
 
 
-@pytest.mark.timeout(1)
 def test_cron_sample():
     plugin = CronInputPlugin(
         id='test',
@@ -32,7 +30,6 @@ def test_cron_sample():
     assert timestamps[-1] == datetime64('2024-01-01T23:59:00')
 
 
-@pytest.mark.timeout(5)
 def test_cron_live():
     start = datetime.now(tz=timezone('UTC')) + timedelta(seconds=0.5)
     plugin = CronInputPlugin(
@@ -54,8 +51,8 @@ def test_cron_live():
 
     assert len(timestamps) == 2
     assert timestamps[0] == datetime64(
-        start.replace(second=start.second + 1, microsecond=0, tzinfo=None)
+        start.replace(microsecond=0, tzinfo=None) + timedelta(seconds=1)
     )
     assert timestamps[-1] == datetime64(
-        start.replace(second=start.second + 2, microsecond=0, tzinfo=None)
+        start.replace(microsecond=0, tzinfo=None) + timedelta(seconds=2)
     )

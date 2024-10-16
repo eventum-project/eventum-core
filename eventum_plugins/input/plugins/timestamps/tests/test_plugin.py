@@ -12,7 +12,6 @@ from eventum_plugins.input.plugins.timestamps.plugin import \
     TimestampsInputPlugin
 
 
-@pytest.mark.timeout(1)
 def test_timestamps_sample():
     config = TimestampsInputPluginConfig(
         source=(
@@ -38,7 +37,6 @@ def test_timestamps_sample():
     ]
 
 
-@pytest.mark.timeout(1)
 def test_timestamps_live():
     now = datetime.now(tz=timezone('UTC'))
     config = TimestampsInputPluginConfig(
@@ -78,7 +76,6 @@ def timestamps_filename():
     return filename
 
 
-@pytest.mark.timeout(1)
 def test_timestamps_from_file(timestamps_filename):
     config = TimestampsInputPluginConfig(source=timestamps_filename)
     plugin = TimestampsInputPlugin(

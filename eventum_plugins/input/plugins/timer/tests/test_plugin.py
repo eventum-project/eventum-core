@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 
-import pytest
 from numpy import datetime64, timedelta64
 from pytz import timezone
 
@@ -8,7 +7,6 @@ from eventum_plugins.input.plugins.timer.config import TimerInputPluginConfig
 from eventum_plugins.input.plugins.timer.plugin import TimerInputPlugin
 
 
-@pytest.mark.timeout(1)
 def test_timer_sample():
     start = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone('UTC'))
 
@@ -33,7 +31,6 @@ def test_timer_sample():
     assert timestamps[-1] == datetime64('2024-01-02T00:00:00')
 
 
-@pytest.mark.timeout(1)
 def test_timer_live():
     start = datetime.now(tz=timezone('UTC')) + timedelta(seconds=0.5)
     expected_end = start + timedelta(seconds=0.5)

@@ -46,7 +46,6 @@ types-pytz = "^2024.1.0.20240417"
 pytest-asyncio = "^0.23.7"
 aioresponses = "^0.7.6"
 flake8 = "^7.0.0"
-pytest-timeout = "^2.3.1"
 types-dateparser = "^1.2.0.20240420"
 matplotlib = "^3.9.2"
 

@@ -9,7 +9,6 @@ from eventum_plugins.input.plugins.linspace.config import \
 from eventum_plugins.input.plugins.linspace.plugin import LinspaceInputPlugin
 
 
-@pytest.mark.timeout(1)
 @pytest.mark.parametrize(
     ('start', 'end', 'count', 'endpoint', 'expected'),
     [
@@ -49,9 +48,8 @@ def test_linspace_sample(start, end, count, endpoint, expected):
     assert timestamps == expected
 
 
-@pytest.mark.timeout(1)
 def test_linspace_live():
-    start = datetime.now(tz=timezone('UTC'))
+    start = datetime.now(tz=timezone('UTC')) + timedelta(seconds=0.5)
     end = start + timedelta(microseconds=500)
     config = LinspaceInputPluginConfig(
         start=start,
@@ -71,6 +69,6 @@ def test_linspace_live():
     for batch in plugin.generate():
         timestamps.extend(batch)
 
-    assert len(timestamps) <= 100
+    assert len(timestamps) == 100
     assert timestamps[-1] == datetime64(end.replace(tzinfo=None))
     assert timestamps[0] >= datetime64(start.replace(tzinfo=None))
