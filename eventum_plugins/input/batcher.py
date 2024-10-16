@@ -14,7 +14,7 @@ from eventum_plugins.input.utils.time_utils import now64
 
 
 class BatcherClosedError(Exception):
-    """Timestamps cannot be added to timestamps batcher that is closed."""
+    """Adding timestamps to a closed batcher."""
 
 
 class BatcherFullError(Exception):
@@ -27,10 +27,10 @@ class TimestampsBatcher:
     Attributes
     ----------
     MIN_BATCH_SIZE : int
-        Minimum batch size that can be configured for batcher instance
+        Minimum batch size that can be configured for batcher
 
     MIN_BATCH_DELAY : float
-        Minimum batch delay that can be configured for batcher instance
+        Minimum batch delay that can be configured for batcher
 
     Parameters
     ----------
@@ -52,7 +52,7 @@ class TimestampsBatcher:
         Timezone of incoming timestamps, used to track current time
         when `scheduling` parameter is set to `True`
 
-    max_queue_size : int, default=100_000_000
+    max_queue_size : int, default=1_000_000
         Maximum size of queue for added timestamps to prepare batches
 
     Raises
@@ -129,7 +129,7 @@ class TimestampsBatcher:
         Parameters
         ----------
         timestamps : NDArray[np.datetime64]
-            Timestamps to add to batcher
+            Timestamps to add
 
         block : bool, default=True
             Whether to block execution of method if batcher queue
@@ -180,7 +180,9 @@ class TimestampsBatcher:
                         self._flush_condition.notify_all()
 
     def close(self) -> None:
-        """Indicate that no new timestamps are going to be added."""
+        """Close batcher to indicate that no new timestamps are going
+        to be added.
+        """
         if self._is_closed:
             return
 
