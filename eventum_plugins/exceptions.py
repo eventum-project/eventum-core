@@ -1,17 +1,17 @@
 class PluginError(Exception):
-    """Error occurred while working with plugin."""
+    """Base plugin error."""
 
 
 class PluginRegistrationError(PluginError):
-    """Failed to register plugin."""
+    """Plugin registration failed."""
 
 
 class PluginLoadError(PluginError):
-    """Failed to load plugin."""
+    """Error during plugin loading."""
 
 
 class PluginNotFoundError(PluginLoadError):
-    """Failed to load plugin because it is not found."""
+    """Plugin is not found."""
 
 
 class PluginConfigurationError(PluginError):
@@ -19,4 +19,4 @@ class PluginConfigurationError(PluginError):
 
 
 class PluginRuntimeError(PluginError):
-    """Error occurred during plugin execution."""
+    """Error during plugin execution."""
