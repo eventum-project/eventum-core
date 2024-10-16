@@ -42,6 +42,9 @@ def normalize_versatile_datetime(
     ------
     ValueError
         If provided value cannot be parsed as datetime objects
+
+    OverflowError
+        If resulting datetime value is overflowed for specified timezone
     """
     now = datetime.now().astimezone(timezone)
     relative_base = relative_base or now
@@ -127,6 +130,10 @@ def normalize_versatile_daterange(
     ValueError
         If provided values cannot be parsed as datetime objects or
         date range is improper (e.g. start time is later than end time)
+
+    OverflowError
+        If some of the resulting datetime values is overflowed for
+        specified timezone
     """
     if start == TimeKeyword.NEVER.value:
         raise ValueError(f'Start time cannot be "{TimeKeyword.NEVER}"')
