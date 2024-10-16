@@ -10,7 +10,7 @@ from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
 from eventum_plugins.input.normalizers import normalize_versatile_datetime
 from eventum_plugins.input.plugins.timer.config import TimerInputPluginConfig
-from eventum_plugins.input.utils.time_utils import to_naive
+from eventum_plugins.input.utils.time_utils import skip_periods, to_naive
 
 
 class TimerInputPlugin(InputPlugin, config_cls=TimerInputPluginConfig):
@@ -44,9 +44,11 @@ class TimerInputPlugin(InputPlugin, config_cls=TimerInputPluginConfig):
         )
 
         timeout = timedelta64(timedelta(seconds=self._config.seconds), 'us')
-        deltas = arange(
+        end = timeout * (self._config.repeat + 1)  # type: ignore[operator]
+
+        deltas: NDArray[timedelta64] = arange(
             start=timeout,
-            stop=timeout * (self._config.repeat + 1),
+            stop=end,
             step=timeout
         )
 
@@ -67,22 +69,18 @@ class TimerInputPlugin(InputPlugin, config_cls=TimerInputPluginConfig):
         )
         timeout = timedelta(seconds=self._config.seconds)
 
-        # skip past timestamps
-        skip_cycles = (datetime.now().astimezone() - start) // timeout
-        if skip_cycles > 0:
-            timestamp = start + (timeout * skip_cycles)
-        else:
-            timestamp = start
-
-        if self._config.repeat is not None and skip_cycles > 0:
-            repeat_count = max(self._config.repeat - skip_cycles, 0)
-        else:
-            repeat_count = self._config.repeat
+        timestamp = skip_periods(
+            start=start,
+            moment=datetime.now().astimezone(self._timezone),
+            duration=timeout,
+            ret_timestamp='first_future'
+        )
+        skipped_periods = (timestamp - start) // timeout
 
         for _ in (
             i_repeat(None)
             if self._config.repeat is None
-            else range(repeat_count)
+            else range(max(self._config.repeat - skipped_periods, 0))
         ):
             timestamp += timeout
             sleep_seconds = (

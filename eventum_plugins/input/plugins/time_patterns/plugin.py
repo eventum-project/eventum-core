@@ -230,15 +230,15 @@ class TimePatternInputPlugin(
         self,
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
-        start, end = normalize_versatile_daterange(
+        start_dt, end_dt = normalize_versatile_daterange(
             start=self._config.oscillator.start,
             end=self._config.oscillator.end,
             timezone=self._timezone,
         )
 
         delta = np.timedelta64(self._period_duration)
-        start = np.datetime64(to_naive(start, self._timezone))
-        end = np.datetime64(to_naive(end, self._timezone))
+        start = np.datetime64(to_naive(start_dt, self._timezone))
+        end = np.datetime64(to_naive(end_dt, self._timezone))
 
         while start < end:
             timestamps = get_past_slice(
@@ -257,25 +257,25 @@ class TimePatternInputPlugin(
         self,
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
-        start, end = normalize_versatile_daterange(
+        start_dt, end_dt = normalize_versatile_daterange(
             start=self._config.oscillator.start,
             end=self._config.oscillator.end,
             timezone=self._timezone,
         )
 
-        start = skip_periods(
-            start=start,
+        start_dt = skip_periods(
+            start=start_dt,
             moment=datetime.now().astimezone(),
             duration=self._period_duration,
             ret_timestamp='last_past'
         )
 
-        if start >= end:
+        if start_dt >= end_dt:
             return
 
         delta = np.timedelta64(self._period_duration)
-        start = np.datetime64(to_naive(start, self._timezone))
-        end = np.datetime64(to_naive(end, self._timezone))
+        start = np.datetime64(to_naive(start_dt, self._timezone))
+        end = np.datetime64(to_naive(end_dt, self._timezone))
 
         timestamps = self._generate_period_timeseries(
             start=start,
