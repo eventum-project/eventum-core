@@ -32,13 +32,20 @@ def test_registry():
 
 
 def test_registry_clearing():
-    import eventum_plugins.input.plugins.cron.plugin  # noqa
+    PluginsRegistry.register_plugin(
+        PluginInfo(
+            name='test',
+            cls=object,
+            config_cls=object,
+            package=input_plugins
+        )
+    )
 
-    assert PluginsRegistry.is_registered(input_plugins, 'cron')
+    assert PluginsRegistry.is_registered(input_plugins, 'test')
 
     PluginsRegistry.clear()
 
-    assert not PluginsRegistry.is_registered(input_plugins, 'cron')
+    assert not PluginsRegistry.is_registered(input_plugins, 'test')
 
 
 def test_plugin_registration():
@@ -47,7 +54,7 @@ def test_plugin_registration():
     assert not PluginsRegistry.is_registered(input_plugins, 'cron')
 
     import eventum_plugins.input.plugins.cron.plugin as plugin
-    from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
+    import eventum_plugins.input.plugins.cron.config as config
     importlib.reload(plugin)
 
     assert PluginsRegistry.is_registered(input_plugins, 'cron')
@@ -57,4 +64,4 @@ def test_plugin_registration():
     assert plugin_info.name == 'cron'
     assert plugin_info.package == input_plugins
     assert plugin_info.cls is plugin.CronInputPlugin
-    assert plugin_info.config_cls is CronInputPluginConfig
+    assert plugin_info.config_cls is config.CronInputPluginConfig
