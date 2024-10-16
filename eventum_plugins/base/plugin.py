@@ -13,14 +13,11 @@ class Plugin(ABC):
     Notes
     -----
     All subclasses of this class is considered as implemented plugins
-    if inheritance parameter `base` is set to `False` and `register` is
-    set to `True`. Implemented plugins are automatically registered in
-    `PluginsRegistry` via `__init_subclass__`.
+    if inheritance parameter `register` is set to `True`. Implemented
+    plugins are automatically registered in `PluginsRegistry`.
 
     Other Parameters
     ----------------
-    Parameters that can be used in inheritance:
-
     config_cls : type
         Model class of config used by plugin
 
@@ -51,14 +48,14 @@ class Plugin(ABC):
             )
 
         try:
-            # expected structure for plugin name extraction:
+            # expected structure for plugin name:
             # eventum_plugins.<plugin_type>.plugins.<plugin_name>.plugin
             module_parts = class_module.__name__.split('.')
             plugin_name = module_parts[-2]
             plugin_type_package_name = '.'.join(module_parts[:-2])
         except IndexError:
             raise PluginRegistrationError(
-                'Cannot resolve plugin module name or plugin type package '
+                'Cannot resolve plugin module name or plugin parent package '
                 f'name for module named "{class_module.__name__}"'
             )
 
