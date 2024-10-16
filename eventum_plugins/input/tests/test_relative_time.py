@@ -12,7 +12,7 @@ def test_parse_relative_time_single_unit():
     assert parse_relative_time('30s') == timedelta(seconds=30)
 
 
-def parse_relative_time_multi_units():
+def test_parse_relative_time_multi_units():
     assert parse_relative_time('-1d') == timedelta(days=-1)
     assert parse_relative_time('-15m2s') == timedelta(minutes=-15, seconds=-2)
     assert parse_relative_time('-1d30s') == timedelta(days=-1, seconds=-30)
@@ -30,7 +30,7 @@ def parse_relative_time_multi_units():
     )
 
 
-def parse_relative_time_invalid_expressions():
+def test_parse_relative_time_invalid_expressions():
     with pytest.raises(ValueError):
         parse_relative_time('16Days minus three hours')
 
