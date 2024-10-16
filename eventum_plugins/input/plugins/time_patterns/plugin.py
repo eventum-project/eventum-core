@@ -14,10 +14,10 @@ from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
 from eventum_plugins.input.batcher import TimestampsBatcher
 from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.merger import InputPluginsLiveMerger
+from eventum_plugins.input.normalizers import normalize_versatile_daterange
 from eventum_plugins.input.plugins.time_patterns.config import (
     Distribution, RandomizerDirection, TimePatternConfig,
     TimePatternsInputPluginConfig)
-from eventum_plugins.input.tools import normalize_versatile_daterange
 from eventum_plugins.input.utils.array_utils import (get_future_slice,
                                                      get_past_slice,
                                                      merge_arrays)

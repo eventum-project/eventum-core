@@ -4,9 +4,9 @@ from numpy import datetime64, linspace, timedelta64
 from numpy.typing import NDArray
 
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
+from eventum_plugins.input.normalizers import normalize_versatile_daterange
 from eventum_plugins.input.plugins.linspace.config import \
     LinspaceInputPluginConfig
-from eventum_plugins.input.tools import normalize_versatile_daterange
 from eventum_plugins.input.utils.array_utils import get_future_slice
 from eventum_plugins.input.utils.time_utils import now64, to_naive
 

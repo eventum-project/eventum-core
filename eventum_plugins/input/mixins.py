@@ -4,7 +4,7 @@ from pydantic import model_validator
 from pytz import timezone
 
 from eventum_plugins.input.fields import VersatileDatetime
-from eventum_plugins.input.tools import normalize_versatile_daterange
+from eventum_plugins.input.normalizers import normalize_versatile_daterange
 
 
 class DaterangeValidatorMixin:

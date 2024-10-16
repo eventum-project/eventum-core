@@ -4,8 +4,8 @@ import pytest
 import pytz
 from pytz import timezone
 
-from eventum_plugins.input.tools import (normalize_versatile_daterange,
-                                         normalize_versatile_datetime)
+from eventum_plugins.input.normalizers import (normalize_versatile_daterange,
+                                               normalize_versatile_datetime)
 
 
 def test_normalize_versatile_datetime_for_none_with_now():

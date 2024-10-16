@@ -253,7 +253,7 @@ class InputPluginsLiveMerger:
                     self._accumulators[idx]
                 )
                 future.add_done_callback(
-                    lambda future, plugin=plugin:
+                    lambda future, plugin=plugin:   # type: ignore[misc]
                     self._handle_done_future(future, plugin)
                 )
 

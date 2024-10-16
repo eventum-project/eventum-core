@@ -8,8 +8,8 @@ from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
+from eventum_plugins.input.normalizers import normalize_versatile_datetime
 from eventum_plugins.input.plugins.timer.config import TimerInputPluginConfig
-from eventum_plugins.input.tools import normalize_versatile_datetime
 from eventum_plugins.input.utils.time_utils import to_naive
 
 
