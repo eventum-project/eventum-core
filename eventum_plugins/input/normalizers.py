@@ -25,11 +25,11 @@ def normalize_versatile_datetime(
         Timezone that is used for returned datetime object
 
     relative_base : datetime | None
-        Base to use when value represents relative time, default is
-        current time
+        Base time to use when value represents relative time, default
+        is current time
 
     none_point : Literal['now', 'min', 'max']
-        What time to used when `value` parameter is `None`: 'now' -
+        What time to use when `value` parameter is `None`: 'now' -
         current time; `min` - minimal value of datetime; `max` -
         maximal value of datetime
 
@@ -116,7 +116,7 @@ def normalize_versatile_daterange(
         Timezone that is used for returned datetime objects
 
     none_start : Literal['now', 'min']
-        What time to used when `start` parameter is `None`: 'now' -
+        What time to use when `start` parameter is `None`: 'now' -
         current time; `min` - minimal value of datetime;
 
     Returns
@@ -132,7 +132,7 @@ def normalize_versatile_daterange(
         date range is improper (e.g. start time is later than end time)
 
     OverflowError
-        If some of the resulting datetime values is overflowed for
+        If some of the resulting datetime values are overflowed for
         specified timezone
     """
     if start == TimeKeyword.NEVER.value:
