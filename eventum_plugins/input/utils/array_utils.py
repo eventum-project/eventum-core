@@ -77,7 +77,7 @@ def merge_arrays(arrays: Sequence[NDArray]) -> NDArray:
     Parameters
     ----------
     arrays : Sequence[NDArray]
-        Arrays to sort
+        Arrays to merge
 
     Returns
     -------
@@ -87,7 +87,7 @@ def merge_arrays(arrays: Sequence[NDArray]) -> NDArray:
     Raises
     ------
     ValueError
-        If less than one array is provided
+        If arrays sequence is empty
     """
     if not arrays:
         raise ValueError('At least one array must be provided')
