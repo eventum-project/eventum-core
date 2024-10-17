@@ -29,37 +29,34 @@ class InputPlugin(Plugin, config_cls=object, register=False):
     Parameters
     ----------
     id : str
-        Arbitrary string for distinction different instances of plugins
-        (e.g. in logger)
+        Arbitrary string for representing instances (e.g. in logger)
 
-    config : Any
-        Configuration for a plugin which class (in implemented plugins)
-        is subclass of `InputPluginConfig` model
+    config : InputPluginConfig
+        Configuration for a plugin
 
     live_mode : bool
         Wether to use timestamp values to generate in live mode
 
     timezone : BaseTzInfo
-        Timezone that is used for generating timestamps
+        Timezone that is used for generated timestamps
 
     batch_size : int | None, default=100_000
-        Parameter `batch_size` for underlying batcher
+        Parameter `batch_size` of `TimestampsBatcher`
 
     batch_delay : float | None, default=0.1
-        Parameter `batch_delay` for underlying batcher
+        Parameter `batch_delay` of `TimestampsBatcher`
 
     queue_max_size : int, default=1_000_000
-        Parameter `queue_max_size` for underlying batcher
+        Parameter `queue_max_size` of `TimestampsBatcher`
 
     on_queue_overflow : Literal['block', 'skip'], default='block'
-        Block or skip adding new timestamps when batcher input
-        queue is overflowed
+        Block or skip adding new timestamps when batcher is overflowed
 
     Raises
     ------
     PluginConfigurationError
         If any error occurs during initializing plugin with the
-        provided config
+        provided parameters
     """
 
     def __init__(
@@ -89,7 +86,7 @@ class InputPlugin(Plugin, config_cls=object, register=False):
         ) == 'block'
 
     def _handle_done_future(self, future: Future) -> None:
-        """Handle future when it is done propagating possible
+        """Handle future when it is done with propagating possible
         exceptions. Batcher is closed finally.
 
         Parameters
@@ -105,8 +102,8 @@ class InputPlugin(Plugin, config_cls=object, register=False):
     def generate(self) -> Iterator[NDArray[datetime64]]:
         """Start timestamps generation in background thread and yield
         batches of generated timestamps. In sample mode timestamps
-        are yielded immediately, in live mode - respectively to real
-        time.
+        are yielded immediately as they are generated, in live mode
+        - respectively to real time.
 
         Yields
         -------
@@ -158,10 +155,10 @@ class InputPlugin(Plugin, config_cls=object, register=False):
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
         """Start timestamps generation in live mode. `on_events`
-        callback should be called with some delays but without
-        increasing accumulation of future timestamps. Also it is
-        not necessary to schedule precisely when to call `on_events`
-        callback since timestamps scheduling is implemented internally.
+        callback should be called cyclically as time passes and earlier
+        than moment of the first timestamp value in the batch, but
+        there is no need to calculate the moments precisely since
+        timestamps scheduling is handled by callback.
 
         Parameters
         ----------
