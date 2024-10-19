@@ -3,9 +3,9 @@ import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
-from typing import Generic, Iterable, Iterator, TypeVar
+from typing import Annotated, Generic, Iterable, Iterator, TypeAlias, TypeVar
 
-from numpy import concatenate, datetime64, searchsorted
+import numpy as np
 from numpy.typing import NDArray
 
 from eventum_plugins.input.base.plugin import InputPlugin
@@ -74,6 +74,14 @@ class BatchesAccumulator(Generic[T]):
             return self._is_closed
 
 
+TimestampBatch: TypeAlias = NDArray[np.datetime64]
+TimestampIdBatch: TypeAlias = Annotated[
+    NDArray,
+    np.dtype([('timestamp', 'datetime64[us]'), ('id', 'uint16')])
+]
+MinimizedTimestampIdBatch: TypeAlias = tuple[NDArray[np.datetime64], int]
+
+
 class InputPluginsLiveMerger:
     """Merger of live timestamp generation flows of multiple input
     plugins. Timestamp batches generating by provided input plugins
@@ -138,7 +146,7 @@ class InputPluginsLiveMerger:
         for plugin in plugins:
             if not plugin.live_mode:
                 raise ValueError(
-                    f'Input plugin with ID "{plugin.id}" is not in live mode'
+                    f'Input plugin "{plugin}" is not in live mode'
                 )
 
         if target_delay < self.MIN_DELAY:
@@ -159,10 +167,50 @@ class InputPluginsLiveMerger:
         self._plugins = {idx: plugin for idx, plugin in enumerate(plugins)}
         self._accumulators: dict[
             int,
-            BatchesAccumulator[NDArray[datetime64]]
+            BatchesAccumulator[MinimizedTimestampIdBatch]
         ] = {idx: BatchesAccumulator() for idx in self._plugins.keys()}
         self._active_plugin_indices = list(self._plugins.keys())
-        self._overlapped_future_part: NDArray[datetime64] | None = None
+        self._overlapped_future_part: TimestampIdBatch | None = None
+
+    def generate(
+        self,
+        include_id: bool = False
+    ) -> Iterator[TimestampBatch | TimestampIdBatch]:
+        """Start timestamps generation of input plugins concurrently.
+
+        Parameters
+        ----------
+        include_id : bool, default=False
+            Wether to include id of plugins in batches
+
+        Yields
+        ------
+        TimestampBatch | TimestampIdBatch
+            Timestamp batches or timestamp batches with plugin ids if
+            parameter `include_id` is `True`
+        """
+        with ThreadPoolExecutor(max_workers=len(self._plugins)) as executor:
+            for idx, plugin in self._plugins.items():
+                future = executor.submit(
+                    self._execute_plugin,
+                    plugin,
+                    self._accumulators[idx]
+                )
+                future.add_done_callback(
+                    lambda future, plugin=plugin:   # type: ignore[misc]
+                    self._handle_done_future(future, plugin)
+                )
+
+            if self._ordering:
+                generator = self._generate_with_ordering()
+            else:
+                generator = self._generate()
+
+            if include_id:
+                yield from generator
+            else:
+                for batch in generator:
+                    yield batch['timestamp']
 
     def _execute_plugin(
         self,
@@ -182,7 +230,8 @@ class InputPluginsLiveMerger:
         """
         try:
             for batch in plugin.generate():
-                accumulator.add(batch)
+                minimized_batch: MinimizedTimestampIdBatch = (batch, plugin.id)
+                accumulator.add(minimized_batch)
         except Exception as e:
             raise e
         finally:
@@ -207,27 +256,55 @@ class InputPluginsLiveMerger:
             future.result()
         except Exception as e:
             logger.error(
-                f'Error occurred in plugin '
-                f'with ID {plugin.id}: {e}'
+                f'Error occurred in plugin {plugin}: {e}'
             )
 
-    def _consume_elements(self) -> list[NDArray[datetime64]]:
-        """Consume all currently available elements from accumulators.
+    def _unminimize_batch(
+        self,
+        batch: MinimizedTimestampIdBatch
+    ) -> TimestampIdBatch:
+        """Unminimize batch converting it to structured array in which
+        id is duplicated for each timestamp.
+
+        Parameters
+        ----------
+        batch : MinimizedTimestampIdBatch
+            Minimized batch
 
         Returns
         -------
-        list[NDArray[datetime64]]
-            List of consumed elements
+        TimestampIdBatch
+            Unminimized timestamps batch
+        """
+        timestamps = batch[0]
+        id = batch[1]
+
+        unminimized_batch = np.empty(
+            shape=timestamps.size,
+            dtype=[('timestamp', 'datetime64[us]'), ('id', 'uint16')]
+        )
+        unminimized_batch['timestamp'] = timestamps
+        unminimized_batch['id'] = id
+
+        return unminimized_batch
+
+    def _consume_batches(self) -> list[TimestampIdBatch]:
+        """Consume all currently available batches.
+
+        Returns
+        -------
+        list[TimestampIdBatch]
+            List of consumed batches
         """
         if not self._active_plugin_indices:
             return []
 
-        elements: list[NDArray[datetime64]] = []
+        batches: list[MinimizedTimestampIdBatch] = []
         done_indices: list[int] = []
 
         for idx in self._active_plugin_indices:
             accumulator = self._accumulators[idx]
-            elements.extend(accumulator.consume())
+            batches.extend(accumulator.consume())
 
             if accumulator.closed:
                 done_indices.append(idx)
@@ -235,65 +312,42 @@ class InputPluginsLiveMerger:
         for idx in done_indices:
             self._active_plugin_indices.remove(idx)
 
-        return elements
+        unminimized_batches: list[TimestampIdBatch] = [
+            self._unminimize_batch(batch) for batch in batches
+        ]
 
-    def generate(self) -> Iterator[NDArray[datetime64]]:
-        """Start timestamps generation of input plugins concurrently.
+        return unminimized_batches
 
-        Yields
-        ------
-        NDArray[datetime64]
-            Timestamp batches
-        """
-        with ThreadPoolExecutor(max_workers=len(self._plugins)) as executor:
-            for idx, plugin in self._plugins.items():
-                future = executor.submit(
-                    self._execute_plugin,
-                    plugin,
-                    self._accumulators[idx]
-                )
-                future.add_done_callback(
-                    lambda future, plugin=plugin:   # type: ignore[misc]
-                    self._handle_done_future(future, plugin)
-                )
-
-            if self._ordering:
-                yield from self._generate_with_ordering()
-            else:
-                yield from self._generate()
-
-    def _generate(self) -> Iterator[NDArray[datetime64]]:
+    def _generate(self,) -> Iterator[TimestampIdBatch]:
         """Generate timestamps without ordering.
 
         Yields
         ------
-        NDArray[datetime64]
+        TimestampIdBatch
             Timestamp batches
         """
+
         while self._active_plugin_indices:
             time.sleep(self._delay)
-            batches = self._consume_elements()
+            batches = self._consume_batches()
 
             if not batches:
                 continue
 
             if self._batch_size is None:
-                batches = [concatenate(batches)]
+                yield np.concatenate(batches)
             else:
-                batches = chunk_array(
-                    array=concatenate(batches),
+                yield from chunk_array(
+                    array=np.concatenate(batches),
                     size=self._batch_size
                 )
 
-            for batch in batches:
-                yield batch
-
-    def _generate_with_ordering(self) -> Iterator[NDArray[datetime64]]:
-        """Generate timestamps with active ordering.
+    def _generate_with_ordering(self) -> Iterator[TimestampIdBatch]:
+        """Generate timestamps with ordering.
 
         Yields
         ------
-        NDArray[datetime64]
+        TimestampIdBatch
             Timestamp batches
         """
         while (
@@ -301,7 +355,7 @@ class InputPluginsLiveMerger:
             or self._overlapped_future_part is not None
         ):
             time.sleep(self._delay)
-            batches = self._consume_elements()
+            batches = self._consume_batches()
 
             if self._overlapped_future_part is not None:
                 batches.append(self._overlapped_future_part)
@@ -323,18 +377,20 @@ class InputPluginsLiveMerger:
 
             if self._active_plugin_indices:
                 # finding latest timestamp that will be a cutoff point
-                latest_timestamp = datetime64(datetime.min)
+                latest_timestamp = np.datetime64(datetime.min)
                 for batch in batches:
-                    if batch[-1] > latest_timestamp:
-                        latest_timestamp = batch[-1]
+                    last_timestamp: np.datetime64 = batch['timestamp'][-1]
+
+                    if last_timestamp > latest_timestamp:
+                        latest_timestamp = last_timestamp
 
                 time.sleep(self._delay)
-                overlapped_batches = self._consume_elements()
+                overlapped_batches = self._consume_batches()
 
                 if overlapped_batches:
                     overlapped = merge_arrays(overlapped_batches)
-                    index = searchsorted(
-                        a=overlapped,
+                    index = np.searchsorted(
+                        a=overlapped['timestamp'],
                         v=latest_timestamp,
                         side='right'
                     )
@@ -352,10 +408,7 @@ class InputPluginsLiveMerger:
             if self._batch_size is None:
                 yield sorted_array
             else:
-                batches = chunk_array(
+                yield from chunk_array(
                     array=sorted_array,
                     size=self._batch_size
                 )
-
-                for batch in batches:
-                    yield batch
