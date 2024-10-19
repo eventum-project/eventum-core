@@ -88,11 +88,16 @@ def merge_arrays(arrays: Sequence[NDArray]) -> NDArray:
     ------
     ValueError
         If arrays sequence is empty
+
+    Notes
+    -----
+    If array is structured or multidimensional then zeroth axis is used
     """
     if not arrays:
         raise ValueError('At least one array must be provided')
 
     return sort(
         a=concatenate(arrays),
-        kind='mergesort'
+        kind='mergesort',
+        axis=0
     )
