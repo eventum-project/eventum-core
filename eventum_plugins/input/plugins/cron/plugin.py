@@ -9,8 +9,7 @@ from numpy.typing import NDArray
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
 from eventum_plugins.input.fields import TimeKeyword
-from eventum_plugins.input.normalizers import (normalize_versatile_daterange,
-                                               normalize_versatile_datetime)
+from eventum_plugins.input.normalizers import normalize_versatile_daterange
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
 
 
@@ -66,23 +65,20 @@ class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        start = normalize_versatile_datetime(
-            value=self._config.start,
-            timezone=self._timezone,
-            none_point='now'
-        )
-
         now = datetime.now().astimezone(self._timezone)
 
-        if start < now:
-            start = now
-
         start, end = normalize_versatile_daterange(
-            start=start,
+            start=self._config.start,
             end=self._config.end,
             timezone=self._timezone,
             none_start='now'
         )
+
+        if end < now:
+            return
+        elif start < now:
+            start = now
+
         range: Iterator[datetime] = croniter.croniter_range(
             start=start,
             stop=end,
