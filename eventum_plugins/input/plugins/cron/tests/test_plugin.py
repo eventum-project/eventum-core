@@ -9,7 +9,7 @@ from eventum_plugins.input.plugins.cron.plugin import CronInputPlugin
 
 def test_cron_sample():
     plugin = CronInputPlugin(
-        id='test',
+        id=1,
         config=CronInputPluginConfig(
             expression='* * * * *',
             count=1,
@@ -34,7 +34,7 @@ def test_cron_live():
     start = datetime.now(tz=timezone('UTC')) + timedelta(seconds=0.5)
     end = start + timedelta(seconds=2)
     plugin = CronInputPlugin(
-        id='test',
+        id=1,
         config=CronInputPluginConfig(
             expression='* * * * * *',
             count=1,

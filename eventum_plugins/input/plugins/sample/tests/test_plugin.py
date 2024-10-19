@@ -10,7 +10,7 @@ def test_sample_sample():
         config=config,
         timezone=timezone('UTC'),
         live_mode=False,
-        id='test'
+        id=1
     )
 
     timestamps = []
@@ -27,7 +27,7 @@ def test_sample_live():
         config=config,
         timezone=timezone('UTC'),
         live_mode=True,
-        id='test'
+        id=1
     )
 
     timestamps = []

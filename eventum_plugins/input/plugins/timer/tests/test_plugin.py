@@ -17,7 +17,7 @@ def test_timer_sample():
             count=3,
             repeat=86400
         ),
-        id='test',
+        id=1,
         live_mode=False,
         timezone=timezone('UTC')
     )
@@ -41,7 +41,7 @@ def test_timer_live():
             count=1,
             repeat=5
         ),
-        id='test',
+        id=1,
         live_mode=True,
         timezone=timezone('UTC')
     )

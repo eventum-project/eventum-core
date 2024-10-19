@@ -23,7 +23,7 @@ def test_timestamps_sample():
     plugin = TimestampsInputPlugin(
         config=config,
         timezone=timezone('UTC'),
-        id='test',
+        id=1,
         live_mode=False
     )
     timestamps = []
@@ -49,7 +49,7 @@ def test_timestamps_live():
     plugin = TimestampsInputPlugin(
         config=config,
         timezone=timezone('UTC'),
-        id='test',
+        id=1,
         live_mode=True
     )
 
@@ -81,7 +81,7 @@ def test_timestamps_from_file(timestamps_filename):
     plugin = TimestampsInputPlugin(
         config=config,
         timezone=timezone('UTC'),
-        id='test',
+        id=1,
         live_mode=False
     )
 

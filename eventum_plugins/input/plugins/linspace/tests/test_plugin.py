@@ -38,7 +38,7 @@ def test_linspace_sample(start, end, count, endpoint, expected):
         config=config,
         timezone=timezone('UTC'),
         live_mode=False,
-        id='test'
+        id=1
     )
 
     timestamps = []
@@ -62,7 +62,7 @@ def test_linspace_live():
         config=config,
         timezone=timezone('UTC'),
         live_mode=False,
-        id='test'
+        id=1
     )
 
     timestamps = []
