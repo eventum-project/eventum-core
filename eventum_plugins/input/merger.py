@@ -3,7 +3,8 @@ import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
-from typing import Annotated, Generic, Iterable, Iterator, TypeAlias, TypeVar
+from typing import (Annotated, Generic, Iterable, Iterator, Literal, TypeAlias,
+                    TypeVar, overload)
 
 import numpy as np
 from numpy.typing import NDArray
@@ -171,6 +172,20 @@ class InputPluginsLiveMerger:
         ] = {idx: BatchesAccumulator() for idx in self._plugins.keys()}
         self._active_plugin_indices = list(self._plugins.keys())
         self._overlapped_future_part: TimestampIdBatch | None = None
+
+    @overload
+    def generate(
+        self,
+        include_id: Literal[False]
+    ) -> Iterator[TimestampBatch]:
+        ...
+
+    @overload
+    def generate(
+        self,
+        include_id: Literal[True]
+    ) -> Iterator[TimestampIdBatch]:
+        ...
 
     def generate(
         self,
