@@ -361,7 +361,6 @@ class TimePatternsInputPlugin(
             # delay should be minimal
             if self._live_mode:
                 kwargs = kwargs | {
-                    'id': f'{kwargs["id"]}[{pattern_path}]',
                     'batch_size': None,
                     'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY
                 }
