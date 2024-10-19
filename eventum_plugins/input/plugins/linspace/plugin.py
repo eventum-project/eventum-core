@@ -31,7 +31,6 @@ class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
             start=self._config.start,
             end=self._config.end,
             timezone=self._timezone,
-            none_start='now'
         )
         space = linspace(
             start=0,
