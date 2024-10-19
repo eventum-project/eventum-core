@@ -162,9 +162,9 @@ class TimePatternInputPlugin(
         size: int,
         duration: np.timedelta64
     ) -> NDArray[np.timedelta64]:
-        """Generate distribution of time points in the distribution for one
-        period where each point is expressed as time from the beginning
-        of the period.
+        """Generate distribution of time points for one period where
+        each point is expressed as time from the beginning of the
+        period.
 
         Parameters
         ----------
@@ -339,6 +339,8 @@ class TimePatternsInputPlugin(
         self,
         **kwargs: Unpack[InputPluginKwargs]
     ) -> list[TimePatternInputPlugin]:
+        """Initialize time pattern specified in config."""
+
         time_patterns: list[TimePatternInputPlugin] = []
         for pattern_path in self._config.patterns:
             try:
@@ -359,7 +361,7 @@ class TimePatternsInputPlugin(
             # delay should be minimal
             if self._live_mode:
                 kwargs = kwargs | {
-                    'id': f'{kwargs["id"]}-{pattern_path}',
+                    'id': f'{kwargs["id"]}[{pattern_path}]',
                     'batch_size': None,
                     'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY
                 }
@@ -402,8 +404,11 @@ class TimePatternsInputPlugin(
                 f'Cannot initialize merger for time patterns: {e}'
             )
 
-        for batch in merged_patterns.generate():
-            on_events(batch)
+        try:
+            for batch in merged_patterns.generate():
+                on_events(batch)
+        except Exception as e:
+            raise PluginRuntimeError from e
 
     @property
     def count(self) -> int:
