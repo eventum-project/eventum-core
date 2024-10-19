@@ -15,7 +15,7 @@ from eventum_plugins.input.batcher import TimestampsBatcher
 
 
 class InputPluginKwargs(TypedDict):
-    id: Required[str]
+    id: Required[int]
     live_mode: Required[bool]
     timezone: Required[BaseTzInfo]
     batch_size: NotRequired[int | None]
@@ -29,8 +29,8 @@ class InputPlugin(Plugin, config_cls=object, register=False):
 
     Parameters
     ----------
-    id : str
-        Arbitrary string for representing instances (e.g. in logger)
+    id : int
+        Numeric plugin identifier
 
     config : InputPluginConfig
         Configuration for a plugin
@@ -175,8 +175,11 @@ class InputPlugin(Plugin, config_cls=object, register=False):
         """
         ...
 
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}-{self.id}'
+
     @property
-    def id(self) -> str:
+    def id(self) -> int:
         """ID of the plugin."""
         return self._id
 
