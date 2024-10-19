@@ -1,6 +1,7 @@
 
+from abc import ABC
 from enum import StrEnum
-from typing import TypeAlias
+from typing import Literal, TypeAlias
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -92,7 +93,7 @@ class RandomizerConfig(BaseModel, extra='forbid', frozen=True):
     """
     deviation: float = Field(..., ge=0, le=1)
     direction: RandomizerDirection
-    sampling: int = Field(1024, ge=256)
+    sampling: int = Field(1024, ge=16)
 
 
 class BetaDistributionParameters(BaseModel, extra='forbid', frozen=True):
@@ -163,14 +164,7 @@ class UniformDistributionParameters(BaseModel, extra='forbid', frozen=True):
         )
 
 
-DistributionParameters: TypeAlias = (
-    UniformDistributionParameters |
-    TriangularDistributionParameters |
-    BetaDistributionParameters
-)
-
-
-class SpreaderConfig(BaseModel, extra='forbid', frozen=True):
+class BaseSpreaderConfig(ABC, BaseModel, extra='forbid', frozen=True):
     """Configuration of spreader.
 
     Attributes
@@ -181,28 +175,27 @@ class SpreaderConfig(BaseModel, extra='forbid', frozen=True):
     parameters: DistributionParameters
         Parameters of distribution
     """
-    _DISTRIBUTION_PARAMETERS_MAP = {
-        Distribution.UNIFORM: UniformDistributionParameters,
-        Distribution.TRIANGULAR: TriangularDistributionParameters,
-        Distribution.BETA: BetaDistributionParameters
-    }
+    ...
 
-    distribution: Distribution
-    parameters: DistributionParameters
 
-    @model_validator(mode='after')
-    def validate_parameters_model(self):
-        if self.distribution not in self._DISTRIBUTION_PARAMETERS_MAP:
-            raise NotImplementedError
+class UniformSpreaderConfig(BaseSpreaderConfig, frozen=True):
+    distribution: Literal[Distribution.UNIFORM]
+    parameters: UniformDistributionParameters
 
-        expected_model = self._DISTRIBUTION_PARAMETERS_MAP[self.distribution]
 
-        if isinstance(self.parameters, expected_model):
-            return self
+class TriangularSpreaderConfig(BaseSpreaderConfig, frozen=True):
+    distribution: Literal[Distribution.TRIANGULAR]
+    parameters: TriangularDistributionParameters
 
-        raise ValueError(
-            f'Improper parameters model for "{self.distribution}" distribution'
-        )
+
+class BetaSpreaderConfig(BaseSpreaderConfig, frozen=True):
+    distribution: Literal[Distribution.BETA]
+    parameters: BetaDistributionParameters
+
+
+SpreaderConfig: TypeAlias = (
+    UniformSpreaderConfig | TriangularSpreaderConfig | BetaSpreaderConfig
+)
 
 
 class TimePatternConfig(InputPluginConfig, extra='forbid', frozen=True):
@@ -229,7 +222,7 @@ class TimePatternConfig(InputPluginConfig, extra='forbid', frozen=True):
     oscillator: OscillatorConfig
     multiplier: MultiplierConfig
     randomizer: RandomizerConfig
-    spreader: SpreaderConfig
+    spreader: SpreaderConfig = Field(discriminator='distribution')
 
 
 class TimePatternsInputPluginConfig(InputPluginConfig, frozen=True):
