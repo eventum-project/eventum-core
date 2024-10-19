@@ -1,27 +1,14 @@
 from abc import abstractmethod
-from typing import Any, Literal, TypeAlias
-
-from nptyping import NDArray
 
 from eventum_plugins.base.plugin import Plugin
-
-TimestampsBatch: TypeAlias = NDArray[
-    Any,
-    Literal['timestamp: Datetime64, plugin_id: Int']
-]
 
 
 class BaseEventPlugin(Plugin, config_cls=object, register=False):
     """Base class for all event plugins."""
 
     @abstractmethod
-    def produce(self, timestamps: TimestampsBatch) -> list[str]:
-        """Produce events for provided timestamps.
-
-        Parameters
-        ----------
-        timestamps : TimestampsBatch
-            Batch of timestamps
+    def produce(self, **kwargs) -> list[str]:
+        """Produce events with provided parameters.
 
         Returns
         -------
