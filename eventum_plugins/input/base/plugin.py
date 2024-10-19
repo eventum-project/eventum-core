@@ -8,7 +8,8 @@ from numpy.typing import NDArray
 from pytz import BaseTzInfo
 
 from eventum_plugins.base.plugin import Plugin
-from eventum_plugins.exceptions import PluginConfigurationError
+from eventum_plugins.exceptions import (PluginConfigurationError,
+                                        PluginRuntimeError)
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import TimestampsBatcher
 
@@ -96,6 +97,8 @@ class InputPlugin(Plugin, config_cls=object, register=False):
         """
         try:
             future.result()
+        except Exception as e:
+            raise PluginRuntimeError from e
         finally:
             self._batcher.close()
 
