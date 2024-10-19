@@ -32,13 +32,14 @@ def test_cron_sample():
 
 def test_cron_live():
     start = datetime.now(tz=timezone('UTC')) + timedelta(seconds=0.5)
+    end = start + timedelta(seconds=2)
     plugin = CronInputPlugin(
         id='test',
         config=CronInputPluginConfig(
             expression='* * * * * *',
             count=1,
             start=start,
-            end='after 2 seconds'
+            end=end
         ),
         live_mode=True,
         timezone=timezone('UTC')
