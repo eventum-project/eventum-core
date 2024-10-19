@@ -53,8 +53,8 @@ def test_plugin_registration():
 
     assert not PluginsRegistry.is_registered(input_plugins, 'cron')
 
-    import eventum_plugins.input.plugins.cron.plugin as plugin
     import eventum_plugins.input.plugins.cron.config as config
+    import eventum_plugins.input.plugins.cron.plugin as plugin
     importlib.reload(plugin)
 
     assert PluginsRegistry.is_registered(input_plugins, 'cron')
