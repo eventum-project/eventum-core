@@ -11,81 +11,81 @@ from eventum_plugins.event.plugins.jinja.state import \
 
 def test_eq():
     state = State({'field': 10})
-    assert Eq(eq={'field': 10}).check(state=state)
-    assert not Eq(eq={'field': 5}).check(state=state)
-    assert not Eq(eq={'other_field': 10}).check(state=state)
+    assert Eq(eq={'locals.field': 10}).check(locals=state)
+    assert not Eq(eq={'locals.field': 5}).check(locals=state)
+    assert not Eq(eq={'locals.other_field': 10}).check(locals=state)
 
 
 def test_gt():
     state = State({'field': 10})
-    assert Gt(gt={'field': 5}).check(state=state)
-    assert not Gt(gt={'field': 10}).check(state=state)
-    assert not Gt(gt={'field': 15}).check(state=state)
+    assert Gt(gt={'locals.field': 5}).check(locals=state)
+    assert not Gt(gt={'locals.field': 10}).check(locals=state)
+    assert not Gt(gt={'locals.field': 15}).check(locals=state)
 
 
 def test_ge():
     state = State({'field': 10})
-    assert Ge(ge={'field': 5}).check(state=state)
-    assert Ge(ge={'field': 10}).check(state=state)
-    assert not Ge(ge={'field': 15}).check(state=state)
+    assert Ge(ge={'locals.field': 5}).check(locals=state)
+    assert Ge(ge={'locals.field': 10}).check(locals=state)
+    assert not Ge(ge={'locals.field': 15}).check(locals=state)
 
 
 def test_lt():
     state = State({'field': 10})
-    assert Lt(lt={'field': 15}).check(state=state)
-    assert not Lt(lt={'field': 10}).check(state=state)
-    assert not Lt(lt={'field': 5}).check(state=state)
+    assert Lt(lt={'locals.field': 15}).check(locals=state)
+    assert not Lt(lt={'locals.field': 10}).check(locals=state)
+    assert not Lt(lt={'locals.field': 5}).check(locals=state)
 
 
 def test_le():
     state = State({'field': 10})
-    assert Le(le={'field': 15}).check(state=state)
-    assert Le(le={'field': 10}).check(state=state)
-    assert not Le(le={'field': 5}).check(state=state)
+    assert Le(le={'locals.field': 15}).check(locals=state)
+    assert Le(le={'locals.field': 10}).check(locals=state)
+    assert not Le(le={'locals.field': 5}).check(locals=state)
 
 
 def test_len_eq():
     state = State({'field': [1, 2, 3]})
-    assert LenEq(len_eq={'field': 3}).check(state=state)
-    assert not LenEq(len_eq={'field': 2}).check(state=state)
+    assert LenEq(len_eq={'locals.field': 3}).check(locals=state)
+    assert not LenEq(len_eq={'locals.field': 2}).check(locals=state)
 
 
 def test_len_gt():
     state = State({'field': [1, 2, 3]})
-    assert LenGt(len_gt={'field': 2}).check(state=state)
-    assert not LenGt(len_gt={'field': 3}).check(state=state)
+    assert LenGt(len_gt={'locals.field': 2}).check(locals=state)
+    assert not LenGt(len_gt={'locals.field': 3}).check(locals=state)
 
 
 def test_len_ge():
     state = State({'field': [1, 2, 3]})
-    assert LenGe(len_ge={'field': 2}).check(state=state)
-    assert LenGe(len_ge={'field': 3}).check(state=state)
-    assert not LenGe(len_ge={'field': 4}).check(state=state)
+    assert LenGe(len_ge={'locals.field': 2}).check(locals=state)
+    assert LenGe(len_ge={'locals.field': 3}).check(locals=state)
+    assert not LenGe(len_ge={'locals.field': 4}).check(locals=state)
 
 
 def test_len_lt():
     state = State({'field': [1, 2, 3]})
-    assert LenLt(len_lt={'field': 4}).check(state=state)
-    assert not LenLt(len_lt={'field': 3}).check(state=state)
+    assert LenLt(len_lt={'locals.field': 4}).check(locals=state)
+    assert not LenLt(len_lt={'locals.field': 3}).check(locals=state)
 
 
 def test_len_le():
     state = State({'field': [1, 2, 3]})
-    assert LenLe(len_le={'field': 4}).check(state=state)
-    assert LenLe(len_le={'field': 3}).check(state=state)
-    assert not LenLe(len_le={'field': 2}).check(state=state)
+    assert LenLe(len_le={'locals.field': 4}).check(locals=state)
+    assert LenLe(len_le={'locals.field': 3}).check(locals=state)
+    assert not LenLe(len_le={'locals.field': 2}).check(locals=state)
 
 
 def test_contains():
     state = State({'field': [5, 10, 15]})
-    assert Contains(contains={'field': 10}).check(state=state)
-    assert not Contains(contains={'field': 2}).check(state=state)
+    assert Contains(contains={'locals.field': 10}).check(locals=state)
+    assert not Contains(contains={'locals.field': 2}).check(locals=state)
 
 
 def test_in():
     state = State({'field': 5})
-    assert In(in_={'field': [5, 10, 15]}).check(state=state)
-    assert not In(in_={'field': [2, 4, 6]}).check(state=state)
+    assert In(in_={'locals.field': [5, 10, 15]}).check(locals=state)
+    assert not In(in_={'locals.field': [2, 4, 6]}).check(locals=state)
 
 
 def test_has_tags():
@@ -235,14 +235,14 @@ def test_after():
 
 def test_matches():
     state = State({'field': 'abc'})
-    assert Matches(matches={'field': r'^a.*c$'}).check(state=state)
-    assert not Matches(matches={'field': r'^b.*c$'}).check(state=state)
+    assert Matches(matches={'locals.field': r'^a.*c$'}).check(locals=state)
+    assert not Matches(matches={'locals.field': r'^b.*c$'}).check(locals=state)
 
 
 def test_defined():
     state = State({'field': 10})
-    assert Defined(defined='field').check(state=state)
-    assert not Defined(defined='other_field').check(state=state)
+    assert Defined(defined='locals.field').check(locals=state)
+    assert not Defined(defined='locals.other_field').check(locals=state)
 
 
 def test_or():
@@ -250,17 +250,17 @@ def test_or():
 
     assert Or(
         or_=[
-            Eq(eq={'field': 5}),
-            Eq(eq={'field': 10})
+            Eq(eq={'locals.field': 5}),
+            Eq(eq={'locals.field': 10})
         ]
-    ).check(state=state)
+    ).check(locals=state)
 
     assert not Or(
         or_=[
-            Eq(eq={'field': 5}),
-            Eq(eq={'field': 15})
+            Eq(eq={'locals.field': 5}),
+            Eq(eq={'locals.field': 15})
         ]
-    ).check(state=state)
+    ).check(locals=state)
 
 
 def test_and():
@@ -268,23 +268,23 @@ def test_and():
 
     assert And(
         and_=[
-            Gt(gt={'field': 5}),
-            Lt(lt={'field': 15})
+            Gt(gt={'locals.field': 5}),
+            Lt(lt={'locals.field': 15})
         ]
-    ).check(state=state)
+    ).check(locals=state)
 
     assert not And(
         and_=[
-            Gt(gt={'field': 5}),
-            Lt(lt={'field': 7})
+            Gt(gt={'locals.field': 5}),
+            Lt(lt={'locals.field': 7})
         ]
-    ).check(state=state)
+    ).check(locals=state)
 
 
 def test_not():
     state = State({'field': 10})
-    assert Not(not_=Eq(eq={'field': 5})).check(state=state)
-    assert not Not(not_=Eq(eq={'field': 10})).check(state=state)
+    assert Not(not_=Eq(eq={'locals.field': 5})).check(locals=state)
+    assert not Not(not_=Eq(eq={'locals.field': 10})).check(locals=state)
 
 
 def test_complex_condition():
@@ -294,17 +294,17 @@ def test_complex_condition():
         or_=[
             And(
                 and_=[
-                    Gt(gt={'field1': 5}),
-                    Lt(lt={'field1': 15})
+                    Gt(gt={'locals.field1': 5}),
+                    Lt(lt={'locals.field1': 15})
                 ]
             ),
             Not(
-                not_=Matches(matches={'field2': r'^a.*c$'})
+                not_=Matches(matches={'locals.field2': r'^a.*c$'})
             )
         ]
     )
 
-    assert condition.check(state=state)
+    assert condition.check(locals=state)
 
 
 def test_invalid_timestamp_components():
