@@ -93,6 +93,7 @@ class FSMTemplatePicker(TemplatePicker[TemplateConfigForFSMMode]):
     ) -> None:
         super().__init__(config)
         self._state = self._get_initial_state()
+        self._initial_pick = True
 
     def _get_initial_state(self) -> str:
         """Get alias of initial state.
@@ -126,7 +127,11 @@ class FSMTemplatePicker(TemplatePicker[TemplateConfigForFSMMode]):
             self._state = transition.to
 
     def pick(self, **kwargs: Unpack[EventContext]) -> tuple[str, ...]:
-        self._check_transition(**kwargs)
+        if self._initial_pick:
+            self._initial_pick = False
+        else:
+            self._check_transition(**kwargs)
+
         return (self._state, )
 
 
