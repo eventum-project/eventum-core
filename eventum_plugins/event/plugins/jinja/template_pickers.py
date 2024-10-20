@@ -126,10 +126,8 @@ class FSMTemplatePicker(TemplatePicker[TemplateConfigForFSMMode]):
             self._state = transition.to
 
     def pick(self, **kwargs: Unpack[EventContext]) -> tuple[str, ...]:
-        alias = self._state
         self._check_transition(**kwargs)
-
-        return (alias, )
+        return (self._state, )
 
 
 def get_picker_class(
