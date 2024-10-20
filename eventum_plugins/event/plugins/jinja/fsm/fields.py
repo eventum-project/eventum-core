@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 from abc import ABC, abstractmethod
@@ -548,20 +550,16 @@ ConditionCheck: TypeAlias = (
     | Before | After
     | Defined | HasTags
 )
-
-
 ConditionLogic: TypeAlias = Union['Or', 'And', 'Not']
+
+Condition: TypeAlias = ConditionLogic | ConditionCheck
 
 
 class Or(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Logic operator 'or' for combining checks or other logic
     operators.
     """
-    or_: list[ConditionLogic | ConditionCheck] = Field(
-        ...,
-        min_length=2,
-        alias='or'
-    )
+    or_: list[Condition] = Field(..., min_length=2, alias='or')
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -585,11 +583,7 @@ class And(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Logic operator 'and' for combining checks or other logic
     operators.
     """
-    and_: list[ConditionLogic | ConditionCheck] = Field(
-        ...,
-        min_length=2,
-        alias='and'
-    )
+    and_: list[Condition] = Field(..., min_length=2, alias='and')
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -613,7 +607,7 @@ class Not(BaseModel, Checkable, frozen=True, extra='forbid'):
     """Logic operator 'not' for negate checks or other logic
     operators.
     """
-    not_: ConditionLogic | ConditionCheck = Field(..., alias='not')
+    not_: Condition = Field(..., alias='not')
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -623,6 +617,3 @@ class Not(BaseModel, Checkable, frozen=True, extra='forbid'):
     @property
     def required_check_kwargs(self) -> tuple[str, ...]:
         return self.not_.required_check_kwargs
-
-
-Condition: TypeAlias = ConditionLogic | ConditionCheck
