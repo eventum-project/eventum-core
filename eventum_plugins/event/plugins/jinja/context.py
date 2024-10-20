@@ -13,7 +13,7 @@ class EventContext(TypedDict):
         Timestamp of event
 
     tags : list[str]
-        Tags from input plugin that generated event
+        Tags from input plugin that generated timestamp
 
     locals : State
         Local state of template
