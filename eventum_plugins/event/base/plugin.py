@@ -7,8 +7,13 @@ class BaseEventPlugin(Plugin, config_cls=object, register=False):
     """Base class for all event plugins."""
 
     @abstractmethod
-    def produce(self, **kwargs) -> list[str]:
+    def produce(self, params: dict) -> list[str]:
         """Produce events with provided parameters.
+
+        Parameters
+        ----------
+        params : dict
+            Parameters for events producing
 
         Returns
         -------
