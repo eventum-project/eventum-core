@@ -5,7 +5,7 @@ from eventum_plugins.event.plugins.jinja.state import State
 
 
 class EventContext(TypedDict):
-    """Kwargs for `check` method of  `Checkable`.
+    """Context for event producing.
 
     Attributes
     ----------
