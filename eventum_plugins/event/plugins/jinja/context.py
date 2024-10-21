@@ -1,4 +1,3 @@
-
 from typing import TypedDict
 
 from eventum_plugins.event.plugins.jinja.state import State
