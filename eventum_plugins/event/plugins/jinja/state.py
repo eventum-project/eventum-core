@@ -25,6 +25,20 @@ class State(ABC):
         ...
 
     @abstractmethod
+    def update(self, m: dict[str, Any], /) -> None:
+        """Update state with  value to state.
+
+        Parameters
+        ----------
+        key : str
+            Key of the value to set
+
+        value : Any
+            Value to set
+        """
+        ...
+
+    @abstractmethod
     def get(self, key: str, default: Any = None) -> Any:
         """Get value from state.
 
@@ -43,33 +57,6 @@ class State(ABC):
             Value from the state, or default value if there is no value
             in state with specified key
         """
-        ...
-
-    @abstractmethod
-    def get_for_update(self, key: str, default: Any = None) -> Any:
-        """Get value from state for next update with acquiring state lock
-        until next set.
-
-        Parameters
-        ----------
-        key : str
-            Key of the value to get
-
-        default : Any, default=None
-            Default value to return if there is no value in state with
-            specified key
-
-        Returns
-        -------
-        Any
-            Value from the state, or default value if there is no value
-            in state with specified key
-        """
-        ...
-
-    @abstractmethod
-    def cancel_update(self) -> None:
-        """Release state lock acquired by `get_for_update` method."""
         ...
 
     @abstractmethod
@@ -95,11 +82,8 @@ class SingleThreadState(State):
         except KeyError:
             return default
 
-    def get_for_update(self, key: str, default: Any = None) -> Any:
-        return self.get(key, default)
-
-    def cancel_update(self) -> None:
-        return
+    def update(self, m: dict[str, Any], /) -> None:
+        return self._state.update(m)
 
     def as_dict(self) -> dict:
         return deepcopy(self._state)
@@ -197,7 +181,39 @@ class MultiProcessState(State):
         else:
             return state[key]
 
+    def update(self, m: dict, /) -> None:
+        with self._lock:
+            if self._state_to_update is None:
+                state: dict = self._load_state()
+            else:
+                state = self._state_to_update
+
+            state.update(m)
+            self._write_state(state)
+
+        if self._state_to_update is not None:
+            self._state_to_update = None
+            self._lock.release()
+
     def get_for_update(self, key: str, default: Any = None) -> Any:
+        """Get value from state for next update with acquiring state lock
+        until next set.
+
+        Parameters
+        ----------
+        key : str
+            Key of the value to get
+
+        default : Any, default=None
+            Default value to return if there is no value in state with
+            specified key
+
+        Returns
+        -------
+        Any
+            Value from the state, or default value if there is no value
+            in state with specified key
+        """
         self._lock.acquire()
         state: dict = self._load_state()
         self._state_to_update = state
@@ -208,6 +224,7 @@ class MultiProcessState(State):
             return state[key]
 
     def cancel_update(self) -> None:
+        """Release state lock acquired by `get_for_update` method."""
         self._lock.release()
 
     def as_dict(self) -> dict:
