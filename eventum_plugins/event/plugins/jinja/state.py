@@ -11,34 +11,6 @@ class State(ABC):
     """Base key-value state."""
 
     @abstractmethod
-    def set(self, key: str, value: Any) -> None:
-        """Set value to state.
-
-        Parameters
-        ----------
-        key : str
-            Key of the value to set
-
-        value : Any
-            Value to set
-        """
-        ...
-
-    @abstractmethod
-    def update(self, m: dict[str, Any], /) -> None:
-        """Update state with  value to state.
-
-        Parameters
-        ----------
-        key : str
-            Key of the value to set
-
-        value : Any
-            Value to set
-        """
-        ...
-
-    @abstractmethod
     def get(self, key: str, default: Any = None) -> Any:
         """Get value from state.
 
@@ -60,6 +32,38 @@ class State(ABC):
         ...
 
     @abstractmethod
+    def set(self, key: str, value: Any) -> None:
+        """Set value to state.
+
+        Parameters
+        ----------
+        key : str
+            Key of the value to set
+
+        value : Any
+            Value to set
+        """
+        ...
+
+    @abstractmethod
+    def update(self, m: dict[str, Any], /) -> None:
+        """Update state with new values.
+
+        Parameters
+        ----------
+        key : str
+            Key of the value to set
+
+        value : Any
+            Value to set
+        """
+
+    @abstractmethod
+    def clear(self) -> None:
+        """Clear state."""
+        ...
+
+    @abstractmethod
     def as_dict(self) -> dict:
         """Get dictionary representation of state."""
         ...
@@ -73,17 +77,20 @@ class SingleThreadState(State):
     def __init__(self, initial: dict[str, Any] | None = None) -> None:
         self._state: dict[str, Any] = initial or dict()
 
-    def set(self, key: str, value: Any) -> None:
-        self._state[key] = value
-
     def get(self, key: str, default: Any | None = None) -> Any:
         try:
             return self._state[key]
         except KeyError:
             return default
 
+    def set(self, key: str, value: Any) -> None:
+        self._state[key] = value
+
     def update(self, m: dict[str, Any], /) -> None:
-        return self._state.update(m)
+        self._state.update(m)
+
+    def clear(self) -> None:
+        self._state.clear()
 
     def as_dict(self) -> dict:
         return deepcopy(self._state)
@@ -159,6 +166,14 @@ class MultiProcessState(State):
         if create:
             self._write_state(initial or dict())
 
+    def get(self, key: str, default: Any = None) -> Any:
+        state: dict = self._load_state()
+
+        if key not in state:
+            return default
+        else:
+            return state[key]
+
     def set(self, key: str, value: Any) -> None:
         with self._lock:
             if self._state_to_update is None:
@@ -173,14 +188,6 @@ class MultiProcessState(State):
             self._state_to_update = None
             self._lock.release()
 
-    def get(self, key: str, default: Any = None) -> Any:
-        state: dict = self._load_state()
-
-        if key not in state:
-            return default
-        else:
-            return state[key]
-
     def update(self, m: dict, /) -> None:
         with self._lock:
             if self._state_to_update is None:
@@ -194,6 +201,10 @@ class MultiProcessState(State):
         if self._state_to_update is not None:
             self._state_to_update = None
             self._lock.release()
+
+    def clear(self) -> None:
+        with self._lock:
+            self._write_state(dict())
 
     def get_for_update(self, key: str, default: Any = None) -> Any:
         """Get value from state for next update with acquiring state lock

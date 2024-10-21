@@ -57,6 +57,17 @@ def test_single_thread_state_get_default(
     assert single_thread_state.get(key, default) == default
 
 
+def test_single_thread_state_clear(
+    single_thread_state: SingleThreadState
+):
+    key = 'test_key'
+    value = 'test_value'
+    single_thread_state.set(key, value)
+    assert single_thread_state.get(key) == value
+    single_thread_state.clear()
+    assert single_thread_state.get(key, default=None) is None
+
+
 def test_single_thread_state_as_dict(
     single_thread_state: SingleThreadState
 ):
@@ -114,6 +125,17 @@ def test_multiprocess_state_cancel_update(
 
     with pytest.raises(AssertionError):
         multiprocess_state.cancel_update()
+
+
+def test_multiprocess_state_clear(
+    multiprocess_state: MultiProcessState
+):
+    key = 'test_key'
+    value = 'test_value'
+    multiprocess_state.set(key, value)
+    assert multiprocess_state.get(key) == value
+    multiprocess_state.clear()
+    assert multiprocess_state.get(key, default=None) is None
 
 
 def test_multiprocess_state_as_dict(
