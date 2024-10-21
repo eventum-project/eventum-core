@@ -3,7 +3,7 @@ from typing import TypedDict
 from eventum_plugins.event.plugins.jinja.state import State
 
 
-class EventContext(TypedDict):
+class EventContext(TypedDict, total=False):
     """Context for event producing.
 
     Attributes
@@ -11,7 +11,7 @@ class EventContext(TypedDict):
     timestamp : str
         Timestamp of event
 
-    tags : list[str]
+    tags : tuple[str, ...]
         Tags from input plugin that generated timestamp
 
     locals : State
@@ -24,7 +24,7 @@ class EventContext(TypedDict):
         Composed state of templates
     """
     timestamp: str
-    tags: list[str]
+    tags: tuple[str, ...]
     locals: State
     shared: State
     composed: State
