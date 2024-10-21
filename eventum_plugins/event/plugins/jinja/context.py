@@ -3,7 +3,7 @@ from typing import TypedDict
 from eventum_plugins.event.plugins.jinja.state import State
 
 
-class EventContext(TypedDict, total=False):
+class EventContext(TypedDict):
     """Context for event producing.
 
     Attributes
