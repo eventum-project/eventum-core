@@ -91,7 +91,15 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
         }
 
         Picker = get_picker_class(self._config.root.mode)
-        self._template_picker = Picker(self._template_configs)
+        try:
+            self._template_picker = Picker(
+                config=self._template_configs,
+                common_config=self._config.root.get_picking_common_fields()
+            )
+        except ValueError as e:
+            raise PluginConfigurationError(
+                f'Failed to configure template picker: {e}'
+            )
 
         self._event_context: EventContext = {
             'timestamp': '',                                        # ephemeral

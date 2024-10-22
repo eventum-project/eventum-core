@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import (BaseModel, Field, RootModel, StringConstraints,
-                      field_validator)
+                      field_validator, model_validator)
 
 from eventum_plugins.event.base.config import EventPluginConfig
 from eventum_plugins.event.plugins.jinja.fsm.fields import Condition
@@ -68,14 +68,16 @@ class TemplatePickingMode(StrEnum):
     - `all` - render all templates at a time
     - `any` - render one randomly chosen template
     - `chance` - render one template depending on specified chances
-    - `spin` - render one template after another in turn
+    - `spin` - cyclically render one template after another
     - `fsm` - render template depending on current state
+    - `chain` - cyclically render templates by user defined chain
     """
     ALL = 'all'
     ANY = 'any'
     CHANCE = 'chance'
     SPIN = 'spin'
     FSM = 'fsm'
+    CHAIN = 'chain'
 
 
 TemplatePath = Annotated[str, StringConstraints(pattern=r'.*\.jinja')]
@@ -133,6 +135,17 @@ class TemplateConfigForFSMMode(TemplateConfigForGeneralModes, frozen=True):
     initial: bool = False
 
 
+class TemplateConfigForChainMode(TemplateConfigForGeneralModes, frozen=True):
+    """Template configuration for `chain` picking mode.
+
+    Attributes
+    ----------
+    chain : list[str]
+        Chain of template aliases
+    """
+    chain: list[str] = Field(..., min_length=1)
+
+
 class JinjaEventConfigCommonFields(BaseModel, frozen=True, extra='forbid'):
     """Configuration common fields for `jinja` event plugin.
 
@@ -146,6 +159,16 @@ class JinjaEventConfigCommonFields(BaseModel, frozen=True, extra='forbid'):
     """
     params: dict
     samples: dict[str, SampleConfig]
+
+    def get_picking_common_fields(self) -> dict[str, Any]:
+        """Get common fields used in templates picking.
+
+        Returns
+        -------
+        dict[str, Any]
+            Field names to their values mapping
+        """
+        return dict()
 
 
 class JinjaEventConfigForGeneralModes(
@@ -195,7 +218,7 @@ class JinjaEventConfigForChanceMode(
     mode : Literal[TemplatePickingMode.CHANCE]
         Template picking mode
 
-    templates : list[dict[str, TemplateConfigForGeneralModes]]
+    templates : list[dict[str, TemplateConfigForChanceMode]]
         List of template configurations
     """
     mode: Literal[TemplatePickingMode.CHANCE]
@@ -218,7 +241,7 @@ class JinjaEventConfigForFSMMode(
     mode : Literal[TemplatePickingMode.FSM]
         Template picking mode
 
-    templates : list[dict[str, TemplateConfigForGeneralModes]]
+    templates : list[dict[str, TemplateConfigForFSMMode]]
         List of template configurations
     """
     mode: Literal[TemplatePickingMode.FSM]
@@ -244,10 +267,56 @@ class JinjaEventConfigForFSMMode(
         return v
 
 
+class JinjaEventConfigForChainMode(
+    TemplateSingleItemElementsValidatorMixin,
+    TemplateAliasesUniquenessValidatorMixin,
+    EventPluginConfig,
+    JinjaEventConfigCommonFields,
+    frozen=True
+):
+    """Configuration for `jinja` event plugin for `chain` picking
+    mode.
+
+    Attributes
+    ----------
+    mode : Literal[TemplatePickingMode.CHAIN]
+        Template picking mode
+
+    templates : list[dict[str, TemplateConfigForGeneralModes]]
+        List of template configurations
+    """
+    mode: Literal[TemplatePickingMode.CHAIN]
+    chain: list[str] = Field(..., min_length=1)
+    templates: list[
+        dict[str, TemplateConfigForGeneralModes]
+    ] = Field(..., min_length=1)
+
+    @model_validator(mode='after')
+    def validate_chain_aliases(self) -> Self:
+        allowed_aliases = set(
+            next(iter(template_info.keys()))
+            for template_info in self.templates
+        )
+        chain_aliases = set(self.chain)
+
+        if not allowed_aliases.issuperset(chain_aliases):
+            unknown_aliases = allowed_aliases - chain_aliases
+            raise ValueError(
+                f'Unknown template aliases in chain: {unknown_aliases} '
+            )
+
+        return self
+
+    def get_picking_common_fields(self) -> dict[str, Any]:
+        fields = super().get_picking_common_fields()
+        fields['chain'] = self.chain
+
+        return fields
+
+
 class JinjaEventConfig(RootModel, frozen=True):
     """Configuration for `jinja` event plugin."""
     root: (
-        JinjaEventConfigForGeneralModes
-        | JinjaEventConfigForChanceMode
-        | JinjaEventConfigForFSMMode
+        JinjaEventConfigForGeneralModes | JinjaEventConfigForChanceMode
+        | JinjaEventConfigForFSMMode | JinjaEventConfigForChainMode
     ) = Field(discriminator='mode')

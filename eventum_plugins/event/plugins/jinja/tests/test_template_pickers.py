@@ -6,8 +6,9 @@ from eventum_plugins.event.plugins.jinja.config import (
 from eventum_plugins.event.plugins.jinja.fsm.fields import Eq
 from eventum_plugins.event.plugins.jinja.state import SingleThreadState
 from eventum_plugins.event.plugins.jinja.template_pickers import (
-    AllTemplatePicker, AnyTemplatePicker, ChanceTemplatePicker,
-    FSMTemplatePicker, SpinTemplatePicker, get_picker_class)
+    AllTemplatePicker, AnyTemplatePicker, ChainTemplatePicker,
+    ChanceTemplatePicker, FSMTemplatePicker, SpinTemplatePicker,
+    get_picker_class)
 
 
 @pytest.mark.parametrize(
@@ -29,7 +30,7 @@ def test_all_template_picker():
         'template1': TemplateConfigForGeneralModes(template='test1.jinja'),
         'template2': TemplateConfigForGeneralModes(template='test2.jinja'),
     }
-    picker = AllTemplatePicker(config)
+    picker = AllTemplatePicker(config, {})
 
     assert picker.pick() == ('template1', 'template2')
 
@@ -39,7 +40,7 @@ def test_any_template_picker():
         'template1': TemplateConfigForGeneralModes(template='test1.jinja'),
         'template2': TemplateConfigForGeneralModes(template='test2.jinja'),
     }
-    picker = AnyTemplatePicker(config)
+    picker = AnyTemplatePicker(config, {})
 
     picked_templates = picker.pick()
 
@@ -58,7 +59,7 @@ def test_chance_template_picker():
             chance=0.8
         ),
     }
-    picker = ChanceTemplatePicker(config)
+    picker = ChanceTemplatePicker(config, {})
 
     picked_templates = picker.pick()
 
@@ -72,7 +73,7 @@ def test_spin_template_picker():
         'template2': TemplateConfigForGeneralModes(template='test2.jinja'),
         'template3': TemplateConfigForGeneralModes(template='test3.jinja'),
     }
-    picker = SpinTemplatePicker(config)
+    picker = SpinTemplatePicker(config, {})
 
     assert picker.pick() == ('template1', )
     assert picker.pick() == ('template2', )
@@ -99,7 +100,7 @@ def test_fsm_template_picker():
             )
         ),
     }
-    picker = FSMTemplatePicker(config)
+    picker = FSMTemplatePicker(config, {})
     state = SingleThreadState({'some_flag': False})
 
     assert picker.pick(shared=state) == ('template1', )
@@ -113,3 +114,28 @@ def test_fsm_template_picker():
 
     assert picker.pick(shared=state) == ('template1', )
     assert picker.pick(shared=state) == ('template1', )
+
+
+def test_chain_template_picker():
+    config = {
+        'template1': TemplateConfigForGeneralModes(template='test1.jinja'),
+        'template2': TemplateConfigForGeneralModes(template='test2.jinja'),
+        'template3': TemplateConfigForGeneralModes(template='test3.jinja'),
+    }
+    picker = ChainTemplatePicker(
+        config=config,
+        common_config={
+            'chain': [
+                'template1', 'template1', 'template3', 'template2', 'template1'
+            ]
+        }
+    )
+
+    assert picker.pick() == ('template1', )
+    assert picker.pick() == ('template1', )
+    assert picker.pick() == ('template3', )
+    assert picker.pick() == ('template2', )
+    assert picker.pick() == ('template1', )
+    assert picker.pick() == ('template1', )
+    assert picker.pick() == ('template1', )
+    assert picker.pick() == ('template3', )
