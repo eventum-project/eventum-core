@@ -1902,6 +1902,26 @@ files = [
 ]
 
 [[package]]
+name = "tablib"
+version = "3.7.0"
+description = "Format agnostic tabular data library (XLS, JSON, YAML, CSV, etc.)"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "tablib-3.7.0-py3-none-any.whl", hash = "sha256:9a6930037cfe0f782377963ca3f2b1dae3fd4cdbf0883848f22f1447e7bb718b"},
+    {file = "tablib-3.7.0.tar.gz", hash = "sha256:f9db84ed398df5109bd69c11d46613d16cc572fb9ad3213f10d95e2b5f12c18e"},
+]
+
+[package.extras]
+all = ["odfpy", "openpyxl (>=2.6.0)", "pandas", "pyyaml", "tabulate", "xlrd", "xlwt"]
+cli = ["tabulate"]
+ods = ["odfpy"]
+pandas = ["pandas"]
+xls = ["xlrd", "xlwt"]
+xlsx = ["openpyxl (>=2.6.0)"]
+yaml = ["pyyaml"]
+
+[[package]]
 name = "types-aiofiles"
 version = "23.2.0.20240403"
 description = "Typing stubs for aiofiles"
@@ -2101,4 +2121,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "cb93bd715c1723b269df90765f325ff5da38615a02aadc363a23412fc54d4ed9"
+content-hash = "9156a2fa60cbf5d7047ab5e95af9c637658f27a9c1ecbced8e5e938982dec7b0"
