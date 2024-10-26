@@ -3,8 +3,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Iterator, Unpack, assert_never
 
 import numpy as np
-from eventum_content_manager.manage import (ContentManagementError,
-                                            load_time_pattern)
+import yaml
 from numpy.typing import NDArray
 from pydantic import ValidationError
 
@@ -344,11 +343,13 @@ class TimePatternsInputPlugin(
         time_patterns: list[TimePatternInputPlugin] = []
         for pattern_path in self._config.patterns:
             try:
-                time_pattern_obj = load_time_pattern(path=pattern_path)
+                with open(pattern_path) as f:
+                    time_pattern_obj = yaml.load(f, yaml.SafeLoader)
+
                 time_pattern = TimePatternConfig.model_validate(
                     obj=time_pattern_obj
                 )
-            except ContentManagementError as e:
+            except yaml.error.YAMLError as e:
                 raise PluginConfigurationError(
                     f'Failed to load time pattern "{pattern_path}": {e}'
                 )
@@ -404,7 +405,7 @@ class TimePatternsInputPlugin(
             )
 
         try:
-            for batch in merged_patterns.generate():
+            for batch in merged_patterns.generate(include_id=False):
                 on_events(batch)
         except Exception as e:
             raise PluginRuntimeError from e
