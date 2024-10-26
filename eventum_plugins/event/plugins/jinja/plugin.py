@@ -1,9 +1,7 @@
+import os
 from copy import copy
-from typing import Any, MutableMapping, TypedDict, assert_never
+from typing import Any, MutableMapping, TypedDict
 
-from eventum_content_manager.manage import (EVENT_TEMPLATES_DIR,
-                                            ContentManagementError,
-                                            load_csv_sample)
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateRuntimeError,
                     TemplateSyntaxError)
@@ -12,10 +10,10 @@ from pytz import BaseTzInfo
 import eventum_plugins.event.plugins.jinja.modules as modules
 from eventum_plugins.event.base.plugin import BaseEventPlugin
 from eventum_plugins.event.plugins.jinja.config import (
-    CSVSampleConfig, ItemsSampleConfig, JinjaEventConfig,
-    TemplateConfigForGeneralModes)
+    JinjaEventConfig, TemplateConfigForGeneralModes)
 from eventum_plugins.event.plugins.jinja.context import EventContext
 from eventum_plugins.event.plugins.jinja.module_provider import ModuleProvider
+from eventum_plugins.event.plugins.jinja.sample_reader import SampleReader
 from eventum_plugins.event.plugins.jinja.state import (MultiProcessState,
                                                        SingleThreadState)
 from eventum_plugins.event.plugins.jinja.subprocess_runner import \
@@ -60,11 +58,11 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
         self._config = config
 
         self._env = Environment(
-            loader=templates_loader or FileSystemLoader(EVENT_TEMPLATES_DIR),
+            loader=templates_loader or FileSystemLoader(os.getcwd()),
             extensions=self._JINJA_EXTENSIONS
         )
 
-        self._samples = self._load_samples()
+        self._samples = SampleReader(self._config.root.samples)
         self._module_provider = ModuleProvider(modules.__name__)
         self._subprocess_runner = SubprocessRunner()
         self._shared_state = SingleThreadState()
@@ -108,41 +106,6 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
             'shared': self._shared_state,
             'composed': self._composed_state,
         }
-
-    def _load_samples(self) -> dict[str, tuple]:
-        """Load samples specified in config.
-
-        Returns
-        -------
-        dict[str, tuple]
-            Mapping with samples in values and their names in keys
-        """
-        samples: dict[str, tuple] = dict()
-
-        for sample_name, value in self._config.root.samples.items():
-
-            match value.root:
-                case ItemsSampleConfig():
-                    samples[sample_name] = value.root.source
-                case CSVSampleConfig():
-                    try:
-                        sample = load_csv_sample(
-                            path=value.root.source,
-                            delimiter=value.root.delimiter
-                        )
-                    except ContentManagementError as e:
-                        raise PluginConfigurationError(
-                            f'Failed to load sample: {e}'
-                        ) from e
-
-                    if value.root.header:
-                        sample = sample[1:]
-
-                    samples[sample_name] = sample
-                case unexpected_type:
-                    assert_never(unexpected_type)
-
-        return samples
 
     def _get_template_configs_as_dict(
         self
