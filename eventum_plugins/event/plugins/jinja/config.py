@@ -15,8 +15,24 @@ from eventum_plugins.event.plugins.jinja.mixins import (
 
 class SampleType(StrEnum):
     """Types of sample."""
-    CSV = 'csv'
     ITEMS = 'items'
+    CSV = 'csv'
+    JSON = 'json'
+
+
+class ItemsSampleConfig(BaseModel, frozen=True, extra='forbid'):
+    """Configuration of sample of directly provided items.
+
+    Attributes
+    ----------
+    type : Literal[SampleType.CSV]
+        Discriminator field for sample configuration
+
+    source : tuple
+        List of sample items
+    """
+    type: Literal[SampleType.ITEMS]
+    source: tuple = Field(..., min_length=1)
 
 
 class CSVSampleConfig(BaseModel, frozen=True, extra='forbid'):
@@ -42,24 +58,26 @@ class CSVSampleConfig(BaseModel, frozen=True, extra='forbid'):
     source: str = Field(..., pattern=r'.*\.csv')
 
 
-class ItemsSampleConfig(BaseModel, frozen=True, extra='forbid'):
-    """Configuration of sample of directly provided items.
+class JSONSampleConfig(BaseModel, frozen=True, extra='forbid'):
+    """Configuration of json sample.
 
     Attributes
     ----------
-    type : Literal[SampleType.CSV]
+    type : Literal[SampleType.JSON]
         Discriminator field for sample configuration
 
-    source : tuple
-        List of sample items
+    source : str
+        Path to json file
     """
-    type: Literal[SampleType.ITEMS]
-    source: tuple = Field(..., min_length=1)
+    type: Literal[SampleType.JSON]
+    source: str = Field(..., pattern=r'.*\.json')
 
 
 class SampleConfig(RootModel, frozen=True):
     """Configuration of sample."""
-    root: CSVSampleConfig | ItemsSampleConfig = Field(discriminator='type')
+    root: ItemsSampleConfig | CSVSampleConfig | JSONSampleConfig = Field(
+        discriminator='type'
+    )
 
 
 class TemplatePickingMode(StrEnum):
