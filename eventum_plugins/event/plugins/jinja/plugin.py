@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from copy import copy
 from typing import Any, MutableMapping, TypedDict
@@ -5,13 +6,11 @@ from typing import Any, MutableMapping, TypedDict
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateRuntimeError,
                     TemplateSyntaxError)
-from pytz import BaseTzInfo
 
 import eventum_plugins.event.plugins.jinja.modules as modules
 from eventum_plugins.event.base.plugin import BaseEventPlugin
 from eventum_plugins.event.plugins.jinja.config import (
     JinjaEventConfig, TemplateConfigForGeneralModes)
-from eventum_plugins.event.plugins.jinja.context import EventContext
 from eventum_plugins.event.plugins.jinja.module_provider import ModuleProvider
 from eventum_plugins.event.plugins.jinja.sample_reader import SampleReader
 from eventum_plugins.event.plugins.jinja.state import (MultiProcessState,
@@ -32,16 +31,12 @@ class ProduceParams(TypedDict):
     timestamp : str
         Timestamp of event
 
-    timezone : BaseTzInfo
-        Timezone of timestamp
-
     tags : tuple[str, ...]
         Tags from input plugin that generated timestamp
 
     """
-    timestamp: str
+    timestamp: datetime
     tags: tuple[str, ...]
-    timezone: BaseTzInfo
 
 
 class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
@@ -98,14 +93,7 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
             raise PluginConfigurationError(
                 f'Failed to configure template picker: {e}'
             )
-
-        self._event_context: EventContext = {
-            'timestamp': '',                                        # ephemeral
-            'tags': tuple(),                                        # ephemeral
-            'locals': next(iter(self._template_states.values())),   # ephemeral
-            'shared': self._shared_state,
-            'composed': self._composed_state,
-        }
+        self._last_used_state = next(iter(self._template_states.values()))
 
     def _get_template_configs_as_dict(
         self
@@ -162,18 +150,24 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
             ) from e
 
     def produce(self, params: ProduceParams) -> list[str]:
-        self._event_context['timestamp'] = params['timestamp']
-        self._event_context['tags'] = params['tags']
-
-        picked_aliases = self._template_picker.pick(**self._event_context)
+        picked_aliases = self._template_picker.pick(
+            timestamp=params['timestamp'],
+            tags=params['tags'],
+            locals=self._last_used_state,
+            shared=self._shared_state,
+            composed=self._composed_state
+        )
 
         rendered = []
         for alias in picked_aliases:
-            locals = self._template_states[alias]
             template = self._templates[alias]
 
             try:
-                event = template.render(locals=locals, **self._event_context)
+                event = template.render(
+                    timestamp=params['timestamp'],
+                    tags=params['tags'],
+                    locals=self._template_states[alias]
+                )
             except TemplateRuntimeError as e:
                 raise PluginRuntimeError(
                     f'Failed to render template "{alias}" '
@@ -181,9 +175,7 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
                 )
             rendered.append(event)
         else:
-            # set locals state in event context to alias of most recently
-            # rendered template
-            self._event_context['locals'] = self._template_states[alias]
+            self._last_used_state = self._template_states[alias]
 
         return rendered
 
