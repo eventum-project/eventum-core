@@ -173,7 +173,7 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
             template = self._templates[alias]
 
             try:
-                event = template.render(locals=locals, **params)
+                event = template.render(locals=locals, **self._event_context)
             except TemplateRuntimeError as e:
                 raise PluginRuntimeError(
                     f'Failed to render template "{alias}" '
