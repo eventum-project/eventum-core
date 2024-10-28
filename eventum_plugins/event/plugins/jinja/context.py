@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TypedDict
 
 from eventum_plugins.event.plugins.jinja.state import State
@@ -8,7 +9,7 @@ class EventContext(TypedDict):
 
     Attributes
     ----------
-    timestamp : str
+    timestamp : datetime
         Timestamp of event
 
     tags : tuple[str, ...]
@@ -23,7 +24,7 @@ class EventContext(TypedDict):
     composed : State
         Composed state of templates
     """
-    timestamp: str
+    timestamp: datetime
     tags: tuple[str, ...]
     locals: State
     shared: State

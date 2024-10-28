@@ -99,7 +99,8 @@ def test_has_tags():
 
 
 def test_before():
-    timestamp = datetime(2023, 10, 27, 10, 30, 20, 500_000).isoformat()
+    timestamp = datetime.fromisoformat('2023-10-27T10:30:20.500000Z')
+
     assert Before(
         before=TimestampComponents(year=2024)
     ).check(timestamp=timestamp)
@@ -166,7 +167,7 @@ def test_before():
 
 
 def test_after():
-    timestamp = datetime(2023, 10, 27, 10, 30, 20, 500_000).isoformat()
+    timestamp = datetime.fromisoformat('2023-10-27T10:30:20.500000Z')
 
     assert After(
         after=TimestampComponents(year=2022)

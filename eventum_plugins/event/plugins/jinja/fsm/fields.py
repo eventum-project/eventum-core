@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import re
 from abc import ABC, abstractmethod
-from datetime import datetime
 from operator import contains, eq, ge, gt, le, lt
 from typing import (Annotated, Any, Callable, Literal, Self, TypeAlias, Union,
                     Unpack)
@@ -29,14 +28,8 @@ class Checkable(ABC):
 
         Parameters
         ----------
-        timestamp : str
-            Timestamp of event
-
-        tags : list[str]
-            Tags from input plugin that generated event
-
-        state : State
-            Shared state of templates
+        **kwargs : Unpack[EventContext]
+            Event context parameters for checking condition
 
         Returns
         -------
@@ -470,7 +463,7 @@ class Before(BaseModel, Checkable, frozen=True, extra='forbid'):
     before: TimestampComponents
 
     def check(self, **kwargs: Unpack[EventContext]) -> bool:
-        dt = datetime.fromisoformat(kwargs['timestamp'])
+        dt = kwargs['timestamp']
 
         target = dt.replace(
             **self.before.model_dump(exclude_none=True)
@@ -488,7 +481,7 @@ class After(BaseModel, Checkable, frozen=True, extra='forbid'):
     after: TimestampComponents
 
     def check(self, **kwargs: Unpack[EventContext]) -> bool:
-        dt = datetime.fromisoformat(kwargs['timestamp'])
+        dt = kwargs['timestamp']
 
         target = dt.replace(
             **self.after.model_dump(exclude_none=True)
