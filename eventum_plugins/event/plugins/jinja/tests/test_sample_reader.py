@@ -1,14 +1,14 @@
 import os
 
 import pytest
-import tablib  # type: ignore[import-untyped]
 
 from eventum_plugins.event.plugins.jinja.config import (CSVSampleConfig,
                                                         ItemsSampleConfig,
                                                         JSONSampleConfig,
                                                         SampleConfig,
                                                         SampleType)
-from eventum_plugins.event.plugins.jinja.sample_reader import (SampleLoadError,
+from eventum_plugins.event.plugins.jinja.sample_reader import (Sample,
+                                                               SampleLoadError,
                                                                SampleReader)
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -125,8 +125,7 @@ def test_load_items_sample(items_sample_config):
     sample_reader = SampleReader(items_sample_config)
     sample = sample_reader['items_sample']
 
-    assert isinstance(sample, tablib.Dataset)
-    assert sample.headers is None
+    assert isinstance(sample, Sample)
     assert sample[0] == ('one', 'two')
     assert sample[1] == ('three', 'four')
 
@@ -135,8 +134,7 @@ def test_load_flat_items_sample(flat_items_sample_config):
     sample_reader = SampleReader(flat_items_sample_config)
     sample = sample_reader['items_sample']
 
-    assert isinstance(sample, tablib.Dataset)
-    assert sample.headers is None
+    assert isinstance(sample, Sample)
     assert sample[0] == (1, )
     assert sample[1] == (2, )
     assert sample[2] == (3, )
@@ -146,8 +144,7 @@ def test_load_csv_sample(csv_sample_config):
     sample_reader = SampleReader(csv_sample_config)
     sample = sample_reader['csv_sample']
 
-    assert isinstance(sample, tablib.Dataset)
-    assert sample.headers == ['name', 'email', 'position']
+    assert isinstance(sample, Sample)
     assert sample[0] == ('John', 'john@example.com', 'Manager')
     assert sample[1] == ('Jane', 'jane@example.com', 'HR')
 
@@ -163,7 +160,6 @@ def test_load_csv_sample_with_other_delimiter(
     sample_reader = SampleReader(other_delimiter_csv_sample_config)
 
     sample = sample_reader['csv_sample']
-    assert sample.headers == ['name', 'email', 'position']
     assert sample[0] == ('John', 'john@example.com', 'Manager')
     assert sample[1] == ('Jane', 'jane@example.com', 'HR')
 
@@ -172,7 +168,6 @@ def test_load_csv_sample_without_header(no_header_csv_sample_config):
     sample_reader = SampleReader(no_header_csv_sample_config)
     sample = sample_reader['csv_sample']
 
-    assert sample.headers is None
     assert sample[0] == ('name', 'email', 'position')
     assert sample[1] == ('John', 'john@example.com', 'Manager')
     assert sample[2] == ('Jane', 'jane@example.com', 'HR')
@@ -182,8 +177,7 @@ def test_load_json_sample(json_sample_config):
     sample_reader = SampleReader(json_sample_config)
     sample = sample_reader['json_sample']
 
-    assert isinstance(sample, tablib.Dataset)
-    assert sample.headers == ['name', 'email', 'position']
+    assert isinstance(sample, Sample)
     assert sample[0] == ('John', 'john@example.com', 'Manager')
     assert sample[1] == ('Jane', 'jane@example.com', 'HR')
 
@@ -192,8 +186,7 @@ def test_load_nested_json_sample(nested_json_sample_config):
     sample_reader = SampleReader(nested_json_sample_config)
     sample = sample_reader['json_sample']
 
-    assert isinstance(sample, tablib.Dataset)
-    assert sample.headers == ['name', 'email', 'position']
+    assert isinstance(sample, Sample)
     assert sample[0] == (
         {'firstname': 'John', 'lastname': 'Doe'},
         ['john@example.com', 'john.public@example.com'],
