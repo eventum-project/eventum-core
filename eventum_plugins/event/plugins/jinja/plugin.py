@@ -1,7 +1,7 @@
 import os
 from copy import copy
 from datetime import datetime
-from typing import Any, MutableMapping, TypedDict
+from typing import Any, MutableMapping, TypedDict, Unpack
 
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateRuntimeError,
@@ -39,6 +39,22 @@ class ProduceParams(TypedDict):
     tags: tuple[str, ...]
 
 
+class JinjaEventPluginKwargs(TypedDict):
+    """Kwargs for `JinjaEventPlugin`.
+
+    Attributes
+    ----------
+    composed_state : MultiProcessState
+        Composed state for cross generators communication
+
+    templates_loader : BaseLoader | None
+        Templates loader
+
+    """
+    composed_state: MultiProcessState
+    templates_loader: BaseLoader | None
+
+
 class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
     """Event plugin for producing events using Jinja template engine."""
 
@@ -46,14 +62,17 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
 
     def __init__(
         self,
+        *,
         config: JinjaEventConfig,
-        composed_state: MultiProcessState,
-        templates_loader: BaseLoader | None = None,
+        **kwargs: Unpack[JinjaEventPluginKwargs]
     ) -> None:
         self._config = config
 
         self._env = Environment(
-            loader=templates_loader or FileSystemLoader(os.getcwd()),
+            loader=(
+                kwargs.get('templates_loader', None)
+                or FileSystemLoader(os.getcwd())
+            ),
             extensions=self._JINJA_EXTENSIONS
         )
 
@@ -61,7 +80,7 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
         self._module_provider = ModuleProvider(modules.__name__)
         self._subprocess_runner = SubprocessRunner()
         self._shared_state = SingleThreadState()
-        self._composed_state = composed_state
+        self._composed_state = kwargs['composed_state']
 
         self._env.globals['params'] = self._config.root.params
         self._env.globals['samples'] = self._samples

@@ -2,10 +2,20 @@ from abc import abstractmethod
 from typing import Any
 
 from eventum_plugins.base.plugin import Plugin
+from eventum_plugins.event.base.config import EventPluginConfig
 
 
 class BaseEventPlugin(Plugin, config_cls=object, register=False):
     """Base class for all event plugins."""
+
+    @abstractmethod
+    def __init__(
+        self,
+        *,
+        config: EventPluginConfig,
+        **kwargs: Any
+    ) -> None:
+        ...
 
     @abstractmethod
     def produce(self, params: Any) -> Any:
