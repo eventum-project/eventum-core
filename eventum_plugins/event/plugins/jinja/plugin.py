@@ -10,7 +10,7 @@ from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
 import eventum_plugins.event.plugins.jinja.modules as modules
 from eventum_plugins.event.base.plugin import BaseEventPlugin
 from eventum_plugins.event.plugins.jinja.config import (
-    JinjaEventConfig, TemplateConfigForGeneralModes)
+    JinjaEventPluginConfig, TemplateConfigForGeneralModes)
 from eventum_plugins.event.plugins.jinja.module_provider import ModuleProvider
 from eventum_plugins.event.plugins.jinja.sample_reader import SampleReader
 from eventum_plugins.event.plugins.jinja.state import (MultiProcessState,
@@ -48,14 +48,15 @@ class JinjaEventPluginKwargs(TypedDict):
         Composed state for cross generators communication
 
     templates_loader : BaseLoader | None
-        Templates loader
+        Templates loader, if `None` is provided then default
+        (FileSystemLoader) loader is used
 
     """
     composed_state: MultiProcessState
     templates_loader: BaseLoader | None
 
 
-class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
+class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventPluginConfig):
     """Event plugin for producing events using Jinja template engine."""
 
     _JINJA_EXTENSIONS = ('jinja2.ext.do', 'jinja2.ext.loopcontrols')
@@ -63,7 +64,7 @@ class JinjaEventPlugin(BaseEventPlugin, config_cls=JinjaEventConfig):
     def __init__(
         self,
         *,
-        config: JinjaEventConfig,
+        config: JinjaEventPluginConfig,
         **kwargs: Unpack[JinjaEventPluginKwargs]
     ) -> None:
         self._config = config

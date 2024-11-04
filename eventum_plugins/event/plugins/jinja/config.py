@@ -164,7 +164,11 @@ class TemplateConfigForChainMode(TemplateConfigForGeneralModes, frozen=True):
     chain: list[str] = Field(..., min_length=1)
 
 
-class JinjaEventConfigCommonFields(BaseModel, frozen=True, extra='forbid'):
+class JinjaEventPluginConfigCommonFields(
+    BaseModel,
+    frozen=True,
+    extra='forbid'
+):
     """Configuration common fields for `jinja` event plugin.
 
     Attributes
@@ -189,11 +193,11 @@ class JinjaEventConfigCommonFields(BaseModel, frozen=True, extra='forbid'):
         return dict()
 
 
-class JinjaEventConfigForGeneralModes(
+class JinjaEventPluginConfigForGeneralModes(
     TemplateSingleItemElementsValidatorMixin,
     TemplateAliasesUniquenessValidatorMixin,
     EventPluginConfig,
-    JinjaEventConfigCommonFields,
+    JinjaEventPluginConfigCommonFields,
     frozen=True
 ):
     """Configuration for `jinja` event plugin for general picking
@@ -221,11 +225,11 @@ class JinjaEventConfigForGeneralModes(
     ] = Field(..., min_length=1)
 
 
-class JinjaEventConfigForChanceMode(
+class JinjaEventPluginConfigForChanceMode(
     TemplateSingleItemElementsValidatorMixin,
     TemplateAliasesUniquenessValidatorMixin,
     EventPluginConfig,
-    JinjaEventConfigCommonFields,
+    JinjaEventPluginConfigCommonFields,
     frozen=True
 ):
     """Configuration for `jinja` event plugin for `chance` picking
@@ -245,11 +249,11 @@ class JinjaEventConfigForChanceMode(
     ] = Field(..., min_length=1)
 
 
-class JinjaEventConfigForFSMMode(
+class JinjaEventPluginConfigForFSMMode(
     TemplateSingleItemElementsValidatorMixin,
     TemplateAliasesUniquenessValidatorMixin,
     EventPluginConfig,
-    JinjaEventConfigCommonFields,
+    JinjaEventPluginConfigCommonFields,
     frozen=True
 ):
     """Configuration for `jinja` event plugin for `fsm` picking mode.
@@ -285,11 +289,11 @@ class JinjaEventConfigForFSMMode(
         return v
 
 
-class JinjaEventConfigForChainMode(
+class JinjaEventPluginConfigForChainMode(
     TemplateSingleItemElementsValidatorMixin,
     TemplateAliasesUniquenessValidatorMixin,
     EventPluginConfig,
-    JinjaEventConfigCommonFields,
+    JinjaEventPluginConfigCommonFields,
     frozen=True
 ):
     """Configuration for `jinja` event plugin for `chain` picking
@@ -332,9 +336,11 @@ class JinjaEventConfigForChainMode(
         return fields
 
 
-class JinjaEventConfig(RootModel, frozen=True):
+class JinjaEventPluginConfig(RootModel, frozen=True):
     """Configuration for `jinja` event plugin."""
     root: (
-        JinjaEventConfigForGeneralModes | JinjaEventConfigForChanceMode
-        | JinjaEventConfigForFSMMode | JinjaEventConfigForChainMode
+        JinjaEventPluginConfigForGeneralModes
+        | JinjaEventPluginConfigForChanceMode
+        | JinjaEventPluginConfigForFSMMode
+        | JinjaEventPluginConfigForChainMode
     ) = Field(discriminator='mode')
