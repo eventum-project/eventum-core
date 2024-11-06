@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import Any, Callable
 
 import tablib  # type: ignore[import-untyped]
@@ -40,10 +41,15 @@ def _load_items_sample(config: ItemsSampleConfig) -> Sample:
         Loaded sample
     """
     data = tablib.Dataset()
+
     try:
-        len(config.source[0])   # check if source is a flat collection
+        first_row = config.source[0]
+    except IndexError:
+        first_row = []
+
+    if isinstance(first_row, Iterable) and not isinstance(first_row, str):
         data.extend(config.source)
-    except TypeError:
+    else:
         data.extend((item, ) for item in config.source)
 
     return Sample(data)
