@@ -1,6 +1,6 @@
-from multiprocessing import RLock
 import os
 from datetime import datetime
+from multiprocessing import RLock
 
 from jinja2 import DictLoader
 
