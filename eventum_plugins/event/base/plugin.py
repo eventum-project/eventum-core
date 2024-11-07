@@ -5,7 +5,7 @@ from eventum_plugins.base.plugin import Plugin
 from eventum_plugins.event.base.config import EventPluginConfig
 
 
-class BaseEventPlugin(Plugin, config_cls=object, register=False):
+class EventPlugin(Plugin, config_cls=object, register=False):
     """Base class for all event plugins."""
 
     @abstractmethod
