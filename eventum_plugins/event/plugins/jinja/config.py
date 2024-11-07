@@ -165,9 +165,8 @@ class TemplateConfigForChainMode(TemplateConfigForGeneralModes, frozen=True):
 
 
 class JinjaEventPluginConfigCommonFields(
-    BaseModel,
-    frozen=True,
-    extra='forbid'
+    EventPluginConfig,
+    frozen=True
 ):
     """Configuration common fields for `jinja` event plugin.
 
@@ -196,7 +195,6 @@ class JinjaEventPluginConfigCommonFields(
 class JinjaEventPluginConfigForGeneralModes(
     TemplateSingleItemElementsValidatorMixin,
     TemplateAliasesUniquenessValidatorMixin,
-    EventPluginConfig,
     JinjaEventPluginConfigCommonFields,
     frozen=True
 ):
@@ -228,7 +226,6 @@ class JinjaEventPluginConfigForGeneralModes(
 class JinjaEventPluginConfigForChanceMode(
     TemplateSingleItemElementsValidatorMixin,
     TemplateAliasesUniquenessValidatorMixin,
-    EventPluginConfig,
     JinjaEventPluginConfigCommonFields,
     frozen=True
 ):
@@ -252,7 +249,6 @@ class JinjaEventPluginConfigForChanceMode(
 class JinjaEventPluginConfigForFSMMode(
     TemplateSingleItemElementsValidatorMixin,
     TemplateAliasesUniquenessValidatorMixin,
-    EventPluginConfig,
     JinjaEventPluginConfigCommonFields,
     frozen=True
 ):
@@ -292,7 +288,6 @@ class JinjaEventPluginConfigForFSMMode(
 class JinjaEventPluginConfigForChainMode(
     TemplateSingleItemElementsValidatorMixin,
     TemplateAliasesUniquenessValidatorMixin,
-    EventPluginConfig,
     JinjaEventPluginConfigCommonFields,
     frozen=True
 ):
