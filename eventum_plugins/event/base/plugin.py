@@ -6,7 +6,18 @@ from eventum_plugins.event.base.config import EventPluginConfig
 
 
 class EventPlugin(Plugin, config_cls=object, register=False):
-    """Base class for all event plugins."""
+    """Base class for all event plugins.
+
+    Parameters
+    ----------
+    config : EventPluginConfig
+        Configuration for a plugin
+
+    Raises
+    ------
+    PluginConfigurationError
+        If any error occurs during initializing plugin
+    """
 
     @abstractmethod
     def __init__(

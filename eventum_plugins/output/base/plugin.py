@@ -11,6 +11,11 @@ class OutputPlugin(Plugin, config_cls=object, register=False):
     ----------
     config : OutputPluginConfig
         Configuration for a plugin
+
+    Raises
+    ------
+    PluginConfigurationError
+        If any error occurs during initializing plugin
     """
 
     @abstractmethod
