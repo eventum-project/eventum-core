@@ -1,6 +1,5 @@
 from enum import StrEnum
 import json
-import os
 from typing import assert_never
 
 
@@ -28,7 +27,7 @@ def format_ndjson(event: str) -> str:
         If formatting failed
     """
     try:
-        return json.dumps(json.loads(event), ensure_ascii=False) + os.linesep
+        return json.dumps(json.loads(event), ensure_ascii=False)
     except json.JSONDecodeError as e:
         raise ValueError(e) from None
 
