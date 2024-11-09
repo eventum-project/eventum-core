@@ -1,4 +1,4 @@
-from eventum_plugins.output.formatters import format_event, Format
+from eventum_plugins.output.formatters import Format, format_event
 
 
 def test_format_plain():

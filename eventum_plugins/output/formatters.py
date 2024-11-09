@@ -1,5 +1,5 @@
-from enum import StrEnum
 import json
+from enum import StrEnum
 from typing import assert_never
 
 

@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from typing import Sequence
+
 from eventum_plugins.base.plugin import Plugin
 from eventum_plugins.output.base.config import OutputPluginConfig
 
