@@ -19,9 +19,8 @@ class OutputPlugin(Plugin, config_cls=object, register=False):
         If any error occurs during initializing plugin
     """
 
-    @abstractmethod
     def __init__(self, *, config: OutputPluginConfig) -> None:
-        ...
+        self._config = config
 
     @abstractmethod
     async def open(self) -> None:
