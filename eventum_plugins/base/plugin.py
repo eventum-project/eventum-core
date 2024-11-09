@@ -2,19 +2,34 @@
 import importlib
 import inspect
 from abc import ABC
+from typing import Any, Required, TypedDict, Unpack
 
 from eventum_plugins.exceptions import PluginRegistrationError
 from eventum_plugins.registry import PluginInfo, PluginsRegistry
 
 
+class PluginKwargs(TypedDict):
+    """Arguments for plugin configuration.
+
+    Attributes
+    ----------
+    config : Any
+        Configuration for the plugin
+
+    id : int
+        Numeric plugin identifier
+    """
+    config: Any
+    id: Required[int]
+
+
 class Plugin(ABC):
     """Base class for all plugins.
 
-    Notes
-    -----
-    All subclasses of this class is considered as implemented plugins
-    if inheritance parameter `register` is set to `True`. Implemented
-    plugins are automatically registered in `PluginsRegistry`.
+    Parameters
+    ----------
+    **kwargs : Unpack[PluginKwargs]
+        Arguments for plugin configuration (see `PluginKwargs`)
 
     Other Parameters
     ----------------
@@ -23,7 +38,23 @@ class Plugin(ABC):
 
     register : bool, default=True
         Whether to register class as implemented plugin
+
+    Notes
+    -----
+    All subclasses of this class is considered as implemented plugins
+    if inheritance parameter `register` is set to `True`. Implemented
+    plugins are automatically registered in `PluginsRegistry`.
     """
+
+    def __init__(self, **kwargs: Unpack[PluginKwargs]) -> None:
+        self._config = kwargs['config']
+        self._id = kwargs['id']
+
+    def __str__(self) -> str:
+        # plugin_name attribute is set during class initialization
+        return (
+            f'{self._plugin_name}-{self._id}'   # type: ignore[attr-defined]
+        )
 
     def __init_subclass__(
         cls,
@@ -67,6 +98,8 @@ class Plugin(ABC):
                 f'for module named "{class_module.__name__}": {e}'
             )
 
+        setattr(cls, '_plugin_name', plugin_name)
+
         PluginsRegistry.register_plugin(
             PluginInfo(
                 name=plugin_name,
@@ -75,3 +108,13 @@ class Plugin(ABC):
                 package=package
             )
         )
+
+    @property
+    def id(self) -> int:
+        """ID of the plugin."""
+        return self._id
+
+    @property
+    def plugin_name(self) -> str:
+        """Canonical name of the plugin."""
+        return self._plugin_name    # type: ignore[attr-defined]

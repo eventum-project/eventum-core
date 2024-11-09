@@ -1,8 +1,12 @@
 from abc import abstractmethod
-from typing import Any
+from typing import Any, Unpack
 
-from eventum_plugins.base.plugin import Plugin
+from eventum_plugins.base.plugin import Plugin, PluginKwargs
 from eventum_plugins.event.base.config import EventPluginConfig
+
+
+class EventPluginKwargs(PluginKwargs):
+    """Arguments for event plugin configuration."""
 
 
 class EventPlugin(Plugin, config_cls=object, register=False):
@@ -10,8 +14,8 @@ class EventPlugin(Plugin, config_cls=object, register=False):
 
     Parameters
     ----------
-    config : EventPluginConfig
-        Configuration for a plugin
+    **kwargs : Unpack[EventPluginKwargs]
+        Arguments for plugin configuration (see `EventPluginKwargs`)
 
     Raises
     ------
@@ -19,14 +23,9 @@ class EventPlugin(Plugin, config_cls=object, register=False):
         If any error occurs during initializing plugin
     """
 
-    @abstractmethod
-    def __init__(
-        self,
-        *,
-        config: EventPluginConfig,
-        **kwargs: Any
-    ) -> None:
-        ...
+    def __init__(self, **kwargs: Unpack[EventPluginKwargs]) -> None:
+        super().__init__(**kwargs)
+        self._config: EventPluginConfig
 
     @abstractmethod
     def produce(self, params: Any) -> Any:

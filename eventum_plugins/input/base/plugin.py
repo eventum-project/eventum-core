@@ -1,40 +1,24 @@
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
-                    TypedDict, Unpack)
+                    Unpack)
 
 from numpy import datetime64
 from numpy.typing import NDArray
 from pytz import BaseTzInfo
 
-from eventum_plugins.base.plugin import Plugin
+from eventum_plugins.base.plugin import Plugin, PluginKwargs
 from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import TimestampsBatcher
 
 
-class InputPluginKwargs(TypedDict):
-    id: Required[int]
-    live_mode: Required[bool]
-    timezone: Required[BaseTzInfo]
-    batch_size: NotRequired[int | None]
-    batch_delay: NotRequired[float | None]
-    queue_max_size: NotRequired[int]
-    on_queue_overflow: NotRequired[Literal['block', 'skip']]
+class InputPluginKwargs(PluginKwargs):
+    """Arguments for input plugin configuration.
 
-
-class InputPlugin(Plugin, config_cls=object, register=False):
-    """Base class for all input plugins.
-
-    Parameters
+    Attributes
     ----------
-    id : int
-        Numeric plugin identifier
-
-    config : InputPluginConfig
-        Configuration for a plugin
-
     live_mode : bool
         Wether to use timestamp values to generate in live mode
 
@@ -52,6 +36,22 @@ class InputPlugin(Plugin, config_cls=object, register=False):
 
     on_queue_overflow : Literal['block', 'skip'], default='block'
         Block or skip adding new timestamps when batcher is overflowed
+    """
+    live_mode: Required[bool]
+    timezone: Required[BaseTzInfo]
+    batch_size: NotRequired[int | None]
+    batch_delay: NotRequired[float | None]
+    queue_max_size: NotRequired[int]
+    on_queue_overflow: NotRequired[Literal['block', 'skip']]
+
+
+class InputPlugin(Plugin, config_cls=object, register=False):
+    """Base class for all input plugins.
+
+    Parameters
+    ----------
+    **kwargs : Unpack[InputPluginKwargs]
+        Arguments for plugin configuration (see `InputPluginKwargs`)
 
     Raises
     ------
@@ -60,14 +60,10 @@ class InputPlugin(Plugin, config_cls=object, register=False):
         provided parameters
     """
 
-    def __init__(
-        self,
-        *,
-        config: InputPluginConfig,
-        **kwargs: Unpack[InputPluginKwargs]
-    ) -> None:
-        self._id = kwargs['id']
-        self._config = config
+    def __init__(self, **kwargs: Unpack[InputPluginKwargs]) -> None:
+        super().__init__(config=kwargs['config'], id=kwargs['id'])
+        self._config: InputPluginConfig
+
         self._live_mode = kwargs['live_mode']
         self._timezone = kwargs['timezone']
 
@@ -174,14 +170,6 @@ class InputPlugin(Plugin, config_cls=object, register=False):
             If any error occurs during timestamps generation
         """
         ...
-
-    def __str__(self) -> str:
-        return f'{self.__class__.__name__}-{self.id}'
-
-    @property
-    def id(self) -> int:
-        """ID of the plugin."""
-        return self._id
 
     @property
     def live_mode(self) -> bool:
