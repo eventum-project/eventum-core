@@ -1,7 +1,7 @@
 from abc import ABC
 
-from pydantic import BaseModel
+from eventum_plugins.base.config import PluginConfig
 
 
-class OutputPluginConfig(ABC, BaseModel, extra='forbid', frozen=True):
+class OutputPluginConfig(PluginConfig, ABC):
     """Base config model for output plugins."""

@@ -1,9 +1,9 @@
 from abc import ABC
 
-from pydantic import BaseModel
+from eventum_plugins.base.config import PluginConfig
 
 
-class InputPluginConfig(ABC, BaseModel, extra='forbid', frozen=True):
+class InputPluginConfig(PluginConfig, ABC):
     """Base config model for input plugins.
 
     Attributes
