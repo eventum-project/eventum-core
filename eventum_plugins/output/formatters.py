@@ -1,6 +1,6 @@
 import json
 from enum import StrEnum
-from typing import assert_never
+from typing import Any, Callable, Iterable, assert_never
 
 
 class Format(StrEnum):
@@ -37,6 +37,9 @@ def format_event(event: str, format: Format) -> str:
 
     Parameters
     ----------
+    event : str
+        Event to format
+
     format : Format
         Format to use
 
@@ -57,3 +60,58 @@ def format_event(event: str, format: Format) -> str:
             return format_ndjson(event)
         case f:
             assert_never(f)
+
+
+def format_events(
+    events: Iterable[str],
+    format: Format,
+    ignore_errors: bool = False,
+    error_callback: Callable[[ValueError], Any] | None = None
+) -> list[str]:
+    """Format events using specified format.
+
+    Parameters
+    ----------
+    events : Iterable[str]
+        Events to format
+
+    format : Format
+        Format to use
+
+    ignore_errors : bool, default = False
+        Proceed formatting events if error occurred for some event,
+        otherwise the first formatting error is propagated
+
+    error_callback : Callable[[ValueError], Any] | None = None
+        Callback that is called each time formatting error occurs,
+        actual only if ignore_errors is `True`
+
+    Returns
+    -------
+    list[str]
+        Formatted events
+
+    Raises
+    ------
+    ValueError
+        If formatting fails for some event and `ignore_errors` is `False`
+    """
+    formatted_events: list[str] = []
+    if ignore_errors:
+        if error_callback is not None:      # minimize condition checks
+            for event in events:
+                try:
+                    formatted_events.append(format_event(event, format))
+                except ValueError as e:
+                    error_callback(e)
+        else:
+            for event in events:
+                try:
+                    formatted_events.append(format_event(event, format))
+                except ValueError:
+                    pass
+    else:
+        for event in events:
+            formatted_events.append(format_event(event, format))
+
+    return formatted_events
