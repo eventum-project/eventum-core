@@ -1,8 +1,12 @@
 from abc import abstractmethod
-from typing import Sequence
+from typing import Required, Sequence, TypedDict, Unpack
 
 from eventum_plugins.base.plugin import Plugin
 from eventum_plugins.output.base.config import OutputPluginConfig
+
+
+class OutputPluginKwargs(TypedDict):
+    id: Required[int]
 
 
 class OutputPlugin(Plugin, config_cls=object, register=False):
@@ -10,6 +14,9 @@ class OutputPlugin(Plugin, config_cls=object, register=False):
 
     Parameters
     ----------
+    id : int
+        Numeric plugin identifier
+
     config : OutputPluginConfig
         Configuration for a plugin
 
@@ -19,8 +26,17 @@ class OutputPlugin(Plugin, config_cls=object, register=False):
         If any error occurs during initializing plugin
     """
 
-    def __init__(self, *, config: OutputPluginConfig) -> None:
+    def __init__(
+        self,
+        *,
+        config: OutputPluginConfig,
+        **kwargs: Unpack[OutputPluginKwargs]
+    ) -> None:
+        self._id = kwargs['id']
         self._config = config
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}-{self.id}'
 
     @abstractmethod
     async def open(self) -> None:
@@ -49,3 +65,8 @@ class OutputPlugin(Plugin, config_cls=object, register=False):
             Number of successfully written events
         """
         ...
+
+    @property
+    def id(self) -> int:
+        """ID of the plugin."""
+        return self._id
