@@ -34,9 +34,13 @@ def test_rendering():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={'test.jinja': '1 + 1 = {{ 1 + 1 }}'}),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={'test.jinja': '1 + 1 = {{ 1 + 1 }}'}
+            ),
+            'composed_state': ...
+        }
     )
 
     events = plugin.produce(
@@ -67,9 +71,13 @@ def test_rendering_parameters():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={'test.jinja': '{{ params.passed_parameter }}'}),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={'test.jinja': '{{ params.passed_parameter }}'}
+            ),
+            'composed_state': ...
+        }
     )
 
     events = plugin.produce(
@@ -105,10 +113,13 @@ def test_items_sample():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={'test.jinja': '{{ samples.test_sample[0][0] }}'}
-        ),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={'test.jinja': '{{ samples.test_sample[0][0] }}'}
+            ),
+            'composed_state': ...
+        }
     )
 
     events = plugin.produce(
@@ -145,10 +156,13 @@ def test_csv_sample():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={'test.jinja': '{{ samples.test_sample[0] }}'}
-        ),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={'test.jinja': '{{ samples.test_sample[0] }}'}
+            ),
+            'composed_state': ...
+        }
     )
 
     events = plugin.produce(
@@ -184,14 +198,17 @@ def test_subprocess():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={
-                'test.jinja': (
-                    '{{ subprocess.run("echo -n \'Hello, World!\'", True) }}'
-                )
-            }
-        ),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={
+                    'test.jinja': (
+                        '{{subprocess.run("echo -n \'Hello, World!\'", True)}}'
+                    )
+                }
+            ),
+            'composed_state': ...
+        }
     )
 
     events = plugin.produce(
@@ -232,20 +249,23 @@ def test_locals_state():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={
-                'test.jinja': (
-                    '{%- set i = locals.get("i", 1) -%}\n'
-                    '{{ i }}\n'
-                    '{%- do locals.set("i", i + 1) -%}\n'
-                ),
-                'other_test.jinja': (
-                    '{%- set i = locals.get("i", 1) -%}\n'
-                    '{{ i }}\n'
-                )
-            }
-        ),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={
+                    'test.jinja': (
+                        '{%- set i = locals.get("i", 1) -%}\n'
+                        '{{ i }}\n'
+                        '{%- do locals.set("i", i + 1) -%}\n'
+                    ),
+                    'other_test.jinja': (
+                        '{%- set i = locals.get("i", 1) -%}\n'
+                        '{{ i }}\n'
+                    )
+                }
+            ),
+            'composed_state': ...
+        }
     )
 
     events = []
@@ -294,20 +314,23 @@ def test_shared_state():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={
-                'test.jinja': (
-                    '{%- set i = shared.get("i", 1) -%}\n'
-                    '{{ i }}\n'
-                    '{%- do shared.set("i", i + 1) -%}\n'
-                ),
-                'other_test.jinja': (
-                    '{%- set i = shared.get("i", 1) -%}\n'
-                    '{{ i }}\n'
-                )
-            }
-        ),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={
+                    'test.jinja': (
+                        '{%- set i = shared.get("i", 1) -%}\n'
+                        '{{ i }}\n'
+                        '{%- do shared.set("i", i + 1) -%}\n'
+                    ),
+                    'other_test.jinja': (
+                        '{%- set i = shared.get("i", 1) -%}\n'
+                        '{{ i }}\n'
+                    )
+                }
+            ),
+            'composed_state': ...
+        }
     )
 
     events = []
@@ -357,20 +380,23 @@ def test_composed_state():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={
-                'test.jinja': (
-                    '{%- set i = composed.get("i", 1) -%}\n'
-                    '{{ i }}\n'
-                    '{%- do composed.set("i", i + 1) -%}\n'
-                ),
-                'other_test.jinja': (
-                    '{%- set i = composed.get("i", 1) -%}\n'
-                    '{{ i }}\n'
-                )
-            }
-        ),
-        composed_state=composed_state
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={
+                    'test.jinja': (
+                        '{%- set i = composed.get("i", 1) -%}\n'
+                        '{{ i }}\n'
+                        '{%- do composed.set("i", i + 1) -%}\n'
+                    ),
+                    'other_test.jinja': (
+                        '{%- set i = composed.get("i", 1) -%}\n'
+                        '{{ i }}\n'
+                    )
+                }
+            ),
+            'composed_state': composed_state
+        }
     )
 
     events = []
@@ -417,14 +443,17 @@ def test_modules():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={
-                'test.jinja': (
-                    '{{ module.rand.number.integer(1, 10) }}'
-                )
-            }
-        ),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={
+                    'test.jinja': (
+                        '{{ module.rand.number.integer(1, 10) }}'
+                    )
+                }
+            ),
+            'composed_state': ...
+        }
     )
 
     events = plugin.produce(
@@ -460,12 +489,15 @@ def test_timestamp():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={
-                'test.jinja': '{{ timestamp.isoformat() }}'
-            }
-        ),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={
+                    'test.jinja': '{{ timestamp.isoformat() }}'
+                }
+            ),
+            'composed_state': ...
+        }
     )
     ts = datetime.now().astimezone()
 
@@ -502,12 +534,15 @@ def test_tags():
 
             )
         ),
-        templates_loader=DictLoader(
-            mapping={
-                'test.jinja': '{{ tags[1] }}'
-            }
-        ),
-        composed_state=...
+        params={
+            'id': 1,
+            'templates_loader': DictLoader(
+                mapping={
+                    'test.jinja': '{{ tags[1] }}'
+                }
+            ),
+            'composed_state': ...
+        }
     )
 
     events = plugin.produce(
