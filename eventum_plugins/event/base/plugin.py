@@ -1,21 +1,30 @@
 from abc import abstractmethod
-from typing import Any, Unpack
+from typing import Any, TypeVar
 
-from eventum_plugins.base.plugin import Plugin, PluginKwargs
+from pydantic import RootModel
+
+from eventum_plugins.base.plugin import Plugin, PluginParams
 from eventum_plugins.event.base.config import EventPluginConfig
 
 
-class EventPluginKwargs(PluginKwargs):
-    """Arguments for event plugin configuration."""
+class EventPluginParams(PluginParams):
+    """Parameters for event plugin."""
 
 
-class EventPlugin(Plugin, config_cls=object, register=False):
+config_T = TypeVar('config_T', bound=(EventPluginConfig | RootModel))
+params_T = TypeVar('params_T', bound=EventPluginParams)
+
+
+class EventPlugin(Plugin[config_T, params_T], register=False):
     """Base class for all event plugins.
 
     Parameters
     ----------
-    **kwargs : Unpack[EventPluginKwargs]
-        Arguments for plugin configuration (see `EventPluginKwargs`)
+    config : config_T
+        Configuration for the plugin
+
+    params : params_T
+        Parameters for the plugin (see `EventPluginParams`)
 
     Raises
     ------
@@ -23,9 +32,8 @@ class EventPlugin(Plugin, config_cls=object, register=False):
         If any error occurs during initializing plugin
     """
 
-    def __init__(self, **kwargs: Unpack[EventPluginKwargs]) -> None:
-        super().__init__(**kwargs)
-        self._config: EventPluginConfig
+    def __init__(self, config: config_T, params: params_T) -> None:
+        super().__init__(config, params)
 
     @abstractmethod
     def produce(self, params: Any) -> Any:
