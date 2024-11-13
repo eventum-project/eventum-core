@@ -1,14 +1,15 @@
 import os
 from copy import copy
 from datetime import datetime
-from typing import Any, MutableMapping, TypedDict, Unpack
+from typing import Any, MutableMapping, TypedDict
 
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateRuntimeError,
                     TemplateSyntaxError)
 
 import eventum_plugins.event.plugins.jinja.modules as modules
-from eventum_plugins.event.base.plugin import EventPlugin
+from eventum_plugins.base.plugin import required_params
+from eventum_plugins.event.base.plugin import EventPlugin, EventPluginParams
 from eventum_plugins.event.plugins.jinja.config import (
     JinjaEventPluginConfig, TemplateConfigForGeneralModes)
 from eventum_plugins.event.plugins.jinja.module_provider import ModuleProvider
@@ -39,8 +40,8 @@ class ProduceParams(TypedDict):
     tags: tuple[str, ...]
 
 
-class JinjaEventPluginKwargs(TypedDict):
-    """Kwargs for `JinjaEventPlugin`.
+class JinjaEventPluginParams(EventPluginParams):
+    """Parameters for jinja event plugin.
 
     Attributes
     ----------
@@ -56,22 +57,23 @@ class JinjaEventPluginKwargs(TypedDict):
     templates_loader: BaseLoader | None
 
 
-class JinjaEventPlugin(EventPlugin, config_cls=JinjaEventPluginConfig):
+class JinjaEventPlugin(
+    EventPlugin[JinjaEventPluginConfig, JinjaEventPluginParams]
+):
     """Event plugin for producing events using Jinja template engine."""
 
     _JINJA_EXTENSIONS = ('jinja2.ext.do', 'jinja2.ext.loopcontrols')
 
     def __init__(
         self,
-        *,
         config: JinjaEventPluginConfig,
-        **kwargs: Unpack[JinjaEventPluginKwargs]
+        params: JinjaEventPluginParams
     ) -> None:
-        self._config = config
+        super().__init__(config, params)
 
         self._env = Environment(
             loader=(
-                kwargs.get('templates_loader', None)
+                params.get('templates_loader', None)
                 or FileSystemLoader(os.getcwd())
             ),
             extensions=self._JINJA_EXTENSIONS
@@ -81,7 +83,9 @@ class JinjaEventPlugin(EventPlugin, config_cls=JinjaEventPluginConfig):
         self._module_provider = ModuleProvider(modules.__name__)
         self._subprocess_runner = SubprocessRunner()
         self._shared_state = SingleThreadState()
-        self._composed_state = kwargs['composed_state']
+
+        with required_params():
+            self._composed_state = params['composed_state']
 
         self._env.globals['params'] = self._config.root.params
         self._env.globals['samples'] = self._samples
