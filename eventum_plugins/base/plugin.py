@@ -86,7 +86,7 @@ class PluginParams(TypedDict):
     id: Required[int]
 
 
-config_T = TypeVar('config_T', bound=(PluginConfig | RootModel[PluginConfig]))
+config_T = TypeVar('config_T', bound=(PluginConfig | RootModel))
 params_T = TypeVar('params_T', bound=PluginParams)
 
 
