@@ -2,6 +2,7 @@
 import importlib
 import inspect
 from abc import ABC
+from contextlib import contextmanager
 from types import ModuleType
 from typing import Generic, Required, TypedDict, TypeVar, get_args
 
@@ -86,6 +87,21 @@ class PluginParams(TypedDict):
     id: Required[int]
 
 
+@contextmanager
+def required_params():
+    """Context manager for handling missing keys in plugin parameters.
+
+    Raises
+    ------
+    TypeError
+        If `KeyError` is raised
+    """
+    try:
+        yield
+    except KeyError as e:
+        raise TypeError(f'Missing required parameter: {e}') from None
+
+
 config_T = TypeVar('config_T', bound=(PluginConfig | RootModel))
 params_T = TypeVar('params_T', bound=PluginParams)
 
@@ -115,10 +131,9 @@ class Plugin(ABC, Generic[config_T, params_T]):
 
     def __init__(self, config: config_T, params: params_T) -> None:
         self._config = config
-        try:
+
+        with required_params():
             self._id = params['id']
-        except KeyError as e:
-            raise TypeError(f'Missing required parameter: {e}')
 
     def __str__(self) -> str:
         # _plugin_name attribute is set during subclass initialization
