@@ -1,15 +1,21 @@
 from abc import abstractmethod
-from typing import Sequence, Unpack
+from typing import Sequence, TypeVar
 
-from eventum_plugins.base.plugin import Plugin, PluginKwargs
+from pydantic import RootModel
+
+from eventum_plugins.base.plugin import Plugin, PluginParams
 from eventum_plugins.output.base.config import OutputPluginConfig
 
 
-class OutputPluginKwargs(PluginKwargs):
-    """Arguments for output plugin configuration."""
+class OutputPluginParams(PluginParams):
+    """Params for output plugin."""
 
 
-class OutputPlugin(Plugin, config_cls=object, register=False):
+config_T = TypeVar('config_T', bound=(OutputPluginConfig | RootModel))
+params_T = TypeVar('params_T', bound=OutputPluginParams)
+
+
+class OutputPlugin(Plugin[config_T, params_T], register=False):
     """Base class for all output plugins.
 
     Parameters
@@ -23,9 +29,8 @@ class OutputPlugin(Plugin, config_cls=object, register=False):
         If any error occurs during initializing plugin
     """
 
-    def __init__(self, **kwargs: Unpack[OutputPluginKwargs]) -> None:
-        super().__init__(**kwargs)
-        self._config = OutputPluginConfig
+    def __init__(self, config: config_T, params: params_T) -> None:
+        super().__init__(config, params)
 
     @abstractmethod
     async def open(self) -> None:
