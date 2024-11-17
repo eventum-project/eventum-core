@@ -1,26 +1,28 @@
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
-                    Unpack)
+                    TypeVar)
 
 from numpy import datetime64
 from numpy.typing import NDArray
+from pydantic import RootModel
 from pytz import BaseTzInfo
 
-from eventum_plugins.base.plugin import Plugin, PluginKwargs
+from eventum_plugins.base.plugin import Plugin, PluginParams, required_params
 from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import TimestampsBatcher
 
 
-class InputPluginKwargs(PluginKwargs):
-    """Arguments for input plugin configuration.
+class InputPluginParams(PluginParams):
+    """Parameters for input plugin.
 
     Attributes
     ----------
     live_mode : bool
-        Wether to use timestamp values to generate in live mode
+        Wether to use live mode and generate events at moments
+        defined by timestamp values
 
     timezone : BaseTzInfo
         Timezone that is used for generated timestamps
@@ -45,7 +47,10 @@ class InputPluginKwargs(PluginKwargs):
     on_queue_overflow: NotRequired[Literal['block', 'skip']]
 
 
-class InputPlugin(Plugin, config_cls=object, register=False):
+config_T = TypeVar('config_T', bound=(InputPluginConfig | RootModel))
+
+
+class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
     """Base class for all input plugins.
 
     Parameters
@@ -60,25 +65,25 @@ class InputPlugin(Plugin, config_cls=object, register=False):
         provided parameters
     """
 
-    def __init__(self, **kwargs: Unpack[InputPluginKwargs]) -> None:
-        super().__init__(config=kwargs['config'], id=kwargs['id'])
-        self._config: InputPluginConfig
+    def __init__(self, config: config_T, params: InputPluginParams) -> None:
+        super().__init__(config, params)
 
-        self._live_mode = kwargs['live_mode']
-        self._timezone = kwargs['timezone']
+        with required_params():
+            self._live_mode = params['live_mode']
+            self._timezone = params['timezone']
 
         try:
             self._batcher = TimestampsBatcher(
-                batch_size=kwargs.get('batch_size', 100_000),
-                batch_delay=kwargs.get('batch_delay', 0.1),
+                batch_size=params.get('batch_size', 100_000),
+                batch_delay=params.get('batch_delay', 0.1),
                 scheduling=self._live_mode,
                 timezone=self._timezone,
-                queue_max_size=kwargs.get('queue_max_size', 1_000_000)
+                queue_max_size=params.get('queue_max_size', 1_000_000)
             )
         except ValueError as e:
             raise PluginConfigurationError(f'Wrong batching parameters: {e}')
 
-        self._block_on_overflow = kwargs.get(
+        self._block_on_overflow = params.get(
             'on_queue_overflow', 'block'
         ) == 'block'
 
