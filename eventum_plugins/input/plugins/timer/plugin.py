@@ -1,32 +1,29 @@
 import time
 from datetime import datetime, timedelta
 from itertools import repeat as i_repeat
-from typing import Any, Callable, Unpack
+from typing import Any, Callable
 
 from numpy import arange, datetime64, full, repeat, timedelta64
 from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
-from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.normalizers import normalize_versatile_datetime
 from eventum_plugins.input.plugins.timer.config import TimerInputPluginConfig
 from eventum_plugins.input.utils.time_utils import skip_periods, to_naive
 
 
-class TimerInputPlugin(InputPlugin, config_cls=TimerInputPluginConfig):
+class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
     """Input plugin for generating timestamps after specified number of
     seconds.
     """
 
     def __init__(
         self,
-        *,
         config: TimerInputPluginConfig,
-        **kwargs: Unpack[InputPluginKwargs]
+        params: InputPluginParams
     ) -> None:
-        super().__init__(config=config, **kwargs)
-
-        self._config: TimerInputPluginConfig
+        super().__init__(config, params)
 
         if not self._live_mode and self._config.repeat is None:
             raise PluginConfigurationError(

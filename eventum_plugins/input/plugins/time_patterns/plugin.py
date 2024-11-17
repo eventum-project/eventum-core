@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timedelta
-from typing import Any, Callable, Iterator, Unpack, assert_never
+from typing import Any, Callable, Iterator, assert_never
 
 import numpy as np
 import yaml
@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
-from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.batcher import TimestampsBatcher
 from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.merger import InputPluginsLiveMerger
@@ -25,11 +25,7 @@ from eventum_plugins.input.utils.time_utils import (now64, skip_periods,
                                                     to_naive)
 
 
-class TimePatternInputPlugin(
-    InputPlugin,
-    config_cls=TimePatternConfig,
-    register=False
-):
+class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
     """Input plugin for generating events with specific pattern of
     distribution in time.
 
@@ -73,10 +69,13 @@ class TimePatternInputPlugin(
     ```
     """
 
-    def __init__(self, *, config: TimePatternConfig, **kwargs) -> None:
-        super().__init__(config=config, **kwargs)
+    def __init__(
+        self,
+        config: TimePatternConfig,
+        params: InputPluginParams
+    ) -> None:
+        super().__init__(config, params)
 
-        self._config: TimePatternConfig
         self._randomizer_factors = self._generate_randomizer_factors(
             count=self._config.randomizer.sampling
         )
@@ -315,28 +314,23 @@ class TimePatternInputPlugin(
             )
 
 
-class TimePatternsInputPlugin(
-    InputPlugin,
-    config_cls=TimePatternsInputPluginConfig
-):
+class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
     """Input plugin for merging timestamps from multiple
     `TimePatternInputPlugin` instances.
     """
 
     def __init__(
         self,
-        *,
         config: TimePatternsInputPluginConfig,
-        **kwargs: Unpack[InputPluginKwargs]
+        params: InputPluginParams
     ) -> None:
-        super().__init__(config=config, **kwargs)
+        super().__init__(config, params)
 
-        self._config: TimePatternsInputPluginConfig
-        self._time_patterns = self._init_time_patterns(**kwargs)
+        self._time_patterns = self._init_time_patterns(params)
 
     def _init_time_patterns(
         self,
-        **kwargs: Unpack[InputPluginKwargs]
+        params: InputPluginParams
     ) -> list[TimePatternInputPlugin]:
         """Initialize time pattern specified in config."""
 
@@ -361,7 +355,7 @@ class TimePatternsInputPlugin(
             # for quick merging of several time patterns in live mode
             # delay should be minimal
             if self._live_mode:
-                kwargs = kwargs | {
+                params = params | {
                     'batch_size': None,
                     'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY
                 }
@@ -369,7 +363,7 @@ class TimePatternsInputPlugin(
             time_patterns.append(
                 TimePatternInputPlugin(
                     config=time_pattern,
-                    **kwargs
+                    params=params
                 )
             )
 

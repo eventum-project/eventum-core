@@ -1,14 +1,14 @@
-from typing import Any, Callable, Unpack
+from typing import Any, Callable
 
 from numpy import datetime64, full
 from numpy.typing import NDArray
 
-from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.plugins.sample.config import SampleInputPluginConfig
 from eventum_plugins.input.utils.time_utils import now64
 
 
-class SampleInputPlugin(InputPlugin, config_cls=SampleInputPluginConfig):
+class SampleInputPlugin(InputPlugin[SampleInputPluginConfig]):
     """Input plugin for generating specified count of timestamps. All
     timestamps are the same and have a value of time when generation
     was started.
@@ -16,13 +16,10 @@ class SampleInputPlugin(InputPlugin, config_cls=SampleInputPluginConfig):
 
     def __init__(
         self,
-        *,
         config: SampleInputPluginConfig,
-        **kwargs: Unpack[InputPluginKwargs]
+        params: InputPluginParams
     ) -> None:
-        super().__init__(config=config, **kwargs)
-
-        self._config: SampleInputPluginConfig
+        super().__init__(config, params)
 
     def _generate_sample(
         self,

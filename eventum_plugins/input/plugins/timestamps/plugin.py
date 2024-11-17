@@ -1,12 +1,12 @@
 import logging
 from datetime import datetime
-from typing import Any, Callable, Unpack
+from typing import Any, Callable
 
 from numpy import array, datetime64
 from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
-from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.plugins.timestamps.config import \
     TimestampsInputPluginConfig
 from eventum_plugins.input.utils.array_utils import get_future_slice
@@ -15,21 +15,15 @@ from eventum_plugins.input.utils.time_utils import now64, to_naive
 logger = logging.getLogger(__name__)
 
 
-class TimestampsInputPlugin(
-    InputPlugin,
-    config_cls=TimestampsInputPluginConfig
-):
+class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
     """Input plugin for generating events at specified timestamps."""
 
     def __init__(
         self,
-        *,
         config: TimestampsInputPluginConfig,
-        **kwargs: Unpack[InputPluginKwargs]
+        params: InputPluginParams
     ) -> None:
-        super().__init__(config=config, **kwargs)
-
-        self._config: TimestampsInputPluginConfig
+        super().__init__(config, params)
 
         if isinstance(config.source, str):
             timestamps: list[datetime] = [

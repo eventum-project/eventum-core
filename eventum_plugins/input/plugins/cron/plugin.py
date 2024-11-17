@@ -1,32 +1,29 @@
 import time
 from datetime import datetime
-from typing import Any, Callable, Iterator, Unpack
+from typing import Any, Callable, Iterator
 
 import croniter
 from numpy import array, datetime64, full, repeat
 from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
-from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.normalizers import normalize_versatile_daterange
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
 
 
-class CronInputPlugin(InputPlugin, config_cls=CronInputPluginConfig):
+class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
     """Input plugin for generating timestamps at moments defined by
     cron expression.
     """
 
     def __init__(
         self,
-        *,
         config: CronInputPluginConfig,
-        **kwargs: Unpack[InputPluginKwargs]
+        params: InputPluginParams
     ) -> None:
-        super().__init__(config=config, **kwargs)
-
-        self._config: CronInputPluginConfig
+        super().__init__(config, params)
 
         if (
             not self._live_mode and (

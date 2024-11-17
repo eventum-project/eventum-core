@@ -1,9 +1,9 @@
-from typing import Any, Callable, Unpack
+from typing import Any, Callable
 
 from numpy import datetime64, linspace, timedelta64
 from numpy.typing import NDArray
 
-from eventum_plugins.input.base.plugin import InputPlugin, InputPluginKwargs
+from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.normalizers import normalize_versatile_daterange
 from eventum_plugins.input.plugins.linspace.config import \
     LinspaceInputPluginConfig
@@ -11,20 +11,17 @@ from eventum_plugins.input.utils.array_utils import get_future_slice
 from eventum_plugins.input.utils.time_utils import now64, to_naive
 
 
-class LinspaceInputPlugin(InputPlugin, config_cls=LinspaceInputPluginConfig):
+class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
     """Input plugin for generating specified count of events linearly
     spaced in specified date range.
     """
 
     def __init__(
         self,
-        *,
         config: LinspaceInputPluginConfig,
-        **kwargs: Unpack[InputPluginKwargs]
+        params: InputPluginParams
     ) -> None:
-        super().__init__(config=config, **kwargs)
-
-        self._config: LinspaceInputPluginConfig
+        super().__init__(config, params)
 
     def _generate(self) -> NDArray[datetime64]:
         start, end = normalize_versatile_daterange(
