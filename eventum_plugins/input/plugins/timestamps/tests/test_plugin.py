@@ -22,9 +22,11 @@ def test_timestamps_sample():
     )
     plugin = TimestampsInputPlugin(
         config=config,
-        timezone=timezone('UTC'),
-        id=1,
-        live_mode=False
+        params={
+            'id': 1,
+            'live_mode': False,
+            'timezone': timezone('UTC')
+        }
     )
     timestamps = []
     for batch in plugin.generate():
@@ -48,9 +50,11 @@ def test_timestamps_live():
     )
     plugin = TimestampsInputPlugin(
         config=config,
-        timezone=timezone('UTC'),
-        id=1,
-        live_mode=True
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []
@@ -80,9 +84,11 @@ def test_timestamps_from_file(timestamps_filename):
     config = TimestampsInputPluginConfig(source=timestamps_filename)
     plugin = TimestampsInputPlugin(
         config=config,
-        timezone=timezone('UTC'),
-        id=1,
-        live_mode=False
+        params={
+            'id': 1,
+            'live_mode': False,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []

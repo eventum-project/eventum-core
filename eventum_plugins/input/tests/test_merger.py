@@ -19,11 +19,13 @@ def test_merger_with_ordering():
             end='+1s',
             count=100_000,
         ),
-        id=1,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=100,
-        batch_delay=0.1
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 100,
+            'batch_delay': 0.1
+        }
     )
 
     plugin_2 = LinspaceInputPlugin(
@@ -32,11 +34,13 @@ def test_merger_with_ordering():
             end='+1s',
             count=100_000,
         ),
-        id=2,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=100,
-        batch_delay=0.1
+        params={
+            'id': 2,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 100,
+            'batch_delay': 0.1
+        }
     )
 
     plugin_3 = LinspaceInputPlugin(
@@ -45,11 +49,13 @@ def test_merger_with_ordering():
             end='+1s',
             count=100_000,
         ),
-        id=3,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=100,
-        batch_delay=0.1
+        params={
+            'id': 3,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 100,
+            'batch_delay': 0.1
+        }
     )
 
     plugins_lst = [plugin_1, plugin_2, plugin_3]
@@ -80,11 +86,13 @@ def test_merger_with_ordering_and_ids():
             end='+1s',
             count=100_000,
         ),
-        id=1,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=100,
-        batch_delay=0.1
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 100,
+            'batch_delay': 0.1
+        }
     )
 
     plugin_2 = LinspaceInputPlugin(
@@ -93,11 +101,13 @@ def test_merger_with_ordering_and_ids():
             end='+1s',
             count=100_000,
         ),
-        id=2,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=100,
-        batch_delay=0.1
+        params={
+            'id': 2,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 100,
+            'batch_delay': 0.1
+        }
     )
 
     plugin_3 = LinspaceInputPlugin(
@@ -106,11 +116,13 @@ def test_merger_with_ordering_and_ids():
             end='+1s',
             count=100_000,
         ),
-        id=3,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=100,
-        batch_delay=0.1
+        params={
+            'id': 3,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 100,
+            'batch_delay': 0.1
+        }
     )
 
     plugins_lst = [plugin_1, plugin_2, plugin_3]
@@ -146,11 +158,13 @@ def test_merger_without_ordering():
             end='+1s',
             count=100_000,
         ),
-        id=1,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=3000,
-        batch_delay=0.1
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 3000,
+            'batch_delay': 0.1
+        }
     )
 
     plugin_2 = LinspaceInputPlugin(
@@ -159,11 +173,13 @@ def test_merger_without_ordering():
             end='+1s',
             count=100_000,
         ),
-        id=2,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=2000,
-        batch_delay=0.1
+        params={
+            'id': 2,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 2000,
+            'batch_delay': 0.1
+        }
     )
 
     plugin_3 = LinspaceInputPlugin(
@@ -172,11 +188,13 @@ def test_merger_without_ordering():
             end='+1s',
             count=100_000,
         ),
-        id=3,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=1000,
-        batch_delay=0.1
+        params={
+            'id': 3,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 1000,
+            'batch_delay': 0.1
+        }
     )
 
     plugins_lst = [plugin_1, plugin_2, plugin_3]
@@ -207,11 +225,13 @@ def test_merger_without_ordering_with_ids():
             end='+1s',
             count=100_000,
         ),
-        id=1,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=3000,
-        batch_delay=0.1
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 3000,
+            'batch_delay': 0.1
+        }
     )
 
     plugin_2 = LinspaceInputPlugin(
@@ -220,11 +240,13 @@ def test_merger_without_ordering_with_ids():
             end='+1s',
             count=100_000,
         ),
-        id=2,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=2000,
-        batch_delay=0.1
+        params={
+            'id': 2,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 2000,
+            'batch_delay': 0.1
+        }
     )
 
     plugin_3 = LinspaceInputPlugin(
@@ -233,11 +255,13 @@ def test_merger_without_ordering_with_ids():
             end='+1s',
             count=100_000,
         ),
-        id=3,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=1000,
-        batch_delay=0.1
+        params={
+            'id': 3,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 1000,
+            'batch_delay': 0.1
+        }
     )
 
     plugins_lst = [plugin_1, plugin_2, plugin_3]
@@ -271,11 +295,13 @@ def test_merger_invalid_params():
             end='+1s',
             count=100_000,
         ),
-        id=1,
-        live_mode=False,
-        timezone=timezone('UTC'),
-        batch_size=100,
-        batch_delay=0.1
+        params={
+            'id': 1,
+            'live_mode': False,
+            'timezone': timezone('UTC'),
+            'batch_size': 100,
+            'batch_delay': 0.1
+        }
     )
 
     plugin_live = LinspaceInputPlugin(
@@ -284,11 +310,13 @@ def test_merger_invalid_params():
             end='+1s',
             count=100_000,
         ),
-        id=2,
-        live_mode=True,
-        timezone=timezone('UTC'),
-        batch_size=100,
-        batch_delay=0.1
+        params={
+            'id': 2,
+            'live_mode': True,
+            'timezone': timezone('UTC'),
+            'batch_size': 100,
+            'batch_delay': 0.1
+        }
     )
 
     with pytest.raises(ValueError):

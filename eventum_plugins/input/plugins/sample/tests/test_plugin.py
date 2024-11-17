@@ -8,9 +8,11 @@ def test_sample_sample():
     config = SampleInputPluginConfig(count=100)
     plugin = SampleInputPlugin(
         config=config,
-        timezone=timezone('UTC'),
-        live_mode=False,
-        id=1
+        params={
+            'id': 1,
+            'live_mode': False,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []
@@ -25,9 +27,11 @@ def test_sample_live():
     config = SampleInputPluginConfig(count=100)
     plugin = SampleInputPlugin(
         config=config,
-        timezone=timezone('UTC'),
-        live_mode=True,
-        id=1
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []

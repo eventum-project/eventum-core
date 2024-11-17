@@ -17,9 +17,11 @@ def test_timer_sample():
             count=3,
             repeat=86400
         ),
-        id=1,
-        live_mode=False,
-        timezone=timezone('UTC')
+        params={
+            'id': 1,
+            'live_mode': False,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []
@@ -41,9 +43,11 @@ def test_timer_live():
             count=1,
             repeat=5
         ),
-        id=1,
-        live_mode=True,
-        timezone=timezone('UTC')
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC')
+        }
     )
     timestamps = []
     for batch in plugin.generate():

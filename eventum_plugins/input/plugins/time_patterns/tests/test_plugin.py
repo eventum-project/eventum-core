@@ -25,9 +25,11 @@ def test_time_pattern_sample():
     )
     plugin = TimePatternsInputPlugin(
         config=config,
-        id=1,
-        timezone=timezone('UTC'),
-        live_mode=False
+        params={
+            'id': 1,
+            'live_mode': False,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []
@@ -67,9 +69,11 @@ def test_time_pattern_live():
     )
     plugin = TimePatternsInputPlugin(
         config=config,
-        id=1,
-        timezone=timezone('UTC'),
-        live_mode=True
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []
@@ -95,7 +99,9 @@ def test_time_pattern_invalid_config():
     with pytest.raises(PluginConfigurationError):
         TimePatternsInputPlugin(
             config=config,
-            id=1,
-            timezone=timezone('UTC'),
-            live_mode=True
+            params={
+                'id': 1,
+                'live_mode': True,
+                'timezone': timezone('UTC')
+            }
         )

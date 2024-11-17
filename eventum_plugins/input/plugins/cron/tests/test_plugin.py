@@ -9,15 +9,17 @@ from eventum_plugins.input.plugins.cron.plugin import CronInputPlugin
 
 def test_cron_sample():
     plugin = CronInputPlugin(
-        id=1,
         config=CronInputPluginConfig(
             expression='* * * * *',
             count=1,
             start=datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone('UTC')),
             end=datetime(2024, 1, 1, 23, 59, 59, tzinfo=timezone('UTC'))
         ),
-        live_mode=False,
-        timezone=timezone('UTC')
+        params={
+            'id': 1,
+            'live_mode': False,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []
@@ -34,15 +36,17 @@ def test_cron_live():
     start = datetime.now(tz=timezone('UTC')) + timedelta(seconds=0.5)
     end = start + timedelta(seconds=2)
     plugin = CronInputPlugin(
-        id=1,
         config=CronInputPluginConfig(
             expression='* * * * * *',
             count=1,
             start=start,
             end=end
         ),
-        live_mode=True,
-        timezone=timezone('UTC')
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []

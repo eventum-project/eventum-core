@@ -36,9 +36,12 @@ def test_linspace_sample(start, end, count, endpoint, expected):
 
     plugin = LinspaceInputPlugin(
         config=config,
-        timezone=timezone('UTC'),
-        live_mode=False,
-        id=1
+        params={
+            'id': 1,
+            'live_mode': False,
+            'timezone': timezone('UTC')
+        }
+
     )
 
     timestamps = []
@@ -60,9 +63,11 @@ def test_linspace_live():
 
     plugin = LinspaceInputPlugin(
         config=config,
-        timezone=timezone('UTC'),
-        live_mode=False,
-        id=1
+        params={
+            'id': 1,
+            'live_mode': True,
+            'timezone': timezone('UTC')
+        }
     )
 
     timestamps = []
