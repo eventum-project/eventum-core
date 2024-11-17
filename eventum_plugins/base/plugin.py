@@ -155,7 +155,7 @@ class Plugin(ABC, Generic[config_T, params_T]):
         setattr(cls, '_plugin_name', registration_info['name'])
 
         try:
-            config_cls, _ = get_args(
+            (config_cls, *_) = get_args(
                 cls.__orig_bases__[0]   # type: ignore[attr-defined]
             )
         except ValueError:
