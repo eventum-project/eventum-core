@@ -1,3 +1,4 @@
+import asyncio
 from abc import abstractmethod
 from typing import Sequence, TypeVar
 
@@ -34,6 +35,7 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
         super().__init__(config, params)
 
         self._is_opened = False
+        self._lock = asyncio.Lock()
 
     async def open(self) -> None:
         """Open plugin for writing.
@@ -43,17 +45,19 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
         PluginRuntimeError
             If error occurs during opening
         """
-        if not self._is_opened:
-            await self._open()
-            self._is_opened = True
+        async with self._lock:
+            if not self._is_opened:
+                await self._open()
+                self._is_opened = True
 
     async def close(self) -> None:
         """Close plugin for writing with releasing resources and
         flushing events.
         """
-        if self._is_opened:
-            await self._close()
-            self._is_opened = False
+        async with self._lock:
+            if self._is_opened:
+                await self._close()
+                self._is_opened = False
 
     async def write(self, events: Sequence[str]) -> int:
         """Write events.
@@ -73,11 +77,12 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
         PluginRuntimeError
             If error occurs during writing events
         """
-        if not self._is_opened:
-            raise PluginRuntimeError(
-                'Output plugin is not opened for writing'
-            )
-        return await self._write(events)
+        async with self._lock:
+            if not self._is_opened:
+                raise PluginRuntimeError(
+                    'Output plugin is not opened for writing'
+                )
+            return await self._write(events)
 
     @abstractmethod
     async def _open(self) -> None:
