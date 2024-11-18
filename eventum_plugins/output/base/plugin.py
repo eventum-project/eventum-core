@@ -8,7 +8,7 @@ from eventum_plugins.output.base.config import OutputPluginConfig
 
 
 class OutputPluginParams(PluginParams):
-    """Params for output plugin."""
+    """Parameters for output plugin."""
 
 
 config_T = TypeVar('config_T', bound=(OutputPluginConfig | RootModel))
