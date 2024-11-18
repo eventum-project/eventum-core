@@ -81,7 +81,7 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
 
     @abstractmethod
     async def _open(self) -> None:
-        """Open plugin for writing.
+        """Perform actions for plugin opening.
 
         Raises
         ------
@@ -92,14 +92,13 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
 
     @abstractmethod
     async def _close(self) -> None:
-        """Close plugin for writing with releasing resources and
-        flushing events.
+        """Perform actions for plugin closing..
         """
         ...
 
     @abstractmethod
     async def _write(self, events: Sequence[str]) -> int:
-        """Write events.
+        """Perform writing events.
 
         Parameters
         ----------
