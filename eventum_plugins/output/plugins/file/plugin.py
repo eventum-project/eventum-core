@@ -136,12 +136,13 @@ class FileOutputPlugin(
         )
 
     async def _open(self) -> None:
-        self._file = await self._open_file()
+        try:
+            self._file = await self._open_file()
+        except OSError as e:
+            raise PluginRuntimeError(str(e))
 
         if not await self._file.writable():
-            raise PluginRuntimeError(
-                f'File "{self._config.path}" is not writable'
-            )
+            raise PluginRuntimeError('File is not writable')
 
         self._flushing_task = self._loop.create_task(self._start_flushing())
         self._cleanup_task = self._loop.create_task(self._schedule_cleanup())
@@ -174,7 +175,10 @@ class FileOutputPlugin(
 
         async with self._cleanup_lock:
             if not await self._is_operable():
-                self._file = await self._reopen_file()
+                try:
+                    self._file = await self._reopen_file()
+                except OSError as e:
+                    raise PluginRuntimeError(f'Failed to reopen file: {e}')
 
             if not self._cleaned_up:
                 self._cleanup_task.cancel()
