@@ -34,6 +34,8 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
     def __init__(self, config: config_T, params: params_T) -> None:
         super().__init__(config, params)
 
+        self._loop = asyncio.get_running_loop()
+
         self._is_opened = False
         self._lock = asyncio.Lock()
 
