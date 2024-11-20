@@ -34,7 +34,7 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
     def __init__(self, config: config_T, params: params_T) -> None:
         super().__init__(config, params)
 
-        self._loop = asyncio.get_running_loop()
+        self._loop: asyncio.AbstractEventLoop
 
         self._is_opened = False
         self._lock = asyncio.Lock()
@@ -48,6 +48,11 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
             If error occurs during opening
         """
         async with self._lock:
+            try:
+                self._loop = asyncio.get_running_loop()
+            except RuntimeError as e:
+                raise PluginRuntimeError(str(e))
+
             if not self._is_opened:
                 await self._open()
                 self._is_opened = True
