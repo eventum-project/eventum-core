@@ -10,6 +10,7 @@ def test_subprocess():
     result = SubprocessRunner().run('echo Hello, world!')
 
     assert result.stdout == 'Hello, world!' + os.linesep
+    assert result.stderr == ''
     assert result.exit_code == 0
 
 
