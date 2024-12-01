@@ -3,7 +3,7 @@ from abc import ABC
 from eventum_plugins.base.config import PluginConfig
 
 
-class InputPluginConfig(PluginConfig, ABC):
+class InputPluginConfig(PluginConfig, ABC, frozen=True):
     """Base config model for input plugins.
 
     Attributes

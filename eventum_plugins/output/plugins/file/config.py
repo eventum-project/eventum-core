@@ -18,11 +18,11 @@ class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
     format : Format, default = Format.PLAIN
         Format for formatting output events
 
-    flush_interval : int, default = 1
+    flush_interval : float, default = 1
         Flush interval (in seconds) for flushing events, if value is 0
         then flush is performed for every event
 
-    cleanup_interval : int, default = 10
+    cleanup_interval : float, default = 10
         Interval (in seconds) to wait new events before closing file,
         file is reopened once new events are received
 
@@ -35,8 +35,8 @@ class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
     """
     path: str
     format: Format = Format.PLAIN
-    flush_interval: int = Field(1, ge=0)
-    cleanup_interval: int = Field(10, ge=1)
+    flush_interval: float = Field(1, ge=0)
+    cleanup_interval: float = Field(10, ge=1.0)
     file_mode: int = Field(-1, ge=-1, le=7777)
     write_mode: Literal['append', 'overwrite'] = 'append'
 
