@@ -189,7 +189,10 @@ class FileOutputPlugin(
             )
 
             try:
-                await self._file.writelines(e + os.linesep for e in events)
+                await self._file.writelines(
+                    e + os.linesep
+                    for e in formatted_events
+                )
             except OSError as e:
                 raise PluginRuntimeError(
                     f'Failed to write events to file: {e}'
