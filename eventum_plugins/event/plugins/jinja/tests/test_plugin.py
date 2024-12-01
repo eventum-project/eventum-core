@@ -203,7 +203,7 @@ def test_subprocess():
             'templates_loader': DictLoader(
                 mapping={
                     'test.jinja': (
-                        '{{subprocess.run("echo -n \'Hello, World!\'", True)}}'
+                        '{{subprocess.run("echo Hello").stdout | trim}}'
                     )
                 }
             ),
@@ -219,7 +219,7 @@ def test_subprocess():
     )
 
     assert len(events) == 1
-    assert events.pop() == 'Hello, World!'
+    assert events.pop() == 'Hello'
 
 
 def test_locals_state():
