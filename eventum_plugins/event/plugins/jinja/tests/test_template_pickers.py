@@ -19,10 +19,16 @@ from eventum_plugins.event.plugins.jinja.template_pickers import (
         (ChanceTemplatePicker, TemplatePickingMode.CHANCE),
         (SpinTemplatePicker, TemplatePickingMode.SPIN),
         (FSMTemplatePicker, TemplatePickingMode.FSM),
+        (ChainTemplatePicker, TemplatePickingMode.CHAIN),
     ]
 )
 def test_get_picker_class(picker_class, picking_mode):
     assert get_picker_class(picking_mode) == picker_class
+
+
+def test_get_picker_class_unexistent():
+    with pytest.raises(ValueError):
+        get_picker_class('what picker?')
 
 
 def test_all_template_picker():

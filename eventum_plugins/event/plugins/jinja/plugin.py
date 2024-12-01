@@ -107,8 +107,9 @@ class JinjaEventPlugin(
             for alias, conf in self._template_configs.items()
         }
 
-        Picker = get_picker_class(self._config.root.mode)
         try:
+            Picker = get_picker_class(self._config.root.mode)
+
             self._template_picker = Picker(
                 config=self._template_configs,
                 common_config=self._config.root.get_picking_common_fields()

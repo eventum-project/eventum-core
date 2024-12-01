@@ -1,6 +1,6 @@
 import random
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar, Unpack, assert_never
+from typing import Any, Generic, TypeVar, Unpack
 
 from eventum_plugins.event.plugins.jinja.config import (
     TemplateConfigForChanceMode, TemplateConfigForFSMMode,
@@ -24,7 +24,26 @@ class TemplatePicker(ABC, Generic[T]):
     ------
     ValueError
         If some required parameter is missing in config
+
+    Other Parameters
+    ----------------
+    mode : TemplatePickingMode
+        Picking mode to which to bind picker class
     """
+    _registered_pickers: dict[TemplatePickingMode,
+                              type['TemplatePicker[Any]']] = dict()
+
+    def __init_subclass__(cls, mode: TemplatePickingMode, **kwargs) -> None:
+        if mode in TemplatePicker._registered_pickers:
+            registered_picker = TemplatePicker._registered_pickers[mode]
+            raise ValueError(
+                f'Picker {registered_picker} is already registered '
+                f'for mode "{mode}"'
+            )
+
+        TemplatePicker._registered_pickers[mode] = cls
+
+        return super().__init_subclass__(**kwargs)
 
     def __init__(
         self,
@@ -46,8 +65,38 @@ class TemplatePicker(ABC, Generic[T]):
         """
         ...
 
+    @classmethod
+    def get_picker(
+        cls,
+        picking_mode: TemplatePickingMode
+    ) -> type['TemplatePicker[Any]']:
+        """Get appropriate picker for specified picking mode.
 
-class AllTemplatePicker(TemplatePicker[TemplateConfigForGeneralModes]):
+        Parameters
+        ----------
+        picking_mode : TemplatePickingMode
+            Picking mode
+
+        Returns
+        -------
+        type['TemplatePicker[Any]']
+            Picker class
+
+        Raises
+        ------
+        ValueError
+            If no appropriate picker found for specified mode
+        """
+        try:
+            return cls._registered_pickers[picking_mode]
+        except KeyError:
+            raise ValueError(f'No picker found for mode "{picking_mode}"')
+
+
+class AllTemplatePicker(
+    TemplatePicker[TemplateConfigForGeneralModes],
+    mode=TemplatePickingMode.ALL
+):
     """Picker of templates for `all` picking mode."""
 
     def __init__(
@@ -61,7 +110,10 @@ class AllTemplatePicker(TemplatePicker[TemplateConfigForGeneralModes]):
         return self._aliases
 
 
-class AnyTemplatePicker(TemplatePicker[TemplateConfigForGeneralModes]):
+class AnyTemplatePicker(
+    TemplatePicker[TemplateConfigForGeneralModes],
+    mode=TemplatePickingMode.ANY
+):
     """Picker of templates for `any` picking mode."""
 
     def __init__(
@@ -75,7 +127,10 @@ class AnyTemplatePicker(TemplatePicker[TemplateConfigForGeneralModes]):
         return (random.choice(self._aliases), )
 
 
-class ChanceTemplatePicker(TemplatePicker[TemplateConfigForChanceMode]):
+class ChanceTemplatePicker(
+    TemplatePicker[TemplateConfigForChanceMode],
+    mode=TemplatePickingMode.CHANCE
+):
     """Picker of templates for `chance` picking mode."""
 
     def __init__(
@@ -92,7 +147,10 @@ class ChanceTemplatePicker(TemplatePicker[TemplateConfigForChanceMode]):
         )
 
 
-class SpinTemplatePicker(TemplatePicker[TemplateConfigForGeneralModes]):
+class SpinTemplatePicker(
+    TemplatePicker[TemplateConfigForGeneralModes],
+    mode=TemplatePickingMode.SPIN
+):
     """Picker of templates for `spin` picking mode."""
 
     def __init__(
@@ -113,7 +171,10 @@ class SpinTemplatePicker(TemplatePicker[TemplateConfigForGeneralModes]):
         return (alias, )
 
 
-class FSMTemplatePicker(TemplatePicker[TemplateConfigForFSMMode]):
+class FSMTemplatePicker(
+    TemplatePicker[TemplateConfigForFSMMode],
+    mode=TemplatePickingMode.FSM
+):
     """Picker of templates for `fsm` picking mode."""
 
     def __init__(
@@ -165,7 +226,10 @@ class FSMTemplatePicker(TemplatePicker[TemplateConfigForFSMMode]):
         return (self._state, )
 
 
-class ChainTemplatePicker(TemplatePicker[TemplateConfigForGeneralModes]):
+class ChainTemplatePicker(
+    TemplatePicker[TemplateConfigForGeneralModes],
+    mode=TemplatePickingMode.CHAIN
+):
     """Picker of templates for `chain` picking mode."""
 
     def __init__(
@@ -198,21 +262,17 @@ def get_picker_class(
 
     Parameters
     ----------
-        picking_mode : TemplatePickingMode
-            Picking mode
+    picking_mode : TemplatePickingMode
+        Picking mode
+
+    Returns
+    -------
+    type['TemplatePicker[Any]']
+        Picker class
+
+    Raises
+    ------
+    ValueError
+        If no appropriate picker found for specified mode
     """
-    match picking_mode:
-        case TemplatePickingMode.ALL:
-            return AllTemplatePicker
-        case TemplatePickingMode.ANY:
-            return AnyTemplatePicker
-        case TemplatePickingMode.CHANCE:
-            return ChanceTemplatePicker
-        case TemplatePickingMode.SPIN:
-            return SpinTemplatePicker
-        case TemplatePickingMode.FSM:
-            return FSMTemplatePicker
-        case TemplatePickingMode.CHAIN:
-            return ChainTemplatePicker
-        case mode:
-            assert_never(mode)
+    return TemplatePicker.get_picker(picking_mode)
