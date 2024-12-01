@@ -193,7 +193,7 @@ async def test_plugin_flush_interval(tmp_path):
             path=str(filepath),
             format=Format.PLAIN,
             write_mode='overwrite',
-            flush_interval=1
+            flush_interval=0.1
         ),
         params={'id': 1}
     )
@@ -209,7 +209,7 @@ async def test_plugin_flush_interval(tmp_path):
 
             assert not lines
 
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(0.5)
 
         lines = f.readlines()
         assert [line.strip(os.linesep) for line in lines] == events
@@ -225,7 +225,7 @@ async def test_plugin_file_recreation(tmp_path):
             path=str(filepath),
             format=Format.PLAIN,
             write_mode='overwrite',
-            flush_interval=1
+            flush_interval=0
         ),
         params={'id': 1}
     )
