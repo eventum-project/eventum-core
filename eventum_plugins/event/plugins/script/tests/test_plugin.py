@@ -90,3 +90,13 @@ def test_plugin_exception_in_function():
                 'tags': ('tag1', 'tag2')
             }
         )
+
+
+def test_plugin_unexistent_file():
+    with pytest.raises(PluginConfigurationError):
+        ScriptEventPlugin(
+            config=ScriptEventPluginConfig(
+                path=os.path.join(STATIC_DIR, 'abcdefg.py')
+            ),
+            params={'id': 1}
+        )
