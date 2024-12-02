@@ -1,10 +1,27 @@
 from abc import abstractmethod
-from typing import Any, TypeVar
+from datetime import datetime
+from typing import TypedDict, TypeVar
 
 from pydantic import RootModel
 
 from eventum_plugins.base.plugin import Plugin, PluginParams
 from eventum_plugins.event.base.config import EventPluginConfig
+
+
+class ProduceParams(TypedDict):
+    """Params for `produce` method of `EventPlugin`.
+
+    Attributes
+    ----------
+    timestamp : str
+        Timestamp of event
+
+    tags : tuple[str, ...]
+        Tags from input plugin that generated timestamp
+
+    """
+    timestamp: datetime
+    tags: tuple[str, ...]
 
 
 class EventPluginParams(PluginParams):
@@ -36,17 +53,17 @@ class EventPlugin(Plugin[config_T, params_T], register=False):
         super().__init__(config, params)
 
     @abstractmethod
-    def produce(self, params: Any) -> Any:
+    def produce(self, params: ProduceParams) -> list[str]:
         """Produce events with provided parameters.
 
         Parameters
         ----------
-        params : Any
+        params : ProduceParams
             Parameters for events producing
 
         Returns
         -------
-        Any
+        list[str]
            Produced events
 
         Raises

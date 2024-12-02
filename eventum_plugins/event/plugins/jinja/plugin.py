@@ -1,7 +1,6 @@
 import os
 from copy import copy
-from datetime import datetime
-from typing import Any, MutableMapping, TypedDict
+from typing import Any, MutableMapping
 
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateRuntimeError,
@@ -9,7 +8,8 @@ from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
 
 import eventum_plugins.event.plugins.jinja.modules as modules
 from eventum_plugins.base.plugin import required_params
-from eventum_plugins.event.base.plugin import EventPlugin, EventPluginParams
+from eventum_plugins.event.base.plugin import (EventPlugin, EventPluginParams,
+                                               ProduceParams)
 from eventum_plugins.event.plugins.jinja.config import (
     JinjaEventPluginConfig, TemplateConfigForGeneralModes)
 from eventum_plugins.event.plugins.jinja.module_provider import ModuleProvider
@@ -22,22 +22,6 @@ from eventum_plugins.event.plugins.jinja.template_pickers import \
     get_picker_class
 from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
-
-
-class ProduceParams(TypedDict):
-    """Params for `produce` method of `JinjaEventPlugin`.
-
-    Attributes
-    ----------
-    timestamp : str
-        Timestamp of event
-
-    tags : tuple[str, ...]
-        Tags from input plugin that generated timestamp
-
-    """
-    timestamp: datetime
-    tags: tuple[str, ...]
 
 
 class JinjaEventPluginParams(EventPluginParams):
