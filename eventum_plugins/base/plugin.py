@@ -9,7 +9,8 @@ from typing import Generic, Required, TypedDict, TypeVar, get_args
 from pydantic import RootModel
 
 from eventum_plugins.base.config import PluginConfig
-from eventum_plugins.exceptions import PluginRegistrationError
+from eventum_plugins.exceptions import (PluginConfigurationError,
+                                        PluginRegistrationError)
 from eventum_plugins.registry import PluginInfo, PluginsRegistry
 
 
@@ -93,13 +94,15 @@ def required_params():
 
     Raises
     ------
-    TypeError
+    PluginConfigurationError
         If `KeyError` is raised
     """
     try:
         yield
     except KeyError as e:
-        raise TypeError(f'Missing required parameter: {e}') from None
+        raise PluginConfigurationError(
+            f'Missing required parameter: {e}'
+        ) from None
 
 
 config_T = TypeVar('config_T', bound=(PluginConfig | RootModel))
