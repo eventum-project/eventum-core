@@ -70,5 +70,8 @@ class EventPlugin(Plugin[config_T, params_T], register=False):
         ------
         PluginRuntimeError
             If any error occurs during producing events
+
+        EventsExhausted
+            If no more events can be produced by event plugin
         """
         ...
