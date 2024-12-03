@@ -6,7 +6,7 @@ from eventum_plugins.event.base.config import EventPluginConfig
 
 
 class ScriptEventPluginConfig(EventPluginConfig, frozen=True):
-    """Configuration for `script` input plugin.
+    """Configuration for `script` event plugin.
 
     Attributes
     ----------
