@@ -16,7 +16,9 @@ class ReplayEventPluginConfig(EventPluginConfig, frozen=True):
     timestamp_pattern : str | None, default=None
         Regular expression pattern to identify the timestamp
         substitution position within the original message, if value is
-        not set, then substitution is not performed.
+        not set, then substitution is not performed, for more
+        information about python regex syntax see:
+        https://docs.python.org/3/library/re.html#regular-expression-syntax
 
     timestamp_format : str | None, default=None
         Format string that defines how the actual timestamp should be

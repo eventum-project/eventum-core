@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from datetime import datetime
 from typing import Iterator
 
 from eventum_plugins.event.base.plugin import (EventPlugin, EventPluginParams,
@@ -101,33 +102,101 @@ class ReplayEventPlugin(
 
             self._last_read_position = 0
 
+    def _format_timestamp(self, timestamp: datetime) -> str:
+        """Format timestamp to specified format.
+
+        Parameters
+        ----------
+        timestamp : datetime
+            Timestamp to format
+
+        Returns
+        -------
+        str
+            Formatted timestamp
+        """
+        if self._config.timestamp_format is None:
+            return timestamp.isoformat()
+        else:
+            return timestamp.strftime(
+                self._config.timestamp_format
+            )
+
+    def _substitute_string(
+        self,
+        message: str,
+        string: str,
+        pattern: re.Pattern,
+        group_name: str
+    ) -> str:
+        """Substitute string into original message in position defined
+        by pattern named group.
+
+        Parameters
+        ----------
+        message : str
+            Original message
+
+        string : str
+            String to substitute
+
+        pattern : re.Pattern
+            Pattern that defines position of substitution
+
+        group_name : str
+            Named group in pattern that defines position of substitution
+
+        Returns
+        -------
+        str
+            New message with substituted string
+
+        Raises
+        ------
+        ValueError
+            If substitution is failed
+        """
+        msg_match = pattern.search(message)
+
+        if msg_match is None:
+            raise ValueError('No match found')
+
+        try:
+            match_start = msg_match.start(group_name)
+            match_end = msg_match.end(group_name)
+        except IndexError:
+            raise ValueError(f'No group "{group_name}" found in match')
+
+        if match_start == -1 or match_end == -1:
+            raise ValueError(
+                f'Group "{group_name}" did not contribute to the match'
+            )
+
+        return message[:match_start] + string + message[match_end:]
+
     def produce(self, params: ProduceParams) -> list[str]:
         try:
             line = next(self._lines)
         except StopIteration:
             raise EventsExhausted
 
-        if self._pattern is not None:
-            timestamp = params['timestamp']
+        if self._pattern is None:
+            return [line]
 
-            if self._config.timestamp_format is None:
-                fmt_timestamp = timestamp.isoformat()
-            else:
-                fmt_timestamp = timestamp.strftime(
-                    self._config.timestamp_format
-                )
+        fmt_timestamp = self._format_timestamp(
+            timestamp=params['timestamp']
+        )
 
-            ts_match = self._pattern.search(line)
-
-            if ts_match is not None:
-                line = (
-                    line[:ts_match.pos]
-                    + fmt_timestamp
-                    + line[ts_match.endpos:]
-                )
-            else:
-                logger.warning(
-                    'Failed to substitute timestamp into original message',
-                )
+        try:
+            line = self._substitute_string(
+                message=line,
+                string=fmt_timestamp,
+                pattern=self._pattern,
+                group_name='timestamp'
+            )
+        except ValueError as e:
+            logger.warning(
+                f'Failed to substitute timestamp into original message: {e}'
+            )
 
         return [line]
