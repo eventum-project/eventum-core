@@ -27,7 +27,7 @@ class ReplayEventPluginConfig(EventPluginConfig, frozen=True):
         https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
         If value is not set, then default (ISO8601) format is used
 
-    repeat : bool
+    repeat : bool, default=False
         Whether to repeat replaying after the end of file is reached
 
     read_batch_size : int
@@ -38,7 +38,7 @@ class ReplayEventPluginConfig(EventPluginConfig, frozen=True):
     path: str
     timestamp_pattern: str | None = None
     timestamp_format: str | None = None
-    repeat: bool
+    repeat: bool = False
     read_batch_size: int = Field(1000, ge=1, le=1_000_000)
 
     @field_validator('path')

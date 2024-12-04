@@ -40,7 +40,7 @@ class ReplayEventPlugin(
                 raise PluginConfigurationError(
                     'Failed to compile regular expression for timestamp '
                     f'pattern "{self._config.timestamp_pattern}": {e}'
-                )
+                ) from None
         else:
             self._pattern = None
 
@@ -73,13 +73,22 @@ class ReplayEventPlugin(
         try:
             with open(self._config.path) as f:
                 f.seek(self._last_read_position, os.SEEK_SET)
-                lines = f.readlines(count)
+                lines = []
+                for _ in range(count):
+                    line = f.readline().rstrip('\n\r')
+
+                    if not line:
+                        break
+
+                    lines.append(line)
+
                 self._last_read_position = f.tell()
+
                 return lines
         except OSError as e:
             raise PluginRuntimeError(
                 f'Failed to read file "{self._config.path}": {e}'
-            )
+            ) from None
 
     def _get_next_line(self) -> Iterator[str]:
         """Get next line.
@@ -165,7 +174,9 @@ class ReplayEventPlugin(
             match_start = msg_match.start(group_name)
             match_end = msg_match.end(group_name)
         except IndexError:
-            raise ValueError(f'No group "{group_name}" found in match')
+            raise ValueError(
+                f'No group "{group_name}" found in match'
+            ) from None
 
         if match_start == -1 or match_end == -1:
             raise ValueError(
@@ -178,7 +189,7 @@ class ReplayEventPlugin(
         try:
             line = next(self._lines)
         except StopIteration:
-            raise EventsExhausted
+            raise EventsExhausted() from None
 
         if self._pattern is None:
             return [line]
