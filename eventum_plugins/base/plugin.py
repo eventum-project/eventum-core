@@ -4,7 +4,7 @@ import inspect
 from abc import ABC
 from contextlib import contextmanager
 from types import ModuleType
-from typing import Generic, Required, TypedDict, TypeVar, get_args
+from typing import Any, Generic, Required, TypedDict, TypeVar, get_args
 
 from pydantic import RootModel
 
@@ -105,7 +105,7 @@ def required_params():
         ) from None
 
 
-config_T = TypeVar('config_T', bound=(PluginConfig | RootModel))
+config_T = TypeVar('config_T', bound=(PluginConfig | RootModel[PluginConfig]))
 params_T = TypeVar('params_T', bound=PluginParams)
 
 
@@ -144,7 +144,7 @@ class Plugin(ABC, Generic[config_T, params_T]):
             f'{self._plugin_name}-{self._id}'   # type: ignore[attr-defined]
         )
 
-    def __init_subclass__(cls, register: bool = True, **kwargs):
+    def __init_subclass__(cls, register: bool = True, **kwargs: Any):
         super().__init_subclass__(**kwargs)
 
         if not register:
