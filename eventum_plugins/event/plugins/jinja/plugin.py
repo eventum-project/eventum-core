@@ -73,14 +73,12 @@ class JinjaEventPlugin(
         with required_params():
             self._composed_state = params['composed_state']
 
-        globals: dict[str, Any] = self._env.globals     # type: ignore
-
-        globals['params'] = self._config.root.params
-        globals['samples'] = self._samples
-        globals['module'] = self._module_provider
-        globals['subprocess'] = self._subprocess_runner
-        globals['shared'] = self._shared_state
-        globals['composed'] = self._composed_state
+        self._env.globals['params'] = self._config.root.params
+        self._env.globals['samples'] = self._samples
+        self._env.globals['module'] = self._module_provider
+        self._env.globals['subprocess'] = self._subprocess_runner
+        self._env.globals['shared'] = self._shared_state
+        self._env.globals['composed'] = self._composed_state
 
         self._template_configs = self._get_template_configs_as_dict()
         self._template_states = {

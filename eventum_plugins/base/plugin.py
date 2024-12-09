@@ -105,7 +105,7 @@ def required_params():
         ) from None
 
 
-config_T = TypeVar('config_T', bound=(PluginConfig | RootModel[Any]))
+config_T = TypeVar('config_T', bound=(PluginConfig | RootModel))
 params_T = TypeVar('params_T', bound=PluginParams)
 
 

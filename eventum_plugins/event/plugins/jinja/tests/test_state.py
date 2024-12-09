@@ -1,4 +1,3 @@
-# type: ignore
 from multiprocessing import Process, RLock
 
 import pytest

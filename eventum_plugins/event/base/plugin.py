@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from datetime import datetime
-from typing import Any, TypedDict, TypeVar
+from typing import TypedDict, TypeVar
 
 from pydantic import RootModel
 
@@ -28,7 +28,7 @@ class EventPluginParams(PluginParams):
     """Parameters for event plugin."""
 
 
-config_T = TypeVar('config_T', bound=(EventPluginConfig | RootModel[Any]))
+config_T = TypeVar('config_T', bound=(EventPluginConfig | RootModel))
 params_T = TypeVar('params_T', bound=EventPluginParams)
 
 

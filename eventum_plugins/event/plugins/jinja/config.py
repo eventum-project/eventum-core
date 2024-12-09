@@ -28,11 +28,11 @@ class ItemsSampleConfig(BaseModel, frozen=True, extra='forbid'):
     type : Literal[SampleType.CSV]
         Discriminator field for sample configuration
 
-    source : tuple[Any, ...]
+    source : tuple
         List of sample items
     """
     type: Literal[SampleType.ITEMS]
-    source: tuple[Any, ...] = Field(default=..., min_length=1)
+    source: tuple = Field(default=..., min_length=1)
 
 
 class CSVSampleConfig(BaseModel, frozen=True, extra='forbid'):

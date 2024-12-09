@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Iterator
+from typing import Iterator
 
 from eventum_plugins.event.base.plugin import (EventPlugin, EventPluginParams,
                                                ProduceParams)
@@ -33,7 +33,7 @@ class ReplayEventPlugin(
 
         if self._config.timestamp_pattern is not None:
             try:
-                self._pattern: re.Pattern[Any] | None = re.compile(
+                self._pattern: re.Pattern | None = re.compile(
                     pattern=self._config.timestamp_pattern
                 )
             except re.error as e:
@@ -140,7 +140,7 @@ class ReplayEventPlugin(
         self,
         message: str,
         string: str,
-        pattern: re.Pattern[Any],
+        pattern: re.Pattern,
         group_name: str
     ) -> str:
         """Substitute string into original message in position defined
@@ -170,7 +170,7 @@ class ReplayEventPlugin(
         ValueError
             If substitution is failed
         """
-        msg_match = pattern.search(message)  # type: ignore
+        msg_match = pattern.search(message)
 
         if msg_match is None:
             raise ValueError('No match found')

@@ -518,7 +518,7 @@ class Or(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
 
     def check(self, context: EventContext) -> bool:
         for clause in self.or_:
-            if clause.check(context):   # type: ignore[call-arg]
+            if clause.check(context):
                 return True
 
         return False
@@ -534,7 +534,7 @@ class And(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
 
     def check(self, context: EventContext) -> bool:
         for clause in self.and_:
-            if not clause.check(context):   # type: ignore[call-arg]
+            if not clause.check(context):
                 return False
 
         return True

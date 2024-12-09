@@ -1,3 +1,4 @@
+# type: ignore
 from datetime import datetime
 
 import pytest
@@ -16,8 +17,8 @@ from eventum_plugins.event.plugins.jinja.state import \
 def test_eq():
     context = EventStateContext(
         locals=State({'field': 10}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert Eq(eq={'locals.field': 10}).check(context)
     assert not Eq(eq={'locals.field': 5}).check(context)
@@ -27,8 +28,8 @@ def test_eq():
 def test_gt():
     context = EventStateContext(
         locals=State({'field': 10}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert Gt(gt={'locals.field': 5}).check(context)
     assert not Gt(gt={'locals.field': 10}).check(context)
@@ -38,8 +39,8 @@ def test_gt():
 def test_ge():
     context = EventStateContext(
         locals=State({'field': 10}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert Ge(ge={'locals.field': 5}).check(context)
     assert Ge(ge={'locals.field': 10}).check(context)
@@ -49,8 +50,8 @@ def test_ge():
 def test_lt():
     context = EventStateContext(
         locals=State({'field': 10}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert Lt(lt={'locals.field': 15}).check(context)
     assert not Lt(lt={'locals.field': 10}).check(context)
@@ -60,8 +61,8 @@ def test_lt():
 def test_le():
     context = EventStateContext(
         locals=State({'field': 10}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert Le(le={'locals.field': 15}).check(context)
     assert Le(le={'locals.field': 10}).check(context)
@@ -71,8 +72,8 @@ def test_le():
 def test_len_eq():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert LenEq(len_eq={'locals.field': 3}).check(context)
     assert not LenEq(len_eq={'locals.field': 2}).check(context)
@@ -81,8 +82,8 @@ def test_len_eq():
 def test_len_gt():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert LenGt(len_gt={'locals.field': 2}).check(context)
     assert not LenGt(len_gt={'locals.field': 3}).check(context)
@@ -91,8 +92,8 @@ def test_len_gt():
 def test_len_ge():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert LenGe(len_ge={'locals.field': 2}).check(context)
     assert LenGe(len_ge={'locals.field': 3}).check(context)
@@ -102,8 +103,8 @@ def test_len_ge():
 def test_len_lt():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert LenLt(len_lt={'locals.field': 4}).check(context)
     assert not LenLt(len_lt={'locals.field': 3}).check(context)
@@ -112,8 +113,8 @@ def test_len_lt():
 def test_len_le():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert LenLe(len_le={'locals.field': 4}).check(context)
     assert LenLe(len_le={'locals.field': 3}).check(context)
@@ -123,8 +124,8 @@ def test_len_le():
 def test_contains():
     context = EventStateContext(
         locals=State({'field': [5, 10, 15]}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert Contains(contains={'locals.field': 10}).check(context)
     assert not Contains(contains={'locals.field': 2}).check(context)
@@ -133,14 +134,14 @@ def test_contains():
 def test_in():
     context = EventStateContext(
         locals=State({'field': 5}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert In(
-        in_={'locals.field': [5, 10, 15]}   # type: ignore
+        in_={'locals.field': [5, 10, 15]}
     ).check(context)
     assert not In(
-        in_={'locals.field': [2, 4, 6]}     # type: ignore
+        in_={'locals.field': [2, 4, 6]}
     ).check(context)
 
 
@@ -299,8 +300,8 @@ def test_after():
 def test_matches():
     context = EventStateContext(
         locals=State({'field': 'abc'}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert Matches(
         matches={'locals.field': r'^a.*c$'}
@@ -313,8 +314,8 @@ def test_matches():
 def test_defined():
     context = EventStateContext(
         locals=State({'field': 10}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
     assert Defined(defined='locals.field').check(context)
     assert not Defined(defined='locals.other_field').check(context)
@@ -322,22 +323,22 @@ def test_defined():
 
 def test_or():
     context = EventContext(
-        timestamp=...,  # type: ignore
+        timestamp=...,
         tags=('tag1', ),
         locals=State({'field': 10}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
 
     assert Or(
-        or_=[   # type: ignore[]
+        or_=[
             Eq(eq={'locals.field': 5}),
             HasTags(has_tags='tag1')
         ]
     ).check(context)
 
     assert not Or(
-        or_=[   # type: ignore[]
+        or_=[
             Eq(eq={'locals.field': 5}),
             HasTags(has_tags='tag2')
         ]
@@ -346,22 +347,22 @@ def test_or():
 
 def test_and():
     context = EventContext(
-        timestamp=...,  # type: ignore
+        timestamp=...,
         tags=('tag1', ),
         locals=State({'field': 15}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
 
     assert And(
-        and_=[  # type: ignore
+        and_=[
             Gt(gt={'locals.field': 10}),
             HasTags(has_tags='tag1')
         ]
     ).check(context)
 
     assert not And(
-        and_=[  # type: ignore
+        and_=[
             Gt(gt={'locals.field': 10}),
             HasTags(has_tags='tag2')
         ]
@@ -370,20 +371,20 @@ def test_and():
 
 def test_not():
     context = EventContext(
-        timestamp=...,  # type: ignore
+        timestamp=...,
         tags=('tag1', ),
         locals=State({'field': 5}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
 
     assert Not(
-        not_=Eq(    # type: ignore
+        not_=Eq(
             eq={'locals.field': 10}
         )
     ).check(context)
     assert not Not(
-        not_=Eq(    # type: ignore
+        not_=Eq(
             eq={'locals.field': 5}
         )
     ).check(context)
@@ -391,23 +392,23 @@ def test_not():
 
 def test_complex_condition():
     context = EventContext(
-        timestamp=...,  # type: ignore
+        timestamp=...,
         tags=('tag1', ),
         locals=State({'field1': 10, 'field2': 'abc'}),
-        shared=...,     # type: ignore
-        composed=...    # type: ignore
+        shared=...,
+        composed=...
     )
 
     condition = Or(
-        or_=[   # type: ignore
+        or_=[
             And(
-                and_=[  # type: ignore
+                and_=[
                     Gt(gt={'locals.field1': 5}),
                     Lt(lt={'locals.field1': 15})
                 ]
             ),
             Not(
-                not_=Matches(   # type: ignore
+                not_=Matches(
                     matches={'locals.field2': r'^a.*c$'}
                 )
             )
