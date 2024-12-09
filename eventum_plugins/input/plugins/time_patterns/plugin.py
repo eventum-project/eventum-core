@@ -355,7 +355,7 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
             # for quick merging of several time patterns in live mode
             # delay should be minimal
             if self._live_mode:
-                params = params | {
+                params = params | {     # type: ignore
                     'batch_size': None,
                     'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY
                 }

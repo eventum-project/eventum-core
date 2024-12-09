@@ -3,7 +3,6 @@ from typing import Self
 from pydantic import model_validator
 from pytz import timezone
 
-from eventum_plugins.input.fields import VersatileDatetime
 from eventum_plugins.input.normalizers import normalize_versatile_daterange
 
 
@@ -14,14 +13,11 @@ class DaterangeValidatorMixin:
 
     @model_validator(mode='after')
     def validate_interval(self) -> Self:
-        self.start: VersatileDatetime
-        self.end: VersatileDatetime
-
         # raises ValueError if start > end
         try:
             normalize_versatile_daterange(
-                start=self.start,
-                end=self.end,
+                start=self.start,   # type: ignore[attr-defined]
+                end=self.end,       # type: ignore[attr-defined]
                 timezone=timezone('UTC')
             )
         except OverflowError:

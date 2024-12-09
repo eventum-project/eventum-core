@@ -14,11 +14,11 @@ from eventum_plugins.input.plugins.timestamps.plugin import \
 
 def test_timestamps_sample():
     config = TimestampsInputPluginConfig(
-        source=(
+        source=[
             datetime.fromisoformat('2024-01-01T00:00:00.000Z'),
             datetime.fromisoformat('2024-01-01T00:00:00.050Z'),
             datetime.fromisoformat('2024-01-01T00:00:00.100Z'),
-        )
+        ]
     )
     plugin = TimestampsInputPlugin(
         config=config,

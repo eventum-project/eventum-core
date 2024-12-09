@@ -35,9 +35,9 @@ class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
     """
     path: str
     format: Format = Format.PLAIN
-    flush_interval: float = Field(1, ge=0)
-    cleanup_interval: float = Field(10, ge=1.0)
-    file_mode: int = Field(-1, ge=-1, le=7777)
+    flush_interval: float = Field(default=1, ge=0)
+    cleanup_interval: float = Field(default=10, ge=1.0)
+    file_mode: int = Field(default=-1, ge=-1, le=7777)
     write_mode: Literal['append', 'overwrite'] = 'append'
 
     @field_validator('path')
