@@ -48,8 +48,3 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
 
         if not os.path.isabs(v):
             raise ValueError('Path must be absolute')
-
-        if not os.path.exists(v):
-            raise ValueError(
-                f'Failed to find CA certificate in "{v}"'
-            )
