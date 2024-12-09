@@ -84,6 +84,9 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
         PluginRuntimeError
             If error occurs during writing events
         """
+        if not events:
+            return 0
+
         async with self._lock:
             if not self._is_opened:
                 raise PluginRuntimeError(
