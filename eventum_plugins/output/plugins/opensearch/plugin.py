@@ -167,7 +167,7 @@ class OpensearchOutputPlugin(
 
         try:
             response = await self._session.post(
-                url=f'{host}/_bulk/',
+                url=f'{host}/_bulk',
                 data=self._create_bulk_data(events)
             )
             text = await response.text()
