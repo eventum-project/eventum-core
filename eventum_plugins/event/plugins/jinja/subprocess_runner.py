@@ -1,6 +1,7 @@
 import logging
 import subprocess as subprocess
 from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class SubprocessRunner:
         self,
         command: str,
         cwd: str | None = None,
-        env: dict | None = None,
+        env: dict[str, Any] | None = None,
         timeout: float | None = None,
     ) -> SubprocessResult | None:
         """Run command in a subprocess.
@@ -32,7 +33,7 @@ class SubprocessRunner:
         cwd : str | None, default=None
             Working directory
 
-        env: dict | None, default=None
+        env: dict[str, Any] | None, default=None
             Environment variables
 
         timeout: float | None, default=None

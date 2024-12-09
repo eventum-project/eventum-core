@@ -1,5 +1,6 @@
 import os
 from copy import copy
+from datetime import datetime
 from typing import Any, MutableMapping
 
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
@@ -12,6 +13,7 @@ from eventum_plugins.event.base.plugin import (EventPlugin, EventPluginParams,
                                                ProduceParams)
 from eventum_plugins.event.plugins.jinja.config import (
     JinjaEventPluginConfig, TemplateConfigForGeneralModes)
+from eventum_plugins.event.plugins.jinja.context import EventContext
 from eventum_plugins.event.plugins.jinja.module_provider import ModuleProvider
 from eventum_plugins.event.plugins.jinja.sample_reader import SampleReader
 from eventum_plugins.event.plugins.jinja.state import (MultiProcessState,
@@ -71,12 +73,14 @@ class JinjaEventPlugin(
         with required_params():
             self._composed_state = params['composed_state']
 
-        self._env.globals['params'] = self._config.root.params
-        self._env.globals['samples'] = self._samples
-        self._env.globals['module'] = self._module_provider
-        self._env.globals['subprocess'] = self._subprocess_runner
-        self._env.globals['shared'] = self._shared_state
-        self._env.globals['composed'] = self._composed_state
+        globals: dict[str, Any] = self._env.globals     # type: ignore
+
+        globals['params'] = self._config.root.params
+        globals['samples'] = self._samples
+        globals['module'] = self._module_provider
+        globals['subprocess'] = self._subprocess_runner
+        globals['shared'] = self._shared_state
+        globals['composed'] = self._composed_state
 
         self._template_configs = self._get_template_configs_as_dict()
         self._template_states = {
@@ -102,7 +106,14 @@ class JinjaEventPlugin(
             raise PluginConfigurationError(
                 f'Failed to configure template picker: {e}'
             )
-        self._last_used_state = next(iter(self._template_states.values()))
+
+        self._event_context = EventContext(
+            timestamp=datetime.now(),   # ephemeral
+            tags=tuple(),               # ephemeral
+            locals=next(iter(self._template_states.values())),  # ephemeral
+            shared=self._shared_state,
+            composed=self._composed_state
+        )
 
     def _get_template_configs_as_dict(
         self
@@ -159,15 +170,12 @@ class JinjaEventPlugin(
             ) from e
 
     def produce(self, params: ProduceParams) -> list[str]:
-        picked_aliases = self._template_picker.pick(
-            timestamp=params['timestamp'],
-            tags=params['tags'],
-            locals=self._last_used_state,
-            shared=self._shared_state,
-            composed=self._composed_state
-        )
+        self._event_context['timestamp'] = params['timestamp']
+        self._event_context['tags'] = params['tags']
 
-        rendered = []
+        picked_aliases = self._template_picker.pick(self._event_context)
+
+        rendered: list[str] = []
         for alias in picked_aliases:
             template = self._templates[alias]
 
@@ -184,7 +192,8 @@ class JinjaEventPlugin(
                 )
             rendered.append(event)
         else:
-            self._last_used_state = self._template_states[alias]
+            locals = self._template_states[alias]   # type: ignore
+            self._event_context['locals'] = locals
 
         return rendered
 

@@ -28,11 +28,11 @@ class ItemsSampleConfig(BaseModel, frozen=True, extra='forbid'):
     type : Literal[SampleType.CSV]
         Discriminator field for sample configuration
 
-    source : tuple
+    source : tuple[Any, ...]
         List of sample items
     """
     type: Literal[SampleType.ITEMS]
-    source: tuple = Field(..., min_length=1)
+    source: tuple[Any, ...] = Field(..., min_length=1)
 
 
 class CSVSampleConfig(BaseModel, frozen=True, extra='forbid'):
@@ -73,9 +73,14 @@ class JSONSampleConfig(BaseModel, frozen=True, extra='forbid'):
     source: str = Field(..., pattern=r'.*\.json')
 
 
-class SampleConfig(RootModel, frozen=True):
+SampleConfigModel = (
+    ItemsSampleConfig | CSVSampleConfig | JSONSampleConfig
+)
+
+
+class SampleConfig(RootModel[SampleConfigModel], frozen=True):
     """Configuration of sample."""
-    root: ItemsSampleConfig | CSVSampleConfig | JSONSampleConfig = Field(
+    root: SampleConfigModel = Field(
         discriminator='type'
     )
 
@@ -172,13 +177,13 @@ class JinjaEventPluginConfigCommonFields(
 
     Attributes
     ----------
-    params : dict
+    params : dict[str, Any]
         Constant parameters passed to templates
 
     sample : dict[str, SampleConfig]
         Samples passed to templates
     """
-    params: dict
+    params: dict[str, Any]
     samples: dict[str, SampleConfig]
 
     def get_picking_common_fields(self) -> dict[str, Any]:
@@ -331,11 +336,14 @@ class JinjaEventPluginConfigForChainMode(
         return fields
 
 
-class JinjaEventPluginConfig(RootModel, frozen=True):
+ConfigModel = (
+    JinjaEventPluginConfigForGeneralModes
+    | JinjaEventPluginConfigForChanceMode
+    | JinjaEventPluginConfigForFSMMode
+    | JinjaEventPluginConfigForChainMode
+)
+
+
+class JinjaEventPluginConfig(RootModel[ConfigModel], frozen=True):
     """Configuration for `jinja` event plugin."""
-    root: (
-        JinjaEventPluginConfigForGeneralModes
-        | JinjaEventPluginConfigForChanceMode
-        | JinjaEventPluginConfigForFSMMode
-        | JinjaEventPluginConfigForChainMode
-    ) = Field(discriminator='mode')
+    root: ConfigModel = Field(discriminator='mode')

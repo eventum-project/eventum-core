@@ -1,6 +1,6 @@
 import random
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar, Unpack
+from typing import Any, Generic, TypeVar
 
 from eventum_plugins.event.plugins.jinja.config import (
     TemplateConfigForChanceMode, TemplateConfigForFSMMode,
@@ -33,7 +33,11 @@ class TemplatePicker(ABC, Generic[T]):
     _registered_pickers: dict[TemplatePickingMode,
                               type['TemplatePicker[Any]']] = dict()
 
-    def __init_subclass__(cls, mode: TemplatePickingMode, **kwargs) -> None:
+    def __init_subclass__(
+        cls,
+        mode: TemplatePickingMode,
+        **kwargs: Any
+    ) -> None:
         if mode in TemplatePicker._registered_pickers:
             registered_picker = TemplatePicker._registered_pickers[mode]
             raise ValueError(
@@ -55,8 +59,13 @@ class TemplatePicker(ABC, Generic[T]):
         self._aliases = tuple(self._config.keys())
 
     @abstractmethod
-    def pick(self, **kwargs: Unpack[EventContext]) -> tuple[str, ...]:
+    def pick(self, context: EventContext) -> tuple[str, ...]:
         """Pick template.
+
+        Parameters
+        ----------
+        context : EventContext
+            Context of event producing
 
         Returns
         -------
@@ -106,7 +115,7 @@ class AllTemplatePicker(
     ) -> None:
         super().__init__(config, common_config)
 
-    def pick(self, **kwargs: Unpack[EventContext]) -> tuple[str, ...]:
+    def pick(self, context: EventContext) -> tuple[str, ...]:
         return self._aliases
 
 
@@ -123,7 +132,7 @@ class AnyTemplatePicker(
     ) -> None:
         super().__init__(config, common_config)
 
-    def pick(self, **kwargs: Unpack[EventContext]) -> tuple[str, ...]:
+    def pick(self, context: EventContext) -> tuple[str, ...]:
         return (random.choice(self._aliases), )
 
 
@@ -141,7 +150,7 @@ class ChanceTemplatePicker(
         super().__init__(config, common_config)
         self._chances = [conf.chance for conf in self._config.values()]
 
-    def pick(self, **kwargs: Unpack[EventContext]) -> tuple[str, ...]:
+    def pick(self, context: EventContext) -> tuple[str, ...]:
         return tuple(
             random.choices(self._aliases, weights=self._chances, k=1)
         )
@@ -161,7 +170,7 @@ class SpinTemplatePicker(
         super().__init__(config, common_config)
         self._spin_index = 0
 
-    def pick(self, **kwargs: Unpack[EventContext]) -> tuple[str, ...]:
+    def pick(self, context: EventContext) -> tuple[str, ...]:
         alias = self._aliases[self._spin_index]
 
         self._spin_index += 1
@@ -205,23 +214,28 @@ class FSMTemplatePicker(
 
         raise RuntimeError('No initial state found')
 
-    def _check_transition(self, **kwargs: Unpack[EventContext]) -> None:
+    def _check_transition(self, context: EventContext) -> None:
         """Check condition of current state and perform transition to
         next state if it is true.
+
+        Parameters
+        ----------
+        context : EventContext
+            Context of event producing
         """
         transition = self._config[self._state].transition
 
         if transition is None:
             return
 
-        if transition.when.check(**kwargs):
+        if transition.when.check(context):
             self._state = transition.to
 
-    def pick(self, **kwargs: Unpack[EventContext]) -> tuple[str, ...]:
+    def pick(self, context: EventContext) -> tuple[str, ...]:
         if self._initial_pick:
             self._initial_pick = False
         else:
-            self._check_transition(**kwargs)
+            self._check_transition(context)
 
         return (self._state, )
 
@@ -245,7 +259,7 @@ class ChainTemplatePicker(
 
         self._chain_index = 0
 
-    def pick(self, **kwargs: Unpack[EventContext]) -> tuple[str, ...]:
+    def pick(self, context: EventContext) -> tuple[str, ...]:
         alias = self._chain[self._chain_index]
 
         self._chain_index += 1
@@ -257,7 +271,7 @@ class ChainTemplatePicker(
 
 def get_picker_class(
     picking_mode: TemplatePickingMode
-) -> type[TemplatePicker]:
+) -> type[TemplatePicker[Any]]:
     """Return specific picker class depending on picking mode.
 
     Parameters

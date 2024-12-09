@@ -64,7 +64,7 @@ class State(ABC):
         ...
 
     @abstractmethod
-    def as_dict(self) -> dict:
+    def as_dict(self) -> dict[str, Any]:
         """Get dictionary representation of state."""
         ...
 
@@ -92,7 +92,7 @@ class SingleThreadState(State):
     def clear(self) -> None:
         self._state.clear()
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> dict[str, Any]:
         return deepcopy(self._state)
 
 
@@ -161,13 +161,13 @@ class MultiProcessState(State):
         self._lock = lock
         self._encoder = msgspec.msgpack.Encoder()
         self._decoder = msgspec.msgpack.Decoder()
-        self._state_to_update: dict | None = None
+        self._state_to_update: dict[str, Any] | None = None
 
         if create:
             self._write_state(initial or dict())
 
     def get(self, key: str, default: Any = None) -> Any:
-        state: dict = self._load_state()
+        state: dict[str, Any] = self._load_state()
 
         if key not in state:
             return default
@@ -177,7 +177,7 @@ class MultiProcessState(State):
     def set(self, key: str, value: Any) -> None:
         with self._lock:
             if self._state_to_update is None:
-                state: dict = self._load_state()
+                state: dict[str, Any] = self._load_state()
             else:
                 state = self._state_to_update
 
@@ -188,10 +188,10 @@ class MultiProcessState(State):
             self._state_to_update = None
             self._lock.release()
 
-    def update(self, m: dict, /) -> None:
+    def update(self, m: dict[str, Any], /) -> None:
         with self._lock:
             if self._state_to_update is None:
-                state: dict = self._load_state()
+                state: dict[str, Any] = self._load_state()
             else:
                 state = self._state_to_update
 
@@ -226,7 +226,7 @@ class MultiProcessState(State):
             in state with specified key
         """
         self._lock.acquire()
-        state: dict = self._load_state()
+        state: dict[str, Any] = self._load_state()
         self._state_to_update = state
 
         if key not in state:
@@ -238,8 +238,8 @@ class MultiProcessState(State):
         """Release state lock acquired by `get_for_update` method."""
         self._lock.release()
 
-    def as_dict(self) -> dict:
-        state: dict = self._load_state()
+    def as_dict(self) -> dict[str, Any]:
+        state: dict[str, Any] = self._load_state()
         return state
 
     def close(self) -> None:

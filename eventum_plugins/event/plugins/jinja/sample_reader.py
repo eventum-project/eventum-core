@@ -23,8 +23,8 @@ class Sample:
     def __len__(self) -> int:
         return self._dataset.__len__()
 
-    def __getitem__(self, key: Any) -> list | tuple:
-        return self._dataset.__getitem__(key)
+    def __getitem__(self, key: Any) -> list[Any] | tuple[Any, ...]:
+        return self._dataset.__getitem__(key)   # type: ignore
 
 
 def _load_items_sample(config: ItemsSampleConfig) -> Sample:
@@ -48,9 +48,9 @@ def _load_items_sample(config: ItemsSampleConfig) -> Sample:
         first_row = []
 
     if isinstance(first_row, Iterable) and not isinstance(first_row, str):
-        data.extend(config.source)
+        data.extend(config.source)  # type: ignore
     else:
-        data.extend((item, ) for item in config.source)
+        data.extend((item, ) for item in config.source)  # type: ignore
 
     return Sample(data)
 
@@ -75,7 +75,7 @@ def _load_csv_sample(config: CSVSampleConfig) -> Sample:
     """
     data = tablib.Dataset()
     with open(config.source) as f:
-        data.load(
+        data.load(  # type: ignore
             in_stream=f,
             format='csv',
             headers=config.header,
@@ -104,7 +104,7 @@ def _load_json_sample(config: JSONSampleConfig) -> Sample:
     """
     data = tablib.Dataset()
     with open(config.source) as f:
-        data.load(
+        data.load(  # type: ignore
             in_stream=f,
             format='json'
         )
