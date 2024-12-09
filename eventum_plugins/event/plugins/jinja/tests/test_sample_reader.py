@@ -1,3 +1,4 @@
+# type: ignore
 import os
 
 import pytest
@@ -35,7 +36,7 @@ def flat_items_sample_config():
         'items_sample': SampleConfig(
             root=ItemsSampleConfig(
                 type=SampleType.ITEMS,
-                source=[1, 2, 3]
+                source=(1, 2, 3)
             )
         )
     }

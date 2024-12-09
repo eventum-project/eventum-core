@@ -1,3 +1,4 @@
+# type: ignore
 import pytest
 
 from eventum_plugins.event.plugins.jinja.config import (
@@ -38,7 +39,7 @@ def test_all_template_picker():
     }
     picker = AllTemplatePicker(config, {})
 
-    assert picker.pick() == ('template1', 'template2')
+    assert picker.pick({}) == ('template1', 'template2')
 
 
 def test_any_template_picker():
@@ -48,7 +49,7 @@ def test_any_template_picker():
     }
     picker = AnyTemplatePicker(config, {})
 
-    picked_templates = picker.pick()
+    picked_templates = picker.pick({})
 
     assert len(picked_templates) == 1
     assert picked_templates[0] in ('template1', 'template2')
@@ -67,7 +68,7 @@ def test_chance_template_picker():
     }
     picker = ChanceTemplatePicker(config, {})
 
-    picked_templates = picker.pick()
+    picked_templates = picker.pick({})
 
     assert len(picked_templates) == 1
     assert picked_templates[0] in ('template1', 'template2')
@@ -81,10 +82,10 @@ def test_spin_template_picker():
     }
     picker = SpinTemplatePicker(config, {})
 
-    assert picker.pick() == ('template1', )
-    assert picker.pick() == ('template2', )
-    assert picker.pick() == ('template3', )
-    assert picker.pick() == ('template1', )
+    assert picker.pick({}) == ('template1', )
+    assert picker.pick({}) == ('template2', )
+    assert picker.pick({}) == ('template3', )
+    assert picker.pick({}) == ('template1', )
 
 
 def test_fsm_template_picker():
@@ -109,17 +110,17 @@ def test_fsm_template_picker():
     picker = FSMTemplatePicker(config, {})
     state = SingleThreadState({'some_flag': False})
 
-    assert picker.pick(shared=state) == ('template1', )
-    assert picker.pick(shared=state) == ('template1', )
+    assert picker.pick({'shared': state}) == ('template1', )
+    assert picker.pick({'shared': state}) == ('template1', )
     state.set('some_flag', True)
 
-    assert picker.pick(shared=state) == ('template2', )
-    assert picker.pick(shared=state) == ('template2', )
+    assert picker.pick({'shared': state}) == ('template2', )
+    assert picker.pick({'shared': state}) == ('template2', )
 
     state.set('some_flag', False)
 
-    assert picker.pick(shared=state) == ('template1', )
-    assert picker.pick(shared=state) == ('template1', )
+    assert picker.pick({'shared': state}) == ('template1', )
+    assert picker.pick({'shared': state}) == ('template1', )
 
 
 def test_chain_template_picker():
@@ -137,11 +138,11 @@ def test_chain_template_picker():
         }
     )
 
-    assert picker.pick() == ('template1', )
-    assert picker.pick() == ('template1', )
-    assert picker.pick() == ('template3', )
-    assert picker.pick() == ('template2', )
-    assert picker.pick() == ('template1', )
-    assert picker.pick() == ('template1', )
-    assert picker.pick() == ('template1', )
-    assert picker.pick() == ('template3', )
+    assert picker.pick({}) == ('template1', )
+    assert picker.pick({}) == ('template1', )
+    assert picker.pick({}) == ('template3', )
+    assert picker.pick({}) == ('template2', )
+    assert picker.pick({}) == ('template1', )
+    assert picker.pick({}) == ('template1', )
+    assert picker.pick({}) == ('template1', )
+    assert picker.pick({}) == ('template3', )
