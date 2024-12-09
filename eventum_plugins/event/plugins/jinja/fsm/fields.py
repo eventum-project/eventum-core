@@ -4,13 +4,17 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from operator import contains, eq, ge, gt, le, lt
-from typing import (Annotated, Any, Callable, Literal, Self, TypeAlias, Union,
-                    Unpack)
+from typing import (Annotated, Any, Callable, Generic, Literal, Self,
+                    TypeAlias, TypeVar, Union)
 
 from pydantic import (BaseModel, ConfigDict, Field, StringConstraints,
                       model_validator)
 
-from eventum_plugins.event.plugins.jinja.context import EventContext
+from eventum_plugins.event.plugins.jinja.context import (BaseEventContext,
+                                                         EventContext,
+                                                         EventStateContext,
+                                                         EventTagsContext,
+                                                         EventTimestampContext)
 from eventum_plugins.event.plugins.jinja.fsm.operators import (len_eq, len_ge,
                                                                len_gt, len_le,
                                                                len_lt)
@@ -18,17 +22,19 @@ from eventum_plugins.event.plugins.jinja.state import State
 
 logger = logging.getLogger(__name__)
 
+context_T = TypeVar('context_T', bound=BaseEventContext)
 
-class Checkable(ABC):
+
+class Checkable(ABC, Generic[context_T]):
     """Base class for models used in condition checking."""
 
     @abstractmethod
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
-        """Check class-specific condition using current state.
+    def check(self, context: context_T) -> bool:
+        """Check class-specific condition using provided context.
 
         Parameters
         ----------
-        **kwargs : Unpack[EventContext]
+        context : context_T
             Event context parameters for checking condition
 
         Returns
@@ -41,12 +47,6 @@ class Checkable(ABC):
         KeyError
             If required kwarg is missing
         """
-        ...
-
-    @property
-    @abstractmethod
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        """List of kwarg names for performing check."""
         ...
 
 
@@ -114,7 +114,7 @@ StateFieldName: TypeAlias = Annotated[
 ]
 
 
-class Eq(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Eq(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if values are equal using '==' operator."""
     eq: dict[StateFieldName, Any] = Field(
         ...,
@@ -122,24 +122,18 @@ class Eq(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.eq.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=eq,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.eq.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class Gt(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Gt(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is greater than other value using '>' operator."""
     gt: dict[StateFieldName, float | int] = Field(
         ...,
@@ -147,24 +141,18 @@ class Gt(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.gt.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=gt,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.gt.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class Ge(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Ge(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is greater or equal to other value using '>='
     operator.
     """
@@ -174,24 +162,18 @@ class Ge(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.ge.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=ge,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.ge.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class Lt(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Lt(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is lower than other value using '<' operator."""
     lt: dict[StateFieldName, float | int] = Field(
         ...,
@@ -199,24 +181,18 @@ class Lt(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.lt.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=lt,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.lt.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class Le(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Le(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is lower or equal to other value using '<='
     operator.
     """
@@ -226,24 +202,23 @@ class Le(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.le.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=le,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.le.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class LenEq(BaseModel, Checkable, frozen=True, extra='forbid'):
+class LenEq(
+    BaseModel,
+    Checkable[EventStateContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if sequence length is equal to value."""
     len_eq: dict[StateFieldName, int] = Field(
         ...,
@@ -251,24 +226,23 @@ class LenEq(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_eq.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=len_eq,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.len_eq.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class LenGt(BaseModel, Checkable, frozen=True, extra='forbid'):
+class LenGt(
+    BaseModel,
+    Checkable[EventStateContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if sequence length is greater than value."""
     len_gt: dict[StateFieldName, int] = Field(
         ...,
@@ -276,24 +250,23 @@ class LenGt(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_gt.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=len_gt,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.len_gt.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class LenGe(BaseModel, Checkable, frozen=True, extra='forbid'):
+class LenGe(
+    BaseModel,
+    Checkable[EventStateContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if sequence length is greater or equal to value."""
     len_ge: dict[StateFieldName, int] = Field(
         ...,
@@ -301,24 +274,23 @@ class LenGe(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_ge.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=len_ge,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.len_ge.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class LenLt(BaseModel, Checkable, frozen=True, extra='forbid'):
+class LenLt(
+    BaseModel,
+    Checkable[EventStateContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if sequence length is lower than value."""
     len_lt: dict[StateFieldName, int] = Field(
         ...,
@@ -326,24 +298,23 @@ class LenLt(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_lt.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=len_lt,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.len_lt.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class LenLe(BaseModel, Checkable, frozen=True, extra='forbid'):
+class LenLe(
+    BaseModel,
+    Checkable[EventStateContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if sequence length is lower or equal to value."""
     len_le: dict[StateFieldName, int] = Field(
         ...,
@@ -351,24 +322,23 @@ class LenLe(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_le.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=len_le,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.len_le.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class Contains(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Contains(
+    BaseModel,
+    Checkable[EventStateContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if sequence value contains element."""
     contains: dict[StateFieldName, Any] = Field(
         ...,
@@ -378,24 +348,18 @@ class Contains(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.contains.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=contains,
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.contains.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class In(BaseModel, Checkable, frozen=True, extra='forbid'):
+class In(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is in sequence."""
     in_: dict[StateFieldName, Any] = Field(
         ...,
@@ -406,49 +370,44 @@ class In(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.in_.items()))
         state, field = _decompose_field(field)
         return _compare_with_state(
             operator=lambda a, b: contains(b, a),
-            state=kwargs[state],
+            state=context[state],
             field_name=field,
             target_value=value
         )
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.in_.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
 
-
-class HasTags(BaseModel, Checkable, frozen=True, extra='forbid'):
+class HasTags(
+    BaseModel,
+    Checkable[EventTagsContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if event has specific tag."""
     has_tags: str | list[str] = Field(..., min_length=1)
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventTagsContext) -> bool:
         if isinstance(self.has_tags, str):
             target_tags = [self.has_tags]
         else:
             target_tags = self.has_tags
 
-        return set(target_tags).issubset(set(kwargs['tags']))
-
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        return ('tags', )
+        return set(target_tags).issubset(set(context['tags']))
 
 
 class TimestampComponents(BaseModel, frozen=True, extra='forbid'):
     """Time components of timestamp."""
-    year: int | None = Field(None, ge=0, le=10_000)
-    month: int | None = Field(None, ge=1, le=12)
-    day: int | None = Field(None, ge=1, le=31)
-    hour: int | None = Field(None, ge=0, le=24)
-    minute: int | None = Field(None, ge=0, le=60)
-    second: int | None = Field(None, ge=0, le=60)
-    microsecond: int | None = Field(None, ge=0, le=1_000_000)
+    year: int | None = Field(default=None, ge=0, le=10_000)
+    month: int | None = Field(default=None, ge=1, le=12)
+    day: int | None = Field(default=None, ge=1, le=31)
+    hour: int | None = Field(default=None, ge=0, le=24)
+    minute: int | None = Field(default=None, ge=0, le=60)
+    second: int | None = Field(default=None, ge=0, le=60)
+    microsecond: int | None = Field(default=None, ge=0, le=1_000_000)
 
     @model_validator(mode='after')
     def validate_specified(self) -> Self:
@@ -458,12 +417,17 @@ class TimestampComponents(BaseModel, frozen=True, extra='forbid'):
         return self
 
 
-class Before(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Before(
+    BaseModel,
+    Checkable[EventTimestampContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if event timestamp is before specific time."""
     before: TimestampComponents
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
-        dt = kwargs['timestamp']
+    def check(self, context: EventTimestampContext) -> bool:
+        dt = context['timestamp']
 
         target = dt.replace(
             **self.before.model_dump(exclude_none=True)
@@ -471,17 +435,18 @@ class Before(BaseModel, Checkable, frozen=True, extra='forbid'):
 
         return dt < target
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        return ('timestamp', )
 
-
-class After(BaseModel, Checkable, frozen=True, extra='forbid'):
+class After(
+    BaseModel,
+    Checkable[EventTimestampContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if event timestamp is after specific time."""
     after: TimestampComponents
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
-        dt = kwargs['timestamp']
+    def check(self, context: EventTimestampContext) -> bool:
+        dt = context['timestamp']
 
         target = dt.replace(
             **self.after.model_dump(exclude_none=True)
@@ -489,12 +454,13 @@ class After(BaseModel, Checkable, frozen=True, extra='forbid'):
 
         return dt >= target
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        return ('timestamp', )
 
-
-class Matches(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Matches(
+    BaseModel,
+    Checkable[EventStateContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if a string matches a regular expression pattern."""
     matches: dict[StateFieldName, str] = Field(
         ...,
@@ -502,38 +468,32 @@ class Matches(BaseModel, Checkable, frozen=True, extra='forbid'):
         max_length=1
     )
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         field, pattern = next(iter(self.matches.items()))
         state, field = _decompose_field(field)
-        state_value = kwargs[state].get(field)
+        state_value = context[state].get(field)
 
         if not isinstance(state_value, str):
             return False
 
         return bool(re.match(pattern, state_value))
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        field = next(iter(self.matches.keys()))
-        state, _ = _decompose_field(field)
-        return (state, )
-
 
 NotDefined = object()
 
 
-class Defined(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Defined(
+    BaseModel,
+    Checkable[EventStateContext],
+    frozen=True,
+    extra='forbid'
+):
     """Check if state has specified key."""
     defined: StateFieldName = Field(..., min_length=1)
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventStateContext) -> bool:
         state, field = _decompose_field(self.defined)
-        return kwargs[state].get(field, default=NotDefined) is not NotDefined
-
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        state, _ = _decompose_field(self.defined)
-        return (state, )
+        return context[state].get(field, default=NotDefined) is not NotDefined
 
 
 ConditionCheck: TypeAlias = (
@@ -548,7 +508,7 @@ ConditionLogic: TypeAlias = Union['Or', 'And', 'Not']
 Condition: TypeAlias = ConditionLogic | ConditionCheck
 
 
-class Or(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Or(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
     """Logic operator 'or' for combining checks or other logic
     operators.
     """
@@ -556,23 +516,15 @@ class Or(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventContext) -> bool:
         for clause in self.or_:
-            if clause.check(**kwargs):
+            if clause.check(context):   # type: ignore[call-arg]
                 return True
 
         return False
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        kwarg_names = set()
-        for clause in self.or_:
-            kwarg_names |= set(clause.required_check_kwargs)
 
-        return tuple(kwarg_names)
-
-
-class And(BaseModel, Checkable, frozen=True, extra='forbid'):
+class And(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
     """Logic operator 'and' for combining checks or other logic
     operators.
     """
@@ -580,23 +532,15 @@ class And(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
+    def check(self, context: EventContext) -> bool:
         for clause in self.and_:
-            if not clause.check(**kwargs):
+            if not clause.check(context):   # type: ignore[call-arg]
                 return False
 
         return True
 
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        kwarg_names = set()
-        for clause in self.and_:
-            kwarg_names |= set(clause.required_check_kwargs)
 
-        return tuple(kwarg_names)
-
-
-class Not(BaseModel, Checkable, frozen=True, extra='forbid'):
+class Not(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
     """Logic operator 'not' for negate checks or other logic
     operators.
     """
@@ -604,9 +548,5 @@ class Not(BaseModel, Checkable, frozen=True, extra='forbid'):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    def check(self, **kwargs: Unpack[EventContext]) -> bool:
-        return not self.not_.check(**kwargs)
-
-    @property
-    def required_check_kwargs(self) -> tuple[str, ...]:
-        return self.not_.required_check_kwargs
+    def check(self, context: EventContext) -> bool:
+        return not self.not_.check(context)
