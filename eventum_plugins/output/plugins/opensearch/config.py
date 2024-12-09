@@ -6,7 +6,7 @@ from pydantic import Field, field_validator
 from eventum_plugins.output.base.config import OutputPluginConfig
 
 
-class OpensearchOutputConfig(OutputPluginConfig, frozen=True):
+class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
     """Configuration for `opensearch` output plugin.
 
     Parameters
