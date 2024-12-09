@@ -33,7 +33,7 @@ class ReplayEventPlugin(
 
         if self._config.timestamp_pattern is not None:
             try:
-                self._pattern: re.Pattern | None = re.compile(
+                self._pattern: re.Pattern | None = re.compile(  # type: ignore
                     pattern=self._config.timestamp_pattern
                 )
             except re.error as e:
@@ -78,7 +78,7 @@ class ReplayEventPlugin(
         try:
             with open(self._config.path) as f:
                 f.seek(self._last_read_position, os.SEEK_SET)
-                lines = []
+                lines: list[str] = []
                 for _ in range(count):
                     line = f.readline().rstrip('\n\r')
 
@@ -140,7 +140,7 @@ class ReplayEventPlugin(
         self,
         message: str,
         string: str,
-        pattern: re.Pattern,
+        pattern: re.Pattern,    # type: ignore
         group_name: str
     ) -> str:
         """Substitute string into original message in position defined
@@ -170,7 +170,7 @@ class ReplayEventPlugin(
         ValueError
             If substitution is failed
         """
-        msg_match = pattern.search(message)
+        msg_match = pattern.search(message)  # type: ignore
 
         if msg_match is None:
             raise ValueError('No match found')
@@ -196,7 +196,7 @@ class ReplayEventPlugin(
         except StopIteration:
             raise EventsExhausted() from None
 
-        if self._pattern is None:
+        if self._pattern is None:   # type: ignore
             return [line]
 
         fmt_timestamp = self._format_timestamp(
@@ -204,10 +204,10 @@ class ReplayEventPlugin(
         )
 
         try:
-            line = self._substitute_string(
+            line = self._substitute_string(  # type: ignore
                 message=line,
                 string=fmt_timestamp,
-                pattern=self._pattern,
+                pattern=self._pattern,  # type: ignore
                 group_name='timestamp'
             )
         except ValueError as e:

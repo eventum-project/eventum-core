@@ -39,7 +39,7 @@ class ReplayEventPluginConfig(EventPluginConfig, frozen=True):
     timestamp_pattern: str | None = None
     timestamp_format: str | None = None
     repeat: bool = False
-    read_batch_size: int = Field(1000, ge=1, le=1_000_000)
+    read_batch_size: int = Field(default=1000, ge=1, le=1_000_000)
 
     @field_validator('path')
     def validate_path(cls, v: str):

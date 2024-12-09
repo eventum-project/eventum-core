@@ -91,9 +91,9 @@ class ScriptEventPlugin(
 
         if isinstance(result, str):
             return [result]
-        elif isinstance(result, list):
+        elif isinstance(result, list):  # type: ignore
             for item in result:
-                if not isinstance(item, str):
+                if not isinstance(item, str):   # type: ignore
                     returned_type = type(item)
                     raise PluginRuntimeError(
                         f'Function "{ScriptEventPlugin._FUNCTION_NAME}" '
