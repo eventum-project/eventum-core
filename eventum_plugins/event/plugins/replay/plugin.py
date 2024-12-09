@@ -44,6 +44,11 @@ class ReplayEventPlugin(
         else:
             self._pattern = None
 
+        if not os.path.exists(self._config.path):
+            raise PluginConfigurationError(
+                f'File "{self._config.path}" does not exist'
+            )
+
     def _read_next_lines(self, count: int) -> list[str]:
         """Read next specified number of lines from the file.
 
