@@ -1,4 +1,3 @@
-# type: ignore
 from datetime import datetime
 
 
