@@ -33,19 +33,36 @@ class RequestHandler(BaseHTTPRequestHandler):
         """
         cls._stop_callback = callback
 
+    def _send_response(self, status: int, message: str | None = None) -> None:
+        """Send response back to client.
+
+        Parameters
+        ----------
+        status : int
+            HTTP response code
+
+        message : str
+            Response message
+        """
+        try:
+            self.send_response(status)
+            self.end_headers()
+
+            if message is not None:
+                self.wfile.write(message.encode())
+        except OSError as e:
+            logger.error(f'Failed to send response: {e}')
+
     def _handle_generate(self) -> None:
         """Handle request to `/generate` endpoint."""
         if self.headers.get('Content-Type') != 'application/json':
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(b'Expected JSON content type')
+            self._send_response(400, 'Expected JSON content type')
             return
 
         # Read and parse JSON
         content_length = int(self.headers.get('Content-Length', 0))
-        post_data = self.rfile.read(content_length)
-        error_message = b''
         try:
+            post_data = self.rfile.read(content_length)
             data = json.loads(post_data)
 
             count = data['count']
@@ -55,39 +72,48 @@ class RequestHandler(BaseHTTPRequestHandler):
             if count < 1:
                 raise ValueError
         except json.JSONDecodeError:
-            error_message = b'Invalid json data'
+            self._send_response(400, 'Invalid json data')
+            return
         except (TypeError, KeyError):
-            error_message = b'Invalid json schema'
+            self._send_response(400, 'Invalid json schema')
+            return
         except ValueError:
-            error_message = b'Count must be greater than 0'
-
-        if error_message:
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(error_message)
+            self._send_response(400, 'Number of events must be greater than 0')
+            return
+        except Exception as e:
+            logger.error(f'Error during processing request: {e}')
+            self._send_response(500, 'Error during processing request')
             return
 
-        if RequestHandler._generate_callback is not None:
-            RequestHandler._generate_callback(count)  # type: ignore
+        try:
+            if RequestHandler._generate_callback is not None:
+                RequestHandler._generate_callback(count)  # type: ignore
+        except Exception as e:
+            logger.error(
+                f'Error occurred during handling "generate" request: {e}'
+            )
+            self._send_response(500, 'Error during generation')
+            return
 
-        self.send_response(201)
-        self.end_headers()
-        self.wfile.write(b'Generated')
+        self._send_response(201, 'Generated')
 
     def _handle_stop(self) -> None:
         """Handle request to `/stop` endpoint."""
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b'Stopped')
+        # response now, because stop callback will shut down the server
+        self._send_response(200, 'Stopping')
 
-        if RequestHandler._stop_callback is not None:
-            RequestHandler._stop_callback()
+        try:
+            if RequestHandler._stop_callback is not None:
+                RequestHandler._stop_callback()
+        except Exception as e:
+            logger.error(
+                f'Error occurred during handling "stop" request: {e}'
+            )
+            return
 
     def _handle_404(self) -> None:
         """Handle request to unknown endpoint."""
-        self.send_response(404)
-        self.end_headers()
-        self.wfile.write(b'Not found')
+        self._send_response(404, 'Not found')
 
     def do_POST(self) -> None:
         match self.path:

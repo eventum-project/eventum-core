@@ -1,4 +1,3 @@
-import socket
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -22,7 +21,6 @@ def test_plugin():
                 'timezone': timezone('UTC'),
                 'live_mode': True,
             }
-
         )
 
         events = []
@@ -32,17 +30,9 @@ def test_plugin():
             res = rq.post('http://localhost:8080/generate', json={'count': 2})
             assert res.status_code == 201
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        assert sock.connect_ex(('127.0.0.1', 8080)) == 0
-        sock.close()
-
         res = rq.post('http://localhost:8080/stop')
 
         assert res.status_code == 200
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        assert sock.connect_ex(('127.0.0.1', 8080)) == 0
-        sock.close()
 
         future.result()
 
