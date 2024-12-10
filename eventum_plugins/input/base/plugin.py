@@ -1,7 +1,8 @@
+import logging
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
-                    TypeVar)
+                    TypeAlias, TypeVar, assert_never)
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -12,7 +13,12 @@ from eventum_plugins.base.plugin import Plugin, PluginParams, required_params
 from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
 from eventum_plugins.input.base.config import InputPluginConfig
-from eventum_plugins.input.batcher import TimestampsBatcher
+from eventum_plugins.input.batcher import BatcherFullError, TimestampsBatcher
+
+logger = logging.getLogger(__name__)
+
+
+QueueOverflowMode: TypeAlias = Literal['block', 'skip']
 
 
 class InputPluginParams(PluginParams):
@@ -36,7 +42,7 @@ class InputPluginParams(PluginParams):
     queue_max_size : int, default=1_000_000
         Parameter `queue_max_size` of `TimestampsBatcher`
 
-    on_queue_overflow : Literal['block', 'skip'], default='block'
+    on_queue_overflow : QueueOverflowMode, default='block'
         Block or skip adding new timestamps when batcher is overflowed
     """
     live_mode: Required[bool]
@@ -44,7 +50,7 @@ class InputPluginParams(PluginParams):
     batch_size: NotRequired[int | None]
     batch_delay: NotRequired[float | None]
     queue_max_size: NotRequired[int]
-    on_queue_overflow: NotRequired[Literal['block', 'skip']]
+    on_queue_overflow: NotRequired[QueueOverflowMode]
 
 
 config_T = TypeVar('config_T', bound=(InputPluginConfig | RootModel))
@@ -83,9 +89,9 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         except ValueError as e:
             raise PluginConfigurationError(f'Wrong batching parameters: {e}')
 
-        self._block_on_overflow = params.get(
+        self._on_queue_overflow: QueueOverflowMode = params.get(
             'on_queue_overflow', 'block'
-        ) == 'block'
+        )
 
     def _handle_done_future(self, future: Future) -> None:
         """Handle future when it is done with propagating possible
@@ -102,6 +108,27 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
             raise PluginRuntimeError from e
         finally:
             self._batcher.close()
+
+    def _add_batch(self, batch: NDArray[datetime64]) -> None:
+        """Add batch to batcher with handling overflowing.
+
+        Parameters
+        ----------
+        batch : NDArray[datetime64]
+            Batch to add
+        """
+        match self._on_queue_overflow:
+            case 'block':
+                self._batcher.add(batch, block=True)
+            case 'skip':
+                try:
+                    self._batcher.add(batch, block=False)
+                except BatcherFullError:
+                    logger.warning(
+                        'Batch was skipped due to batcher is overflowed'
+                    )
+            case mode:
+                assert_never(mode)
 
     def generate(self) -> Iterator[NDArray[datetime64]]:
         """Start timestamps generation in background thread and yield
@@ -126,7 +153,7 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
                     if self._live_mode
                     else self._generate_sample
                 ),
-                lambda batch: self._batcher.add(batch, self._block_on_overflow)
+                self._add_batch
             )
             future.add_done_callback(self._handle_done_future)
 

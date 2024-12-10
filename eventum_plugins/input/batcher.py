@@ -140,7 +140,7 @@ class TimestampsBatcher:
         ------
         BatcherFullError
             If batcher queue doesn't have enough space at moment of
-            addition timestamps and `block` is parameter `False`
+            addition timestamps and `block` parameter is `False`
 
         BatcherClosedError
             If batcher is already closed
