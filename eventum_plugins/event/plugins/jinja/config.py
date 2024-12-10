@@ -32,7 +32,7 @@ class ItemsSampleConfig(BaseModel, frozen=True, extra='forbid'):
         List of sample items
     """
     type: Literal[SampleType.ITEMS]
-    source: tuple = Field(default=..., min_length=1)
+    source: tuple = Field(min_length=1)
 
 
 class CSVSampleConfig(BaseModel, frozen=True, extra='forbid'):
@@ -55,7 +55,7 @@ class CSVSampleConfig(BaseModel, frozen=True, extra='forbid'):
     type: Literal[SampleType.CSV]
     header: bool = False
     delimiter: str = Field(default=',', min_length=1)
-    source: str = Field(default=..., pattern=r'.*\.csv')
+    source: str = Field(pattern=r'.*\.csv')
 
 
 class JSONSampleConfig(BaseModel, frozen=True, extra='forbid'):
@@ -70,7 +70,7 @@ class JSONSampleConfig(BaseModel, frozen=True, extra='forbid'):
         Path to json file
     """
     type: Literal[SampleType.JSON]
-    source: str = Field(default=..., pattern=r'.*\.json')
+    source: str = Field(pattern=r'.*\.json')
 
 
 SampleConfigModel = (
@@ -114,7 +114,7 @@ class TemplateConfigForGeneralModes(BaseModel, frozen=True, extra='forbid'):
     template : TemplatePath
         Path to template
     """
-    template: TemplatePath = Field(default=..., min_length=1)
+    template: TemplatePath = Field(min_length=1)
 
 
 class TemplateConfigForChanceMode(TemplateConfigForGeneralModes, frozen=True):
@@ -125,7 +125,7 @@ class TemplateConfigForChanceMode(TemplateConfigForGeneralModes, frozen=True):
     chance : float
         Proportional value of probability of rendering template
     """
-    chance: float = Field(default=..., gt=0.0)
+    chance: float = Field(gt=0.0)
 
 
 class TemplateTransition(BaseModel, frozen=True, extra='forbid'):
@@ -139,7 +139,7 @@ class TemplateTransition(BaseModel, frozen=True, extra='forbid'):
     when : Condition
         Condition for performing transition
     """
-    to: str = Field(default=..., min_length=1)
+    to: str = Field(min_length=1)
     when: Condition
 
 
@@ -166,7 +166,7 @@ class TemplateConfigForChainMode(TemplateConfigForGeneralModes, frozen=True):
     chain : list[str]
         Chain of template aliases
     """
-    chain: list[str] = Field(default=..., min_length=1)
+    chain: list[str] = Field(min_length=1)
 
 
 class JinjaEventPluginConfigCommonFields(
@@ -225,7 +225,7 @@ class JinjaEventPluginConfigForGeneralModes(
     ]
     templates: list[
         dict[str, TemplateConfigForGeneralModes]
-    ] = Field(default=..., min_length=1)
+    ] = Field(min_length=1)
 
 
 class JinjaEventPluginConfigForChanceMode(
@@ -248,7 +248,7 @@ class JinjaEventPluginConfigForChanceMode(
     mode: Literal[TemplatePickingMode.CHANCE]
     templates: list[
         dict[str, TemplateConfigForChanceMode]
-    ] = Field(default=..., min_length=1)
+    ] = Field(min_length=1)
 
 
 class JinjaEventPluginConfigForFSMMode(
@@ -270,7 +270,7 @@ class JinjaEventPluginConfigForFSMMode(
     mode: Literal[TemplatePickingMode.FSM]
     templates: list[
         dict[str, TemplateConfigForFSMMode]
-    ] = Field(default=..., min_length=1)
+    ] = Field(min_length=1)
 
     @field_validator('templates')
     def validate_single_initial(
@@ -308,10 +308,10 @@ class JinjaEventPluginConfigForChainMode(
         List of template configurations
     """
     mode: Literal[TemplatePickingMode.CHAIN]
-    chain: list[str] = Field(default=..., min_length=1)
+    chain: list[str] = Field(min_length=1)
     templates: list[
         dict[str, TemplateConfigForGeneralModes]
-    ] = Field(default=..., min_length=1)
+    ] = Field(min_length=1)
 
     @model_validator(mode='after')
     def validate_chain_aliases(self) -> Self:

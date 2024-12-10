@@ -116,11 +116,7 @@ StateFieldName: TypeAlias = Annotated[
 
 class Eq(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if values are equal using '==' operator."""
-    eq: dict[StateFieldName, Any] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    eq: dict[StateFieldName, Any] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.eq.items()))
@@ -135,11 +131,7 @@ class Eq(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
 
 class Gt(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is greater than other value using '>' operator."""
-    gt: dict[StateFieldName, float | int] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    gt: dict[StateFieldName, float | int] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.gt.items()))
@@ -156,11 +148,7 @@ class Ge(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is greater or equal to other value using '>='
     operator.
     """
-    ge: dict[StateFieldName, float | int] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    ge: dict[StateFieldName, float | int] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.ge.items()))
@@ -175,11 +163,7 @@ class Ge(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
 
 class Lt(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is lower than other value using '<' operator."""
-    lt: dict[StateFieldName, float | int] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    lt: dict[StateFieldName, float | int] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.lt.items()))
@@ -196,11 +180,7 @@ class Le(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is lower or equal to other value using '<='
     operator.
     """
-    le: dict[StateFieldName, float | int] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    le: dict[StateFieldName, float | int] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.le.items()))
@@ -220,11 +200,7 @@ class LenEq(
     extra='forbid'
 ):
     """Check if sequence length is equal to value."""
-    len_eq: dict[StateFieldName, int] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    len_eq: dict[StateFieldName, int] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_eq.items()))
@@ -244,11 +220,7 @@ class LenGt(
     extra='forbid'
 ):
     """Check if sequence length is greater than value."""
-    len_gt: dict[StateFieldName, int] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    len_gt: dict[StateFieldName, int] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_gt.items()))
@@ -268,11 +240,7 @@ class LenGe(
     extra='forbid'
 ):
     """Check if sequence length is greater or equal to value."""
-    len_ge: dict[StateFieldName, int] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    len_ge: dict[StateFieldName, int] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_ge.items()))
@@ -292,11 +260,7 @@ class LenLt(
     extra='forbid'
 ):
     """Check if sequence length is lower than value."""
-    len_lt: dict[StateFieldName, int] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    len_lt: dict[StateFieldName, int] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_lt.items()))
@@ -316,11 +280,7 @@ class LenLe(
     extra='forbid'
 ):
     """Check if sequence length is lower or equal to value."""
-    len_le: dict[StateFieldName, int] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    len_le: dict[StateFieldName, int] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, value = next(iter(self.len_le.items()))
@@ -340,11 +300,7 @@ class Contains(
     extra='forbid'
 ):
     """Check if sequence value contains element."""
-    contains: dict[StateFieldName, Any] = Field(
-        default=...,
-        min_length=1,
-        max_length=1,
-    )
+    contains: dict[StateFieldName, Any] = Field(min_length=1, max_length=1)
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -362,7 +318,6 @@ class Contains(
 class In(BaseModel, Checkable[EventStateContext], frozen=True, extra='forbid'):
     """Check if value is in sequence."""
     in_: dict[StateFieldName, Any] = Field(
-        default=...,
         min_length=1,
         max_length=1,
         alias='in'
@@ -388,7 +343,7 @@ class HasTags(
     extra='forbid'
 ):
     """Check if event has specific tag."""
-    has_tags: str | list[str] = Field(default=..., min_length=1)
+    has_tags: str | list[str] = Field(min_length=1)
 
     def check(self, context: EventTagsContext) -> bool:
         if isinstance(self.has_tags, str):
@@ -462,11 +417,7 @@ class Matches(
     extra='forbid'
 ):
     """Check if a string matches a regular expression pattern."""
-    matches: dict[StateFieldName, str] = Field(
-        default=...,
-        min_length=1,
-        max_length=1
-    )
+    matches: dict[StateFieldName, str] = Field(min_length=1, max_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         field, pattern = next(iter(self.matches.items()))
@@ -489,7 +440,7 @@ class Defined(
     extra='forbid'
 ):
     """Check if state has specified key."""
-    defined: StateFieldName = Field(default=..., min_length=1)
+    defined: StateFieldName = Field(min_length=1)
 
     def check(self, context: EventStateContext) -> bool:
         state, field = _decompose_field(self.defined)
@@ -512,7 +463,7 @@ class Or(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
     """Logic operator 'or' for combining checks or other logic
     operators.
     """
-    or_: list[Condition] = Field(default=..., min_length=2, alias='or')
+    or_: list[Condition] = Field(min_length=2, alias='or')
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -528,7 +479,7 @@ class And(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
     """Logic operator 'and' for combining checks or other logic
     operators.
     """
-    and_: list[Condition] = Field(default=..., min_length=2, alias='and')
+    and_: list[Condition] = Field(min_length=2, alias='and')
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -544,7 +495,7 @@ class Not(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
     """Logic operator 'not' for negate checks or other logic
     operators.
     """
-    not_: Condition = Field(default=..., alias='not')
+    not_: Condition = Field(alias='not')
 
     model_config = ConfigDict(populate_by_name=True)
 

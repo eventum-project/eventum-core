@@ -22,7 +22,7 @@ class TimestampsInputPluginConfig(InputPluginConfig, frozen=True):
     It is expected that timestamps are already sorted in ascending
     order
     """
-    source: list[datetime] | str = Field(..., min_length=1)
+    source: list[datetime] | str = Field(min_length=1)
 
     @field_validator('source')
     def validate_source(cls, v: list[datetime] | str) -> list[datetime] | str:

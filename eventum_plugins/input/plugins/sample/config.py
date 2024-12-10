@@ -12,4 +12,4 @@ class SampleInputPluginConfig(InputPluginConfig, frozen=True):
     count : int
         Number of events to generate
     """
-    count: int = Field(..., gt=0)
+    count: int = Field(gt=0)

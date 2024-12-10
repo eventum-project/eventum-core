@@ -26,9 +26,9 @@ class LinspaceInputPluginConfig(
     endpoint : bool
         Whether to include end point of date range
     """
-    start: VersatileDatetimeStrict = Field(..., union_mode='left_to_right')
-    end: VersatileDatetimeStrict = Field(..., union_mode='left_to_right')
-    count: int = Field(..., ge=1)
+    start: VersatileDatetimeStrict = Field(union_mode='left_to_right')
+    end: VersatileDatetimeStrict = Field(union_mode='left_to_right')
+    count: int = Field(ge=1)
     endpoint: bool = True
 
     @field_validator('end')

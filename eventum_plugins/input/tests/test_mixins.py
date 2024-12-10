@@ -7,15 +7,15 @@ from eventum_plugins.input.mixins import DaterangeValidatorMixin
 
 
 class NotValidatedConfig(InputPluginConfig, frozen=True):
-    start: VersatileDatetime = Field(None, union_mode='left_to_right')
-    end: VersatileDatetime = Field(None, union_mode='left_to_right')
+    start: VersatileDatetime = Field(default=None, union_mode='left_to_right')
+    end: VersatileDatetime = Field(default=None, union_mode='left_to_right')
 
     __test__ = False
 
 
 class ValidatedConfig(DaterangeValidatorMixin, InputPluginConfig, frozen=True):
-    start: VersatileDatetime = Field(None, union_mode='left_to_right')
-    end: VersatileDatetime = Field(None, union_mode='left_to_right')
+    start: VersatileDatetime = Field(default=None, union_mode='left_to_right')
+    end: VersatileDatetime = Field(default=None, union_mode='left_to_right')
 
     __test__ = False
 

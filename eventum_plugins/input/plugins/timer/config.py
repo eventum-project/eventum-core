@@ -23,7 +23,7 @@ class TimerInputPluginConfig(InputPluginConfig, frozen=True):
         Number of cycles to repeat, if value is not set (only for live
         mode) repeat infinitely
     """
-    start: VersatileDatetime = Field(None, union_mode='left_to_right')
-    seconds: float = Field(..., ge=0.1)
-    count: int = Field(..., ge=1)
-    repeat: int | None = Field(None, ge=1)
+    start: VersatileDatetime = Field(default=None, union_mode='left_to_right')
+    seconds: float = Field(ge=0.1)
+    count: int = Field(ge=1)
+    repeat: int | None = Field(default=None, ge=1)

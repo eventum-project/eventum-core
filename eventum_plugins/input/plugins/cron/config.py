@@ -32,10 +32,10 @@ class CronInputPluginConfig(
     count : int
         Number of events to generate for every interval
     """
-    start: VersatileDatetime = Field(None, union_mode='left_to_right')
-    end: VersatileDatetime = Field(None, union_mode='left_to_right')
+    start: VersatileDatetime = Field(default=None, union_mode='left_to_right')
+    end: VersatileDatetime = Field(default=None, union_mode='left_to_right')
     expression: str
-    count: int = Field(..., gt=0)
+    count: int = Field(gt=0)
 
     @field_validator('expression')
     def validate_expression(cls, v: str):

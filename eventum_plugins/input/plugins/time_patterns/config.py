@@ -60,10 +60,10 @@ class OscillatorConfig(
         if relative time is provided start time of distribution used as
         relative base
     """
-    period: float = Field(..., gt=0)
+    period: float = Field(gt=0)
     unit: TimeUnit
-    start: VersatileDatetimeStrict = Field(..., union_mode='left_to_right')
-    end: VersatileDatetimeStrict = Field(..., union_mode='left_to_right')
+    start: VersatileDatetimeStrict = Field(union_mode='left_to_right')
+    end: VersatileDatetimeStrict = Field(union_mode='left_to_right')
 
 
 class MultiplierConfig(BaseModel, extra='forbid', frozen=True):
@@ -74,7 +74,7 @@ class MultiplierConfig(BaseModel, extra='forbid', frozen=True):
     ratio : int
         Multiplication ratio
     """
-    ratio: int = Field(..., ge=1)
+    ratio: int = Field(ge=1)
 
 
 class RandomizerConfig(BaseModel, extra='forbid', frozen=True):
@@ -88,12 +88,12 @@ class RandomizerConfig(BaseModel, extra='forbid', frozen=True):
     direction : RandomizerDirection
         Direction of deviation
 
-    sampling : int
+    sampling : int, default=1024
         Size of sample with random deviation ratios
     """
-    deviation: float = Field(..., ge=0, le=1)
+    deviation: float = Field(ge=0, le=1)
     direction: RandomizerDirection
-    sampling: int = Field(1024, ge=16)
+    sampling: int = Field(default=1024, ge=16)
 
 
 class BetaDistributionParameters(BaseModel, extra='forbid', frozen=True):
@@ -107,8 +107,8 @@ class BetaDistributionParameters(BaseModel, extra='forbid', frozen=True):
     b : float
         Parameter beta for the distribution
     """
-    a: float = Field(..., ge=0)
-    b: float = Field(..., ge=0)
+    a: float = Field(ge=0)
+    b: float = Field(ge=0)
 
 
 class TriangularDistributionParameters(BaseModel, extra='forbid', frozen=True):
@@ -125,9 +125,9 @@ class TriangularDistributionParameters(BaseModel, extra='forbid', frozen=True):
     right : float
         Right edge of the distribution
     """
-    left: float = Field(..., ge=0, lt=1)
-    mode: float = Field(..., ge=0, le=1)
-    right: float = Field(..., gt=0, le=1)
+    left: float = Field(ge=0, lt=1)
+    mode: float = Field(ge=0, le=1)
+    right: float = Field(gt=0, le=1)
 
     @model_validator(mode='after')
     def validate_points(self):
@@ -152,8 +152,8 @@ class UniformDistributionParameters(BaseModel, extra='forbid', frozen=True):
     high : float
         High edge of the distribution
     """
-    low: float = Field(..., ge=0, lt=1)
-    high: float = Field(..., gt=0, le=1)
+    low: float = Field(ge=0, lt=1)
+    high: float = Field(gt=0, le=1)
 
     @model_validator(mode='after')
     def validate_points(self):
@@ -218,7 +218,7 @@ class TimePatternConfig(InputPluginConfig, extra='forbid', frozen=True):
     spreader: SpreaderConfig
         Configuration of spreader
     """
-    label: str = Field(..., min_length=1)
+    label: str = Field(min_length=1)
     oscillator: OscillatorConfig
     multiplier: MultiplierConfig
     randomizer: RandomizerConfig
@@ -239,5 +239,5 @@ class TimePatternsInputPluginConfig(InputPluginConfig, frozen=True):
         live mode with usage of multiple configs)
     """
 
-    patterns: list[str] = Field(..., min_length=1)
+    patterns: list[str] = Field(min_length=1)
     ordered_merging: bool = False

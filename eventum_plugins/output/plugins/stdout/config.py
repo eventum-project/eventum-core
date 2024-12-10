@@ -22,5 +22,5 @@ class StdoutOutputPluginConfig(OutputPluginConfig, frozen=True):
         Stream to write events in
     """
     format: Format = Format.PLAIN
-    flush_interval: float = Field(1, ge=0)
+    flush_interval: float = Field(default=1, ge=0)
     stream: Literal['stdout', 'stderr'] = 'stdout'
