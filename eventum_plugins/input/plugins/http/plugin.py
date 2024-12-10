@@ -1,6 +1,7 @@
-from concurrent.futures import ThreadPoolExecutor
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from http.server import HTTPServer
+from threading import Event
 from typing import Any, Callable
 
 from numpy import datetime64, full
@@ -11,8 +12,6 @@ from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.plugins.http.config import HttpInputPluginConfig
 from eventum_plugins.input.plugins.http.server import RequestHandler
 from eventum_plugins.input.utils.time_utils import now64
-
-from threading import Event
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,13 @@
+import socket
 from concurrent.futures import ThreadPoolExecutor
+
 import pytest
+import requests as rq  # type: ignore[import-untyped]
 from pytz import timezone
+
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.plugins.http.config import HttpInputPluginConfig
 from eventum_plugins.input.plugins.http.plugin import HttpInputPlugin
-import requests as rq   # type: ignore[import-untyped]
-import socket
 
 
 def test_plugin():

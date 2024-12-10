@@ -1,7 +1,7 @@
 
 import json
-from http.server import BaseHTTPRequestHandler
 import logging
+from http.server import BaseHTTPRequestHandler
 from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
