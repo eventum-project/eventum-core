@@ -48,8 +48,15 @@ def normalize_versatile_datetime(
     """
     now = datetime.now().astimezone(timezone)
     relative_base = relative_base or now
-    min = datetime.min.replace(tzinfo=timezone)
-    max = datetime.max.replace(tzinfo=timezone)
+
+    min = now.replace(
+        year=1900, month=1, day=1,
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    max = now.replace(
+        year=3000, month=12, day=31,
+        hour=23, minute=59, second=59, microsecond=999999
+    )
 
     match value:
         case datetime():
@@ -59,19 +66,20 @@ def normalize_versatile_datetime(
                 keyword = TimeKeyword(value)
             except ValueError:
                 try:
-                    timedelta = parse_relative_time(value)
-                    time = relative_base + timedelta
+                    delta = parse_relative_time(value)
+                    time = relative_base + delta
                 except ValueError:
                     parsed_time = dateparser.parse(
                         value,
                         settings={
                             'RELATIVE_BASE': relative_base,
-                            'TIMEZONE': timezone.zone or 'UTC',
                             'RETURN_AS_TIMEZONE_AWARE': True
                         }
                     )
                     if parsed_time is None:
-                        raise ValueError(f'Cannot parse expression "{value}"')
+                        raise ValueError(
+                            f'Cannot parse expression "{value}"'
+                        ) from None
 
                     time = parsed_time
             else:
@@ -145,7 +153,7 @@ def normalize_versatile_daterange(
             none_point=none_start
         )
     except ValueError as e:
-        raise ValueError(f'Cannot parse start time: {e}')
+        raise ValueError(f'Cannot parse start time: {e}') from None
 
     try:
         end = normalize_versatile_datetime(
@@ -155,7 +163,7 @@ def normalize_versatile_daterange(
             none_point='max'
         )
     except ValueError as e:
-        raise ValueError(f'Cannot parse end time: {e}')
+        raise ValueError(f'Cannot parse end time: {e}') from None
 
     if start > end:
         raise ValueError('End time cannot be earlier than start time')
