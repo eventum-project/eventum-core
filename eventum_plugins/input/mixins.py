@@ -18,7 +18,8 @@ class DaterangeValidatorMixin:
             normalize_versatile_daterange(
                 start=self.start,   # type: ignore[attr-defined]
                 end=self.end,       # type: ignore[attr-defined]
-                timezone=timezone('UTC')
+                timezone=timezone('UTC'),
+                none_start='now'
             )
         except OverflowError:
             raise ValueError(
