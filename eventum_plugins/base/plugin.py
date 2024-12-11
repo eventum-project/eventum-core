@@ -22,10 +22,14 @@ class _PluginRegistrationInfo(TypedDict):
     name : str
         Name of the plugin
 
+    type : str
+        Plugin type (i.e. parent package name)
+
     package : ModuleType
         Parent package containing plugin package
     """
     name: str
+    type: str
     package: ModuleType
 
 
@@ -59,7 +63,8 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
         # eventum_plugins.<plugin_type>.plugins.<plugin_name>.plugin
         module_parts = class_module.__name__.split('.')
         plugin_name = module_parts[-2]
-        plugin_type_package_name = '.'.join(module_parts[:-2])
+        plugin_type = module_parts[-4]
+        plugin_type_package_name = '.'.join(module_parts[:-3])
     except IndexError:
         raise TypeError(
             'Cannot resolve plugin module name or plugin parent package '
@@ -74,7 +79,11 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
             f'for module named "{class_module.__name__}": {e}'
         )
 
-    return _PluginRegistrationInfo(name=plugin_name, package=package)
+    return _PluginRegistrationInfo(
+        name=plugin_name,
+        type=plugin_type,
+        package=package
+    )
 
 
 class PluginParams(TypedDict):
@@ -156,6 +165,7 @@ class Plugin(ABC, Generic[config_T, params_T]):
             raise PluginRegistrationError(f'Unable to inspect plugin: {e}')
 
         setattr(cls, '_plugin_name', registration_info['name'])
+        setattr(cls, '_plugin_type', registration_info['type'])
 
         try:
             (config_cls, *_) = get_args(
@@ -193,3 +203,8 @@ class Plugin(ABC, Generic[config_T, params_T]):
     def plugin_name(self) -> str:
         """Canonical name of the plugin."""
         return self._plugin_name    # type: ignore[attr-defined]
+
+    @property
+    def plugin_type(self) -> str:
+        """Type of the plugin."""
+        return self._plugin_type    # type: ignore[attr-defined]
