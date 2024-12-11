@@ -148,9 +148,8 @@ class Plugin(ABC, Generic[config_T, params_T]):
             self._id = params['id']
 
     def __str__(self) -> str:
-        # _plugin_name attribute is set during subclass initialization
         return (
-            f'{self._plugin_name}-{self._id}'   # type: ignore[attr-defined]
+            f'<{self.plugin_name} {self.plugin_type} plugin [{self.id}]>'
         )
 
     def __init_subclass__(cls, register: bool = True, **kwargs: Any):
