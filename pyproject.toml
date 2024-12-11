@@ -36,6 +36,7 @@ mimesis = "^18.0.0"
 faker = "^30.8.2"
 aiofiles = "^24.1.0"
 aiohttp = {extras = ["speedups"], version = "^3.10.10"}
+structlog = "^24.4.0"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
