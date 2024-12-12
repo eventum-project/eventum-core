@@ -130,7 +130,6 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             for factor in factors:
                 yield float(factor)
 
-            self._logger.debug('Reshuffling randomizer factors')
             np.random.shuffle(factors)
 
     @property
@@ -237,7 +236,6 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
         start = np.datetime64(to_naive(start_dt, self._timezone))
         end = np.datetime64(to_naive(end_dt, self._timezone))
 
-        self._logger.debug('Generating timestamps')
         while start < end:
             timestamps = get_past_slice(
                 timestamps=self._generate_period_timeseries(
@@ -260,19 +258,20 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             end=self._config.oscillator.end,
         )
 
-        self._logger.debug('Skipping past periods')
         start_dt = skip_periods(
             start=start_dt,
             moment=datetime.now().astimezone(),
             duration=self._period_duration,
             ret_timestamp='last_past'
         )
+        self._logger.info(
+            'Past periods are skipped, start time aligned',
+            start=start_dt
+        )
 
         if start_dt >= end_dt:
             self._logger.info('All periods are in past, nothing to generate')
             return
-
-        self._logger.debug('Start iterating over timestamps')
 
         delta = np.timedelta64(self._period_duration)
         start = np.datetime64(to_naive(start_dt, self._timezone))
@@ -329,7 +328,7 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
     ) -> None:
         super().__init__(config, params)
 
-        self._logger.debug('Loading time patterns')
+        self._logger.info('Loading time patterns')
         self._time_patterns = self._init_time_patterns(params)
 
     def _init_time_patterns(
@@ -345,8 +344,8 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
         """
         time_patterns: list[TimePatternInputPlugin] = []
         for pattern_path in self._config.patterns:
-            self._logger.debug(
-                'Reading time pattern configuration',
+            self._logger.info(
+                'Initializing time pattern for configuration',
                 config_path=pattern_path
             )
             try:
@@ -380,10 +379,6 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
                     'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY
                 }
 
-            self._logger.debug(
-                'Initializing time pattern',
-                config_path=pattern_path
-            )
             try:
                 time_pattern_plugin = TimePatternInputPlugin(
                     config=time_pattern,
@@ -407,14 +402,12 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
         self,
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
-        self._logger.debug('Generating timestamps')
         samples: list[NDArray[np.datetime64]] = []
         for plugin in self._time_patterns:
             samples.append(
                 np.concatenate(list(plugin.generate()))  # propagate exceptions
             )
 
-        self._logger.debug('Merging timestamps of different time patterns')
         timestamps = merge_arrays(samples)
         on_events(timestamps)
 
@@ -422,7 +415,7 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
         self,
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
-        self._logger.debug('Setting up merging of time patterns')
+        self._logger.info('Merging time patterns')
         try:
             merged_patterns = InputPluginsLiveMerger(
                 plugins=self._time_patterns,
@@ -432,12 +425,8 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
             )
         except ValueError as e:
             raise PluginRuntimeError(
-                f'Cannot set up merging of time patterns: {e}'
+                f'Cannot merge time patterns: {e}'
             )
-
-        self._logger.debug(
-            'Starting timestamps generation of merged time patterns'
-        )
 
         try:
             for batch in merged_patterns.generate(include_id=False):

@@ -294,7 +294,7 @@ class InputPluginsLiveMerger:
         )
         try:
             future.result()
-            log.debug(
+            log.info(
                 'Plugin included in merger finished execution successfully'
             )
         except PluginRuntimeError as e:

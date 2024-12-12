@@ -28,7 +28,6 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
             end=self._config.end,
         )
 
-        self._logger.debug('Generating linearly spaced timestamps')
         space = linspace(
             start=0,
             stop=1,

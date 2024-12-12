@@ -80,21 +80,13 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
             self._live_mode = params['live_mode']
             self._timezone = params['timezone']
 
-        batcher_parameters = {
-            'batch_size': params.get('batch_size', 100_000),
-            'batch_delay': params.get('batch_delay', 0.1),
-            'scheduling': self._live_mode,
-            'timezone': self._timezone,
-            'queue_max_size': params.get('queue_max_size', 1_000_000)
-        }
-
-        self._logger.debug(
-            'Initializing batcher',
-            batcher_parameters=batcher_parameters
-        )
         try:
             self._batcher = TimestampsBatcher(
-                **batcher_parameters    # type: ignore[arg-type]
+                batch_size=params.get('batch_size', 100_000),
+                batch_delay=params.get('batch_delay', 0.1),
+                scheduling=self._live_mode,
+                timezone=self._timezone,
+                queue_max_size=params.get('queue_max_size', 1_000_000)
             )
         except ValueError as e:
             raise PluginConfigurationError(
@@ -115,11 +107,9 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         """
         try:
             future.result()
-            self._logger.debug('Generation task was ended with success')
         except Exception:
-            self._logger.error('Generation task was ended with errors')
+            pass
         finally:
-            self._logger.debug('Closing batcher')
             self._batcher.close()
 
     def _add_timestamps(self, timestamps: NDArray[datetime64]) -> None:
@@ -163,10 +153,6 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
             If any error occurs during timestamps generation
         """
         with ThreadPoolExecutor(max_workers=1) as executor:
-            self._logger.debug(
-                'Submitting generation task to thread pool',
-                live_mode=self._live_mode
-            )
             future = executor.submit(
                 (
                     self._generate_live
@@ -177,10 +163,8 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
             )
             future.add_done_callback(self._handle_done_future)
 
-            self._logger.debug('Start scrolling batches')
             yield from self._batcher.scroll()
 
-            self._logger.debug('Finishing generation task')
             future.result()
 
     @abstractmethod
@@ -243,7 +227,6 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         -----
         See documentation string of `normalize_versatile_daterange`
         """
-        self._logger.debug('Normalizing generation date range')
         dt_start, dt_end = normalize_versatile_daterange(
             start=start,
             end=end,

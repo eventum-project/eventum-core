@@ -1,4 +1,3 @@
-
 import json
 from http.server import BaseHTTPRequestHandler
 from typing import Any, Callable
@@ -99,9 +98,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._send_response(500, 'Error during processing request')
             return
 
-        RequestHandler._logger.debug(
-            'Calling "generate" callback', count=count
-        )
         try:
             if RequestHandler._generate_callback is not None:
                 RequestHandler._generate_callback(count)  # type: ignore
@@ -120,7 +116,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         # response now, because stop callback will shut down the server
         self._send_response(200, 'Stopping')
 
-        RequestHandler._logger.debug('Calling "stop" callback')
         try:
             if RequestHandler._stop_callback is not None:
                 RequestHandler._stop_callback()

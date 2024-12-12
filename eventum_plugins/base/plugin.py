@@ -53,9 +53,6 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
     TypeError
         If provided class cannot be inspected
     """
-    log = logger.bind(plugin_class=plugin_cls.__name__)
-
-    log.debug('Getting module of plugin class')
     class_module = inspect.getmodule(plugin_cls)
     if class_module is None:
         raise TypeError('Cannot get module of plugin class definition')
@@ -63,10 +60,6 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
     if class_module.__name__ == '__main__':
         raise TypeError('Plugin can be used only as external module')
 
-    log.debug(
-        'Extracting information from module path',
-        module_path=class_module.__name__
-    )
     try:
         # expected structure for extraction:
         # eventum_plugins.<plugin_type>.plugins.<plugin_name>.plugin
@@ -80,10 +73,6 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
             f'name for module named "{class_module.__name__}"'
         ) from None
 
-    log.debug(
-        'Importing parent package',
-        package_name=plugin_type_package_name
-    )
     try:
         package = importlib.import_module(plugin_type_package_name)
     except ImportError as e:
@@ -92,7 +81,6 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
             f'for module named "{class_module.__name__}": {e}'
         )
 
-    log.debug('Plugin class inspected successfully')
     return _PluginRegistrationInfo(
         name=plugin_name,
         type=plugin_type,
@@ -163,12 +151,6 @@ class Plugin(ABC, Generic[config_T, params_T]):
 
         self._logger = self._get_logger_with_context()
 
-        self._logger.debug(
-            'Initializing plugin',
-            config=config.model_dump(),
-            params=params
-        )
-
     def _get_logger_with_context(self) -> structlog.stdlib.BoundLogger:
         """Get logger with plugin instance context.
 
@@ -194,15 +176,12 @@ class Plugin(ABC, Generic[config_T, params_T]):
         log = logger.bind(plugin_class=cls.__name__)
 
         if not register:
-            log.debug('Plugin registration is skipped')
-
             setattr(cls, '_plugin_name', '[unregistered]')
             setattr(cls, '_plugin_type', '[unregistered]')
             return
 
-        log.debug('Registering plugin')
+        log.info('Registering plugin')
 
-        log.debug('Inspecting plugin class')
         try:
             registration_info = _inspect_plugin(cls)
         except TypeError as e:
@@ -211,7 +190,6 @@ class Plugin(ABC, Generic[config_T, params_T]):
         setattr(cls, '_plugin_name', registration_info['name'])
         setattr(cls, '_plugin_type', registration_info['type'])
 
-        log.debug('Processing generic parameters')
         try:
             (config_cls, *_) = get_args(
                 cls.__orig_bases__[0]   # type: ignore[attr-defined]
@@ -230,7 +208,6 @@ class Plugin(ABC, Generic[config_T, params_T]):
                 'Config class cannot have generic type'
             )
 
-        log.debug('Registering plugin in registry')
         PluginsRegistry.register_plugin(
             PluginInfo(
                 name=registration_info['name'],
@@ -240,7 +217,7 @@ class Plugin(ABC, Generic[config_T, params_T]):
             )
         )
 
-        log.debug(
+        log.info(
             'Plugin successfully registered',
             plugin_type=registration_info['type'],
             plugin_name=registration_info['name'],

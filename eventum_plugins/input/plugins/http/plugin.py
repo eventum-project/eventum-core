@@ -29,7 +29,6 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
         self._stop_event = Event()
         self._stop_event.clear()
 
-        self._logger.debug('Initializing http server')
         try:
             self._server = HTTPServer(
                 server_address=(self._config.address, self._config.port),
