@@ -44,7 +44,7 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
             none_start='now'
         )
 
-        self._logger.debug('Creating timestamps sequence for cron schedule')
+        self._logger.debug('Creating timestamps for cron schedule')
         range = croniter.croniter_range(
             start=start.replace(tzinfo=None),
             stop=end.replace(tzinfo=None),
@@ -88,7 +88,7 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
             end=end
         )
 
-        self._logger.debug('Creating timestamps sequence for cron schedule')
+        self._logger.debug('Creating timestamps for cron schedule')
         range: Iterator[datetime] = croniter.croniter_range(
             start=start,
             stop=end,
@@ -97,7 +97,7 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
 
         )
 
-        self._logger.debug('Start iterating over timestamps sequence')
+        self._logger.debug('Start iterating over timestamps')
         for timestamp in range:
             now = datetime.now().astimezone(self._timezone)
             wait_seconds = (timestamp - now).total_seconds()

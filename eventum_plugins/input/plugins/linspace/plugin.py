@@ -55,7 +55,6 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
     ) -> None:
         timestamps = self._generate()
 
-        self._logger.debug('Getting future slice of timestamps')
         future_timestamps = get_future_slice(
             timestamps=timestamps,
             after=now64(self._timezone)
