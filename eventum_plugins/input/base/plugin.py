@@ -1,9 +1,10 @@
-import logging
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
+from datetime import datetime
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
                     TypeAlias, TypeVar, assert_never)
 
+import structlog
 from numpy import datetime64
 from numpy.typing import NDArray
 from pydantic import RootModel
@@ -14,9 +15,11 @@ from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import BatcherFullError, TimestampsBatcher
+from eventum_plugins.input.normalizers import (NoneStartPoint,
+                                               VersatileDatetime,
+                                               normalize_versatile_daterange)
 
-logger = logging.getLogger(__name__)
-
+logger = structlog.stdlib.get_logger()
 
 QueueOverflowMode: TypeAlias = Literal['block', 'skip']
 
@@ -78,13 +81,21 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
             self._live_mode = params['live_mode']
             self._timezone = params['timezone']
 
+        batcher_parameters = {
+            'batch_size': params.get('batch_size', 100_000),
+            'batch_delay': params.get('batch_delay', 0.1),
+            'scheduling': self._live_mode,
+            'timezone': self._timezone,
+            'queue_max_size': params.get('queue_max_size', 1_000_000)
+        }
+
+        self._logger.debug(
+            'Initializing batcher',
+            batcher_parameters=batcher_parameters
+        )
         try:
             self._batcher = TimestampsBatcher(
-                batch_size=params.get('batch_size', 100_000),
-                batch_delay=params.get('batch_delay', 0.1),
-                scheduling=self._live_mode,
-                timezone=self._timezone,
-                queue_max_size=params.get('queue_max_size', 1_000_000)
+                **batcher_parameters    # type: ignore[arg-type]
             )
         except ValueError as e:
             raise PluginConfigurationError(f'Wrong batching parameters: {e}')
@@ -94,8 +105,7 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         )
 
     def _handle_done_future(self, future: Future) -> None:
-        """Handle future when it is done with propagating possible
-        exceptions. Batcher is closed finally.
+        """Handle future when it is done.
 
         Parameters
         ----------
@@ -104,28 +114,33 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         """
         try:
             future.result()
-        except Exception as e:
-            raise PluginRuntimeError from e
+            self._logger.debug('Generation task was ended with success')
+        except Exception:
+            self._logger.error('Generation task was ended with errors')
         finally:
+            self._logger.debug('Closing batcher')
             self._batcher.close()
 
-    def _add_batch(self, batch: NDArray[datetime64]) -> None:
-        """Add batch to batcher with handling overflowing.
+    def _add_timestamps(self, timestamps: NDArray[datetime64]) -> None:
+        """Add timestamps to batcher with handling overflowing.
 
         Parameters
         ----------
-        batch : NDArray[datetime64]
-            Batch to add
+        timestamps : NDArray[datetime64]
+            Timestamps to add
         """
         match self._on_queue_overflow:
             case 'block':
-                self._batcher.add(batch, block=True)
+                self._batcher.add(timestamps, block=True)
             case 'skip':
                 try:
-                    self._batcher.add(batch, block=False)
+                    self._batcher.add(timestamps, block=False)
                 except BatcherFullError:
-                    logger.warning(
-                        'Batch was skipped due to batcher is overflowed'
+                    self._logger.warning(
+                        'Timestamps were skipped due to batcher is overflowed',
+                        count=len(timestamps),
+                        first=timestamps[0],
+                        last=timestamps[-1],
                     )
             case mode:
                 assert_never(mode)
@@ -147,18 +162,29 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
             If any error occurs during timestamps generation
         """
         with ThreadPoolExecutor(max_workers=1) as executor:
+            self._logger.debug(
+                'Submitting generation task to thread pool',
+                live_mode=self._live_mode
+            )
             future = executor.submit(
                 (
                     self._generate_live
                     if self._live_mode
                     else self._generate_sample
                 ),
-                self._add_batch
+                self._add_timestamps
             )
             future.add_done_callback(self._handle_done_future)
 
+            self._logger.debug('Start scrolling batches')
             yield from self._batcher.scroll()
-            future.result()
+
+            self._logger.debug('Finishing generation task')
+            try:
+                future.result()
+            except Exception as e:
+                logger.exception('Error during generation')
+                raise PluginRuntimeError(str(e))
 
     @abstractmethod
     def _generate_sample(
@@ -207,3 +233,31 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
     def live_mode(self) -> bool:
         """Status of live mode of the plugin."""
         return self._live_mode
+
+    def _normalize_daterange(
+        self,
+        start: VersatileDatetime,
+        end: VersatileDatetime,
+        none_start: NoneStartPoint
+    ) -> tuple[datetime, datetime]:
+        """Normalize date range for specified parameters.
+
+        Notes
+        -----
+        See documentation string of `normalize_versatile_daterange`
+        """
+        self._logger.debug('Normalizing generation date range')
+        dt_start, dt_end = normalize_versatile_daterange(
+            start=start,
+            end=end,
+            timezone=self._timezone,
+            none_start=none_start
+        )
+
+        self._logger.info(
+            'Generation date range is normalized',
+            start=dt_start.isoformat(),
+            end=dt_end.isoformat()
+        )
+
+        return (dt_start, dt_end)
