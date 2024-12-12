@@ -61,8 +61,11 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             if message is not None:
                 self.wfile.write(message.encode())
-        except OSError:
-            RequestHandler._logger.exception('Failed to send response')
+        except OSError as e:
+            RequestHandler._logger.error(
+                'Failed to send response',
+                reason=str(e)
+            )
 
     def _handle_generate(self) -> None:
         """Handle request to `/generate` endpoint."""
@@ -102,9 +105,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         try:
             if RequestHandler._generate_callback is not None:
                 RequestHandler._generate_callback(count)  # type: ignore
-        except Exception:
-            RequestHandler._logger.exception(
-                'Error occurred during handling "generate" request'
+        except Exception as e:
+            RequestHandler._logger.error(
+                'Error occurred during handling "generate" request',
+                reason=str(e)
             )
             self._send_response(500, 'Error during generation')
             return
@@ -120,9 +124,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         try:
             if RequestHandler._stop_callback is not None:
                 RequestHandler._stop_callback()
-        except Exception:
-            RequestHandler._logger.exception(
-                'Error occurred during handling "stop" request'
+        except Exception as e:
+            RequestHandler._logger.error(
+                'Error occurred during handling "stop" request',
+                reason=str(e)
             )
             return
 
