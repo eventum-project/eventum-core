@@ -78,7 +78,7 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
         raise TypeError(
             'Cannot resolve plugin module name or plugin parent package '
             f'name for module named "{class_module.__name__}"'
-        )
+        ) from None
 
     log.debug(
         'Importing parent package',
@@ -87,7 +87,6 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
     try:
         package = importlib.import_module(plugin_type_package_name)
     except ImportError as e:
-        log.exception('Failed to import package')
         raise TypeError(
             'Cannot import parent package of plugin '
             f'for module named "{class_module.__name__}": {e}'
@@ -199,7 +198,6 @@ class Plugin(ABC, Generic[config_T, params_T]):
 
             setattr(cls, '_plugin_name', '[unregistered]')
             setattr(cls, '_plugin_type', '[unregistered]')
-
             return
 
         log.debug('Registering plugin')
@@ -221,7 +219,7 @@ class Plugin(ABC, Generic[config_T, params_T]):
         except ValueError:
             raise PluginRegistrationError(
                 'Generic parameters must be specified'
-            )
+            ) from None
         except Exception as e:
             raise PluginRegistrationError(
                 f'Unable to define config class: {e}'
