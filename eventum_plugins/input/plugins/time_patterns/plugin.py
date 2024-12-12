@@ -433,7 +433,7 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
                 on_events(batch)
         except PluginRuntimeError as e:
             raise PluginRuntimeError(
-                f'Error during generation of merged time patterns: {e}'
+                f'Error during execution of merged time patterns: {e}'
             ) from None
 
     @property
