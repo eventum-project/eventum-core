@@ -272,6 +272,8 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             self._logger.info('All periods are in past, nothing to generate')
             return
 
+        self._logger.debug('Start iterating over timestamps')
+
         delta = np.timedelta64(self._period_duration)
         start = np.datetime64(to_naive(start_dt, self._timezone))
         end = np.datetime64(to_naive(end_dt, self._timezone))
@@ -290,7 +292,6 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             before=end
         )
 
-        self._logger.debug('Start iterating over timestamps')
         while True:
             if timestamps.size != 0:
                 now = now64(self._timezone)
@@ -434,7 +435,9 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
                 f'Cannot set up merging of time patterns: {e}'
             )
 
-        self._logger.debug('Start iterating over merged time patterns')
+        self._logger.debug(
+            'Starting timestamps generation of merged time patterns'
+        )
         for batch in merged_patterns.generate(include_id=False):
             on_events(batch)
 
