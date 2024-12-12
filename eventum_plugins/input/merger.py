@@ -1,4 +1,3 @@
-import logging
 import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -7,12 +6,14 @@ from typing import (Annotated, Generic, Iterable, Iterator, Literal, TypeAlias,
                     TypeVar, overload)
 
 import numpy as np
+import structlog
 from numpy.typing import NDArray
 
+from eventum_plugins.exceptions import PluginRuntimeError
 from eventum_plugins.input.base.plugin import InputPlugin
 from eventum_plugins.input.utils.array_utils import chunk_array, merge_arrays
 
-logger = logging.getLogger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 T = TypeVar('T')
@@ -147,7 +148,7 @@ class InputPluginsLiveMerger:
         for plugin in plugins:
             if not plugin.live_mode:
                 raise ValueError(
-                    f'Input plugin "{plugin}" is not in live mode'
+                    f'Input plugin "{plugin.plugin_name}" is not in live mode'
                 )
 
         if target_delay < self.MIN_DELAY:
@@ -203,8 +204,15 @@ class InputPluginsLiveMerger:
         TimestampBatch | TimestampIdBatch
             Timestamp batches or timestamp batches with plugin ids if
             parameter `include_id` is `True`
+
+        Raises
+        ------
+        PluginRuntimeError
+            If any plugins raises exception during execution, exception
+            is raised after all plugins finished
         """
         with ThreadPoolExecutor(max_workers=len(self._plugins)) as executor:
+            futures: list[Future] = []
             for idx, plugin in self._plugins.items():
                 future = executor.submit(
                     self._execute_plugin,
@@ -215,6 +223,7 @@ class InputPluginsLiveMerger:
                     lambda future, plugin=plugin:   # type: ignore[misc]
                     self._handle_done_future(future, plugin)
                 )
+                futures.append(future)
 
             if self._ordering:
                 generator = self._generate_with_ordering()
@@ -226,6 +235,18 @@ class InputPluginsLiveMerger:
             else:
                 for batch in generator:
                     yield batch['timestamp']
+
+            errors = []
+            for future in futures:
+                try:
+                    future.result()
+                except Exception as e:
+                    errors.append(str(e))
+
+            if errors:
+                raise PluginRuntimeError(
+                    f'Some plugins finished execution with errors: {errors}'
+                )
 
     def _execute_plugin(
         self,
@@ -247,8 +268,8 @@ class InputPluginsLiveMerger:
             for batch in plugin.generate():
                 minimized_batch: MinimizedTimestampIdBatch = (batch, plugin.id)
                 accumulator.add(minimized_batch)
-        except Exception as e:
-            raise e
+        except Exception:
+            raise
         finally:
             accumulator.close()
 
@@ -267,11 +288,24 @@ class InputPluginsLiveMerger:
         plugin : InputPlugin
             Input plugin related to provided `future`
         """
+        log = logger.bind(
+            plugin_id=plugin.id,
+            plugin_name=plugin.plugin_name
+        )
         try:
             future.result()
-        except Exception as e:
-            logger.error(
-                f'Error occurred in plugin {plugin}: {e}'
+            log.debug(
+                'Plugin included in merger finished execution successfully'
+            )
+        except PluginRuntimeError as e:
+            log.error(
+                'Plugin included in merger finished execution with error',
+                reason=str(e)
+            )
+        except Exception:
+            log.exception(
+                'Plugin included in merger finished execution with '
+                'unexpected error'
             )
 
     def _unminimize_batch(
