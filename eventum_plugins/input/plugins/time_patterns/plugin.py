@@ -438,8 +438,14 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
         self._logger.debug(
             'Starting timestamps generation of merged time patterns'
         )
-        for batch in merged_patterns.generate(include_id=False):
-            on_events(batch)
+
+        try:
+            for batch in merged_patterns.generate(include_id=False):
+                on_events(batch)
+        except PluginRuntimeError as e:
+            raise PluginRuntimeError(
+                f'Error during generation of merged time patterns: {e}'
+            ) from None
 
     @property
     def count(self) -> int:
