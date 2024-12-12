@@ -36,7 +36,6 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
                 RequestHandlerClass=self._request_handler_cls
             )
         except OSError as e:
-            self._logger.exception('Error during server initialization')
             raise PluginConfigurationError(
                 f'Failed to initialize http server: {e}'
             )
@@ -84,10 +83,9 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
                 self._stop_event.set()
                 stop_future.result()
             except Exception as e:
-                self._logger.exception('Stopping http server due to error')
                 self._server.server_close()
                 raise PluginRuntimeError(
-                    f'Stopping http server due to error: {e}'
+                    f'HTTP server was stopped due to error: {e}'
                 )
 
     def _generate_live(
