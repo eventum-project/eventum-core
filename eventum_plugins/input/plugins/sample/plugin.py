@@ -25,22 +25,17 @@ class SampleInputPlugin(InputPlugin[SampleInputPluginConfig]):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        on_events(
-            full(
-                shape=self._config.count,
-                fill_value=now64(timezone=self._timezone),
-                dtype='datetime64[us]'
-            )
+        self._logger.debug('Generating timestamps')
+        timestamps = full(
+            shape=self._config.count,
+            fill_value=now64(timezone=self._timezone),
+            dtype='datetime64[us]'
         )
+
+        on_events(timestamps)
 
     def _generate_live(
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        on_events(
-            full(
-                shape=self._config.count,
-                fill_value=now64(timezone=self._timezone),
-                dtype='datetime64[us]'
-            )
-        )
+        self._generate_sample(on_events)
