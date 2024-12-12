@@ -381,7 +381,7 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
                 }
 
             self._logger.debug(
-                'Initializing time pattern plugin',
+                'Initializing time pattern',
                 config_path=pattern_path
             )
             try:
