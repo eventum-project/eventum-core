@@ -238,7 +238,7 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         self,
         start: VersatileDatetime,
         end: VersatileDatetime,
-        none_start: NoneStartPoint
+        none_start: NoneStartPoint = 'min'
     ) -> tuple[datetime, datetime]:
         """Normalize date range for specified parameters.
 
