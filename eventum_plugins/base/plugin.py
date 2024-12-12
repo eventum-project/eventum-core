@@ -162,16 +162,26 @@ class Plugin(ABC, Generic[config_T, params_T]):
 
         self._config = config
 
-        self._logger = logger.bind(
-            plugin_type=self.plugin_type,
-            plugin_name=self.plugin_name,
-            plugin_id=self.id
-        )
+        self._logger = self._get_logger_with_context()
 
         self._logger.debug(
             'Initializing plugin',
             config=config.model_dump(),
             params=params
+        )
+
+    def _get_logger_with_context(self) -> structlog.stdlib.BoundLogger:
+        """Get logger with plugin instance context.
+
+        Returns
+        -------
+        structlog.stdlib.BoundLogger
+            Logger with context
+        """
+        return logger.bind(
+            plugin_type=self.plugin_type,
+            plugin_name=self.plugin_name,
+            plugin_id=self.id
         )
 
     def __str__(self) -> str:
@@ -245,7 +255,43 @@ class Plugin(ABC, Generic[config_T, params_T]):
         """Canonical name of the plugin."""
         return getattr(self, '_plugin_name', 'unknown')
 
+    def set_ephemeral_name(self, name: str) -> None:
+        """Set ephemeral name for plugin.
+
+        Parameters
+        ----------
+        name : str
+            Name to set
+
+        Notes
+        -----
+        This method can be helpful when plugin is not registered
+        but it needs representable name for some reason
+        """
+        self._plugin_name = name
+
+        # we should rebind logger since context is changed
+        self._logger = self._get_logger_with_context()
+
     @property
     def plugin_type(self) -> str:
         """Type of the plugin."""
         return getattr(self, '_plugin_type', 'unknown')
+
+    def set_ephemeral_type(self, type: str) -> None:
+        """Set ephemeral type for plugin.
+
+        Parameters
+        ----------
+        type : str
+            Type to set
+
+        Notes
+        -----
+        This method can be helpful when plugin is not registered
+        but it needs representable type for some reason
+        """
+        self._plugin_type = type
+
+        # we should rebind logger since context is changed
+        self._logger = self._get_logger_with_context()
