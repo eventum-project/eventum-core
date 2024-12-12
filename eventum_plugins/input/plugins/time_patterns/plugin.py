@@ -359,17 +359,17 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
                 raise PluginConfigurationError(
                     'Failed to load time pattern configuration '
                     f'"{pattern_path}": {e}'
-                )
+                ) from None
             except yaml.error.YAMLError as e:
                 raise PluginConfigurationError(
                     'Failed to parse time pattern configuration '
                     f'"{pattern_path}": {e}'
-                )
+                ) from None
             except ValidationError as e:
                 raise PluginConfigurationError(
                     'Bad time pattern configuration structure '
                     f'"{pattern_path}": {e}'
-                )
+                ) from None
 
             # for quick merging of several time patterns in live mode
             # delay should be minimal
