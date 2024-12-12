@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, assert_never
+from typing import Literal, TypeAlias, assert_never
 
 import dateparser
 from pytz import BaseTzInfo
@@ -7,12 +7,14 @@ from pytz import BaseTzInfo
 from eventum_plugins.input.fields import TimeKeyword, VersatileDatetime
 from eventum_plugins.input.relative_time import parse_relative_time
 
+NonePoint: TypeAlias = Literal['now', 'min', 'max']
+
 
 def normalize_versatile_datetime(
     value: VersatileDatetime,
     timezone: BaseTzInfo,
     relative_base: datetime | None = None,
-    none_point: Literal['now', 'min', 'max'] = 'min',
+    none_point: NonePoint = 'min',
 ) -> datetime:
     """Normalize value representing datetime.
 
@@ -28,7 +30,7 @@ def normalize_versatile_datetime(
         Base time to use when value represents relative time, default
         is current time
 
-    none_point : Literal['now', 'min', 'max']
+    none_point : NonePoint
         What time to use when `value` parameter is `None`: 'now' -
         current time; `min` - minimal value of datetime; `max` -
         maximal value of datetime
@@ -104,11 +106,14 @@ def normalize_versatile_datetime(
     return time
 
 
+NoneStartPoint: TypeAlias = Literal['now', 'min']
+
+
 def normalize_versatile_daterange(
     start: VersatileDatetime,
     end: VersatileDatetime,
     timezone: BaseTzInfo,
-    none_start: Literal['now', 'min'] = 'min',
+    none_start: NoneStartPoint = 'min',
 ) -> tuple[datetime, datetime]:
     """Normalize date range for specified start and end parameters.
 
@@ -123,7 +128,7 @@ def normalize_versatile_daterange(
     timezone : BaseTzInfo
         Timezone that is used for returned datetime objects
 
-    none_start : Literal['now', 'min']
+    none_start : NoneStartPoint
         What time to use when `start` parameter is `None`: 'now' -
         current time; `min` - minimal value of datetime;
 
