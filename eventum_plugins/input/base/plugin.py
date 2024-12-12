@@ -11,8 +11,7 @@ from pydantic import RootModel
 from pytz import BaseTzInfo
 
 from eventum_plugins.base.plugin import Plugin, PluginParams, required_params
-from eventum_plugins.exceptions import (PluginConfigurationError,
-                                        PluginRuntimeError)
+from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import BatcherFullError, TimestampsBatcher
 from eventum_plugins.input.normalizers import (NoneStartPoint,
@@ -98,7 +97,9 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
                 **batcher_parameters    # type: ignore[arg-type]
             )
         except ValueError as e:
-            raise PluginConfigurationError(f'Wrong batching parameters: {e}')
+            raise PluginConfigurationError(
+                f'Wrong batching parameters: {e}'
+            ) from None
 
         self._on_queue_overflow: QueueOverflowMode = params.get(
             'on_queue_overflow', 'block'
@@ -180,11 +181,7 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
             yield from self._batcher.scroll()
 
             self._logger.debug('Finishing generation task')
-            try:
-                future.result()
-            except Exception as e:
-                logger.exception('Error during generation')
-                raise PluginRuntimeError(str(e))
+            future.result()
 
     @abstractmethod
     def _generate_sample(
