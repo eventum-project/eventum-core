@@ -243,9 +243,9 @@ class Plugin(ABC, Generic[config_T, params_T]):
     @property
     def plugin_name(self) -> str:
         """Canonical name of the plugin."""
-        return self._plugin_name    # type: ignore[attr-defined]
+        return getattr(self, '_plugin_name', 'unknown')
 
     @property
     def plugin_type(self) -> str:
         """Type of the plugin."""
-        return self._plugin_type    # type: ignore[attr-defined]
+        return getattr(self, '_plugin_type', 'unknown')
