@@ -196,6 +196,10 @@ class Plugin(ABC, Generic[config_T, params_T]):
 
         if not register:
             log.debug('Plugin registration is skipped')
+
+            setattr(cls, '_plugin_name', '[unregistered]')
+            setattr(cls, '_plugin_type', '[unregistered]')
+
             return
 
         log.debug('Registering plugin')
@@ -253,7 +257,7 @@ class Plugin(ABC, Generic[config_T, params_T]):
     @property
     def plugin_name(self) -> str:
         """Canonical name of the plugin."""
-        return getattr(self, '_plugin_name', 'unknown')
+        return getattr(self, '_plugin_name')
 
     def set_ephemeral_name(self, name: str) -> None:
         """Set ephemeral name for plugin.
@@ -276,7 +280,7 @@ class Plugin(ABC, Generic[config_T, params_T]):
     @property
     def plugin_type(self) -> str:
         """Type of the plugin."""
-        return getattr(self, '_plugin_type', 'unknown')
+        return getattr(self, '_plugin_type')
 
     def set_ephemeral_type(self, type: str) -> None:
         """Set ephemeral type for plugin.
