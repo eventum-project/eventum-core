@@ -69,8 +69,8 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
         plugin_type_package_name = '.'.join(module_parts[:-3])
     except IndexError:
         raise TypeError(
-            'Cannot resolve plugin module name or plugin parent package '
-            f'name for module named "{class_module.__name__}"'
+            'Cannot extract information from module named '
+            f'"{class_module.__name__}"'
         ) from None
 
     try:
