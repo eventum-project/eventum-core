@@ -25,6 +25,7 @@ class SampleInputPlugin(InputPlugin[SampleInputPluginConfig]):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
+        self._logger.info('Starting generation', count=self._config.count)
         timestamps = full(
             shape=self._config.count,
             fill_value=now64(timezone=self._timezone),

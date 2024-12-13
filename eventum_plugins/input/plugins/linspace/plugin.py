@@ -4,6 +4,7 @@ from numpy import datetime64, linspace, timedelta64
 from numpy.typing import NDArray
 
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
+from eventum_plugins.input.normalizers import normalize_versatile_daterange
 from eventum_plugins.input.plugins.linspace.config import \
     LinspaceInputPluginConfig
 from eventum_plugins.input.utils.array_utils import get_future_slice
@@ -23,9 +24,17 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
         super().__init__(config, params)
 
     def _generate(self) -> NDArray[datetime64]:
-        start, end = self._normalize_daterange(
+        start, end = normalize_versatile_daterange(
             start=self._config.start,
             end=self._config.end,
+            timezone=self._timezone,
+            none_start='now'
+        )
+
+        self._logger.info(
+            'Starting generation',
+            start_timestamp=start,
+            end_timestamp=end
         )
 
         space = linspace(
@@ -58,5 +67,12 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
             timestamps=timestamps,
             after=now64(self._timezone)
         )
+
+        skipped = len(timestamps) - len(future_timestamps)
+        if skipped > 0:
+            self._logger.info(
+                'Past timestamps is skipped',
+                count=skipped
+            )
 
         on_events(future_timestamps)
