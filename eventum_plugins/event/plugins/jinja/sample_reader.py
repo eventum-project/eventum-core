@@ -70,7 +70,7 @@ def _load_csv_sample(config: CSVSampleConfig) -> Sample:
 
     Raises
     ------
-    OSError
+    Exception
         If some error occurs during sample loading
     """
     data = tablib.Dataset()
@@ -99,7 +99,7 @@ def _load_json_sample(config: JSONSampleConfig) -> Sample:
 
     Raises
     ------
-    OSError
+    Exception
         If some error occurs during sample loading
     """
     data = tablib.Dataset()
