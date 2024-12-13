@@ -13,6 +13,7 @@ from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.batcher import TimestampsBatcher
 from eventum_plugins.input.fields import TimeKeyword
 from eventum_plugins.input.merger import InputPluginsLiveMerger
+from eventum_plugins.input.normalizers import normalize_versatile_daterange
 from eventum_plugins.input.plugins.time_patterns.config import (
     Distribution, RandomizerDirection, TimePatternConfig,
     TimePatternsInputPluginConfig)
@@ -227,9 +228,16 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
         self,
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
-        start_dt, end_dt = self._normalize_daterange(
+        start_dt, end_dt = normalize_versatile_daterange(
             start=self._config.oscillator.start,
             end=self._config.oscillator.end,
+            timezone=self._timezone,
+            none_start='min'
+        )
+        self._logger.info(
+            'Starting generation',
+            start_timestamp=start_dt.isoformat(),
+            end_timestamp=end_dt.isoformat()
         )
 
         delta = np.timedelta64(self._period_duration)
@@ -253,9 +261,16 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
         self,
         on_events: Callable[[NDArray[np.datetime64]], Any]
     ) -> None:
-        start_dt, end_dt = self._normalize_daterange(
+        start_dt, end_dt = normalize_versatile_daterange(
             start=self._config.oscillator.start,
             end=self._config.oscillator.end,
+            timezone=self._timezone,
+            none_start='min'
+        )
+        self._logger.info(
+            'Starting generation',
+            start_timestamp=start_dt.isoformat(),
+            end_timestamp=end_dt.isoformat()
         )
 
         start_dt = skip_periods(
@@ -265,8 +280,8 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             ret_timestamp='last_past'
         )
         self._logger.info(
-            'Past periods are skipped, start time aligned',
-            start=start_dt
+            'Past periods are skipped, start timestamp aligned to interval',
+            start_timestamp=start_dt.isoformat()
         )
 
         if start_dt >= end_dt:
@@ -346,7 +361,7 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
         for pattern_path in self._config.patterns:
             self._logger.info(
                 'Initializing time pattern for configuration',
-                config_path=pattern_path
+                file_path=pattern_path
             )
             try:
                 with open(pattern_path) as f:
