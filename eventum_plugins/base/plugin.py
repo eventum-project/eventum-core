@@ -66,7 +66,7 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
         module_parts = class_module.__name__.split('.')
         plugin_name = module_parts[-2]
         plugin_type = module_parts[-4]
-        plugin_type_package_name = '.'.join(module_parts[:-3])
+        plugin_type_package_name = '.'.join(module_parts[:-2])
     except IndexError:
         raise TypeError(
             'Cannot extract information from module named '
