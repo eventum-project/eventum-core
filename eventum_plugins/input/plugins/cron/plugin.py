@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.fields import TimeKeyword
+from eventum_plugins.input.normalizers import normalize_versatile_daterange
 from eventum_plugins.input.plugins.cron.config import CronInputPluginConfig
 
 
@@ -38,10 +39,17 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        start, end = self._normalize_daterange(
+        start, end = normalize_versatile_daterange(
             start=self._config.start,
             end=self._config.end,
+            timezone=self._timezone,
             none_start='now'
+        )
+
+        self._logger.info(
+            'Starting generation',
+            start_timestamp=start,
+            end_timestamp=end
         )
 
         range = croniter.croniter_range(
@@ -63,10 +71,17 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
         now = datetime.now().astimezone(self._timezone)
-        start, end = self._normalize_daterange(
+        start, end = normalize_versatile_daterange(
             start=self._config.start,
             end=self._config.end,
+            timezone=self._timezone,
             none_start='now'
+        )
+
+        self._logger.info(
+            'Starting generation',
+            start_timestamp=start,
+            end_timestamp=end
         )
 
         if end < now:
@@ -78,7 +93,7 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
             start = now
             self._logger.info(
                 'Start time is in past, shifting it to current time',
-                start=start
+                start_timestamp=start
             )
 
         range: Iterator[datetime] = croniter.croniter_range(

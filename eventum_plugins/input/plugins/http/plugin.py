@@ -31,7 +31,10 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
 
         try:
             self._server = HTTPServer(
-                server_address=(self._config.address, self._config.port),
+                server_address=(
+                    self._config.ip,    # type: ignore[arg-type]
+                    self._config.port
+                ),
                 RequestHandlerClass=self._request_handler_cls
             )
         except OSError as e:
@@ -70,7 +73,7 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
 
         self._logger.info(
             'Starting http server',
-            address=self._config.address,
+            ip=self._config.ip,
             port=self._config.port
         )
         with ThreadPoolExecutor(max_workers=2) as executor:

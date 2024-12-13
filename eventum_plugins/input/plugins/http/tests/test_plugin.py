@@ -43,7 +43,7 @@ def test_plugin_bad_address():
     with pytest.raises(PluginConfigurationError):
         HttpInputPlugin(
             config=HttpInputPluginConfig(
-                address='google.com',   # why not
+                ip='255.255.255.255',   # type: ignore
                 port=443
             ),
             params={
