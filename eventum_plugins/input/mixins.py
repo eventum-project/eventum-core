@@ -19,12 +19,12 @@ class DaterangeValidatorMixin:
                 start=self.start,   # type: ignore[attr-defined]
                 end=self.end,       # type: ignore[attr-defined]
                 timezone=timezone('UTC'),
-                none_start='now'
+                none_start='min',
+                none_end='max'
             )
         except OverflowError:
             raise ValueError(
-                'Unable to validate date range due to datetime overflow '
-                'for UTC timezone'
+                'Unable to validate date range due to datetime overflow'
             ) from None
 
         return self

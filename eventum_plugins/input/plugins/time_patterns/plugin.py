@@ -232,7 +232,8 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             start=self._config.oscillator.start,
             end=self._config.oscillator.end,
             timezone=self._timezone,
-            none_start='min'
+            none_start='now',
+            none_end='max'
         )
         self._logger.info(
             'Generating in range',
@@ -265,7 +266,8 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             start=self._config.oscillator.start,
             end=self._config.oscillator.end,
             timezone=self._timezone,
-            none_start='min'
+            none_start='now',
+            none_end='max'
         )
         self._logger.info(
             'Generating in range',

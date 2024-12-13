@@ -26,7 +26,7 @@ def test_normalize_versatile_datetime_for_none_with_min():
         none_point='min'
     )
 
-    assert result < datetime(1000, 1, 1, 0, 0, 0, tzinfo=timezone('UTC'))
+    assert result < datetime(1900, 1, 1, 0, 0, 0, tzinfo=timezone('UTC'))
 
 
 def test_normalize_versatile_datetime_for_none_with_max():
@@ -36,7 +36,7 @@ def test_normalize_versatile_datetime_for_none_with_max():
         none_point='max'
     )
 
-    assert result > datetime(3000, 1, 1, 0, 0, 0, tzinfo=timezone('UTC'))
+    assert result > datetime(2100, 1, 1, 0, 0, 0, tzinfo=timezone('UTC'))
 
 
 def test_normalize_versatile_datetime_for_datetime():
@@ -67,7 +67,7 @@ def test_normalize_versatile_datetime_for_keyword_never():
         timezone=timezone('UTC')
     )
 
-    assert result > datetime(3000, 1, 1, 0, 0, 0, tzinfo=timezone('UTC'))
+    assert result > datetime(2100, 1, 1, 0, 0, 0, tzinfo=timezone('UTC'))
 
 
 def test_normalize_versatile_datetime_for_relative_time():
@@ -215,7 +215,7 @@ def test_normalize_versatile_daterange_none_values_now_start():
 
 def test_normalize_versatile_daterange_none_values_min_start():
     enough_early_for_me = datetime(
-        10, 1, 1, 0, 0, tzinfo=pytz.timezone('UTC')
+        1900, 1, 1, 0, 0, tzinfo=pytz.timezone('UTC')
     )
     enough_late_for_me = datetime(
         2100, 1, 1, 0, 0, tzinfo=pytz.timezone('UTC')

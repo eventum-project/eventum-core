@@ -14,7 +14,7 @@ def normalize_versatile_datetime(
     value: VersatileDatetime,
     timezone: BaseTzInfo,
     relative_base: datetime | None = None,
-    none_point: NonePoint = 'min',
+    none_point: NonePoint = 'now',
 ) -> datetime:
     """Normalize value representing datetime.
 
@@ -30,7 +30,7 @@ def normalize_versatile_datetime(
         Base time to use when value represents relative time, default
         is current time
 
-    none_point : NonePoint
+    none_point : NonePoint, default='now'
         What time to use when `value` parameter is `None`: 'now' -
         current time; `min` - minimal value of datetime; `max` -
         maximal value of datetime
@@ -51,12 +51,13 @@ def normalize_versatile_datetime(
     now = datetime.now().astimezone(timezone)
     relative_base = relative_base or now
 
+    # not actual min-max bounds are used for safety of conversions
     min = now.replace(
-        year=1900, month=1, day=1,
+        year=1000, month=1, day=1,
         hour=0, minute=0, second=0, microsecond=0
     )
     max = now.replace(
-        year=3000, month=12, day=31,
+        year=2999, month=12, day=31,
         hour=23, minute=59, second=59, microsecond=999999
     )
 
@@ -75,6 +76,7 @@ def normalize_versatile_datetime(
                         value,
                         settings={
                             'RELATIVE_BASE': relative_base,
+                            'TIMEZONE': timezone._tzname or 'UTC',
                             'RETURN_AS_TIMEZONE_AWARE': True
                         }
                     )
@@ -107,6 +109,7 @@ def normalize_versatile_datetime(
 
 
 NoneStartPoint: TypeAlias = Literal['now', 'min']
+NoneEndPoint: TypeAlias = Literal['now', 'max']
 
 
 def normalize_versatile_daterange(
@@ -114,6 +117,7 @@ def normalize_versatile_daterange(
     end: VersatileDatetime,
     timezone: BaseTzInfo,
     none_start: NoneStartPoint = 'min',
+    none_end: NoneEndPoint = 'max'
 ) -> tuple[datetime, datetime]:
     """Normalize date range for specified start and end parameters.
 
@@ -128,9 +132,13 @@ def normalize_versatile_daterange(
     timezone : BaseTzInfo
         Timezone that is used for returned datetime objects
 
-    none_start : NoneStartPoint
+    none_start : NoneStartPoint, default='min'
         What time to use when `start` parameter is `None`: 'now' -
         current time; `min` - minimal value of datetime;
+
+    none_end : NoneStartPoint, default='max'
+        What time to use when `end` parameter is `None`: 'now' -
+        current time; `max` - maximal value of datetime;
 
     Returns
     -------
@@ -165,7 +173,7 @@ def normalize_versatile_daterange(
             value=end,
             timezone=timezone,
             relative_base=start,
-            none_point='max'
+            none_point=none_end
         )
     except ValueError as e:
         raise ValueError(f'Cannot parse end time: {e}') from None

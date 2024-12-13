@@ -28,7 +28,8 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
             start=self._config.start,
             end=self._config.end,
             timezone=self._timezone,
-            none_start='now'
+            none_start='now',
+            none_end='max'
         )
 
         self._logger.info(
