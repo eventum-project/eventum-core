@@ -33,8 +33,8 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
 
         self._logger.info(
             'Starting generation',
-            start_timestamp=start,
-            end_timestamp=end
+            start_timestamp=start.isoformat(),
+            end_timestamp=end.isoformat()
         )
 
         space = linspace(
