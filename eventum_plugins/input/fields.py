@@ -1,3 +1,4 @@
+import ipaddress
 from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, TypeAlias
@@ -51,3 +52,17 @@ VersatileDatetimeStrict: TypeAlias = (
     datetime | TimeKeywordString | RelativeTimeString | HumanDatetimeString
 )
 VersatileDatetime: TypeAlias = (VersatileDatetimeStrict | None)
+
+
+def _try_parse_ipv4(v: str) -> str:
+    try:
+        ipaddress.IPv4Address(v)
+    except ipaddress.AddressValueError as e:
+        raise ValueError(str(e)) from None
+
+    return v
+
+
+IPv4AddressStr: TypeAlias = Annotated[
+    str, AfterValidator(_try_parse_ipv4)
+]

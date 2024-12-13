@@ -34,23 +34,33 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        start = normalize_versatile_datetime(
+        start_dt = normalize_versatile_datetime(
             value=self._config.start,
             timezone=self._timezone,
             none_point='now'
         )
+        end_after = timedelta(seconds=self._config.seconds) * (
+            self._config.repeat + 1  # type: ignore[operator]
+        )
+        end_dt = start_dt + end_after
+
+        self._logger.info(
+            'Generating in range',
+            start_timestamp=start_dt.isoformat(),
+            end_timestamp=end_dt.isoformat()
+        )
 
         timeout = timedelta64(timedelta(seconds=self._config.seconds), 'us')
-        end = timeout * (self._config.repeat + 1)  # type: ignore[operator]
+        delta_end = timedelta64(end_after, 'us')
 
         deltas: NDArray[timedelta64] = arange(
             start=timeout,
-            stop=end,
+            stop=delta_end,
             step=timeout
         )
 
         timestamps = deltas + datetime64(
-            to_naive(start, self._timezone), 'us'
+            to_naive(start_dt, self._timezone), 'us'
         )
         timestamps = repeat(timestamps, repeats=self._config.count)
         on_events(timestamps)
@@ -64,7 +74,22 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
             timezone=self._timezone,
             none_point='now'
         )
+
         timeout = timedelta(seconds=self._config.seconds)
+
+        if self._config.repeat is None:
+            self._logger.info(
+                'Generating infinitely',
+                start_timestamp=start.isoformat()
+            )
+        else:
+            self._logger.info(
+                'Generating in range',
+                start_timestamp=start.isoformat(),
+                end_timestamp=(
+                    start + (timeout * self._config.repeat)
+                ).isoformat()
+            )
 
         timestamp = skip_periods(
             start=start,
@@ -73,6 +98,21 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
             ret_timestamp='first_future'
         )
         skipped_periods = (timestamp - start) // timeout
+
+        if skipped_periods > 1:
+            self._logger.info(
+                'Past timestamps are skipped',
+                count=skipped_periods,
+                start_timestamp=timestamp.isoformat()
+            )
+
+        if (
+            self._config.repeat is not None
+            and self._config.repeat - skipped_periods <= 0
+        ):
+            self._logger.info(
+                'All timestamps are in past, nothing to generate'
+            )
 
         for _ in (
             i_repeat(None)

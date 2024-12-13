@@ -235,7 +235,7 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             none_start='min'
         )
         self._logger.info(
-            'Starting generation',
+            'Generating in range',
             start_timestamp=start_dt.isoformat(),
             end_timestamp=end_dt.isoformat()
         )
@@ -268,24 +268,25 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             none_start='min'
         )
         self._logger.info(
-            'Starting generation',
+            'Generating in range',
             start_timestamp=start_dt.isoformat(),
             end_timestamp=end_dt.isoformat()
         )
 
+        original_start_dt = start_dt
         start_dt = skip_periods(
             start=start_dt,
             moment=datetime.now().astimezone(),
             duration=self._period_duration,
             ret_timestamp='last_past'
         )
-        self._logger.info(
-            'Past periods are skipped, start timestamp aligned to interval',
-            start_timestamp=start_dt.isoformat()
-        )
+        if original_start_dt != start_dt:
+            self._logger.info('Past timestamps are skipped')
 
         if start_dt >= end_dt:
-            self._logger.info('All periods are in past, nothing to generate')
+            self._logger.info(
+                'All timestamps are in past, nothing to generate'
+            )
             return
 
         delta = np.timedelta64(self._period_duration)

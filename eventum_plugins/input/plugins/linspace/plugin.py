@@ -32,7 +32,7 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
         )
 
         self._logger.info(
-            'Starting generation',
+            'Generating in range',
             start_timestamp=start.isoformat(),
             end_timestamp=end.isoformat()
         )
@@ -68,11 +68,7 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
             after=now64(self._timezone)
         )
 
-        skipped = len(timestamps) - len(future_timestamps)
-        if skipped > 0:
-            self._logger.info(
-                'Past timestamps is skipped',
-                count=skipped
-            )
+        if len(future_timestamps) < len(timestamps):
+            self._logger.info('Past timestamps are skipped')
 
         on_events(future_timestamps)

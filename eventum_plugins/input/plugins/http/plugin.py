@@ -76,6 +76,7 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
             ip=self._config.ip,
             port=self._config.port
         )
+        self._logger.info('Waiting for incoming generation requests')
         with ThreadPoolExecutor(max_workers=2) as executor:
             stop_future = executor.submit(self._handle_stop)
             serve_future = executor.submit(self._server.serve_forever)

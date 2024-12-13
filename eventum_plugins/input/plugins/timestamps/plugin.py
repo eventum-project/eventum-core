@@ -30,6 +30,8 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
                 to_naive(ts, self._timezone)
                 for ts in self._read_timestamps_from_file(config.source)
             ]
+            if not timestamps:
+                raise PluginConfigurationError('No timestamps in the file')
         else:
             timestamps = [
                 to_naive(ts, self._timezone) for ts in config.source
@@ -60,6 +62,7 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
             If cannot read content of the specified file or parse
             timestamps
         """
+        self._logger.info('Reading timestamps from file', file_path=filename)
         try:
             with open(filename) as f:
                 return [
@@ -75,17 +78,21 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
+        self._logger.info('Generating in provided range')
         on_events(self._timestamps)
 
     def _generate_live(
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        future_timestamps = self._timestamps
+        self._logger.info('Generating in provided range')
 
         future_timestamps = get_future_slice(
             timestamps=self._timestamps,
             after=now64(timezone=self._timezone)
         )
+
+        if len(future_timestamps) < len(self._timestamps):
+            self._logger.info('Past timestamp are skipped')
 
         on_events(future_timestamps)

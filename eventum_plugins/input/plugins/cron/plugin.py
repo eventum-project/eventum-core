@@ -47,9 +47,9 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
         )
 
         self._logger.info(
-            'Starting generation',
-            start_timestamp=start,
-            end_timestamp=end
+            'Generating in range',
+            start_timestamp=start.isoformat(),
+            end_timestamp=end.isoformat()
         )
 
         range = croniter.croniter_range(
@@ -79,9 +79,9 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
         )
 
         self._logger.info(
-            'Starting generation',
-            start_timestamp=start,
-            end_timestamp=end
+            'Generating in range',
+            start_timestamp=start.isoformat(),
+            end_timestamp=end.isoformat()
         )
 
         if end < now:
@@ -91,10 +91,7 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
             return
         elif start < now:
             start = now
-            self._logger.info(
-                'Start time is in past, shifting it to current time',
-                start_timestamp=start
-            )
+            self._logger.info('Past timestamps are skipped')
 
         range: Iterator[datetime] = croniter.croniter_range(
             start=start,

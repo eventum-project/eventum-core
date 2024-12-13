@@ -1,7 +1,7 @@
 from pydantic import Field
-from pydantic.networks import IPvAnyAddress
 
 from eventum_plugins.input.base.config import InputPluginConfig
+from eventum_plugins.input.fields import IPv4AddressStr
 
 
 class HttpInputPluginConfig(
@@ -12,11 +12,11 @@ class HttpInputPluginConfig(
 
     Attributes
     ----------
-    ip : IPvAnyAddress, default='0.0.0.0'
+    ip : str, default='0.0.0.0'
         IP to listen
 
     port : int
         Port to listen
     """
-    ip: IPvAnyAddress = Field(default='0.0.0.0')
+    ip: IPv4AddressStr = Field(default='0.0.0.0')
     port: int = Field(ge=1)
