@@ -1,10 +1,8 @@
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
-from datetime import datetime
 from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
                     TypeAlias, TypeVar, assert_never)
 
-import structlog
 from numpy import datetime64
 from numpy.typing import NDArray
 from pydantic import RootModel
@@ -14,11 +12,6 @@ from eventum_plugins.base.plugin import Plugin, PluginParams, required_params
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import BatcherFullError, TimestampsBatcher
-from eventum_plugins.input.normalizers import (NoneStartPoint,
-                                               VersatileDatetime,
-                                               normalize_versatile_daterange)
-
-logger = structlog.stdlib.get_logger()
 
 QueueOverflowMode: TypeAlias = Literal['block', 'skip']
 
@@ -130,8 +123,8 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
                     self._logger.warning(
                         'Timestamps were skipped due to batcher is overflowed',
                         count=len(timestamps),
-                        first=timestamps[0],
-                        last=timestamps[-1],
+                        first_timestamp=timestamps[0],
+                        last_timestamp=timestamps[-1],
                     )
             case mode:
                 assert_never(mode)
@@ -214,30 +207,3 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
     def live_mode(self) -> bool:
         """Status of live mode of the plugin."""
         return self._live_mode
-
-    def _normalize_daterange(
-        self,
-        start: VersatileDatetime,
-        end: VersatileDatetime,
-        none_start: NoneStartPoint = 'min'
-    ) -> tuple[datetime, datetime]:
-        """Normalize date range for specified parameters.
-
-        Notes
-        -----
-        See documentation string of `normalize_versatile_daterange`
-        """
-        dt_start, dt_end = normalize_versatile_daterange(
-            start=start,
-            end=end,
-            timezone=self._timezone,
-            none_start=none_start
-        )
-
-        self._logger.info(
-            'Generation date range is normalized',
-            start=dt_start.isoformat(),
-            end=dt_end.isoformat()
-        )
-
-        return (dt_start, dt_end)

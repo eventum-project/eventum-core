@@ -221,7 +221,7 @@ class Plugin(ABC, Generic[config_T, params_T]):
             'Plugin successfully registered',
             plugin_type=registration_info['type'],
             plugin_name=registration_info['name'],
-            config_class=config_cls.__name__,
+            plugin_config_class=config_cls.__name__,
         )
 
     @property
