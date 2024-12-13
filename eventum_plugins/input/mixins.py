@@ -18,7 +18,7 @@ class DaterangeValidatorMixin:
             normalize_versatile_daterange(
                 start=self.start,   # type: ignore[attr-defined]
                 end=self.end,       # type: ignore[attr-defined]
-                timezone=timezone('UTC'),
+                timezone=timezone('Pacific/Kiritimati'),    # latest tz
                 none_start='min',
                 none_end='max'
             )

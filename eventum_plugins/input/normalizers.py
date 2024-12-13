@@ -51,14 +51,14 @@ def normalize_versatile_datetime(
     now = datetime.now().astimezone(timezone)
     relative_base = relative_base or now
 
-    # not actual min-max bounds are used for safety of conversions
     min = now.replace(
-        year=1000, month=1, day=1,
+        year=1, month=1, day=1,
         hour=0, minute=0, second=0, microsecond=0
     )
+
     max = now.replace(
-        year=2999, month=12, day=31,
-        hour=23, minute=59, second=59, microsecond=999999
+        year=9999, month=12, day=31,
+        hour=23, minute=59, second=59, microsecond=999998   # 8 is for croniter
     )
 
     match value:
