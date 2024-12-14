@@ -144,7 +144,7 @@ class JinjaEventPlugin(
 
         Parameters
         ----------
-        template_path : str
+        name : str
             Name of the template to load
 
         globals : MutableMapping[str, Any] | None, default=None
@@ -160,6 +160,7 @@ class JinjaEventPlugin(
         PluginConfigurationError
             If template cannot be loaded
         """
+        self._logger.info('Loading template', file_path=name)
         try:
             return self._env.get_template(name, globals=globals)
         except TemplateNotFound as e:

@@ -16,11 +16,14 @@
         <td>Reason of event (e.g. exception message)</td>
         <td>str</td>
     </tr>
-    <tr>
-        <td>info</td>
-        <td>Additional information about event</td>
-        <td>str</td>
-    </tr>
+</table>
+
+## Network
+
+<table>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Data type</th>
     <tr>
         <td>ip</td>
         <td>IP address</td>
@@ -31,6 +34,19 @@
         <td>Port number</td>
         <td>int</td>
     </tr>
+    <tr>
+        <td>request_info</td>
+        <td>Information about request</td>
+        <td>str</td>
+    </tr>
+</table>
+
+## OS
+
+<table>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Data type</th>
     <tr>
         <td>file_path</td>
         <td>Path to file</td>
@@ -95,6 +111,21 @@
     <tr>
         <td>end_timestamp</td>
         <td>End timestamp of plugin generation in ISO8601 format</td>
+        <td>str</td>
+    </tr>
+</table>
+
+### Event plugins
+
+#### Jinja Event plugin
+
+<table>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Data type</th>
+    <tr>
+        <td>template_alias</td>
+        <td>Alias of template</td>
         <td>str</td>
     </tr>
 </table>
