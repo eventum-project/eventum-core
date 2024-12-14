@@ -69,6 +69,9 @@ class JinjaEventPlugin(
         except SampleLoadError as e:
             raise PluginConfigurationError(str(e)) from None
 
+        if self._config.root.samples:
+            self._logger.info('Samples are loaded')
+
         self._module_provider = ModuleProvider(modules.__name__)
         self._subprocess_runner = SubprocessRunner()
         self._shared_state = SingleThreadState()
@@ -95,6 +98,7 @@ class JinjaEventPlugin(
             )
             for alias, conf in self._template_configs.items()
         }
+        self._logger.info('Templates are loaded')
 
         try:
             Picker = get_picker_class(self._config.root.mode)
@@ -160,7 +164,6 @@ class JinjaEventPlugin(
         PluginConfigurationError
             If template cannot be loaded
         """
-        self._logger.info('Loading template', file_path=name)
         try:
             return self._env.get_template(name, globals=globals)
         except TemplateNotFound as e:
