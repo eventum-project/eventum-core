@@ -1,6 +1,5 @@
 import itertools
 import json
-import logging
 import os
 import ssl
 from typing import Iterable, Iterator, Sequence
@@ -13,8 +12,6 @@ from eventum_plugins.output.base.plugin import OutputPlugin, OutputPluginParams
 from eventum_plugins.output.formatters import Format, format_events
 from eventum_plugins.output.plugins.opensearch.config import \
     OpensearchOutputPluginConfig
-
-logger = logging.getLogger(__name__)
 
 
 class OpensearchOutputPlugin(
@@ -49,6 +46,11 @@ class OpensearchOutputPlugin(
                 raise PluginConfigurationError(
                     f'Failed to load CA certificate: {e}'
                 ) from None
+
+            self._logger.info(
+                'CA certificate is added to verified locations',
+                file_path=self._config.ca_cert_path
+            )
 
         self._session: aiohttp.ClientSession
 
@@ -197,9 +199,9 @@ class OpensearchOutputPlugin(
             )
 
         if errors:
-            logger.error(
-                f'{len(errors)} events was not indexed due to error, '
-                f'first 3 errors are shown: {errors[:3]}'
+            await self._logger.aerror(
+                'Some events were not indexed using bulk request',
+                reason=f'First 3/{len(errors)} are shown: {errors[:3]}'
             )
 
         return len(events) - len(errors)
@@ -250,8 +252,10 @@ class OpensearchOutputPlugin(
                 events=events,
                 format=Format.NDJSON,
                 ignore_errors=True,
-                error_callback=lambda e: logger.warning(
-                    f'Failed to format event as json document: {e}',
+                error_callback=lambda event, err: self._logger.error(
+                    'Failed to format event as json document',
+                    reason=str(err),
+                    original_event=event
                 )
             )
         )

@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import os
 import sys
 from typing import Sequence, assert_never
@@ -8,8 +7,6 @@ from eventum_plugins.output.base.plugin import OutputPlugin, OutputPluginParams
 from eventum_plugins.output.formatters import format_events
 from eventum_plugins.output.plugins.stdout.config import \
     StdoutOutputPluginConfig
-
-logger = logging.getLogger(__name__)
 
 
 class StdoutOutputPlugin(
@@ -70,9 +67,11 @@ class StdoutOutputPlugin(
                 events=events,
                 format=self._config.format,
                 ignore_errors=True,
-                error_callback=lambda e: logger.warning(
-                    f'Failed to format event to "{self._config.format}" '
-                    f'format in "{self}" output plugin: {e}',
+                error_callback=lambda event, err: self._logger.error(
+                    'Failed to format event',
+                    format=self._config.format,
+                    reason=str(err),
+                    original_event=event,
                 )
             )
         )

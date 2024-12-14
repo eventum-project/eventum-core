@@ -129,3 +129,21 @@
         <td>str</td>
     </tr>
 </table>
+
+### Output plugins
+
+<table>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Data type</th>
+    <tr>
+        <td>format</td>
+        <td>Format of outcome event (e.g. "plain", "ndjson" e.t.c.)</td>
+        <td>str</td>
+    </tr>
+    <tr>
+        <td>original_event</td>
+        <td>Original unformatted event</td>
+        <td>str</td>
+    </tr>
+</table>
