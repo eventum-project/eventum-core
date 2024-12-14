@@ -34,33 +34,33 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        start_dt = normalize_versatile_datetime(
+        start = normalize_versatile_datetime(
             value=self._config.start,
             timezone=self._timezone,
             none_point='now'
         )
-        end_after = timedelta(seconds=self._config.seconds) * (
-            self._config.repeat + 1  # type: ignore[operator]
-        )
-        end_dt = start_dt + end_after
+
+        timeout = timedelta(seconds=self._config.seconds)
+        end_after = timeout * self._config.repeat  # type: ignore[operator]
+        end = start + end_after
 
         self._logger.info(
             'Generating in range',
-            start_timestamp=start_dt.isoformat(),
-            end_timestamp=end_dt.isoformat()
+            start_timestamp=start.isoformat(),
+            end_timestamp=end.isoformat()
         )
 
-        timeout = timedelta64(timedelta(seconds=self._config.seconds), 'us')
-        delta_end = timedelta64(end_after, 'us')
+        delta = timedelta64(timeout, 'us')
+        delta_end = timedelta64(end_after + timeout, 'us')
 
         deltas: NDArray[timedelta64] = arange(
-            start=timeout,
+            start=delta,
             stop=delta_end,
-            step=timeout
+            step=delta
         )
 
         timestamps = deltas + datetime64(
-            to_naive(start_dt, self._timezone), 'us'
+            to_naive(start, self._timezone), 'us'
         )
         timestamps = repeat(timestamps, repeats=self._config.count)
         on_events(timestamps)
@@ -78,18 +78,19 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
         timeout = timedelta(seconds=self._config.seconds)
 
         if self._config.repeat is None:
-            self._logger.info(
-                'Generating infinitely',
-                start_timestamp=start.isoformat()
+            end = normalize_versatile_datetime(
+                value=None,
+                timezone=self._timezone,
+                none_point='max'
             )
         else:
-            self._logger.info(
-                'Generating in range',
-                start_timestamp=start.isoformat(),
-                end_timestamp=(
-                    start + (timeout * self._config.repeat)
-                ).isoformat()
-            )
+            end = start + (timeout * self._config.repeat)
+
+        self._logger.info(
+            'Generating in range',
+            start_timestamp=start.isoformat(),
+            end_timestamp=end.isoformat()
+        )
 
         timestamp = skip_periods(
             start=start,
