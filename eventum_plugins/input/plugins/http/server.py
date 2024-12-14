@@ -142,6 +142,6 @@ class RequestHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         RequestHandler._logger.info(
             'Request received',
-            info=format % args,
+            request_info=format % args,
             ip=self.address_string()
         )
