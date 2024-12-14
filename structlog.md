@@ -39,6 +39,16 @@
         <td>Information about request</td>
         <td>str</td>
     </tr>
+    <tr>
+        <td>url</td>
+        <td>URL address</td>
+        <td>str</td>
+    </tr>
+    <tr>
+        <td>http_status</td>
+        <td>HTTP response code</td>
+        <td>int</td>
+    </tr>
 </table>
 
 ## OS
@@ -62,7 +72,7 @@
     <th>Data type</th>
     <tr>
         <td>plugin_type</td>
-        <td>Type of plugin (e.g. "input", "event" e.t.c)</td>
+        <td>Type of plugin (e.g. "input", "event" etc.)</td>
         <td>str</td>
     </tr>
     <tr>
@@ -138,7 +148,7 @@
     <th>Data type</th>
     <tr>
         <td>format</td>
-        <td>Format of outcome event (e.g. "plain", "ndjson" e.t.c.)</td>
+        <td>Format of outcome event (e.g. "plain", "ndjson" etc.)</td>
         <td>str</td>
     </tr>
     <tr>
