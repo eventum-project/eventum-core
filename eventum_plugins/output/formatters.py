@@ -66,7 +66,7 @@ def format_events(
     events: Iterable[str],
     format: Format,
     ignore_errors: bool = False,
-    error_callback: Callable[[ValueError], Any] | None = None
+    error_callback: Callable[[str, ValueError], Any] | None = None
 ) -> list[str]:
     """Format events using specified format.
 
@@ -82,9 +82,10 @@ def format_events(
         Proceed formatting events if error occurred for some event,
         otherwise the first formatting error is propagated
 
-    error_callback : Callable[[ValueError], Any] | None = None
+    error_callback : Callable[[str, ValueError], Any] | None = None
         Callback that is called each time formatting error occurs,
-        actual only if ignore_errors is `True`
+        actual only if ignore_errors is `True`, the first parameter
+        is the original event and the second one is the exception
 
     Returns
     -------
@@ -103,7 +104,7 @@ def format_events(
                 try:
                     formatted_events.append(format_event(event, format))
                 except ValueError as e:
-                    error_callback(e)
+                    error_callback(event, e)
         else:
             for event in events:
                 try:

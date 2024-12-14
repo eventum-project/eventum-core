@@ -82,6 +82,8 @@ class FileOutputPlugin(
 
             self._cleaned_up = True
 
+        await self._logger.ainfo('File is closed', file_path=self._config.path)
+
     def _create_descriptor(self, path: str, flags: int) -> int:
         """Create file descriptor opened for writing with specified
         file mode.
@@ -113,12 +115,14 @@ class FileOutputPlugin(
         AsyncTextIOWrapper
             Opened file
         """
-        return await aiofiles.open(
+        f = await aiofiles.open(
             file=self._config.path,
             mode='a' if self._config.write_mode == 'append' else 'w',
             encoding='utf-8',
             opener=self._create_descriptor
         )
+        await self._logger.ainfo('File is opened', file_path=self._config.path)
+        return f
 
     async def _reopen_file(self) -> AsyncTextIOWrapper:
         """Reopen file after deleting or cleanup.
@@ -128,12 +132,17 @@ class FileOutputPlugin(
         AsyncTextIOWrapper
             Opened file
         """
-        return await aiofiles.open(
+        f = await aiofiles.open(
             file=self._config.path,
             mode='a',
             encoding='utf-8',
             opener=self._create_descriptor
         )
+        await self._logger.ainfo(
+            'File is reopened',
+            file_path=self._config.path
+        )
+        return f
 
     async def _open(self) -> None:
         try:
@@ -163,9 +172,11 @@ class FileOutputPlugin(
                 events=events,
                 format=self._config.format,
                 ignore_errors=True,
-                error_callback=lambda e: logger.warning(
-                    f'Failed to format event to "{self._config.format}" '
-                    f'format in "{self}" output plugin: {e}',
+                error_callback=lambda event, err: self._logger.warning(
+                    'Failed to format event',
+                    format=self._config.format,
+                    reason=str(err),
+                    original_event=event
                 )
             )
         )
