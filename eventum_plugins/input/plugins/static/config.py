@@ -4,8 +4,8 @@ from pydantic import Field
 from eventum_plugins.input.base.config import InputPluginConfig
 
 
-class SampleInputPluginConfig(InputPluginConfig, frozen=True):
-    """Configuration for `sample` input plugin.
+class StaticInputPluginConfig(InputPluginConfig, frozen=True):
+    """Configuration for `static` input plugin.
 
     Attributes
     ----------

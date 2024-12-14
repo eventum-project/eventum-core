@@ -4,19 +4,19 @@ from numpy import datetime64, full
 from numpy.typing import NDArray
 
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
-from eventum_plugins.input.plugins.sample.config import SampleInputPluginConfig
+from eventum_plugins.input.plugins.static.config import StaticInputPluginConfig
 from eventum_plugins.input.utils.time_utils import now64
 
 
-class SampleInputPlugin(InputPlugin[SampleInputPluginConfig]):
-    """Input plugin for generating specified count of timestamps. All
-    timestamps are the same and have a value of time when generation
+class StaticInputPlugin(InputPlugin[StaticInputPluginConfig]):
+    """Input plugin for generating specified number of timestamps with
+    static value. All timestamps have a value of time when generation
     was started.
     """
 
     def __init__(
         self,
-        config: SampleInputPluginConfig,
+        config: StaticInputPluginConfig,
         params: InputPluginParams
     ) -> None:
         super().__init__(config, params)
