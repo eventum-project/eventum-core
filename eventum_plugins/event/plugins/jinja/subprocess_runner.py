@@ -41,22 +41,22 @@ class SubprocessRunner:
 
         Returns
         -------
-        SubprocessResult | None
-            `None` if command is timed out or command result including
-            its stdout, stderr and exit code
+        SubprocessResult
+            Command result including its stdout, stderr and exit code
+
+        Raises
+        ------
+        subprocess.TimeoutExpired
+            If command timed out
         """
-        try:
-            proc = subprocess.run(
-                args=command,
-                shell=True,
-                capture_output=True,
-                cwd=cwd,
-                env=env,
-                timeout=timeout,
-            )
-        except subprocess.TimeoutExpired as e:
-            logger.info(str(e))
-            return None
+        proc = subprocess.run(
+            args=command,
+            shell=True,
+            capture_output=True,
+            cwd=cwd,
+            env=env,
+            timeout=timeout,
+        )
 
         return SubprocessResult(
             stdout=proc.stdout.decode(),

@@ -40,7 +40,7 @@ def test_rendering():
             'templates_loader': DictLoader(
                 mapping={'test.jinja': '1 + 1 = {{ 1 + 1 }}'}
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
 
@@ -77,7 +77,7 @@ def test_rendering_parameters():
             'templates_loader': DictLoader(
                 mapping={'test.jinja': '{{ params.passed_parameter }}'}
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
 
@@ -119,7 +119,7 @@ def test_items_sample():
             'templates_loader': DictLoader(
                 mapping={'test.jinja': '{{ samples.test_sample[0][0] }}'}
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
 
@@ -162,7 +162,7 @@ def test_csv_sample():
             'templates_loader': DictLoader(
                 mapping={'test.jinja': '{{ samples.test_sample[0] }}'}
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
 
@@ -208,7 +208,7 @@ def test_subprocess():
                     )
                 }
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
 
@@ -265,7 +265,7 @@ def test_locals_state():
                     )
                 }
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
 
@@ -330,7 +330,7 @@ def test_shared_state():
                     )
                 }
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
 
@@ -353,8 +353,8 @@ def test_shared_state():
     ]
 
 
-def test_composed_state():
-    composed_state = MultiProcessState('test', True, 1024, RLock())
+def test_global_state():
+    global_state = MultiProcessState('test', True, 1024, RLock())
     plugin = JinjaEventPlugin(
         config=JinjaEventPluginConfig(
             root=JinjaEventPluginConfigForGeneralModes(
@@ -386,17 +386,17 @@ def test_composed_state():
             'templates_loader': DictLoader(
                 mapping={
                     'test.jinja': (
-                        '{%- set i = composed.get("i", 1) -%}\n'
+                        '{%- set i = globals.get("i", 1) -%}\n'
                         '{{ i }}\n'
-                        '{%- do composed.set("i", i + 1) -%}\n'
+                        '{%- do globals.set("i", i + 1) -%}\n'
                     ),
                     'other_test.jinja': (
-                        '{%- set i = composed.get("i", 1) -%}\n'
+                        '{%- set i = globals.get("i", 1) -%}\n'
                         '{{ i }}\n'
                     )
                 }
             ),
-            'composed_state': composed_state
+            'global_state': global_state
         }
     )
 
@@ -411,8 +411,8 @@ def test_composed_state():
             )
         )
 
-    composed_state.close()
-    composed_state.destroy()
+    global_state.close()
+    global_state.destroy()
 
     assert len(events) == 6
     assert events == [
@@ -453,7 +453,7 @@ def test_modules():
                     )
                 }
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
 
@@ -497,7 +497,7 @@ def test_timestamp():
                     'test.jinja': '{{ timestamp.isoformat() }}'
                 }
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
     ts = datetime.now().astimezone()
@@ -542,7 +542,7 @@ def test_tags():
                     'test.jinja': '{{ tags[1] }}'
                 }
             ),
-            'composed_state': ...
+            'global_state': ...
         }
     )
 

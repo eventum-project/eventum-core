@@ -1,6 +1,9 @@
 import os
 import platform
+import subprocess
 from pathlib import Path
+
+import pytest
 
 from eventum_plugins.event.plugins.jinja.subprocess_runner import \
     SubprocessRunner
@@ -56,8 +59,8 @@ def test_subprocess_env():
 
 
 def test_subprocess_timed_out():
-    result = SubprocessRunner().run(
-        command='sleep 10 && echo "Hello, world!"',
-        timeout=0.1,
-    )
-    assert result is None
+    with pytest.raises(subprocess.TimeoutExpired):
+        SubprocessRunner().run(
+            command='sleep 10 && echo "Hello, world!"',
+            timeout=0.1,
+        )
