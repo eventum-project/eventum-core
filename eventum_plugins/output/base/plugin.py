@@ -57,6 +57,8 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
                 await self._open()
                 self._is_opened = True
 
+        await self._logger.ainfo('Plugin is opened for writing')
+
     async def close(self) -> None:
         """Close plugin for writing with releasing resources and
         flushing events.
@@ -65,6 +67,8 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
             if self._is_opened:
                 await self._close()
                 self._is_opened = False
+
+        await self._logger.ainfo('Plugin is closed')
 
     async def write(self, events: Sequence[str]) -> int:
         """Write events.
