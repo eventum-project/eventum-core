@@ -27,7 +27,8 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
 
         if not self._live_mode and self._config.repeat is None:
             raise PluginConfigurationError(
-                'Repeats count must be finite for sample mode'
+                'Repeats count must be finite for sample mode',
+                context=dict(self.instance_info)
             )
 
     def _generate_sample(

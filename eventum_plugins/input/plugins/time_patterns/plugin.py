@@ -85,7 +85,8 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
             and self._config.oscillator.end == TimeKeyword.NEVER.value
         ):
             raise PluginConfigurationError(
-                'End time must be finite for sample mode'
+                'End time must be finite for sample mode',
+                context=dict(self.instance_info)
             )
 
     def _generate_randomizer_factors(self, count: int) -> Iterator[float]:
@@ -375,26 +376,44 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
                 )
             except OSError as e:
                 raise PluginConfigurationError(
-                    'Failed to load time pattern configuration '
-                    f'"{pattern_path}": {e}'
+                    'Failed to load time pattern configuration',
+                    context=dict(
+                        self.instance_info,
+                        file_path=pattern_path,
+                        reason=str(e)
+                    )
                 ) from None
             except yaml.error.YAMLError as e:
                 raise PluginConfigurationError(
-                    'Failed to parse time pattern configuration '
-                    f'"{pattern_path}": {e}'
+                    'Failed to parse time pattern configuration',
+                    context=dict(
+                        self.instance_info,
+                        file_path=pattern_path,
+                        reason=str(e)
+                    )
                 ) from None
             except ValidationError as e:
                 raise PluginConfigurationError(
-                    'Bad time pattern configuration structure '
-                    f'"{pattern_path}": {e}'
+                    'Bad time pattern configuration structure',
+                    context=dict(
+                        self.instance_info,
+                        file_path=pattern_path,
+                        reason=str(e)
+                    )
                 ) from None
 
             # for quick merging of several time patterns in live mode
             # delay should be minimal
+            #
+            # also ephemeral name and type are set because
+            # TimePatternInputPlugin is unregistered as input plugin
+            # and used as "sub-plugin"
             if self._live_mode:
                 params = params | {     # type: ignore
                     'batch_size': None,
-                    'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY
+                    'batch_delay': TimestampsBatcher.MIN_BATCH_DELAY,
+                    'ephemeral_name': f'{self.plugin_name} ({pattern_path})',
+                    'ephemeral_type': self.plugin_type
                 }
 
             try:
@@ -404,14 +423,14 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
                 )
             except PluginConfigurationError as e:
                 raise PluginConfigurationError(
-                    'Failed to initialize time pattern for '
-                    f'configuration "{pattern_path}": {e}'
+                    'Failed to initialize time pattern for configuration',
+                    context=dict(
+                        self.instance_info,
+                        file_path=pattern_path,
+                        reason=str(e)
+                    )
                 )
 
-            time_pattern_plugin.set_ephemeral_name(
-                name=f'{self.plugin_name} ({pattern_path})'
-            )
-            time_pattern_plugin.set_ephemeral_type(self.plugin_type)
             time_patterns.append(time_pattern_plugin)
 
         return time_patterns
@@ -443,15 +462,22 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
             )
         except ValueError as e:
             raise PluginRuntimeError(
-                f'Cannot merge time patterns: {e}'
+                'Cannot merge time patterns',
+                context=dict(self.instance_info, reason=str(e))
             )
 
         try:
             for batch in merged_patterns.generate(include_id=False):
                 on_events(batch)
         except PluginRuntimeError as e:
+            if 'reason' in e.context:
+                reason = f'{e}: {e.context["reason"]}'
+            else:
+                reason = str(e)
+
             raise PluginRuntimeError(
-                f'Error during execution of merged time patterns: {e}'
+                'Error during execution of merged time patterns',
+                context=dict(self.instance_info, reason=reason)
             ) from None
 
     @property

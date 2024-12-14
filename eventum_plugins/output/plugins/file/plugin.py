@@ -145,10 +145,23 @@ class FileOutputPlugin(
         try:
             self._file = await self._open_file()
         except OSError as e:
-            raise PluginRuntimeError(str(e))
+            raise PluginRuntimeError(
+                'Failed to open file',
+                context=dict(
+                    self.instance_info,
+                    reason=str(e),
+                    file_path=self._config.path
+                )
+            )
 
         if not await self._file.writable():
-            raise PluginRuntimeError('File is not writable')
+            raise PluginRuntimeError(
+                'File is not writable',
+                context=dict(
+                    self.instance_info,
+                    file_path=self._config.path
+                )
+            )
 
         self._flushing_task = self._loop.create_task(self._start_flushing())
         self._cleanup_task = self._loop.create_task(self._schedule_cleanup())
@@ -186,7 +199,14 @@ class FileOutputPlugin(
                 try:
                     self._file = await self._reopen_file()
                 except OSError as e:
-                    raise PluginRuntimeError(f'Failed to reopen file: {e}')
+                    raise PluginRuntimeError(
+                        'Failed to reopen file',
+                        context=dict(
+                            self.instance_info,
+                            reason=str(e),
+                            file_path=self._config.path
+                        )
+                    )
 
             if not self._cleaned_up:
                 self._cleanup_task.cancel()
@@ -203,7 +223,12 @@ class FileOutputPlugin(
                 )
             except OSError as e:
                 raise PluginRuntimeError(
-                    f'Failed to write events to file: {e}'
+                    'Failed to write events to file',
+                    context=dict(
+                        self.instance_info,
+                        reason=str(e),
+                        file_path=self._config.path
+                    )
                 ) from e
 
             if self._config.flush_interval == 0:

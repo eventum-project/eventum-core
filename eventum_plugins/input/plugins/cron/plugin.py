@@ -32,7 +32,8 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
             )
         ):
             raise PluginConfigurationError(
-                'End time must be finite for sample mode'
+                'End time must be finite for sample mode',
+                context=dict(self.instance_info)
             )
 
     def _generate_sample(

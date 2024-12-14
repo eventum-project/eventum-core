@@ -51,7 +51,10 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
             try:
                 self._loop = asyncio.get_running_loop()
             except RuntimeError as e:
-                raise PluginRuntimeError(str(e))
+                raise PluginRuntimeError(
+                    str(e).capitalize(),
+                    context=dict(self.instance_info)
+                )
 
             if not self._is_opened:
                 await self._open()
@@ -94,7 +97,8 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
         async with self._lock:
             if not self._is_opened:
                 raise PluginRuntimeError(
-                    'Output plugin is not opened for writing'
+                    'Output plugin is not opened for writing',
+                    context=dict(self.instance_info)
                 )
             return await self._write(events)
 

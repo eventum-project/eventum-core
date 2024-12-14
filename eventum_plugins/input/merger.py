@@ -245,7 +245,8 @@ class InputPluginsLiveMerger:
 
             if errors:
                 raise PluginRuntimeError(
-                    f'Some plugins finished execution with errors: {errors}'
+                    'Some plugins finished execution with errors',
+                    context=dict(reason=str(errors))
                 )
 
     def _execute_plugin(

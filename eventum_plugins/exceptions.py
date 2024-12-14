@@ -1,5 +1,22 @@
+from typing import Any
+
+
 class PluginError(Exception):
-    """Base plugin error."""
+    """Base plugin error.
+
+    Parameters
+    ----------
+    context : dict[str, Any]
+        Context information about plugin (e.g. plugin id, name etc.)
+    """
+
+    def __init__(
+        self,
+        *args: Any,
+        context: dict[str, Any]
+    ) -> None:
+        super().__init__(*args)
+        self.context = context
 
 
 class PluginRegistrationError(PluginError):

@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 from pydantic import RootModel
 from pytz import BaseTzInfo
 
-from eventum_plugins.base.plugin import Plugin, PluginParams, required_params
+from eventum_plugins.base.plugin import Plugin, PluginParams
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.config import InputPluginConfig
 from eventum_plugins.input.batcher import BatcherFullError, TimestampsBatcher
@@ -69,7 +69,7 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
     def __init__(self, config: config_T, params: InputPluginParams) -> None:
         super().__init__(config, params)
 
-        with required_params():
+        with self.required_params():
             self._live_mode = params['live_mode']
             self._timezone = params['timezone']
 
@@ -83,7 +83,8 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
             )
         except ValueError as e:
             raise PluginConfigurationError(
-                f'Wrong batching parameters: {e}'
+                'Wrong batching parameters',
+                context=dict(self.instance_info, reason=str(e))
             ) from None
 
         self._on_queue_overflow: QueueOverflowMode = params.get(

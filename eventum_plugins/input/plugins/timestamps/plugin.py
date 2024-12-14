@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import Any, Callable
 
-from numpy import array, datetime64
+from numpy import array, astype, datetime64
 from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
@@ -31,11 +31,23 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
                 for ts in self._read_timestamps_from_file(config.source)
             ]
             if not timestamps:
-                raise PluginConfigurationError('No timestamps in the file')
+                raise PluginConfigurationError(
+                    'No timestamps are in the file',
+                    context=dict(self.instance_info, file_path=config.source)
+                )
+            self._logger.info(
+                'Timestamps are read from the file',
+                file_path=config.source,
+                count=len(timestamps)
+            )
         else:
             timestamps = [
                 to_naive(ts, self._timezone) for ts in config.source
             ]
+            self._logger.info(
+                'Timestamps are read from the configuration',
+                count=len(timestamps)
+            )
 
         self._timestamps: NDArray[datetime64] = array(
             timestamps,
@@ -62,7 +74,6 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
             If cannot read content of the specified file or parse
             timestamps
         """
-        self._logger.info('Reading timestamps from file', file_path=filename)
         try:
             with open(filename) as f:
                 return [
@@ -71,21 +82,40 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
                 ]
         except (OSError, ValueError) as e:
             raise PluginConfigurationError(
-                f'Failed to read timestamps from file: {e}'
+                'Failed to read timestamps from file',
+                context=dict(
+                    self.instance_info,
+                    file_path=filename,
+                    reason=str(e)
+                )
             ) from None
+
+    def _log_generation_range(self) -> None:
+        """Log generation range."""
+        start = self._timezone.localize(
+            astype(self._timestamps[0], datetime)   # type: ignore[arg-type]
+        )
+        end = self._timezone.localize(
+            astype(self._timestamps[-1], datetime)  # type: ignore[arg-type]
+        )
+        self._logger.info(
+            'Generating in range',
+            start_timestamp=start.isoformat(),
+            end_timestamp=end.isoformat(),
+        )
 
     def _generate_sample(
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        self._logger.info('Generating in provided range')
+        self._log_generation_range()
         on_events(self._timestamps)
 
     def _generate_live(
         self,
         on_events: Callable[[NDArray[datetime64]], Any]
     ) -> None:
-        self._logger.info('Generating in provided range')
+        self._log_generation_range()
 
         future_timestamps = get_future_slice(
             timestamps=self._timestamps,

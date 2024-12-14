@@ -3,7 +3,8 @@ import inspect
 from abc import ABC
 from contextlib import contextmanager
 from types import ModuleType
-from typing import Any, Generic, Required, TypedDict, TypeVar, get_args
+from typing import (Any, Generic, Iterator, NotRequired, Required, TypedDict,
+                    TypeVar, get_args)
 
 import structlog
 from pydantic import RootModel
@@ -17,7 +18,7 @@ logger = structlog.stdlib.get_logger()
 
 
 class _PluginRegistrationInfo(TypedDict):
-    """Information of plugin for registration.
+    """Information about plugin for registration.
 
     Attributes
     ----------
@@ -25,7 +26,7 @@ class _PluginRegistrationInfo(TypedDict):
         Name of the plugin
 
     type : str
-        Plugin type (i.e. parent package name)
+        Type of the plugin (i.e. parent package name)
 
     package : ModuleType
         Parent package containing plugin package
@@ -33,6 +34,25 @@ class _PluginRegistrationInfo(TypedDict):
     name: str
     type: str
     package: ModuleType
+
+
+class PluginInstanceInfo(TypedDict):
+    """Information about instance of plugin.
+
+    Attributes
+    ----------
+    plugin_name : str
+        Name of the plugin
+
+    plugin_type : str
+        Type of the plugin
+
+    plugin_id : int
+        ID of the plugin instance
+    """
+    plugin_name: str
+    plugin_type: str
+    plugin_id: int
 
 
 def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
@@ -69,8 +89,8 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
         plugin_type_package_name = '.'.join(module_parts[:-2])
     except IndexError:
         raise TypeError(
-            'Cannot extract information from module named '
-            f'"{class_module.__name__}"'
+            'Cannot extract information from plugin '
+            f'module name "{class_module.__name__}"'
         ) from None
 
     try:
@@ -78,7 +98,7 @@ def _inspect_plugin(plugin_cls: type) -> _PluginRegistrationInfo:
     except ImportError as e:
         raise TypeError(
             'Cannot import parent package of plugin '
-            f'for module named "{class_module.__name__}": {e}'
+            f'"{plugin_type_package_name}": {e}'
         )
 
     return _PluginRegistrationInfo(
@@ -95,25 +115,20 @@ class PluginParams(TypedDict):
     ----------
     id : int
         Numeric plugin identifier
+
+    ephemeral_name : str
+        Ephemeral name of plugin, might be helpful when plugin is not
+        registered but it needs representable name to moment of
+        initialization
+
+    ephemeral_type : str
+        Ephemeral type of plugin, might be helpful when plugin is not
+        registered but it needs representable type to moment of
+        initialization
     """
     id: Required[int]
-
-
-@contextmanager
-def required_params():
-    """Context manager for handling missing keys in plugin parameters.
-
-    Raises
-    ------
-    PluginConfigurationError
-        If `KeyError` is raised
-    """
-    try:
-        yield
-    except KeyError as e:
-        raise PluginConfigurationError(
-            f'Missing required parameter: {e}'
-        ) from None
+    ephemeral_name: NotRequired[str]
+    ephemeral_type: NotRequired[str]
 
 
 config_T = TypeVar('config_T', bound=(PluginConfig | RootModel))
@@ -144,26 +159,28 @@ class Plugin(ABC, Generic[config_T, params_T]):
     """
 
     def __init__(self, config: config_T, params: params_T) -> None:
-        with required_params():
+        with self.required_params():
             self._id = params['id']
 
         self._config = config
+        self._logger = logger.bind(**self.instance_info)
 
-        self._logger = self._get_logger_with_context()
+    @contextmanager
+    def required_params(self) -> Iterator:
+        """Context manager for handling missing keys in plugin parameters.
 
-    def _get_logger_with_context(self) -> structlog.stdlib.BoundLogger:
-        """Get logger with plugin instance context.
-
-        Returns
-        -------
-        structlog.stdlib.BoundLogger
-            Logger with context
+        Raises
+        ------
+        PluginConfigurationError
+            If `KeyError` is raised
         """
-        return logger.bind(
-            plugin_type=self.plugin_type,
-            plugin_name=self.plugin_name,
-            plugin_id=self.id
-        )
+        try:
+            yield
+        except KeyError as e:
+            raise PluginConfigurationError(
+                'Missing required parameter',
+                context=dict(self.instance_info, reason=str(e))
+            ) from None
 
     def __str__(self) -> str:
         return (
@@ -173,7 +190,9 @@ class Plugin(ABC, Generic[config_T, params_T]):
     def __init_subclass__(cls, register: bool = True, **kwargs: Any):
         super().__init_subclass__(**kwargs)
 
-        log = logger.bind(plugin_class=cls.__name__)
+        context = {'plugin_class': cls.__name__}
+
+        log = logger.bind(**context)
 
         if not register:
             setattr(cls, '_plugin_name', '[unregistered]')
@@ -185,7 +204,10 @@ class Plugin(ABC, Generic[config_T, params_T]):
         try:
             registration_info = _inspect_plugin(cls)
         except TypeError as e:
-            raise PluginRegistrationError(f'Unable to inspect plugin: {e}')
+            raise PluginRegistrationError(
+                'Unable to inspect plugin',
+                context=dict(context, reason=str(e))
+            )
 
         setattr(cls, '_plugin_name', registration_info['name'])
         setattr(cls, '_plugin_type', registration_info['type'])
@@ -196,16 +218,19 @@ class Plugin(ABC, Generic[config_T, params_T]):
             )
         except ValueError:
             raise PluginRegistrationError(
-                'Generic parameters must be specified'
+                'Generic parameters must be specified',
+                context=context
             ) from None
         except Exception as e:
             raise PluginRegistrationError(
-                f'Unable to define config class: {e}'
+                'Unable to define config class',
+                context=dict(context, reason=str(e))
             )
 
         if isinstance(config_cls, TypeVar):
             raise PluginRegistrationError(
-                'Config class cannot have generic type'
+                'Config class cannot have generic type',
+                context=context
             )
 
         PluginsRegistry.register_plugin(
@@ -234,43 +259,16 @@ class Plugin(ABC, Generic[config_T, params_T]):
         """Canonical name of the plugin."""
         return getattr(self, '_plugin_name')
 
-    def set_ephemeral_name(self, name: str) -> None:
-        """Set ephemeral name for plugin.
-
-        Parameters
-        ----------
-        name : str
-            Name to set
-
-        Notes
-        -----
-        This method can be helpful when plugin is not registered
-        but it needs representable name for some reason
-        """
-        self._plugin_name = name
-
-        # we should rebind logger since context is changed
-        self._logger = self._get_logger_with_context()
-
     @property
     def plugin_type(self) -> str:
         """Type of the plugin."""
         return getattr(self, '_plugin_type')
 
-    def set_ephemeral_type(self, type: str) -> None:
-        """Set ephemeral type for plugin.
-
-        Parameters
-        ----------
-        type : str
-            Type to set
-
-        Notes
-        -----
-        This method can be helpful when plugin is not registered
-        but it needs representable type for some reason
-        """
-        self._plugin_type = type
-
-        # we should rebind logger since context is changed
-        self._logger = self._get_logger_with_context()
+    @property
+    def instance_info(self) -> PluginInstanceInfo:
+        """Information about plugin instance."""
+        return {
+            'plugin_name': self.plugin_name,
+            'plugin_type': self.plugin_type,
+            'plugin_id': self.id
+        }

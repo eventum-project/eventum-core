@@ -38,15 +38,16 @@ class ReplayEventPlugin(
                 )
             except re.error as e:
                 raise PluginConfigurationError(
-                    'Failed to compile regular expression for timestamp '
-                    f'pattern "{self._config.timestamp_pattern}": {e}'
+                    'Failed to compile regular expression',
+                    context=dict(self.instance_info, reason=str(e))
                 ) from None
         else:
             self._pattern = None
 
         if not os.path.exists(self._config.path):
             raise PluginConfigurationError(
-                f'File "{self._config.path}" does not exist'
+                'File does not exist',
+                context=dict(self.instance_info, file_path=self._config.path)
             )
 
     def _read_next_lines(self, count: int) -> list[str]:
@@ -93,7 +94,12 @@ class ReplayEventPlugin(
                 return lines
         except OSError as e:
             raise PluginRuntimeError(
-                f'Failed to read file "{self._config.path}": {e}'
+                'Failed to read file',
+                context=dict(
+                    self.instance_info,
+                    reason=str(e),
+                    file_path=self._config.path
+                )
             ) from None
 
     def _get_next_line(self) -> Iterator[str]:

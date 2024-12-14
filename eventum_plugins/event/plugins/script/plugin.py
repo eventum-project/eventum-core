@@ -55,7 +55,8 @@ class ScriptEventPlugin(
 
         if spec is None:
             raise PluginConfigurationError(
-                f'Could not get spec of script "{script_path}"'
+                'Cannot get spec of script module',
+                context=dict(self.instance_info, file_path=script_path)
             )
 
         try:
@@ -64,20 +65,27 @@ class ScriptEventPlugin(
             if spec.loader is not None:
                 spec.loader.exec_module(module)
             else:
-                raise RuntimeError(
-                    'Script cannot be executed due to loader problem '
+                raise PluginConfigurationError(
+                    'Script cannot be executed due to loader problem',
+                    context=dict(self.instance_info, file_path=script_path)
                 )
         except Exception as e:
             raise PluginConfigurationError(
-                f'Failed to import script as external module: {e}'
+                'Failed to import script as external module',
+                context=dict(
+                    self.instance_info,
+                    reason=str(e),
+                    file_path=script_path
+                )
             )
 
         try:
             function = getattr(module, ScriptEventPlugin._FUNCTION_NAME)
         except AttributeError:
             raise PluginConfigurationError(
-                f'Function "{ScriptEventPlugin._FUNCTION_NAME}" is not '
-                f'found in "{script_path}"'
+                f'Definition of function "{ScriptEventPlugin._FUNCTION_NAME}" '
+                'is missing in script',
+                context=dict(self.instance_info, file_path=script_path)
             )
 
         return function
@@ -87,28 +95,34 @@ class ScriptEventPlugin(
             result = self._function(params)
         except Exception as e:
             raise PluginRuntimeError(
-                f'{e.__class__.__name__} exception occurred during '
-                f'"{ScriptEventPlugin._FUNCTION_NAME}" function execution: {e}'
+                'Exception occurred during function execution',
+                context=dict(
+                    self.instance_info,
+                    reason=f'{e.__class__.__name__}: {e}'
+                )
             )
 
         if isinstance(result, str):
             return [result]
         elif isinstance(result, list):
-            for item in result:
-                if not isinstance(item, str):
-                    returned_type = type(item)
-                    raise PluginRuntimeError(
-                        f'Function "{ScriptEventPlugin._FUNCTION_NAME}" '
-                        f"returned list that contains object of type "
-                        f"{returned_type}, but elements of type <class 'str'>"
-                        " are expected"
+            types = set(map(lambda el: el.__class__.__name__, result))
+            if (not result) or ('str' in types and len(types) == 1):
+                return result
+            else:
+                raise PluginRuntimeError(
+                    'Function returned object of invalid type, '
+                    'string or list of strings are expected',
+                    context=dict(
+                        self.instance_info,
+                        reason=(
+                            'Elements of next types encountered '
+                            f'in list: {types}'
+                        )
                     )
-
-            return result
+                )
         else:
-            returned_type = type(result)
             raise PluginRuntimeError(
-                f'Function "{ScriptEventPlugin._FUNCTION_NAME}" returned '
-                f"object of type {returned_type}, but <class 'str'> or "
-                "<class 'list'> are expected"
+                'Function returned object of invalid type, '
+                'string or list of strings are expected',
+                context=dict(self.instance_info)
             )

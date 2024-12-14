@@ -79,9 +79,15 @@ def _invoke_plugin(package: ModuleType, name: str) -> None:
     try:
         importlib.import_module(_construct_plugin_module_name(package, name))
     except ModuleNotFoundError:
-        raise PluginNotFoundError('Plugin not found')
+        raise PluginNotFoundError(
+            'Plugin not found',
+            context=dict(plugin_name=name)
+        )
     except ImportError as e:
-        raise PluginLoadError(f'Error during importing plugin module: {e}')
+        raise PluginLoadError(
+            'Error during importing plugin module',
+            context=dict(reason=str(e), plugin_name=name)
+        )
 
 
 def _load_plugin(package: ModuleType, name: str) -> PluginInfo:
@@ -117,7 +123,8 @@ def _load_plugin(package: ModuleType, name: str) -> PluginInfo:
         return PluginsRegistry.get_plugin_info(package, name)
     except ValueError:
         raise PluginLoadError(
-            'Plugin was imported but was not found in registry'
+            'Plugin was imported but was not found in registry',
+            context=dict(plugin_name=name)
         )
 
 

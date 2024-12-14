@@ -36,7 +36,11 @@ class OpensearchOutputPlugin(
         if config.ca_cert_path is not None:
             if not os.path.exists(config.ca_cert_path):
                 raise PluginConfigurationError(
-                    f'Failed to find CA certificate in "{config.ca_cert_path}"'
+                    'CA certificate file does not exist',
+                    context=dict(
+                        self.instance_info,
+                        file_path=config.ca_cert_path
+                    )
                 )
 
             try:
@@ -44,7 +48,12 @@ class OpensearchOutputPlugin(
                     cafile=config.ca_cert_path)
             except ssl.SSLError as e:
                 raise PluginConfigurationError(
-                    f'Failed to load CA certificate: {e}'
+                    'Failed to load CA certificate',
+                    context=dict(
+                        self.instance_info,
+                        reason=str(e),
+                        file_path=config.ca_cert_path
+                    )
                 ) from None
 
             self._logger.info(
@@ -175,27 +184,47 @@ class OpensearchOutputPlugin(
             text = await response.text()
         except aiohttp.ClientError as e:
             raise PluginRuntimeError(
-                f'Failed to perform bulk indexing using node "{host}": {e}'
+                'Failed to perform bulk indexing',
+                context=dict(
+                    self.instance_info,
+                    reason=str(e),
+                    url=host
+                )
             )
 
         if response.status != 200:
             raise PluginRuntimeError(
-                f'Failed to perform bulk indexing using node "{host}": '
-                f'HTTP {response.status} - {text}'
+                'Failed to perform bulk indexing',
+                context=dict(
+                    self.instance_info,
+                    reason=text,
+                    http_status=response.status,
+                    url=host
+                )
             )
 
         try:
             result = json.loads(text)
         except json.JSONDecodeError as e:
             raise PluginRuntimeError(
-                f'Failed to decode response from node "{host}": {e}'
+                'Failed to decode bulk response',
+                context=dict(
+                    self.instance_info,
+                    reason=str(e),
+                    url=host
+                )
             )
 
         try:
             errors = self._get_bulk_response_errors(result)
         except ValueError as e:
             raise PluginRuntimeError(
-                f'Failed to process bulk response from node "{host}": {e}'
+                'Failed to process bulk response',
+                context=dict(
+                    self.instance_info,
+                    reason=str(e),
+                    url=host
+                )
             )
 
         if errors:
@@ -234,13 +263,23 @@ class OpensearchOutputPlugin(
             text = await response.text()
         except aiohttp.ClientError as e:
             raise PluginRuntimeError(
-                f'Failed to perform bulk indexing using node "{host}": {e}'
+                'Failed to post document',
+                context=dict(
+                    self.instance_info,
+                    reason=str(e),
+                    url=host
+                )
             )
 
         if response.status != 201:
             raise PluginRuntimeError(
-                f'Failed to post document using node "{host}": '
-                f'HTTP {response.status} - {text}'
+                'Failed to post document',
+                context=dict(
+                    self.instance_info,
+                    reason=text,
+                    http_status=response.status,
+                    url=host
+                )
             )
 
         return 1
