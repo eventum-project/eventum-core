@@ -64,17 +64,9 @@ class ReplayEventPlugin(
 
         Raises
         ------
-        ValueError
-            If parameter `count` is lower than 1
-
         PluginRuntimeError
             If error occurs during reading the file
         """
-        if count < 1:
-            raise ValueError(
-                'The number of lines must be at least 1'
-            )
-
         try:
             with open(self._config.path) as f:
                 f.seek(self._last_read_position, os.SEEK_SET)
@@ -83,12 +75,21 @@ class ReplayEventPlugin(
                     line = f.readline().rstrip('\n\r')
 
                     if not line:
+                        self._logger.info(
+                            'End of file is reached',
+                            file_path=self._config.path
+                        )
                         break
 
                     lines.append(line)
 
                 self._last_read_position = f.tell()
 
+                self._logger.info(
+                    'Next lines from file have been read',
+                    file_name=self._config.path,
+                    count=len(lines)
+                )
                 return lines
         except OSError as e:
             raise PluginRuntimeError(
@@ -113,6 +114,11 @@ class ReplayEventPlugin(
 
             if not self._config.repeat:
                 break
+            else:
+                self._logger.info(
+                    'Reset read position to beginning of the file',
+                    file_path=self._config.path
+                )
 
             self._last_read_position = 0
 
