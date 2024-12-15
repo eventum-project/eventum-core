@@ -16,7 +16,7 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
         nodes must be specified in format `https://<host>:<port>`
 
     username: str
-        Username that is used to authenticate to opensearch for indexing
+        Username that is used to authenticate to Opensearch for indexing
         events
 
     password: str
@@ -30,13 +30,13 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
         connecting to them
 
     ca_cert: str | None, default=None
-        Path to CA certificate
+        Absolute path to CA certificate
 
     client_cert: str | None, default=None
-        Path to client certificate
+        Absolute path to client certificate
 
-    client_cert: str | None, default=None
-        Path to client certificate key
+    client_cert_key: str | None, default=None
+        Absolute path to client certificate key
     """
     hosts: list[str] = Field(min_length=1)
     username: str = Field(min_length=1)
