@@ -30,6 +30,11 @@
         <td>str</td>
     </tr>
     <tr>
+        <td>host</td>
+        <td>IP address or hostname</td>
+        <td>str</td>
+    </tr>
+    <tr>
         <td>port</td>
         <td>Port number</td>
         <td>int</td>
@@ -164,6 +169,11 @@
     <tr>
         <td>original_event</td>
         <td>Original unformatted event</td>
+        <td>str</td>
+    </tr>
+    <tr>
+        <td>formatted_event</td>
+        <td>Formatted event</td>
         <td>str</td>
     </tr>
 </table>
