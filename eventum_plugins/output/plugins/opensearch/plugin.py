@@ -27,41 +27,113 @@ class OpensearchOutputPlugin(
         super().__init__(config, params)
 
         self._hosts = self._choose_host()
-        self._ssl_context = ssl.create_default_context()
 
-        if not config.verify_ssl:
+        self._ssl_context = ssl.create_default_context()
+        self._initialize_ssl_context()
+
+        self._session: aiohttp.ClientSession
+
+    def _initialize_ssl_context(self) -> None:
+        """Initialize SSL context for session."""
+        if not self._config.verify:
             self._ssl_context.check_hostname = False
             self._ssl_context.verify_mode = ssl.CERT_NONE
 
-        if config.ca_cert_path is not None:
-            if not os.path.exists(config.ca_cert_path):
-                raise PluginConfigurationError(
-                    'CA certificate file does not exist',
-                    context=dict(
-                        self.instance_info,
-                        file_path=config.ca_cert_path
-                    )
-                )
-
-            try:
-                self._ssl_context.load_verify_locations(
-                    cafile=config.ca_cert_path)
-            except ssl.SSLError as e:
-                raise PluginConfigurationError(
-                    'Failed to load CA certificate',
-                    context=dict(
-                        self.instance_info,
-                        reason=str(e),
-                        file_path=config.ca_cert_path
-                    )
-                ) from None
+        if self._config.ca_cert is not None:
+            self._load_ca_cert(self._config.ca_cert)
 
             self._logger.info(
-                'CA certificate is added to verified locations',
-                file_path=self._config.ca_cert_path
+                'CA certificate is loaded',
+                file_path=self._config.ca_cert
             )
 
-        self._session: aiohttp.ClientSession
+        if (
+            self._config.client_cert is not None
+            and self._config.client_cert_key is not None
+        ):
+            self._load_client_cert(
+                cert_path=self._config.client_cert,
+                key_path=self._config.client_cert_key,
+            )
+            self._logger.info(
+                'Client certificate chain is loaded',
+                cert_file_path=self._config.client_cert,
+                key_file_path=self._config.client_cert_key
+            )
+
+    def _load_ca_cert(self, path: str) -> None:
+        """Load CA certificate from file.
+
+        Parameters
+        ----------
+        path : str
+            Path to CA certificate
+        """
+        if not os.path.exists(path):
+            raise PluginConfigurationError(
+                'CA certificate file does not exist',
+                context=dict(
+                    self.instance_info,
+                    file_path=path
+                )
+            )
+
+        try:
+            self._ssl_context.load_verify_locations(cafile=path)
+        except ssl.SSLError as e:
+            raise PluginConfigurationError(
+                'Failed to load CA certificate',
+                context=dict(
+                    self.instance_info,
+                    reason=str(e),
+                    file_path=path
+                )
+            ) from e
+
+    def _load_client_cert(self, cert_path: str, key_path: str) -> None:
+        """Load client cert and key from files.
+
+        Parameters
+        ----------
+        cert_path : str
+            Path to client certificate
+
+        key_path : str
+            Path to client certificate key
+        """
+        if not os.path.exists(cert_path):
+            raise PluginConfigurationError(
+                'Client certificate file does not exist',
+                context=dict(
+                    self.instance_info,
+                    file_path=cert_path
+                )
+            )
+
+        if not os.path.exists(key_path):
+            raise PluginConfigurationError(
+                'Client certificate key file does not exist',
+                context=dict(
+                    self.instance_info,
+                    file_path=key_path
+                )
+            )
+
+        try:
+            self._ssl_context.load_cert_chain(
+                certfile=cert_path,
+                keyfile=key_path
+            )
+        except ssl.SSLError as e:
+            raise PluginConfigurationError(
+                'Failed to load client certificate chain',
+                context=dict(
+                    self.instance_info,
+                    reason=str(e),
+                    cert_file_path=cert_path,
+                    key_file_path=key_path
+                )
+            ) from e
 
     async def _open(self) -> None:
         self._session = aiohttp.ClientSession(
@@ -73,7 +145,9 @@ class OpensearchOutputPlugin(
             headers={
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
-            }
+            },
+            conn_timeout=self._config.connect_timeout,
+            read_timeout=self._config.request_timeout
         )
 
     async def _close(self) -> None:
@@ -193,7 +267,7 @@ class OpensearchOutputPlugin(
                     reason=str(e),
                     url=host
                 )
-            )
+            ) from e
 
         if response.status != 200:
             raise PluginRuntimeError(
@@ -216,7 +290,7 @@ class OpensearchOutputPlugin(
                     reason=str(e),
                     url=host
                 )
-            )
+            ) from None
 
         try:
             errors = self._get_bulk_response_errors(result)
@@ -228,7 +302,7 @@ class OpensearchOutputPlugin(
                     reason=str(e),
                     url=host
                 )
-            )
+            ) from None
 
         if errors:
             await self._logger.aerror(
@@ -272,7 +346,7 @@ class OpensearchOutputPlugin(
                     reason=str(e),
                     url=host
                 )
-            )
+            ) from e
 
         if response.status != 201:
             raise PluginRuntimeError(

@@ -51,7 +51,7 @@
     </tr>
 </table>
 
-## OS
+## Files
 
 <table>
     <th>Name</th>
@@ -60,6 +60,16 @@
     <tr>
         <td>file_path</td>
         <td>Path to file</td>
+        <td>str</td>
+    </tr>
+    <tr>
+        <td>cert_file_path</td>
+        <td>Path to certificate file (used in combination with key_file_path)</td>
+        <td>str</td>
+    </tr>
+    <tr>
+        <td>key_file_path</td>
+        <td>Path to certificate key file (used in combination with cert_file_path)</td>
         <td>str</td>
     </tr>
 </table>

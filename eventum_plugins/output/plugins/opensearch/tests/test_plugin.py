@@ -19,7 +19,7 @@ def config():
         username='admin',
         password='pass',
         index='test_index',
-        verify_ssl=False
+        verify=False
     )
 
 
