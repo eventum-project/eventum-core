@@ -1,4 +1,5 @@
 import os
+
 from pydantic import Field, field_validator, model_validator
 
 from eventum_plugins.output.base.config import OutputPluginConfig
