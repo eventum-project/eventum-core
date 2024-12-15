@@ -1,7 +1,4 @@
-from typing import Any, Callable
-
-from numpy import datetime64, full
-from numpy.typing import NDArray
+from numpy import full
 
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum_plugins.input.plugins.static.config import StaticInputPluginConfig
@@ -21,10 +18,7 @@ class StaticInputPlugin(InputPlugin[StaticInputPluginConfig]):
     ) -> None:
         super().__init__(config, params)
 
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_sample(self) -> None:
         self._logger.info('Generating at current timestamp')
         timestamps = full(
             shape=self._config.count,
@@ -32,10 +26,7 @@ class StaticInputPlugin(InputPlugin[StaticInputPluginConfig]):
             dtype='datetime64[us]'
         )
 
-        on_events(timestamps)
+        self._enqueue(timestamps)
 
-    def _generate_live(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
-        self._generate_sample(on_events)
+    def _generate_live(self) -> None:
+        self._generate_sample()

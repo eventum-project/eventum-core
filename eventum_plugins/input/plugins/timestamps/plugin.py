@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from typing import Any, Callable
 
 from numpy import array, astype, datetime64
 from numpy.typing import NDArray
@@ -104,17 +103,11 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
             end_timestamp=end.isoformat(),
         )
 
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_sample(self) -> None:
         self._log_generation_range()
-        on_events(self._timestamps)
+        self._enqueue(self._timestamps)
 
-    def _generate_live(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_live(self) -> None:
         self._log_generation_range()
 
         future_timestamps = get_future_slice(
@@ -125,4 +118,4 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
         if len(future_timestamps) < len(self._timestamps):
             self._logger.info('Past timestamp are skipped')
 
-        on_events(future_timestamps)
+        self._enqueue(future_timestamps)

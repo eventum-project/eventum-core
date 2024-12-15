@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import (Any, Callable, Iterator, Literal, NotRequired, Required,
-                    TypeAlias, TypeVar, assert_never)
+from typing import (Iterator, Literal, NotRequired, Required, TypeAlias,
+                    TypeVar, assert_never)
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -106,8 +106,8 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         finally:
             self._batcher.close()
 
-    def _add_timestamps(self, timestamps: NDArray[datetime64]) -> None:
-        """Add timestamps to batcher with handling overflowing.
+    def _enqueue(self, timestamps: NDArray[datetime64]) -> None:
+        """Enqueue timestamps to batcher with handling overflowing.
 
         Parameters
         ----------
@@ -148,12 +148,9 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         """
         with ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(
-                (
-                    self._generate_live
-                    if self._live_mode
-                    else self._generate_sample
-                ),
-                self._add_timestamps
+                self._generate_live
+                if self._live_mode
+                else self._generate_sample
             )
             future.add_done_callback(self._handle_done_future)
 
@@ -162,12 +159,9 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
             future.result()
 
     @abstractmethod
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
-        """Start timestamps generation in sample mode. `on_events`
-        callback should be called once timestamps are generated.
+    def _generate_sample(self) -> None:
+        """Start timestamps generation in sample mode. `self._enqueue`
+        method should be called once timestamps are generated.
 
         Parameters
         ----------
@@ -182,20 +176,12 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         ...
 
     @abstractmethod
-    def _generate_live(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
-        """Start timestamps generation in live mode. `on_events`
-        callback should be called cyclically as time passes and earlier
-        than moment of the first timestamp value in the batch, but
-        there is no need to calculate the moments precisely since
-        timestamps scheduling is handled by callback.
-
-        Parameters
-        ----------
-        on_events : Callable[[NDArray[datetime64]], Any]
-            Callback that should be called for generated timestamps
+    def _generate_live(self) -> None:
+        """Start timestamps generation in live mode. `self._enqueue`
+        method should be called cyclically as time passes and earlier
+        than moment of the first timestamp value in the batch. There is
+        no need to calculate the moments of enqueuing precisely since
+        timestamps scheduling is handled by underlying batcher.
 
         Raises
         ------

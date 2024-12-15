@@ -1,10 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 from http.server import HTTPServer
 from threading import Event
-from typing import Any, Callable
 
-from numpy import datetime64, full
-from numpy.typing import NDArray
+from numpy import full
 
 from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
@@ -53,14 +51,11 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
         )
         self._server.shutdown()
 
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_sample(self) -> None:
         self._request_handler_cls.set_logger(self._logger)
         self._request_handler_cls.set_generate_callback(
             callback=lambda count:
-            on_events(
+            self._enqueue(
                 full(
                     shape=count,
                     fill_value=now64(self._timezone),
@@ -93,8 +88,5 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
                     context=dict(self.instance_info, reason=str(e))
                 )
 
-    def _generate_live(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
-        self._generate_sample(on_events)
+    def _generate_live(self) -> None:
+        self._generate_sample()

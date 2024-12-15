@@ -1,5 +1,3 @@
-from typing import Any, Callable
-
 from numpy import datetime64, linspace, timedelta64
 from numpy.typing import NDArray
 
@@ -51,17 +49,11 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
         timestamps = first + (timedelta * space)
         return timestamps
 
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_sample(self) -> None:
         timestamps = self._generate()
-        on_events(timestamps)
+        self._enqueue(timestamps)
 
-    def _generate_live(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_live(self) -> None:
         timestamps = self._generate()
 
         future_timestamps = get_future_slice(
@@ -72,4 +64,4 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
         if len(future_timestamps) < len(timestamps):
             self._logger.info('Past timestamps are skipped')
 
-        on_events(future_timestamps)
+        self._enqueue(future_timestamps)

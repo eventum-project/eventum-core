@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timedelta
-from typing import Any, Callable, Iterator, assert_never
+from typing import Iterator, assert_never
 
 import numpy as np
 import yaml
@@ -225,10 +225,7 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
         """
         return self._generate_distribution(size, duration) + start
 
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[np.datetime64]], Any]
-    ) -> None:
+    def _generate_sample(self) -> None:
         start_dt, end_dt = normalize_versatile_daterange(
             start=self._config.oscillator.start,
             end=self._config.oscillator.end,
@@ -255,14 +252,11 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
                 ),
                 before=end
             )
-            on_events(timestamps)
+            self._enqueue(timestamps)
 
             start += delta
 
-    def _generate_live(
-        self,
-        on_events: Callable[[NDArray[np.datetime64]], Any]
-    ) -> None:
+    def _generate_live(self) -> None:
         start_dt, end_dt = normalize_versatile_daterange(
             start=self._config.oscillator.start,
             end=self._config.oscillator.end,
@@ -318,7 +312,7 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
                 if wait_seconds > 0:
                     time.sleep(wait_seconds)
 
-                on_events(timestamps)
+                self._enqueue(timestamps)
 
             start += delta
 
@@ -435,10 +429,7 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
 
         return time_patterns
 
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[np.datetime64]], Any]
-    ) -> None:
+    def _generate_sample(self) -> None:
         samples: list[NDArray[np.datetime64]] = []
         for plugin in self._time_patterns:
             samples.append(
@@ -446,12 +437,9 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
             )
 
         timestamps = merge_arrays(samples)
-        on_events(timestamps)
+        self._enqueue(timestamps)
 
-    def _generate_live(
-        self,
-        on_events: Callable[[NDArray[np.datetime64]], Any]
-    ) -> None:
+    def _generate_live(self) -> None:
         self._logger.info('Merging time patterns')
         try:
             merged_patterns = InputPluginsLiveMerger(
@@ -468,7 +456,7 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
 
         try:
             for batch in merged_patterns.generate(include_id=False):
-                on_events(batch)
+                self._enqueue(batch)
         except PluginRuntimeError as e:
             if 'reason' in e.context:
                 reason = f'{e}: {e.context["reason"]}'

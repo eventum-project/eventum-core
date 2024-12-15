@@ -1,7 +1,6 @@
 import time
 from datetime import datetime, timedelta
 from itertools import repeat as i_repeat
-from typing import Any, Callable
 
 from numpy import arange, datetime64, full, repeat, timedelta64
 from numpy.typing import NDArray
@@ -31,10 +30,7 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
                 context=dict(self.instance_info)
             )
 
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_sample(self) -> None:
         start = normalize_versatile_datetime(
             value=self._config.start,
             timezone=self._timezone,
@@ -64,12 +60,9 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
             to_naive(start, self._timezone), 'us'
         )
         timestamps = repeat(timestamps, repeats=self._config.count)
-        on_events(timestamps)
+        self._enqueue(timestamps)
 
-    def _generate_live(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_live(self) -> None:
         start = normalize_versatile_datetime(
             value=self._config.start,
             timezone=self._timezone,
@@ -129,7 +122,7 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
             if sleep_seconds > 0:
                 time.sleep(sleep_seconds)
 
-            on_events(
+            self._enqueue(
                 full(
                     shape=self._config.count,
                     fill_value=datetime64(

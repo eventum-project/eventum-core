@@ -1,10 +1,9 @@
 import time
 from datetime import datetime
-from typing import Any, Callable, Iterator
+from typing import Iterator
 
 import croniter
 from numpy import array, datetime64, full, repeat
-from numpy.typing import NDArray
 
 from eventum_plugins.exceptions import PluginConfigurationError
 from eventum_plugins.input.base.plugin import InputPlugin, InputPluginParams
@@ -36,10 +35,7 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
                 context=dict(self.instance_info)
             )
 
-    def _generate_sample(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_sample(self) -> None:
         start, end = normalize_versatile_daterange(
             start=self._config.start,
             end=self._config.end,
@@ -66,12 +62,9 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
             repeats=self._config.count
         )
 
-        on_events(timestamps)
+        self._enqueue(timestamps)
 
-    def _generate_live(
-        self,
-        on_events: Callable[[NDArray[datetime64]], Any]
-    ) -> None:
+    def _generate_live(self) -> None:
         now = datetime.now().astimezone(self._timezone)
         start, end = normalize_versatile_daterange(
             start=self._config.start,
@@ -111,7 +104,7 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
             if wait_seconds > 0:
                 time.sleep(wait_seconds)
 
-            on_events(
+            self._enqueue(
                 full(
                     shape=self._config.count,
                     fill_value=datetime64(timestamp.replace(tzinfo=None)),
