@@ -16,8 +16,8 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
         specifying more than one nodes allows for load balancing,
         nodes must be specified in format `https://<host>:<port>`
 
-    user: str
-        User that is used to authenticate to opensearch for indexing
+    username: str
+        Username that is used to authenticate to opensearch for indexing
         events
 
     password: str
@@ -35,7 +35,7 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
     """
 
     hosts: list[str] = Field(min_length=1)
-    user: str = Field(min_length=1)
+    username: str = Field(min_length=1)
     password: str = Field(min_length=1)
     index: str = Field(min_length=1)
     verify_ssl: bool = True

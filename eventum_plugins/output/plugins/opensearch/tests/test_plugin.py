@@ -16,7 +16,7 @@ pytest_plugins = ('pytest_asyncio',)
 def config():
     return OpensearchOutputPluginConfig(
         hosts=['https://localhost:9200'],
-        user='admin',
+        username='admin',
         password='pass',
         index='test_index',
         verify_ssl=False

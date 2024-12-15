@@ -65,7 +65,10 @@ class OpensearchOutputPlugin(
 
     async def _open(self) -> None:
         self._session = aiohttp.ClientSession(
-            auth=aiohttp.BasicAuth(self._config.user, self._config.password),
+            auth=aiohttp.BasicAuth(
+                self._config.username,
+                self._config.password
+            ),
             connector=aiohttp.TCPConnector(ssl=self._ssl_context),
             headers={
                 'Accept': 'application/json',
