@@ -82,7 +82,7 @@ class ClickhouseOutputPluginConfig(OutputPluginConfig, frozen=True):
     table: str = Field(min_length=1)
     username: str = Field(default='default', min_length=1)
     password: str = Field(default='')
-    dsn: ClickHouseDsn | None = Field(default=None, min_length=1)
+    dsn: ClickHouseDsn | None = Field(default=None)
     connect_timeout: int = Field(default=10, ge=1)
     request_timeout: int = Field(default=300, ge=1)
     client_name: str | None = Field(default=None, min_length=1)
