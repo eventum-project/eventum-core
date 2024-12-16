@@ -1,7 +1,7 @@
 import os
 from typing import Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import ClickHouseDsn, Field, field_validator, model_validator
 
 from eventum_plugins.output.base.config import OutputPluginConfig
 
@@ -32,7 +32,7 @@ class ClickhouseOutputPluginConfig(OutputPluginConfig, frozen=True):
     password : str, default=''
         Password for user to authenticate
 
-    dsn : str | None, default=None
+    dsn : ClickHouseDsn | None, default=None
         A string in standard DSN (Data Source Name) format, other
         connection values (such as host or username) will be extracted
         from this string if not set otherwise
@@ -82,7 +82,7 @@ class ClickhouseOutputPluginConfig(OutputPluginConfig, frozen=True):
     table: str = Field(min_length=1)
     username: str = Field(default='default', min_length=1)
     password: str = Field(default='')
-    dsn: str | None = Field(default=None, min_length=1)
+    dsn: ClickHouseDsn | None = Field(default=None, min_length=1)
     connect_timeout: int = Field(default=10, ge=1)
     request_timeout: int = Field(default=300, ge=1)
     client_name: str | None = Field(default=None, min_length=1)

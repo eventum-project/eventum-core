@@ -42,7 +42,7 @@ class ClickhouseOutputPlugin(
                 database=self._config.database,
                 username=self._config.username,
                 password=self._config.password,
-                dsn=self._config.dsn,
+                dsn=str(self._config.dsn) if self._config.dsn else None,
                 connect_timeout=self._config.connect_timeout,
                 send_receive_timeout=self._config.request_timeout,
                 client_name=self._config.client_name,
