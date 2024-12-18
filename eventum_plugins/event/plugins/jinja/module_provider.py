@@ -4,6 +4,9 @@ from types import ModuleType
 
 class ModuleProvider:
     """Provider of modules used in jinja templates.
+    By default custom modules are searched in `package_name` package,
+    if module is not found there, then it is searched in environment
+    packages.
 
     Parameters
     ----------
@@ -22,7 +25,10 @@ class ModuleProvider:
         try:
             module = importlib.import_module(f'{self._package_name}.{key}')
         except ModuleNotFoundError:
-            raise KeyError(f'Module "{key}" is not found') from None
+            try:
+                module = importlib.import_module(key)
+            except ModuleNotFoundError:
+                raise KeyError(f'Module "{key}" is not found') from None
         except ImportError as e:
             raise KeyError(f'Failed to import module "{key}": {e}') from None
 
