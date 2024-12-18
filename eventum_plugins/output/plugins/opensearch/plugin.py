@@ -1,7 +1,5 @@
 import itertools
 import json
-import os
-import ssl
 from typing import Iterable, Iterator, Sequence
 
 import aiohttp
@@ -10,6 +8,8 @@ from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
 from eventum_plugins.output.base.plugin import OutputPlugin, OutputPluginParams
 from eventum_plugins.output.formatters import Format, format_events
+from eventum_plugins.output.http_session import (create_session,
+                                                 create_ssl_context)
 from eventum_plugins.output.plugins.opensearch.config import \
     OpensearchOutputPluginConfig
 
@@ -28,126 +28,32 @@ class OpensearchOutputPlugin(
 
         self._hosts = self._choose_host()
 
-        self._ssl_context = ssl.create_default_context()
-        self._initialize_ssl_context()
+        try:
+            self._ssl_context = create_ssl_context(
+                verify=config.verify,
+                ca_cert=config.ca_cert,
+                client_cert=config.client_cert,
+                client_key=config.client_cert_key
+            )
+        except OSError as e:
+            raise PluginConfigurationError(
+                'Failed to create SSL context',
+                context=dict(self.instance_info, reason=str(e))
+            )
 
         self._session: aiohttp.ClientSession
 
-    def _initialize_ssl_context(self) -> None:
-        """Initialize SSL context for session."""
-        if not self._config.verify:
-            self._ssl_context.check_hostname = False
-            self._ssl_context.verify_mode = ssl.CERT_NONE
-
-        if self._config.ca_cert is not None:
-            self._load_ca_cert(self._config.ca_cert)
-
-            self._logger.info(
-                'CA certificate is loaded',
-                file_path=self._config.ca_cert
-            )
-
-        if (
-            self._config.client_cert is not None
-            and self._config.client_cert_key is not None
-        ):
-            self._load_client_cert(
-                cert_path=self._config.client_cert,
-                key_path=self._config.client_cert_key,
-            )
-            self._logger.info(
-                'Client certificate chain is loaded',
-                cert_file_path=self._config.client_cert,
-                key_file_path=self._config.client_cert_key
-            )
-
-    def _load_ca_cert(self, path: str) -> None:
-        """Load CA certificate from file.
-
-        Parameters
-        ----------
-        path : str
-            Path to CA certificate
-        """
-        if not os.path.exists(path):
-            raise PluginConfigurationError(
-                'CA certificate file does not exist',
-                context=dict(
-                    self.instance_info,
-                    file_path=path
-                )
-            )
-
-        try:
-            self._ssl_context.load_verify_locations(cafile=path)
-        except ssl.SSLError as e:
-            raise PluginConfigurationError(
-                'Failed to load CA certificate',
-                context=dict(
-                    self.instance_info,
-                    reason=str(e),
-                    file_path=path
-                )
-            ) from e
-
-    def _load_client_cert(self, cert_path: str, key_path: str) -> None:
-        """Load client cert and key from files.
-
-        Parameters
-        ----------
-        cert_path : str
-            Path to client certificate
-
-        key_path : str
-            Path to client certificate key
-        """
-        if not os.path.exists(cert_path):
-            raise PluginConfigurationError(
-                'Client certificate file does not exist',
-                context=dict(
-                    self.instance_info,
-                    file_path=cert_path
-                )
-            )
-
-        if not os.path.exists(key_path):
-            raise PluginConfigurationError(
-                'Client certificate key file does not exist',
-                context=dict(
-                    self.instance_info,
-                    file_path=key_path
-                )
-            )
-
-        try:
-            self._ssl_context.load_cert_chain(
-                certfile=cert_path,
-                keyfile=key_path
-            )
-        except ssl.SSLError as e:
-            raise PluginConfigurationError(
-                'Failed to load client certificate chain',
-                context=dict(
-                    self.instance_info,
-                    reason=str(e),
-                    cert_file_path=cert_path,
-                    key_file_path=key_path
-                )
-            ) from e
-
     async def _open(self) -> None:
-        self._session = aiohttp.ClientSession(
-            auth=aiohttp.BasicAuth(
-                self._config.username,
-                self._config.password
-            ),
-            connector=aiohttp.TCPConnector(ssl=self._ssl_context),
+        self._session = create_session(
+            ssl_context=self._ssl_context,
+            username=self._config.username,
+            password=self._config.password,
             headers={
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
-            conn_timeout=self._config.connect_timeout,
-            read_timeout=self._config.request_timeout
+            connect_timeout=self._config.connect_timeout,
+            request_timeout=self._config.request_timeout
         )
 
     async def _close(self) -> None:
