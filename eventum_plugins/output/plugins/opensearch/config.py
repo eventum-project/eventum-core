@@ -25,6 +25,12 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
     index: str
         Index for writing events
 
+    connect_timeout : int, default=10
+        Connection timeout in seconds
+
+    request_timeout : int, default=300
+        Requests timeout in seconds
+
     verify: bool, default=True
         Whether to verify SSL certificate of the cluster nodes when
         connecting to them
