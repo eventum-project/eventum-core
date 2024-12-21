@@ -30,7 +30,7 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
         try:
             self._server = HTTPServer(
                 server_address=(
-                    self._config.ip,    # type: ignore[arg-type]
+                    str(self._config.ip),
                     self._config.port
                 ),
                 RequestHandlerClass=self._request_handler_cls
@@ -69,7 +69,7 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
 
         self._logger.info(
             'Starting http server',
-            ip=self._config.ip,
+            ip=str(self._config.ip),
             port=self._config.port
         )
         with ThreadPoolExecutor(max_workers=2) as executor:
