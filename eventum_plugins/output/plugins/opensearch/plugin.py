@@ -68,7 +68,7 @@ class OpensearchOutputPlugin(
             Chosen host
         """
         for node in itertools.cycle(self._config.hosts):
-            yield node
+            yield str(node)
 
     def _create_bulk_data(self, events: Iterable[str]) -> str:
         """Create body for bulk request. It is expected that events
@@ -162,7 +162,11 @@ class OpensearchOutputPlugin(
         try:
             response = await self._session.post(
                 url=f'{host}/_bulk',
-                data=self._create_bulk_data(events)
+                data=self._create_bulk_data(events),
+                proxy=(
+                    str(self._config.proxy_url)
+                    if self._config.proxy_url else None
+                )
             )
             text = await response.text()
         except aiohttp.ClientError as e:
@@ -241,7 +245,11 @@ class OpensearchOutputPlugin(
         try:
             response = await self._session.post(
                 url=f'{host}/{self._config.index}/_doc',
-                data=event
+                data=event,
+                proxy=(
+                    str(self._config.proxy_url)
+                    if self._config.proxy_url else None
+                )
             )
             text = await response.text()
         except aiohttp.ClientError as e:

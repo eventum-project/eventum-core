@@ -15,7 +15,7 @@ pytest_plugins = ('pytest_asyncio',)
 @pytest.fixture
 def config():
     return OpensearchOutputPluginConfig(
-        hosts=['https://localhost:9200'],
+        hosts=['https://localhost:9200'],   # type: ignore[arg-type]
         username='admin',
         password='pass',
         index='test_index',

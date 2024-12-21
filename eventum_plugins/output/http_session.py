@@ -76,7 +76,6 @@ def create_session(
     headers: dict[str, Any] | None = None,
     connect_timeout: int = 10,
     request_timeout: int = 300
-
 ) -> aiohttp.ClientSession:
     """Create client HTTP session with initialized parameters.
 

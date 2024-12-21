@@ -1,7 +1,8 @@
 import os
 from typing import Literal
 
-from pydantic import ClickHouseDsn, Field, field_validator, model_validator
+from pydantic import (ClickHouseDsn, Field, HttpUrl, field_validator,
+                      model_validator)
 
 from eventum_plugins.output.base.config import OutputPluginConfig
 
@@ -70,6 +71,9 @@ class ClickhouseOutputPluginConfig(OutputPluginConfig, frozen=True):
         key, `mutual` assumes ClickHouse mutual TLS auth with a client
         certificate, default behavior is `mutual`
 
+    proxy_url : HttpUrl
+        HTTP(S) proxy address
+
     Notes
     -----
     To see full documentation:
@@ -92,6 +96,7 @@ class ClickhouseOutputPluginConfig(OutputPluginConfig, frozen=True):
     client_cert_key: str | None = Field(default=None, min_length=1)
     server_host_name: str | None = Field(default=None, min_length=1)
     tls_mode: Literal['proxy', 'strict', 'mutual'] | None = Field(default=None)
+    proxy_url: HttpUrl | None = Field(default=None)
 
     @field_validator('ca_cert', 'client_cert', 'client_cert_key')
     def validate_ca_cert(cls, v: str | None):

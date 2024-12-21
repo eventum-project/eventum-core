@@ -1,6 +1,6 @@
 import os
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator, model_validator, HttpUrl
 
 from eventum_plugins.output.base.config import OutputPluginConfig
 
@@ -10,7 +10,7 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
 
     Parameters
     ----------
-    hosts: list[str]
+    hosts: list[HttpUrl]
         Opensearch cluster nodes that will be used for indexing events,
         specifying more than one nodes allows for load balancing,
         nodes must be specified in format `https://<host>:<port>`
@@ -43,8 +43,11 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
 
     client_cert_key: str | None, default=None
         Absolute path to client certificate key
+
+    proxy_url : HttpUrl
+        HTTP(S) proxy address
     """
-    hosts: list[str] = Field(min_length=1)
+    hosts: list[HttpUrl] = Field(min_length=1)
     username: str = Field(min_length=1)
     password: str = Field(min_length=1)
     index: str = Field(min_length=1)
@@ -54,6 +57,7 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
     ca_cert: str | None = Field(default=None, min_length=1)
     client_cert: str | None = Field(default=None, min_length=1)
     client_cert_key: str | None = Field(default=None, min_length=1)
+    proxy_url: HttpUrl | None = Field(default=None)
 
     @field_validator('ca_cert', 'client_cert', 'client_cert_key')
     def validate_absolute_paths(cls, v: str | None):

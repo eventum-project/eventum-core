@@ -52,6 +52,14 @@ class ClickhouseOutputPlugin(
                 client_cert_key=self._config.client_cert_key,
                 server_host_name=self._config.server_host_name,
                 tls_mode=self._config.tls_mode,
+                http_proxy=(
+                    str(self._config.proxy_url)
+                    if self._config.proxy_url else None
+                ),
+                https_proxy=(
+                    str(self._config.proxy_url)
+                    if self._config.proxy_url else None
+                )
             )
         except Exception as e:
             raise PluginRuntimeError(
