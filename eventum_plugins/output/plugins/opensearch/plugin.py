@@ -3,6 +3,7 @@ import json
 from typing import Iterable, Iterator, Sequence
 
 import aiohttp
+from yarl import URL
 
 from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
@@ -59,16 +60,18 @@ class OpensearchOutputPlugin(
     async def _close(self) -> None:
         await self._session.close()
 
-    def _choose_host(self) -> Iterator[str]:
-        """Choose host from nodes list specified in config.
+    def _choose_host(self) -> Iterator[URL]:
+        """Choose host from hosts list specified in config.
 
         Yields
         ------
-        str
-            Chosen host
+        yarl.URL
+            Chosen host URL
         """
-        for node in itertools.cycle(self._config.hosts):
-            yield str(node)
+        host_urls = [URL(str(host)) for host in self._config.hosts]
+
+        for host in itertools.cycle(host_urls):
+            yield host
 
     def _create_bulk_data(self, events: Iterable[str]) -> str:
         """Create body for bulk request. It is expected that events
@@ -161,7 +164,7 @@ class OpensearchOutputPlugin(
 
         try:
             response = await self._session.post(
-                url=f'{host}/_bulk',
+                url=host.with_path('_bulk'),
                 data=self._create_bulk_data(events),
                 proxy=(
                     str(self._config.proxy_url)
@@ -175,7 +178,7 @@ class OpensearchOutputPlugin(
                 context=dict(
                     self.instance_info,
                     reason=str(e),
-                    url=host
+                    url=host.host
                 )
             ) from e
 
@@ -186,7 +189,7 @@ class OpensearchOutputPlugin(
                     self.instance_info,
                     reason=text,
                     http_status=response.status,
-                    url=host
+                    url=host.host
                 )
             )
 
@@ -198,7 +201,7 @@ class OpensearchOutputPlugin(
                 context=dict(
                     self.instance_info,
                     reason=str(e),
-                    url=host
+                    url=host.host
                 )
             ) from None
 
@@ -210,7 +213,7 @@ class OpensearchOutputPlugin(
                 context=dict(
                     self.instance_info,
                     reason=str(e),
-                    url=host
+                    url=host.host
                 )
             ) from None
 
@@ -244,7 +247,7 @@ class OpensearchOutputPlugin(
 
         try:
             response = await self._session.post(
-                url=f'{host}/{self._config.index}/_doc',
+                url=host.with_path(f'{self._config.index}/_doc'),
                 data=event,
                 proxy=(
                     str(self._config.proxy_url)
@@ -258,7 +261,7 @@ class OpensearchOutputPlugin(
                 context=dict(
                     self.instance_info,
                     reason=str(e),
-                    url=host
+                    url=host.host
                 )
             ) from e
 
@@ -269,7 +272,7 @@ class OpensearchOutputPlugin(
                     self.instance_info,
                     reason=text,
                     http_status=response.status,
-                    url=host
+                    url=host.host
                 )
             )
 
