@@ -41,12 +41,12 @@ class EventStateContext(BaseEventContext):
     shared : State
         Shared state of templates
 
-    composed : State
-        Composed state of templates
+    globals : State
+        Global inter process state of templates
     """
     locals: State
     shared: State
-    composed: State
+    globals: State
 
 
 class EventContext(EventTimestampContext, EventTagsContext, EventStateContext):

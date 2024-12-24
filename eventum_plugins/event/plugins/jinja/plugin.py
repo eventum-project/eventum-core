@@ -120,7 +120,7 @@ class JinjaEventPlugin(
             tags=tuple(),               # ephemeral
             locals=next(iter(self._template_states.values())),  # ephemeral
             shared=self._shared_state,
-            composed=self._global_state
+            globals=self._global_state
         )
 
     def _get_template_configs_as_dict(

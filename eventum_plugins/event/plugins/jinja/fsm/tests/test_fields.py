@@ -18,7 +18,7 @@ def test_eq():
     context = EventStateContext(
         locals=State({'field': 10}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert Eq(eq={'locals.field': 10}).check(context)
     assert not Eq(eq={'locals.field': 5}).check(context)
@@ -29,7 +29,7 @@ def test_gt():
     context = EventStateContext(
         locals=State({'field': 10}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert Gt(gt={'locals.field': 5}).check(context)
     assert not Gt(gt={'locals.field': 10}).check(context)
@@ -40,7 +40,7 @@ def test_ge():
     context = EventStateContext(
         locals=State({'field': 10}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert Ge(ge={'locals.field': 5}).check(context)
     assert Ge(ge={'locals.field': 10}).check(context)
@@ -51,7 +51,7 @@ def test_lt():
     context = EventStateContext(
         locals=State({'field': 10}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert Lt(lt={'locals.field': 15}).check(context)
     assert not Lt(lt={'locals.field': 10}).check(context)
@@ -62,7 +62,7 @@ def test_le():
     context = EventStateContext(
         locals=State({'field': 10}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert Le(le={'locals.field': 15}).check(context)
     assert Le(le={'locals.field': 10}).check(context)
@@ -73,7 +73,7 @@ def test_len_eq():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert LenEq(len_eq={'locals.field': 3}).check(context)
     assert not LenEq(len_eq={'locals.field': 2}).check(context)
@@ -83,7 +83,7 @@ def test_len_gt():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert LenGt(len_gt={'locals.field': 2}).check(context)
     assert not LenGt(len_gt={'locals.field': 3}).check(context)
@@ -93,7 +93,7 @@ def test_len_ge():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert LenGe(len_ge={'locals.field': 2}).check(context)
     assert LenGe(len_ge={'locals.field': 3}).check(context)
@@ -104,7 +104,7 @@ def test_len_lt():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert LenLt(len_lt={'locals.field': 4}).check(context)
     assert not LenLt(len_lt={'locals.field': 3}).check(context)
@@ -114,7 +114,7 @@ def test_len_le():
     context = EventStateContext(
         locals=State({'field': [1, 2, 3]}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert LenLe(len_le={'locals.field': 4}).check(context)
     assert LenLe(len_le={'locals.field': 3}).check(context)
@@ -125,7 +125,7 @@ def test_contains():
     context = EventStateContext(
         locals=State({'field': [5, 10, 15]}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert Contains(contains={'locals.field': 10}).check(context)
     assert not Contains(contains={'locals.field': 2}).check(context)
@@ -135,7 +135,7 @@ def test_in():
     context = EventStateContext(
         locals=State({'field': 5}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert In(
         in_={'locals.field': [5, 10, 15]}
@@ -301,7 +301,7 @@ def test_matches():
     context = EventStateContext(
         locals=State({'field': 'abc'}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert Matches(
         matches={'locals.field': r'^a.*c$'}
@@ -315,7 +315,7 @@ def test_defined():
     context = EventStateContext(
         locals=State({'field': 10}),
         shared=...,
-        composed=...
+        globals=...
     )
     assert Defined(defined='locals.field').check(context)
     assert not Defined(defined='locals.other_field').check(context)
@@ -327,7 +327,7 @@ def test_or():
         tags=('tag1', ),
         locals=State({'field': 10}),
         shared=...,
-        composed=...
+        globals=...
     )
 
     assert Or(
@@ -351,7 +351,7 @@ def test_and():
         tags=('tag1', ),
         locals=State({'field': 15}),
         shared=...,
-        composed=...
+        globals=...
     )
 
     assert And(
@@ -375,7 +375,7 @@ def test_not():
         tags=('tag1', ),
         locals=State({'field': 5}),
         shared=...,
-        composed=...
+        globals=...
     )
 
     assert Not(
@@ -396,7 +396,7 @@ def test_complex_condition():
         tags=('tag1', ),
         locals=State({'field1': 10, 'field2': 'abc'}),
         shared=...,
-        composed=...
+        globals=...
     )
 
     condition = Or(

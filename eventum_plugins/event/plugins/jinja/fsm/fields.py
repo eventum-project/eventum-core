@@ -101,7 +101,7 @@ def _compare_with_state(
 
 def _decompose_field(
     field: str
-) -> tuple[Literal['locals', 'shared', 'composed'], str]:
+) -> tuple[Literal['locals', 'shared', 'globals'], str]:
     """Get state and field name from original field name."""
     state, field = field.split('.', maxsplit=1)
 
@@ -110,7 +110,7 @@ def _decompose_field(
 
 StateFieldName: TypeAlias = Annotated[
     str,
-    StringConstraints(pattern=r'^(locals|shared|composed)\..+$')
+    StringConstraints(pattern=r'^(locals|shared|globals)\..+$')
 ]
 
 
