@@ -15,6 +15,17 @@ from eventum_plugins.input.utils.time_utils import now64
 class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
     """Input plugin for generating timestamps when HTTP request is
     received.
+
+    Notes
+    -----
+    For generating events a POST request is required with following
+    data in body:
+    ```json
+    {
+        "count": x
+    }
+    ```
+    , where `x` - is a number of events to generate
     """
 
     def __init__(

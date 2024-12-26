@@ -19,6 +19,7 @@ class Format(StrEnum):
     JSON_BATCH = 'json-batch'
     TEMPLATE = 'template'
     TEMPLATE_BATCH = 'template-batch'
+    EVENTUM_HTTP_INPUT = 'eventum-http-input'
 
 
 @dataclass(frozen=True, slots=True)
@@ -285,9 +286,28 @@ class TemplateBatchFormatter(TemplateFormatter):
         )
 
 
+class EventumHttpInputFormatter(BaseFormatter):
+    """Formatter for generating request body for Eventum HTTP input
+    plugin.
+
+    Parameters
+    ----------
+    format : Literal[Format.EVENTUM_HTTP_INPUT]
+        Target format
+    """
+    format: Literal[Format.EVENTUM_HTTP_INPUT]
+
+    def format_events(self, events: Sequence[str]) -> FormattingResult:
+        return FormattingResult(
+            events=[f'{{"count": {len(events)}}}'],
+            formatted_count=len(events),
+            errors=[]
+        )
+
+
 OutputFormats = (
     PlainFormatter | JsonFormatter | JsonBatchFormatter
-    | TemplateFormatter
+    | TemplateFormatter | TemplateBatchFormatter | EventumHttpInputFormatter
 )
 
 
