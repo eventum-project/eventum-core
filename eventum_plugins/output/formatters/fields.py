@@ -223,7 +223,10 @@ class TemplateFormatter(BaseFormatter):
             except Exception as e:
                 errors.append(
                     FormatError(
-                        f'Failed render template: {e}',
+                        (
+                            f'Failed to render template: '
+                            f'{e.__class__.__name__}: {e}',
+                        ),
                         original_event=event
                     )
                 )
