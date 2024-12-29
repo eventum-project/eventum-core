@@ -78,7 +78,7 @@ SampleConfigModel = (
 )
 
 
-class SampleConfig(RootModel[SampleConfigModel], frozen=True):
+class SampleConfig(RootModel, frozen=True):
     """Configuration of sample."""
     root: SampleConfigModel = Field(
         discriminator='type'
@@ -344,6 +344,6 @@ ConfigModel = (
 )
 
 
-class JinjaEventPluginConfig(RootModel[ConfigModel], frozen=True):
+class JinjaEventPluginConfig(RootModel, frozen=True):
     """Configuration for `jinja` event plugin."""
     root: ConfigModel = Field(discriminator='mode')
