@@ -30,8 +30,10 @@ class TemplatePicker(ABC, Generic[T]):
     mode : TemplatePickingMode
         Picking mode to which to bind picker class
     """
-    _registered_pickers: dict[TemplatePickingMode,
-                              type['TemplatePicker[Any]']] = dict()
+    _registered_pickers: dict[
+        TemplatePickingMode,
+        type['TemplatePicker[Any]']
+    ] = dict()
 
     def __init_subclass__(
         cls,
