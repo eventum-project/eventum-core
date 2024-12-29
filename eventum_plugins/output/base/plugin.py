@@ -13,11 +13,11 @@ class OutputPluginParams(PluginParams):
     """Parameters for output plugin."""
 
 
-config_T = TypeVar('config_T', bound=(OutputPluginConfig | RootModel))
-params_T = TypeVar('params_T', bound=OutputPluginParams)
+ConfigT = TypeVar('ConfigT', bound=(OutputPluginConfig | RootModel))
+ParamsT = TypeVar('ParamsT', bound=OutputPluginParams)
 
 
-class OutputPlugin(Plugin[config_T, params_T], register=False):
+class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
     """Base class for all output plugins.
 
     Parameters
@@ -31,7 +31,7 @@ class OutputPlugin(Plugin[config_T, params_T], register=False):
         If any error occurs during initializing plugin
     """
 
-    def __init__(self, config: config_T, params: params_T) -> None:
+    def __init__(self, config: ConfigT, params: ParamsT) -> None:
         super().__init__(config, params)
 
         self._loop: asyncio.AbstractEventLoop

@@ -48,10 +48,10 @@ class InputPluginParams(PluginParams):
     on_queue_overflow: NotRequired[QueueOverflowMode]
 
 
-config_T = TypeVar('config_T', bound=(InputPluginConfig | RootModel))
+ConfigT = TypeVar('ConfigT', bound=(InputPluginConfig | RootModel))
 
 
-class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
+class InputPlugin(Plugin[ConfigT, InputPluginParams], register=False):
     """Base class for all input plugins.
 
     Parameters
@@ -66,7 +66,7 @@ class InputPlugin(Plugin[config_T, InputPluginParams], register=False):
         provided parameters
     """
 
-    def __init__(self, config: config_T, params: InputPluginParams) -> None:
+    def __init__(self, config: ConfigT, params: InputPluginParams) -> None:
         super().__init__(config, params)
 
         with self.required_params():

@@ -22,19 +22,19 @@ from eventum_plugins.event.plugins.jinja.state import State
 
 logger = logging.getLogger(__name__)
 
-context_T = TypeVar('context_T', bound=BaseEventContext)
+ContextT = TypeVar('ContextT', bound=BaseEventContext)
 
 
-class Checkable(ABC, Generic[context_T]):
+class Checkable(ABC, Generic[ContextT]):
     """Base class for models used in condition checking."""
 
     @abstractmethod
-    def check(self, context: context_T) -> bool:
+    def check(self, context: ContextT) -> bool:
         """Check class-specific condition using provided context.
 
         Parameters
         ----------
-        context : context_T
+        context : ContextT
             Event context parameters for checking condition
 
         Returns

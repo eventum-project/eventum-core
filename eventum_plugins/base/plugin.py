@@ -131,19 +131,19 @@ class PluginParams(TypedDict):
     ephemeral_type: NotRequired[str]
 
 
-config_T = TypeVar('config_T', bound=(PluginConfig | RootModel))
-params_T = TypeVar('params_T', bound=PluginParams)
+ConfigT = TypeVar('ConfigT', bound=(PluginConfig | RootModel))
+ParamsT = TypeVar('ParamsT', bound=PluginParams)
 
 
-class Plugin(ABC, Generic[config_T, params_T]):
+class Plugin(ABC, Generic[ConfigT, ParamsT]):
     """Base class for all plugins.
 
     Parameters
     ----------
-    config : config_T
+    config : ConfigT
         Configuration for the plugin
 
-    params : params_T
+    params : ParamsT
         Parameters for plugin (see `PluginParams`)
 
     Other Parameters
@@ -158,7 +158,7 @@ class Plugin(ABC, Generic[config_T, params_T]):
     plugins are automatically registered in `PluginsRegistry`.
     """
 
-    def __init__(self, config: config_T, params: params_T) -> None:
+    def __init__(self, config: ConfigT, params: ParamsT) -> None:
         with self.required_params():
             self._id = params['id']
 

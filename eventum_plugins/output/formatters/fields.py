@@ -308,11 +308,11 @@ class EventumHttpInputFormatter(BaseFormatter):
         )
 
 
-OutputFormats = (
+FormatterT = (
     PlainFormatter | JsonFormatter | JsonBatchFormatter
     | TemplateFormatter | TemplateBatchFormatter | EventumHttpInputFormatter
 )
 
 
 class Formatter(RootModel):
-    root: OutputFormats = Field(discriminator='format')
+    root: FormatterT = Field(discriminator='format')

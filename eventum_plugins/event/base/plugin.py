@@ -28,19 +28,19 @@ class EventPluginParams(PluginParams):
     """Parameters for event plugin."""
 
 
-config_T = TypeVar('config_T', bound=(EventPluginConfig | RootModel))
-params_T = TypeVar('params_T', bound=EventPluginParams)
+ConfigT = TypeVar('ConfigT', bound=(EventPluginConfig | RootModel))
+ParamsT = TypeVar('ParamsT', bound=EventPluginParams)
 
 
-class EventPlugin(Plugin[config_T, params_T], register=False):
+class EventPlugin(Plugin[ConfigT, ParamsT], register=False):
     """Base class for all event plugins.
 
     Parameters
     ----------
-    config : config_T
+    config : ConfigT
         Configuration for the plugin
 
-    params : params_T
+    params : ParamsT
         Parameters for the plugin (see `EventPluginParams`)
 
     Raises
@@ -49,7 +49,7 @@ class EventPlugin(Plugin[config_T, params_T], register=False):
         If any error occurs during initializing plugin
     """
 
-    def __init__(self, config: config_T, params: params_T) -> None:
+    def __init__(self, config: ConfigT, params: ParamsT) -> None:
         super().__init__(config, params)
 
     @abstractmethod
