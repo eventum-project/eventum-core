@@ -159,25 +159,17 @@ class JsonBatchFormatter(BaseFormatter):
         )
 
 
-class TemplateFormatter(BaseFormatter):
+class BaseTemplateFormatter(BaseFormatter):
     """Formatter for formatting events using user defined template.
 
     Parameters
     ----------
-    format : Literal[Format.TEMPLATE]
-        Target format
-
     template : str | None, default=None
         Template content
 
     template_path : str | None, default=None
         Template path
-
-    Notes
-    -----
-    To access original event in template use `event` variable
     """
-    format: Literal[Format.TEMPLATE]
     template: str | None = Field(default=None, min_length=1)
     template_path: str | None = Field(default=None, min_length=1)
 
@@ -185,11 +177,18 @@ class TemplateFormatter(BaseFormatter):
         super().__init__(*args, **kwargs)
 
         if self.template_path is not None:
+            if os.path.isabs(self.template_path):
+                base_path = os.path.dirname(self.template_path)
+                template_name = os.path.basename(self.template_path)
+            else:
+                base_path = os.getcwd()
+                template_name = self.template_path
+
             env = Environment(
-                loader=FileSystemLoader(searchpath=os.getcwd())
+                loader=FileSystemLoader(searchpath=base_path)
             )
             try:
-                self._template = env.get_template(self.template_path)
+                self._template = env.get_template(template_name)
             except TemplateNotFound:
                 raise ValueError('Template is not found')
             except TemplateError as e:
@@ -213,6 +212,21 @@ class TemplateFormatter(BaseFormatter):
             )
 
         return self
+
+
+class TemplateFormatter(BaseTemplateFormatter):
+    """Formatter for formatting events using user defined template.
+
+    Parameters
+    ----------
+    format : Literal[Format.TEMPLATE]
+        Target format
+
+    Notes
+    -----
+    To access original event in template use `event` variable
+    """
+    format: Literal[Format.TEMPLATE]
 
     def format_events(self, events: Sequence[str]) -> FormattingResult:
         formatted_events: list[str] = []
@@ -239,7 +253,7 @@ class TemplateFormatter(BaseFormatter):
         )
 
 
-class TemplateBatchFormatter(TemplateFormatter):
+class TemplateBatchFormatter(BaseTemplateFormatter):
     """Formatter for formatting events using user defined template
     into a single event.
 
@@ -248,23 +262,12 @@ class TemplateBatchFormatter(TemplateFormatter):
     format : Literal[Format.TEMPLATE_BATCH]
         Target format
 
-    template : str | None, default=None
-        Template content
-
-    template_path : str | None, default=None
-        Template path
-
     Notes
     -----
     To access original events sequence in template use `events`
     variable
     """
-    format: Literal[Format.TEMPLATE]
-    template: str | None = Field(default=None, min_length=1)
-    template_path: str | None = Field(default=None, min_length=1)
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    format: Literal[Format.TEMPLATE_BATCH]
 
     def format_events(self, events: Sequence[str]) -> FormattingResult:
         formatted_events: list[str] = []
