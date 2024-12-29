@@ -1,13 +1,19 @@
 import pytest
 
 from eventum_plugins.output.formatters.exceptions import FormatError
-from eventum_plugins.output.formatters.fields import (
-    EventumHttpInputFormatter, Format, FormattingResult, JsonBatchFormatter,
+from eventum_plugins.output.formatters.fields import (Format,
+                                                      JsonFormatterConfig,
+                                                      SimpleFormatterConfig,
+                                                      TemplateFormatterConfig)
+from eventum_plugins.output.formatters.formatters import (
+    EventumHttpInputFormatter, FormattingResult, JsonBatchFormatter,
     JsonFormatter, PlainFormatter, TemplateBatchFormatter, TemplateFormatter)
 
 
 def test_plain_formatter():
-    formatter = PlainFormatter(format=Format.PLAIN)
+    formatter = PlainFormatter(
+        config=SimpleFormatterConfig(format=Format.PLAIN)
+    )
 
     events = ['event1', 'event2', 'event3']
 
@@ -21,7 +27,9 @@ def test_plain_formatter():
 
 
 def test_json_formatter():
-    formatter = JsonFormatter(format=Format.JSON, indent=2)
+    formatter = JsonFormatter(
+        config=JsonFormatterConfig(format=Format.JSON, indent=2)
+    )
 
     events = ['"event1"', '{"key": "value"}', 'invalid json']
 
@@ -34,7 +42,9 @@ def test_json_formatter():
 
 
 def test_json_batch_formatter():
-    formatter = JsonBatchFormatter(format=Format.JSON_BATCH, indent=2)
+    formatter = JsonBatchFormatter(
+        config=JsonFormatterConfig(format=Format.JSON_BATCH, indent=2)
+    )
 
     events = ['"event1"', '{"key": "value"}', 'invalid json']
 
@@ -51,8 +61,10 @@ def test_json_batch_formatter():
 
 def test_template_formatter_with_template():
     formatter = TemplateFormatter(
-        format=Format.TEMPLATE,
-        template='{{ event | upper }}'
+        config=TemplateFormatterConfig(
+            format=Format.TEMPLATE,
+            template='{{ event | upper }}'
+        )
     )
 
     events = ['event1', 'event2', 'event3']
@@ -70,8 +82,10 @@ def test_template_formatter_with_template_path(tmp_path):
     template_file.write_text('{{ event | lower }}')
 
     formatter = TemplateFormatter(
-        format=Format.TEMPLATE,
-        template_path=str(template_file)
+        config=TemplateFormatterConfig(
+            format=Format.TEMPLATE,
+            template_path=str(template_file)
+        )
     )
 
     events = ['EVENT1', 'EVENT2', 'EVENT3']
@@ -87,8 +101,10 @@ def test_template_formatter_with_template_path(tmp_path):
 def test_template_formatter_template_not_found():
     with pytest.raises(ValueError):
         TemplateFormatter(
-            format=Format.TEMPLATE,
-            template_path='non_existent_file'
+            config=TemplateFormatterConfig(
+                format=Format.TEMPLATE,
+                template_path='non_existent_file'
+            )
         )
 
 
@@ -98,29 +114,37 @@ def test_template_formatter_invalid_template(tmp_path):
 
     with pytest.raises(ValueError):
         TemplateFormatter(
-            format=Format.TEMPLATE,
-            template_path=str(template_file)
+            config=TemplateFormatterConfig(
+                format=Format.TEMPLATE,
+                template_path=str(template_file)
+            )
         )
 
 
 def test_template_formatter_both_template_and_path():
     with pytest.raises(ValueError):
         TemplateFormatter(
-            format=Format.TEMPLATE,
-            template='{{ event }}',
-            template_path='some_path'
+            config=TemplateFormatterConfig(
+                format=Format.TEMPLATE,
+                template='{{ event }}',
+                template_path='some_path'
+            )
         )
 
 
 def test_template_formatter_neither_template_nor_path():
     with pytest.raises(ValueError):
-        TemplateFormatter(format=Format.TEMPLATE)
+        TemplateFormatter(
+            config=TemplateFormatterConfig(format=Format.TEMPLATE)
+        )
 
 
 def test_template_formatter_template_error():
     formatter = TemplateFormatter(
-        format=Format.TEMPLATE,
-        template='{{ event - 1 }}'
+        config=TemplateFormatterConfig(
+            format=Format.TEMPLATE,
+            template='{{ event - 1 }}'
+        )
     )
 
     events = ['event1']
@@ -131,9 +155,12 @@ def test_template_formatter_template_error():
 
 def test_template_batch_formatter():
     formatter = TemplateBatchFormatter(
-        format=Format.TEMPLATE_BATCH,
-        template="{{ events | join(', ') }}"
+        config=TemplateFormatterConfig(
+            format=Format.TEMPLATE_BATCH,
+            template="{{ events | join(', ') }}"
+        )
     )
+
     events = ['event1', 'event2', 'event3']
     result = formatter.format_events(events)
 
@@ -145,7 +172,11 @@ def test_template_batch_formatter():
 
 
 def test_eventum_http_input_formatter():
-    formatter = EventumHttpInputFormatter(format=Format.EVENTUM_HTTP_INPUT)
+    formatter = EventumHttpInputFormatter(
+        config=SimpleFormatterConfig(
+            format=Format.EVENTUM_HTTP_INPUT
+        )
+    )
 
     events = ['event1', 'event2', 'event3']
     result = formatter.format_events(events)
