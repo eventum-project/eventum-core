@@ -5,6 +5,10 @@ from pydantic import (ClickHouseDsn, Field, HttpUrl, field_validator,
                       model_validator)
 
 from eventum_plugins.output.base.config import OutputPluginConfig
+from eventum_plugins.output.fields import (Format, FormatterConfigT,
+                                           JsonFormatterConfig)
+from eventum_plugins.output.plugins.clickhouse.fields import \
+    ClickhouseInputFormat
 
 
 class ClickhouseOutputPluginConfig(OutputPluginConfig, frozen=True):
@@ -74,10 +78,19 @@ class ClickhouseOutputPluginConfig(OutputPluginConfig, frozen=True):
     proxy_url : HttpUrl
         HTTP(S) proxy address
 
+    input_format : ClickhouseInputFormat, default='JSONEachRow'
+        ClickHouse input format for inserting, documentation:
+        https://clickhouse.com/docs/en/interfaces/formats
+
+    separator : str, default='\\n'
+        Separator between events for constructing request body
+
     Notes
     -----
-    To see full documentation:
+    To see full documentation of parameters:
     https://clickhouse.com/docs/en/integrations/python#connection-arguments
+
+    By default one line JSON formatter is used for events
     """
     host: str = Field(min_length=1)
     port: int = Field(default=8123, ge=1)
@@ -97,6 +110,19 @@ class ClickhouseOutputPluginConfig(OutputPluginConfig, frozen=True):
     server_host_name: str | None = Field(default=None, min_length=1)
     tls_mode: Literal['proxy', 'strict', 'mutual'] | None = Field(default=None)
     proxy_url: HttpUrl | None = Field(default=None)
+    input_format: ClickhouseInputFormat = Field(
+        default='JSONEachRow',
+        validate_default=True
+    )
+    separator: str = Field(default='\n')
+    formatter: FormatterConfigT = Field(
+        default_factory=lambda: JsonFormatterConfig(
+            format=Format.JSON,
+            indent=0
+        ),
+        validate_default=True,
+        discriminator='format'
+    )
 
     @field_validator('ca_cert', 'client_cert', 'client_cert_key')
     def validate_ca_cert(cls, v: str | None):

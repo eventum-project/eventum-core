@@ -8,7 +8,6 @@ from clickhouse_connect.driver.binding import quote_identifier as quote
 
 from eventum_plugins.exceptions import PluginRuntimeError
 from eventum_plugins.output.base.plugin import OutputPlugin, OutputPluginParams
-from eventum_plugins.output.formatters import Format, format_events
 from eventum_plugins.output.plugins.clickhouse.config import \
     ClickhouseOutputPluginConfig
 
@@ -73,28 +72,11 @@ class ClickhouseOutputPlugin(
         self._client.close
 
     async def _write(self, events: Sequence[str]) -> int:
-        formatted_events = await self._loop.run_in_executor(
-            executor=None,
-            func=lambda: format_events(
-                events=events,
-                format=Format.NDJSON,
-                ignore_errors=True,
-                error_callback=lambda event, err: self._logger.error(
-                    'Failed to format event as json document',
-                    reason=str(err),
-                    original_event=event
-                )
-            )
-        )
-
-        if not formatted_events:
-            return 0
-
         try:
             response = await self._client.raw_insert(
                 table=self._fq_table_name,
-                insert_block=('\n'.join(formatted_events) + '\n'),
-                fmt='JSONEachRow'
+                insert_block=(self._config.separator.join(events) + '\n'),
+                fmt=self._config.input_format
             )
         except Exception as e:
             context = dict(
@@ -108,7 +90,7 @@ class ClickhouseOutputPlugin(
             if pos_match is not None:
                 row = int(pos_match.group('row'))
                 with contextlib.suppress(IndexError):
-                    context.update(formatted_event=formatted_events[row - 1])
+                    context.update(formatted_event=events[row - 1])
 
             raise PluginRuntimeError(
                 'Failed to insert events to ClickHouse',
