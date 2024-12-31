@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import Field
 
 from eventum_plugins.output.base.config import OutputPluginConfig
-from eventum_plugins.output.encodings import Encoding
+from eventum_plugins.output.fields import Encoding
 
 
 class StdoutOutputPluginConfig(OutputPluginConfig, frozen=True):
