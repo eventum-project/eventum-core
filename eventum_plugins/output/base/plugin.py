@@ -1,19 +1,26 @@
 import asyncio
 from abc import abstractmethod
-from typing import Sequence, TypeVar
+from typing import Any, Sequence, TypeVar
 
 from pydantic import RootModel
 
 from eventum_plugins.base.plugin import Plugin, PluginParams
-from eventum_plugins.exceptions import PluginRuntimeError
+from eventum_plugins.exceptions import (PluginConfigurationError,
+                                        PluginRuntimeError)
 from eventum_plugins.output.base.config import OutputPluginConfig
+from eventum_plugins.output.fields import FormatterConfigT
+from eventum_plugins.output.formatters import (Formatter, FormattingResult,
+                                               get_formatter_class)
 
 
 class OutputPluginParams(PluginParams):
     """Parameters for output plugin."""
 
 
-ConfigT = TypeVar('ConfigT', bound=(OutputPluginConfig | RootModel))
+ConfigT = TypeVar(
+    'ConfigT',
+    bound=(OutputPluginConfig | RootModel[OutputPluginConfig])
+)
 ParamsT = TypeVar('ParamsT', bound=OutputPluginParams)
 
 
@@ -22,8 +29,11 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
 
     Parameters
     ----------
-    **kwargs : Unpack[OutputPluginKwargs]
-        Arguments for plugin configuration (see `OutputPluginKwargs`)
+    config : ConfigT
+        Configuration for the plugin
+
+    params : ParamsT
+        Parameters for the plugin (see `OutputPluginParams`)
 
     Raises
     ------
@@ -38,6 +48,62 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
 
         self._is_opened = False
         self._lock = asyncio.Lock()
+
+        self._formatter_config = self._get_formatter_config()
+        self._formatter = self._get_formatter(self._formatter_config)
+
+    def _get_formatter_config(self) -> FormatterConfigT:
+        """Get formatter config.
+
+        Returns
+        -------
+        FormatterConfigT
+            Formatter config
+
+        Raises
+        ------
+        PluginConfigurationError
+            If config is of invalid type
+        """
+        if isinstance(self._config, OutputPluginConfig):
+            return self._config.formatter.root
+        elif isinstance(self._config, RootModel):
+            return self._config.root.formatter.root
+        else:
+            raise PluginConfigurationError(
+                'Invalid config type',
+                context=dict(
+                    self.instance_info,
+                    plugin_config_class=type(self._config)
+                )
+            )
+
+    def _get_formatter(self, config: FormatterConfigT) -> Formatter[Any]:
+        """Get formatter corresponding to config.
+
+        Parameters
+        ----------
+        config : FormatterConfigT
+            Configuration of formatter
+
+        Returns
+        -------
+        Formatter[Any]
+            Formatter
+
+        Raises
+        ------
+        PluginConfigurationError
+            If formatter configuration fails
+        """
+        try:
+            FormatterCls = get_formatter_class(config.format)
+            return FormatterCls(config)
+        except ValueError as e:
+            raise PluginConfigurationError(
+                'Failed to configure formatter',
+                context=dict(self.instance_info, reason=str(e))
+            )
 
     async def open(self) -> None:
         """Open plugin for writing.
@@ -73,6 +139,52 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
 
         await self._logger.ainfo('Plugin is closed')
 
+    async def _format_events(self, events: Sequence[str]) -> FormattingResult:
+        """Format events.
+
+        Parameters
+        ----------
+        events : Sequence[str]
+            Events to format
+
+        Returns
+        -------
+        FormattingResult
+            Formatting result
+
+        Notes
+        -----
+        All errors from formatting result are logged
+        """
+
+        formatting_result = await self._loop.run_in_executor(
+            executor=None,
+            func=lambda: self._formatter.format_events(events)
+        )
+
+        if formatting_result.errors:
+            contexts: list[dict] = []
+
+            for error in formatting_result.errors:
+                context = {
+                    'format': self._formatter_config.format,
+                    'reason': str(error)
+                }
+
+                if error.original_event is not None:
+                    context['original_event'] = error.original_event
+
+                contexts.append(context)
+
+            await asyncio.gather(
+                *[
+                    self._logger.aerror('Failed to format event', **context)
+                    for context in contexts
+                ]
+            )
+
+        return formatting_result
+
     async def write(self, events: Sequence[str]) -> int:
         """Write events.
 
@@ -84,12 +196,16 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
         Returns
         -------
         int
-            Number of successfully written events
+            Number of successfully written formatted events
 
         Raises
         ------
         PluginRuntimeError
             If error occurs during writing events
+
+        Notes
+        -----
+        Number of successfully written events based on formatted events
         """
         if not events:
             return 0
@@ -100,7 +216,13 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
                     'Output plugin is not opened for writing',
                     context=dict(self.instance_info)
                 )
-            return await self._write(events)
+
+            formatting_result = await self._format_events(events)
+
+            if not formatting_result.events:
+                return 0
+
+            return await self._write(formatting_result.events)
 
     @abstractmethod
     async def _open(self) -> None:
@@ -115,8 +237,7 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
 
     @abstractmethod
     async def _close(self) -> None:
-        """Perform actions for plugin closing..
-        """
+        """Perform actions for plugin closing."""
         ...
 
     @abstractmethod
