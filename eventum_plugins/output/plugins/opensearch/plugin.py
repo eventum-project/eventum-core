@@ -219,7 +219,7 @@ class OpensearchOutputPlugin(
         if errors:
             await self._logger.aerror(
                 'Some events were not indexed using bulk request',
-                reason=f'First 3/{len(errors)} are shown: {errors[:3]}'
+                reason=f'First 3/{len(errors)} errors are shown: {errors[:3]}'
             )
 
         return len(events) - len(errors)
