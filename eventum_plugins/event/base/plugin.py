@@ -28,7 +28,10 @@ class EventPluginParams(PluginParams):
     """Parameters for event plugin."""
 
 
-ConfigT = TypeVar('ConfigT', bound=(EventPluginConfig | RootModel))
+ConfigT = TypeVar(
+    'ConfigT',
+    bound=(EventPluginConfig | RootModel[EventPluginConfig])
+)
 ParamsT = TypeVar('ParamsT', bound=EventPluginParams)
 
 

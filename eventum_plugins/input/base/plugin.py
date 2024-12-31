@@ -48,7 +48,10 @@ class InputPluginParams(PluginParams):
     on_queue_overflow: NotRequired[QueueOverflowMode]
 
 
-ConfigT = TypeVar('ConfigT', bound=(InputPluginConfig | RootModel))
+ConfigT = TypeVar(
+    'ConfigT',
+    bound=(InputPluginConfig | RootModel[InputPluginConfig])
+)
 
 
 class InputPlugin(Plugin[ConfigT, InputPluginParams], register=False):
