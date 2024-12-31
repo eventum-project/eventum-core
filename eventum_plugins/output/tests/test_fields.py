@@ -1,13 +1,15 @@
 import pytest
 
-from eventum_plugins.output.formatters.exceptions import FormatError
-from eventum_plugins.output.formatters.fields import (Format,
-                                                      JsonFormatterConfig,
-                                                      SimpleFormatterConfig,
-                                                      TemplateFormatterConfig)
-from eventum_plugins.output.formatters.formatters import (
-    EventumHttpInputFormatter, FormattingResult, JsonBatchFormatter,
-    JsonFormatter, PlainFormatter, TemplateBatchFormatter, TemplateFormatter)
+from eventum_plugins.output.exceptions import FormatError
+from eventum_plugins.output.fields import (Format, JsonFormatterConfig,
+                                           SimpleFormatterConfig,
+                                           TemplateFormatterConfig)
+from eventum_plugins.output.formatters import (EventumHttpInputFormatter,
+                                               FormattingResult,
+                                               JsonBatchFormatter,
+                                               JsonFormatter, PlainFormatter,
+                                               TemplateBatchFormatter,
+                                               TemplateFormatter)
 
 
 def test_plain_formatter():

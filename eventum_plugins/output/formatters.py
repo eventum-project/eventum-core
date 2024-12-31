@@ -1,5 +1,3 @@
-
-
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -9,12 +7,11 @@ import msgspec
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound)
 
-from eventum_plugins.output.formatters.exceptions import FormatError
-from eventum_plugins.output.formatters.fields import (BaseFormatterConfig,
-                                                      Format,
-                                                      JsonFormatterConfig,
-                                                      SimpleFormatterConfig,
-                                                      TemplateFormatterConfig)
+from eventum_plugins.output.exceptions import FormatError
+from eventum_plugins.output.fields import (BaseFormatterConfig, Format,
+                                           JsonFormatterConfig,
+                                           SimpleFormatterConfig,
+                                           TemplateFormatterConfig)
 
 
 @dataclass(frozen=True, slots=True)
@@ -364,3 +361,24 @@ class EventumHttpInputFormatter(
             formatted_count=len(events),
             errors=[]
         )
+
+
+def get_formatter_class(format: Format) -> type[Formatter[Any]]:
+    """Return specific formatter class depending on format.
+
+    Parameters
+    ----------
+    format : Format
+        Format
+
+    Returns
+    -------
+    type[Formatter[Any]]
+        Formatter class
+
+    Raises
+    ------
+    ValueError
+        If no appropriate formatter found for specified format
+    """
+    return Formatter.get_formatter(format)

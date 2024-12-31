@@ -1,11 +1,8 @@
-import os
 from abc import ABC
 from enum import StrEnum
 from typing import Literal, Self
 
 from pydantic import BaseModel, Field, RootModel, model_validator
-
-from eventum_plugins.output.formatters.encodings import Encoding
 
 
 class Format(StrEnum):
@@ -28,8 +25,6 @@ class BaseFormatterConfig(BaseModel, ABC, frozen=True, extra='forbid'):
     separator : str, default=os.linesep
         Separator between events
     """
-    encoding: Encoding = Field(default='utf_8')
-    line_separator: str = Field(default=os.linesep)
 
 
 class SimpleFormatterConfig(BaseFormatterConfig, frozen=True):
@@ -95,10 +90,10 @@ class TemplateFormatterConfig(BaseFormatterConfig, frozen=True):
         return self
 
 
-FormatterT = (
+FormatterConfigT = (
     SimpleFormatterConfig | JsonFormatterConfig | TemplateFormatterConfig
 )
 
 
 class FormatterConfig(RootModel):
-    root: FormatterT = Field(discriminator='format')
+    root: FormatterConfigT = Field(discriminator='format')
