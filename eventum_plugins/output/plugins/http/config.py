@@ -54,7 +54,7 @@ class HttpOutputPluginConfig(OutputPluginConfig, frozen=True):
     -----
     By default one line JSON batch formatter is used for events
     """
-    url: HttpUrl = Field(min_length=1)
+    url: HttpUrl
     method: Literal[
         'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'
     ] = Field(default='POST')
