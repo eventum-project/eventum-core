@@ -8,7 +8,6 @@ from yarl import URL
 from eventum_plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
 from eventum_plugins.output.base.plugin import OutputPlugin, OutputPluginParams
-from eventum_plugins.output.formatters import Format, format_events
 from eventum_plugins.output.http_session import (create_session,
                                                  create_ssl_context)
 from eventum_plugins.output.plugins.opensearch.config import \
@@ -279,24 +278,7 @@ class OpensearchOutputPlugin(
         return 1
 
     async def _write(self, events: Sequence[str]) -> int:
-        formatted_events = await self._loop.run_in_executor(
-            executor=None,
-            func=lambda: format_events(
-                events=events,
-                format=Format.NDJSON,
-                ignore_errors=True,
-                error_callback=lambda event, err: self._logger.error(
-                    'Failed to format event as json document',
-                    reason=str(err),
-                    original_event=event
-                )
-            )
-        )
-
-        if not formatted_events:
-            return 0
-
-        if len(formatted_events) > 1:
-            return await self._post_bulk(formatted_events)
+        if len(events) > 1:
+            return await self._post_bulk(events)
         else:
-            return await self._post_doc(formatted_events[0])
+            return await self._post_doc(events[0])

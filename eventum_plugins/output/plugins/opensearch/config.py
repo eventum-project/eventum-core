@@ -3,6 +3,8 @@ import os
 from pydantic import Field, HttpUrl, field_validator, model_validator
 
 from eventum_plugins.output.base.config import OutputPluginConfig
+from eventum_plugins.output.fields import (Format, FormatterConfigT,
+                                           JsonFormatterConfig)
 
 
 class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
@@ -58,6 +60,14 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
     client_cert: str | None = Field(default=None, min_length=1)
     client_cert_key: str | None = Field(default=None, min_length=1)
     proxy_url: HttpUrl | None = Field(default=None)
+    formatter: FormatterConfigT = Field(
+        default_factory=lambda: JsonFormatterConfig(
+            format=Format.JSON,
+            indent=0
+        ),
+        validate_default=True,
+        discriminator='format'
+    )
 
     @field_validator('ca_cert', 'client_cert', 'client_cert_key')
     def validate_absolute_paths(cls, v: str | None):
