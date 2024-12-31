@@ -7,7 +7,6 @@ from aiofiles.threadpool.text import AsyncTextIOWrapper
 
 from eventum_plugins.exceptions import PluginRuntimeError
 from eventum_plugins.output.base.plugin import OutputPlugin, OutputPluginParams
-from eventum_plugins.output.formatters import format_events
 from eventum_plugins.output.plugins.file.config import FileOutputPluginConfig
 
 
@@ -115,7 +114,7 @@ class FileOutputPlugin(
         f = await aiofiles.open(
             file=self._config.path,
             mode='a' if self._config.write_mode == 'append' else 'w',
-            encoding='utf-8',
+            encoding=self._config.encoding,
             opener=self._create_descriptor
         )
         await self._logger.ainfo('File is opened', file_path=self._config.path)
@@ -132,7 +131,7 @@ class FileOutputPlugin(
         f = await aiofiles.open(
             file=self._config.path,
             mode='a',
-            encoding='utf-8',
+            encoding=self._config.encoding,
             opener=self._create_descriptor
         )
         await self._logger.ainfo(
@@ -176,24 +175,6 @@ class FileOutputPlugin(
                 await self._file.close()
 
     async def _write(self, events: Sequence[str]) -> int:
-        formatted_events = await self._loop.run_in_executor(
-            executor=None,
-            func=lambda: format_events(
-                events=events,
-                format=self._config.format,
-                ignore_errors=True,
-                error_callback=lambda event, err: self._logger.error(
-                    'Failed to format event',
-                    format=self._config.format,
-                    reason=str(err),
-                    original_event=event
-                )
-            )
-        )
-
-        if not formatted_events:
-            return 0
-
         async with self._cleanup_lock:
             if not await self._is_operable():
                 try:
@@ -218,8 +199,7 @@ class FileOutputPlugin(
 
             try:
                 await self._file.writelines(
-                    e + os.linesep
-                    for e in formatted_events
+                    e + self._config.separator for e in events
                 )
             except OSError as e:
                 raise PluginRuntimeError(
@@ -234,4 +214,4 @@ class FileOutputPlugin(
             if self._config.flush_interval == 0:
                 await self._file.flush()
 
-        return len(formatted_events)
+        return len(events)

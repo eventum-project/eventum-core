@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import Field, field_validator
 
 from eventum_plugins.output.base.config import OutputPluginConfig
+from eventum_plugins.output.encodings import Encoding
 from eventum_plugins.output.formatters import Format
 
 
@@ -32,6 +33,12 @@ class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
 
     write_mode : Literal['append', 'overwrite'], default = 'append'
         Mode that is used to write if the file already exists
+
+    encoding : Encoding, default='utf-8'
+        Encoding
+
+    separator : str, default=os.linesep
+        Separator between events
     """
     path: str
     format: Format = Format.PLAIN
@@ -39,6 +46,8 @@ class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
     cleanup_interval: float = Field(default=10, ge=1.0)
     file_mode: int = Field(default=-1, ge=-1, le=7777)
     write_mode: Literal['append', 'overwrite'] = 'append'
+    encoding: Encoding = Field(default='utf_8')
+    separator: str = Field(default=os.linesep)
 
     @field_validator('path')
     def validate_path(cls, v: str):
