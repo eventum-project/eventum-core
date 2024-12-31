@@ -34,6 +34,31 @@ async def test_plugin_write(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_plugin_separator(tmp_path):
+    filepath = tmp_path / 'test'
+    plugin = FileOutputPlugin(
+        config=FileOutputPluginConfig(
+            path=str(filepath),
+            write_mode='overwrite',
+            separator=''
+        ),
+        params={'id': 1}
+    )
+
+    await plugin.open()
+
+    events = ['event1', 'event2', 'event3']
+    await plugin.write(events)
+
+    await plugin.close()
+
+    with open(filepath) as f:
+        content = f.read()
+
+    assert ''.join(events) == content
+
+
+@pytest.mark.asyncio
 async def test_plugin_write_with_format(tmp_path):
     filepath = tmp_path / 'test'
     plugin = FileOutputPlugin(
