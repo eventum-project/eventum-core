@@ -1,10 +1,8 @@
 import asyncio
-import os
 import sys
 from typing import Sequence, assert_never
 
 from eventum_plugins.output.base.plugin import OutputPlugin, OutputPluginParams
-from eventum_plugins.output.formatters import format_events
 from eventum_plugins.output.plugins.stdout.config import \
     StdoutOutputPluginConfig
 
@@ -61,29 +59,16 @@ class StdoutOutputPlugin(
         self._writer.close()
 
     async def _write(self, events: Sequence[str]) -> int:
-        formatted_events = await self._loop.run_in_executor(
-            executor=None,
-            func=lambda: format_events(
-                events=events,
-                format=self._config.format,
-                ignore_errors=True,
-                error_callback=lambda event, err: self._logger.error(
-                    'Failed to format event',
-                    format=self._config.format,
-                    reason=str(err),
-                    original_event=event,
-                )
-            )
-        )
-
-        if not formatted_events:
-            return 0
-
         self._writer.writelines(
-            [f'{event}{os.linesep}'.encode() for event in formatted_events]
+            [
+                f'{event}{self._config.separator}'.encode(
+                    encoding=self._config.encoding
+                )
+                for event in events
+            ]
         )
 
         if self._config.flush_interval == 0:
             await self._writer.drain()
 
-        return len(formatted_events)
+        return len(events)

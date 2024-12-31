@@ -1,10 +1,10 @@
+import os
 from typing import Literal
 
 from pydantic import Field
 
 from eventum_plugins.output.base.config import OutputPluginConfig
-from eventum_plugins.output.formatters.fields import (Format, Formatter,
-                                                      PlainFormatter)
+from eventum_plugins.output.encodings import Encoding
 
 
 class StdoutOutputPluginConfig(OutputPluginConfig, frozen=True):
@@ -12,19 +12,20 @@ class StdoutOutputPluginConfig(OutputPluginConfig, frozen=True):
 
     Attributes
     ----------
-    formatter : Formatter, default=PlainFormatter
-        Format for formatting output events
-
     flush_interval : float, default=1
         Flush interval (in seconds) for flushing events, if value is 0
         then flush is performed for every event
 
     stream : Literal['stdout', 'stderr'], default='stdout'
         Stream to write events in
+
+    encoding : Encoding, default='utf-8'
+        Encoding
+
+    separator : str, default=os.linesep
+        Separator between events
     """
-    formatter: Formatter = Field(
-        default_factory=lambda: PlainFormatter(format=Format.PLAIN),
-        validate_default=True
-    )
     flush_interval: float = Field(default=1, ge=0)
     stream: Literal['stdout', 'stderr'] = 'stdout'
+    encoding: Encoding = Field(default='utf_8')
+    separator: str = Field(default=os.linesep)
