@@ -48,6 +48,10 @@ class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
 
     proxy_url : HttpUrl
         HTTP(S) proxy address
+
+    Notes
+    -----
+    By default one line JSON formatter is used for events
     """
     hosts: list[HttpUrl] = Field(min_length=1)
     username: str = Field(min_length=1)
