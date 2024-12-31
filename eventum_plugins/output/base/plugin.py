@@ -242,7 +242,7 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
 
     @abstractmethod
     async def _write(self, events: Sequence[str]) -> int:
-        """Perform writing events.
+        """Perform writing of formatted events.
 
         Parameters
         ----------
