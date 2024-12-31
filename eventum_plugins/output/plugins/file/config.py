@@ -5,7 +5,6 @@ from pydantic import Field, field_validator
 
 from eventum_plugins.output.base.config import OutputPluginConfig
 from eventum_plugins.output.encodings import Encoding
-from eventum_plugins.output.formatters import Format
 
 
 class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
@@ -15,9 +14,6 @@ class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
     ----------
     path : str
         Absolute path of the file to write
-
-    format : Format, default = Format.PLAIN
-        Format for formatting output events
 
     flush_interval : float, default = 1
         Flush interval (in seconds) for flushing events, if value is 0
@@ -41,7 +37,6 @@ class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
         Separator between events
     """
     path: str
-    format: Format = Format.PLAIN
     flush_interval: float = Field(default=1, ge=0)
     cleanup_interval: float = Field(default=10, ge=1.0)
     file_mode: int = Field(default=-1, ge=-1, le=7777)

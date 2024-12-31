@@ -3,6 +3,7 @@ import os
 
 import pytest
 
+from eventum_plugins.output.fields import JsonFormatterConfig
 from eventum_plugins.output.formatters import Format
 from eventum_plugins.output.plugins.file.config import FileOutputPluginConfig
 from eventum_plugins.output.plugins.file.plugin import FileOutputPlugin
@@ -14,7 +15,6 @@ async def test_plugin_write(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.PLAIN,
             write_mode='overwrite'
         ),
         params={'id': 1}
@@ -39,7 +39,7 @@ async def test_plugin_write_with_format(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.NDJSON,
+            formatter=JsonFormatterConfig(format=Format.JSON),
             write_mode='overwrite'
         ),
         params={'id': 1}
@@ -69,7 +69,6 @@ async def test_plugin_write_overwrite(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.PLAIN,
             write_mode='overwrite'
         ),
         params={'id': 1}
@@ -83,7 +82,6 @@ async def test_plugin_write_overwrite(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.PLAIN,
             write_mode='overwrite'
         ),
         params={'id': 1}
@@ -106,7 +104,6 @@ async def test_plugin_write_append(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.PLAIN,
             write_mode='overwrite'
         ),
         params={'id': 1}
@@ -120,7 +117,6 @@ async def test_plugin_write_append(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.PLAIN,
             write_mode='append'
         ),
         params={'id': 1}
@@ -143,7 +139,6 @@ async def test_plugin_filemode(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.PLAIN,
             write_mode='overwrite',
             file_mode=600
         ),
@@ -164,7 +159,6 @@ async def test_plugin_flush_every_event(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.PLAIN,
             write_mode='overwrite',
             flush_interval=0
         ),
@@ -191,7 +185,6 @@ async def test_plugin_flush_interval(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.PLAIN,
             write_mode='overwrite',
             flush_interval=0.1
         ),
@@ -223,7 +216,6 @@ async def test_plugin_file_recreation(tmp_path):
     plugin = FileOutputPlugin(
         config=FileOutputPluginConfig(
             path=str(filepath),
-            format=Format.PLAIN,
             write_mode='overwrite',
             flush_interval=0
         ),
