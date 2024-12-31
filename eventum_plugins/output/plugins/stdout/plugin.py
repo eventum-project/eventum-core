@@ -2,6 +2,7 @@ import asyncio
 import sys
 from typing import Sequence, assert_never
 
+from eventum_plugins.exceptions import PluginRuntimeError
 from eventum_plugins.output.base.plugin import OutputPlugin, OutputPluginParams
 from eventum_plugins.output.plugins.stdout.config import \
     StdoutOutputPluginConfig
@@ -59,14 +60,20 @@ class StdoutOutputPlugin(
         self._writer.close()
 
     async def _write(self, events: Sequence[str]) -> int:
-        self._writer.writelines(
-            [
+        try:
+            lines = [
                 f'{event}{self._config.separator}'.encode(
                     encoding=self._config.encoding
                 )
                 for event in events
             ]
-        )
+        except UnicodeEncodeError as e:
+            raise PluginRuntimeError(
+                'Cannot encode events',
+                context=dict(self.instance_info, reason=str(e))
+            )
+
+        self._writer.writelines(lines)
 
         if self._config.flush_interval == 0:
             await self._writer.drain()
