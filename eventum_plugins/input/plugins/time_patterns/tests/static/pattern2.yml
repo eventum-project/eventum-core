@@ -1,0 +1,17 @@
+label: Time pattern 1
+oscillator:
+  start: "now"
+  end: +1s
+  period: 0.25
+  unit: seconds
+multiplier:
+  ratio: 50000
+randomizer:
+  deviation: 0.1
+  direction: mixed
+spreader:
+  distribution: triangular
+  parameters:
+    left: 0.0
+    mode: 0.5
+    right: 1
