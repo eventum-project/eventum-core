@@ -2,7 +2,7 @@ from abc import ABC
 from enum import StrEnum
 from typing import Literal, Self
 
-from pydantic import BaseModel, Field, RootModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 
 class Format(StrEnum):
@@ -93,7 +93,3 @@ class TemplateFormatterConfig(BaseFormatterConfig, frozen=True):
 FormatterConfigT = (
     SimpleFormatterConfig | JsonFormatterConfig | TemplateFormatterConfig
 )
-
-
-class FormatterConfig(RootModel):
-    root: FormatterConfigT = Field(discriminator='format')

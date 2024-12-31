@@ -66,9 +66,9 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
             If config is of invalid type
         """
         if isinstance(self._config, OutputPluginConfig):
-            return self._config.formatter.root
+            return self._config.formatter
         elif isinstance(self._config, RootModel):
-            return self._config.root.formatter.root
+            return self._config.root.formatter
         else:
             raise PluginConfigurationError(
                 'Invalid config type',
