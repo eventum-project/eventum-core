@@ -52,12 +52,12 @@ def subprocess(name: str) -> Callable:
 def _terminate_subprocess(
     is_done: EventClass,
     exit_code: int = 0,
-    signal_queue: Optional[Queue] = None
+    downstream_queue: Optional[Queue] = None
 ) -> NoReturn:
     """Handle termination of subprocess."""
-    if signal_queue is not None:
-        time.sleep(1)
-        signal_queue.put(None)
+    if downstream_queue is not None:
+        time.sleep(0.1)
+        downstream_queue.put(None)
     is_done.set()
     exit(exit_code)
 

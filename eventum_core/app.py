@@ -56,7 +56,7 @@ class Application:
         )
 
         # Regardless of whether the process ended with an error or not
-        # this flag must be set at the end of its execution.
+        # this flag must be set by subprocess at the end of its execution.
         # Used to control situations when process was killed from outside.
         self._is_input_done: EventClass = Event()
         self._is_event_done: EventClass = Event()
