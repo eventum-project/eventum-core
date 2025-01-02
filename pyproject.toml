@@ -16,8 +16,8 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 packages = [
-  {include = "eventum_plugins"},
-  {include = "eventum_plugins/py.typed"},
+  {include = "eventum.plugins"},
+  {include = "eventum.plugins/py.typed"},
 ]
 
 [tool.poetry.dependencies]
