@@ -1,43 +1,62 @@
 [tool.poetry]
-name = "eventum-core"
-version = "1.1.3"
+name = "eventum-generator"
+version = "2.0.0"
 description = "Flexible event generator"
 license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
 readme = "README.md"
-repository = "https://github.com/eventum-project/eventum-core"
+repository = "https://github.com/eventum-project/eventum-generator"
 documentation = "https://eventum-project.github.io/website/"
-keywords = ["generator", "testing", "data", "event"]
+keywords = ["event", "log", "generator", "synthetic", "simulation", "data", "dataset", "template", "scheduling"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Topic :: Software Development :: Testing",
-    "Topic :: Software Development :: Testing :: Traffic Generation"
-
 ]
 packages = [
-  {include = "eventum_core"},
-  {include = "eventum_core/py.typed"},
+  {include = "eventum"},
+  {include = "eventum/py.typed"},
 ]
 
 [tool.poetry.dependencies]
 python = "^3.11"
 pydantic = "^2.6.2"
-setproctitle = "^1.3.3"
+pyyaml = "^6.0.2"
+types-pyyaml = "^6.0.12.20240917"
+numpy = "^2.1.2"
+pytz = "^2024.2"
+croniter = "^5.0.1"
 jinja2 = "^3.1.3"
-eventum-content-manager = "^1.1.0"
-eventum-plugins = "^1.1.0"
-pytz = "^2024.1"
+msgspec = "^0.18.6"
+tablib = "^3.7.0"
+dateparser = "^1.2.0"
+mimesis = "^18.0.0"
+faker = "^30.8.2"
+aiofiles = "^24.1.0"
+aiohttp = {extras = ["speedups"], version = "^3.10.10"}
+structlog = "^24.4.0"
+clickhouse-connect = "^0.8.10"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
 pytest = "^8.0.1"
 mypy = "^1.9.0"
+types-aiofiles = "^23.2.0.20240403"
+types-croniter = "^2.0.0.20240423"
 types-pytz = "^2024.1.0.20240417"
+pytest-asyncio = "^0.23.7"
+aioresponses = "^0.7.6"
 flake8 = "^7.0.0"
+types-dateparser = "^1.2.0.20240420"
+matplotlib = "^3.9.2"
+git-cliff = "^2.7.0"
+requests = "^2.32.3"
+
+
+[tool.poetry.group.extra.dependencies]
+requests = "^2.32.3"
 
 [build-system]
 requires = ["poetry-core"]
