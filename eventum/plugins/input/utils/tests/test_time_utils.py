@@ -13,7 +13,7 @@ def test_now64():
     tz = pytz.timezone('Europe/Moscow')
     now = datetime.now().astimezone(tz).replace(tzinfo=None)
 
-    expected = datetime64(now, 'us')
+    expected = datetime64(now.isoformat(), 'us')
     result = now64(timezone=tz)
 
     assert 0 <= ((result - expected) / timedelta64(1000000, 'us')) < 0.5

@@ -57,7 +57,7 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
         )
 
         timestamps = deltas + datetime64(
-            to_naive(start, self._timezone), 'us'
+            to_naive(start, self._timezone).isoformat(), 'us'
         )
         timestamps = repeat(timestamps, repeats=self._config.count)
         self._enqueue(timestamps)
@@ -126,7 +126,7 @@ class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
                 full(
                     shape=self._config.count,
                     fill_value=datetime64(
-                        to_naive(timestamp, self._timezone), 'us'
+                        to_naive(timestamp, self._timezone).isoformat(), 'us'
                     ),
                     dtype='datetime64[us]'
                 )

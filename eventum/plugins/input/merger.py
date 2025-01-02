@@ -333,8 +333,8 @@ class InputPluginsLiveMerger:
             shape=timestamps.size,
             dtype=[('timestamp', 'datetime64[us]'), ('id', 'uint16')]
         )
-        unminimized_batch['timestamp'] = timestamps
-        unminimized_batch['id'] = id
+        unminimized_batch['timestamp'][:] = timestamps
+        unminimized_batch['id'][:] = id
 
         return unminimized_batch
 
@@ -427,7 +427,7 @@ class InputPluginsLiveMerger:
 
             if self._active_plugin_indices:
                 # finding latest timestamp that will be a cutoff point
-                latest_timestamp = np.datetime64(datetime.min)
+                latest_timestamp = np.datetime64(datetime.min.isoformat())
                 for batch in batches:
                     last_timestamp: np.datetime64 = batch['timestamp'][-1]
 

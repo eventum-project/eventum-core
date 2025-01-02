@@ -43,7 +43,7 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
             endpoint=self._config.endpoint,
         )
 
-        first = datetime64(to_naive(start, self._timezone), 'us')
+        first = datetime64(to_naive(start, self._timezone).isoformat(), 'us')
         timedelta = timedelta64((end - start), 'us')
 
         timestamps = first + (timedelta * space)
