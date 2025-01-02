@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "eventum-cli"
-version = "1.1.0"
+version = "1.2.0"
 description = "Command line interface for Eventum"
 license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
 readme = "README.md"
-repository = "https://github.com/Eventum-Generatives/EventumCLI"
-documentation = "https://eventum-generatives.github.io/Website/"
+repository = "https://github.com/eventum-project/eventum-cli"
+documentation = "https://eventum-project.github.io/website/"
 keywords = ["generator", "testing", "data", "cli"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -47,3 +47,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 eventum = "eventum_cli.cli_main:main"
 eventum-compose = "eventum_cli.cli_compose:main"
+eventum-keyring = "eventum_cli.cli_keyring:main"
