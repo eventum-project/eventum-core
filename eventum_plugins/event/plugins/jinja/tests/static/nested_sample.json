@@ -1,0 +1,4 @@
+[
+    {"name": {"firstname": "John", "lastname": "Doe"}, "email": ["john@example.com", "john.public@example.com"], "position": "Manager"},
+    {"name": {"firstname": "Jane", "lastname": "Doe"}, "email": ["jane@example.com", "jane.public@example.com"], "position": "HR"}
+]
