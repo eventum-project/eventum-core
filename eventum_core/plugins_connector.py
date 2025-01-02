@@ -51,21 +51,25 @@ def get_plugins_to_config_mapping(
     return mapping
 
 
+class PluginNotFoundError(ModuleNotFoundError):
+    """Exception for errors not found plugins."""
+
+
 def _load_plugin_class(
     plugin_type: Literal['input', 'output'],
     plugin_name: str
 ) -> type[BaseInputPlugin] | type[BaseOutputPlugin]:
-    """Get plugin class. Raise `ValueError` if plugin with specified
-    name is not found."""
+    """Get plugin class. Raise `PluginNotFoundError` if plugin with
+    specified name is not found."""
     try:
         module = importlib.import_module(
             name=f'eventum_plugins.{plugin_type}.{plugin_name}'
         )
         return module.PLUGIN_CLASS
     except (ModuleNotFoundError, AttributeError):
-        raise ValueError(
+        raise PluginNotFoundError(
             f'{plugin_type.capitalize()} plugin "{plugin_name}" is not found'
-        )
+        ) from None
 
 
 def load_input_plugin_class(plugin_name: str) -> type[BaseInputPlugin]:
