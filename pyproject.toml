@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "eventum-plugins"
+name = "eventum-generator"
 version = "2.0.0"
-description = "Plugins for Eventum"
+description = "Flexible event generator"
 license = "Apache-2.0"
 authors = ["Nikita Reznikov <nikita.reznikov.public@mail.ru>"]
 readme = "README.md"
 repository = "https://github.com/eventum-project/eventum-plugins"
 documentation = "https://eventum-project.github.io/website/"
-keywords = ["plugin", "generator", "template", "scheduling", "time"]
+keywords = ["event", "data", "dataset", "sample", "log", "generator", "synthetic", "template", "scheduling"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -16,8 +16,8 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 packages = [
-  {include = "eventum.plugins"},
-  {include = "eventum.plugins/py.typed"},
+  {include = "eventum"},
+  {include = "eventum/py.typed"},
 ]
 
 [tool.poetry.dependencies]
