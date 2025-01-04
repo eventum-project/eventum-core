@@ -143,5 +143,5 @@ class RequestHandler(BaseHTTPRequestHandler):
         RequestHandler._logger.info(
             'Request received',
             request_info=format % args,
-            ip=self.address_string()
+            host=self.address_string()
         )

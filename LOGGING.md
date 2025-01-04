@@ -25,13 +25,8 @@
     <th>Description</th>
     <th>Data type</th>
     <tr>
-        <td>ip</td>
-        <td>IP address</td>
-        <td>str</td>
-    </tr>
-    <tr>
         <td>host</td>
-        <td>IP address or hostname</td>
+        <td>Network address (ip or hostname)</td>
         <td>str</td>
     </tr>
     <tr>
