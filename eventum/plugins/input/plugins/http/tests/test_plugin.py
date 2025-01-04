@@ -43,7 +43,7 @@ def test_plugin_bad_address():
     with pytest.raises(PluginConfigurationError):
         HttpInputPlugin(
             config=HttpInputPluginConfig(
-                ip='255.255.255.255',   # type: ignore[arg-type]
+                host='255.255.255.255',
                 port=443
             ),
             params={
