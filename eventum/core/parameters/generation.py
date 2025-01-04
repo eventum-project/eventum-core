@@ -78,10 +78,10 @@ class CommonGenerationParameters(BaseModel, extra='forbid', frozen=True):
     timezone : str, default='UTC'
         Time zone for generating timestamps
 
-    batch : BatchParameters
+    batch : BatchParameters, default=BatchParameters(...)
         Batch parameters
 
-    queue : QueueParameters
+    queue : QueueParameters, default=QueueParameters(...)
         Queue parameters
     """
     timezone: str = Field(
