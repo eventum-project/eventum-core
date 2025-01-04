@@ -52,7 +52,7 @@ class TimestampsBatcher:
         Timezone of incoming timestamps, used to track current time
         when `scheduling` parameter is set to `True`
 
-    max_queue_size : int, default=1_000_000
+    queue_max_size : int, default=1_000_000
         Maximum size of queue for added timestamps to prepare batches
 
     Raises
