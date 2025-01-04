@@ -1,4 +1,5 @@
 from ipaddress import IPv4Address
+
 from pydantic import Field, IPvAnyAddress
 
 from eventum.plugins.input.base.config import InputPluginConfig
@@ -13,10 +14,10 @@ class HttpInputPluginConfig(
     Attributes
     ----------
     ip : IPvAnyAddress, default='0.0.0.0'
-        IP to listen
+        Bind IP address
 
     port : int
-        Port to listen
+        Bind port
     """
     ip: IPvAnyAddress = Field(
         default=IPv4Address('0.0.0.0'),
