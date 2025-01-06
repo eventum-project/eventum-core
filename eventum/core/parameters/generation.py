@@ -69,7 +69,7 @@ class QueueParameters(BaseModel, extra='forbid', frozen=True):
     )
 
 
-class CommonGenerationParameters(BaseModel, extra='forbid', frozen=True):
+class GenerationParameters(BaseModel, extra='forbid', frozen=True):
     """Generation parameters that are common for all generators and can
     be overridden from generators parameters level.
 
@@ -83,6 +83,10 @@ class CommonGenerationParameters(BaseModel, extra='forbid', frozen=True):
 
     queue : QueueParameters, default=QueueParameters(...)
         Queue parameters
+
+    order_timestamps : bool, default=False
+        Whether to keep chronological order of timestamps after
+        merging them from many input plugins
     """
     timezone: str = Field(
         default='UTC',
@@ -97,26 +101,6 @@ class CommonGenerationParameters(BaseModel, extra='forbid', frozen=True):
         default_factory=lambda: QueueParameters(),
         description='Queue parameters'
     )
-
-    @field_validator('timezone')
-    def validate_timezone(cls, v: str) -> str:
-        if v in all_timezones_set:
-            return v
-
-        raise ValueError(f'Unknown time zone "{v}"')
-
-
-class GenerationParameters(CommonGenerationParameters, frozen=True):
-    """Generation parameters including common parameters for all
-    generators that can be overridden from generators parameters level
-    and non-overridable generation parameters.
-
-    Parameters
-    ----------
-    order_timestamps : bool, default=False
-        Whether to keep chronological order of timestamps after
-        merging them from many input plugins
-    """
     order_timestamps: bool = Field(
         default=False,
         description=(
@@ -124,3 +108,10 @@ class GenerationParameters(CommonGenerationParameters, frozen=True):
             'merging them from many input plugins'
         )
     )
+
+    @field_validator('timezone')
+    def validate_timezone(cls, v: str) -> str:
+        if v in all_timezones_set:
+            return v
+
+        raise ValueError(f'Unknown time zone "{v}"')

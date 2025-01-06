@@ -3,10 +3,10 @@ from typing import Any, Literal
 
 from pydantic import Field, field_validator
 
-from eventum.core.parameters.generation import CommonGenerationParameters
+from eventum.core.parameters.generation import GenerationParameters
 
 
-class GeneratorParameters(CommonGenerationParameters, frozen=True):
+class GeneratorParameters(GenerationParameters, frozen=True):
     """Parameters for single generator.
 
     Parameters
