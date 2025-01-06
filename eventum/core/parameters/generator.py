@@ -1,7 +1,7 @@
-
+import os
 from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from eventum.core.parameters.generation import CommonGenerationParameters
 
@@ -11,8 +11,11 @@ class GeneratorParameters(CommonGenerationParameters, frozen=True):
 
     Parameters
     ----------
+    id : str
+        Generator unique identified
+
     path : str
-        Path to configuration
+        Absolute path to configuration
 
     time_mode : Literal['live', 'sample']
         Wether to use live mode and generate events at moments defined
@@ -22,8 +25,13 @@ class GeneratorParameters(CommonGenerationParameters, frozen=True):
     params: dict[str, Any], default={}
         Parameters that can be used in generator configuration file
     """
+    id: str = Field(
+        min_length=1,
+        description='Generator unique identified'
+    )
     path: str = Field(
-        description='Path to generator configuration file'
+        min_length=1,
+        description='Absolute path to generator configuration file'
     )
     time_mode: Literal['live', 'sample'] = Field(
         description=(
@@ -38,3 +46,9 @@ class GeneratorParameters(CommonGenerationParameters, frozen=True):
             'Parameters that can be used in generator configuration file'
         )
     )
+
+    @field_validator('path')
+    def validate_path(cls, v: str):
+        if os.path.isabs(v):
+            return v
+        raise ValueError('Path must be absolute')
