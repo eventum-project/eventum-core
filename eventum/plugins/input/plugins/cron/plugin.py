@@ -49,7 +49,6 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
                 return
             if start < now:
                 start = now
-                self._logger.info('Past timestamps are skipped')
 
         range: Iterator[datetime] = croniter.croniter_range(
             start=start,
