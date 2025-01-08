@@ -10,7 +10,7 @@ from eventum.plugins.output.fields import (Format, FormatterConfigT,
 class OutputPluginConfig(PluginConfig, ABC, frozen=True):
     """Base config model for output plugins.
 
-    Parameters
+    Attributes
     ----------
     formatter : FormatterConfigT, default=SimpleFormatterConfig(...)
         Formatter configuration

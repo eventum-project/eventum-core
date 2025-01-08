@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 class StartupParameters(BaseModel, extra='forbid', frozen=True):
     """Startup parameters.
 
-    Parameters
+    Attributes
     ----------
     source : Literal['db', 'file'], default='file'
         Type of source with configuration

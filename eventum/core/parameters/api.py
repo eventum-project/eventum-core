@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 class SSLParameters(BaseModel, extra='forbid', frozen=True):
     """SSL parameters.
 
-    Parameters
+    Attributes
     ----------
     enabled : bool, default=True
         Whether to enable SSL
@@ -71,6 +71,8 @@ class SSLParameters(BaseModel, extra='forbid', frozen=True):
 class APIParameters(BaseModel, extra='forbid', frozen=True):
     """API parameters.
 
+    Attributes
+    ----------
     enabled : bool, default = True
         Whether to enable REST API
 

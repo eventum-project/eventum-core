@@ -9,7 +9,7 @@ from eventum.core.parameters.generation import GenerationParameters
 class GeneratorParameters(GenerationParameters, frozen=True):
     """Parameters for single generator.
 
-    Parameters
+    Attributes
     ----------
     id : str
         Generator unique identified

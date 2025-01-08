@@ -9,7 +9,7 @@ from eventum.plugins.input.base.plugin import QueueOverflowMode
 class BatchParameters(BaseModel, extra='forbid', frozen=True):
     """Batcher parameters.
 
-    Parameters
+    Attributes
     ----------
     size : int | None, default=10000
         Batch size for generating events
@@ -43,7 +43,7 @@ class BatchParameters(BaseModel, extra='forbid', frozen=True):
 class QueueParameters(BaseModel, extra='forbid', frozen=True):
     """Parameters of input plugins queue.
 
-    Parameters
+    Attributes
     ----------
     max_size : int, default=100000
         Maximum size of queue for generated timestamps per input plugin
@@ -73,7 +73,7 @@ class GenerationParameters(BaseModel, extra='forbid', frozen=True):
     """Generation parameters that are common for all generators and can
     be overridden from generators parameters level.
 
-    Parameters
+    Attributes
     ----------
     timezone : str, default='UTC'
         Time zone for generating timestamps

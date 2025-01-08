@@ -14,7 +14,7 @@ from eventum.plugins.output.plugins.clickhouse.fields import \
 class ClickhouseOutputPluginConfig(OutputPluginConfig, frozen=True):
     """Configuration for `clickhouse` output plugin.
 
-    Parameters
+    Attributes
     ----------
     host : str
         The hostname or IP address of the ClickHouse server

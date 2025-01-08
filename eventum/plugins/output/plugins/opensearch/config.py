@@ -10,7 +10,7 @@ from eventum.plugins.output.fields import (Format, FormatterConfigT,
 class OpensearchOutputPluginConfig(OutputPluginConfig, frozen=True):
     """Configuration for `opensearch` output plugin.
 
-    Parameters
+    Attributes
     ----------
     hosts: list[HttpUrl]
         Opensearch cluster nodes that will be used for indexing events,

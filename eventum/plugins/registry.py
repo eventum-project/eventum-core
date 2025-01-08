@@ -6,7 +6,7 @@ from types import ModuleType
 class PluginInfo:
     """Plugin information for a registration.
 
-    Parameters
+    Attributes
     ----------
     name : str
         Plugin name

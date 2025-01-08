@@ -11,7 +11,7 @@ from eventum.plugins.output.fields import (Format, FormatterConfigT,
 class HttpOutputPluginConfig(OutputPluginConfig, frozen=True):
     """Configuration for `http` output plugin.
 
-    Parameters
+    Attributes
     ----------
     url : HttpUrl
         URL to use for requests
