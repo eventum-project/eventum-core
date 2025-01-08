@@ -1,3 +1,5 @@
+from typing import Iterator
+
 from numpy import datetime64, linspace, timedelta64
 from numpy.typing import NDArray
 
@@ -21,7 +23,10 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
     ) -> None:
         super().__init__(config, params)
 
-    def _generate(self) -> NDArray[datetime64]:
+    def generate(
+        self,
+        skip_past: bool = True
+    ) -> Iterator[NDArray[datetime64]]:
         start, end = normalize_versatile_daterange(
             start=self._config.start,
             end=self._config.end,
@@ -47,21 +52,16 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
         timedelta = timedelta64((end - start), 'us')
 
         timestamps = first + (timedelta * space)
-        return timestamps
 
-    def _generate_sample(self) -> None:
-        timestamps = self._generate()
-        self._enqueue(timestamps)
+        if skip_past:
+            timestamps = get_future_slice(
+                timestamps=timestamps,
+                after=now64(self._timezone)
+            )
+            if not timestamps:
+                self._logger.info(
+                    'All timestamps are in past, nothing to generate'
+                )
+                return
 
-    def _generate_live(self) -> None:
-        timestamps = self._generate()
-
-        future_timestamps = get_future_slice(
-            timestamps=timestamps,
-            after=now64(self._timezone)
-        )
-
-        if len(future_timestamps) < len(timestamps):
-            self._logger.info('Past timestamps are skipped')
-
-        self._enqueue(future_timestamps)
+        yield timestamps

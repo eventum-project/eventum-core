@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 from numpy import datetime64
@@ -26,7 +26,7 @@ from eventum.plugins.input.plugins.linspace.plugin import LinspaceInputPlugin
         ]),
     ]
 )
-def test_linspace_sample(start, end, count, endpoint, expected):
+def test_plugin(start, end, count, endpoint, expected):
     config = LinspaceInputPluginConfig(
         start=datetime.fromisoformat(start),
         end=datetime.fromisoformat(end),
@@ -38,42 +38,13 @@ def test_linspace_sample(start, end, count, endpoint, expected):
         config=config,
         params={
             'id': 1,
-            'live_mode': False,
             'timezone': timezone('UTC')
         }
 
     )
 
     timestamps = []
-    for batch in plugin.generate():
+    for batch in plugin.generate(skip_past=False):
         timestamps.extend(batch)
 
     assert timestamps == expected
-
-
-def test_linspace_live():
-    start = datetime.now(tz=timezone('UTC')) + timedelta(seconds=0.5)
-    end = start + timedelta(microseconds=500)
-    config = LinspaceInputPluginConfig(
-        start=start,
-        end=end,
-        count=100,
-        endpoint=True
-    )
-
-    plugin = LinspaceInputPlugin(
-        config=config,
-        params={
-            'id': 1,
-            'live_mode': True,
-            'timezone': timezone('UTC')
-        }
-    )
-
-    timestamps = []
-    for batch in plugin.generate():
-        timestamps.extend(batch)
-
-    assert len(timestamps) == 100
-    assert timestamps[-1] == datetime64(end.replace(tzinfo=None))
-    assert timestamps[0] >= datetime64(start.replace(tzinfo=None))
