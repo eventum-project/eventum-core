@@ -16,6 +16,11 @@ class HttpInputPluginConfig(
 
     port : int
         Bind port
+
+    max_pending_requests : int, default=100
+        Maximum number of incoming requests to store in queue before
+        they are processed, if a request arrives and the queue is full
+        a 429 response will be returned immediately
     """
     host: str = Field(
         default='0.0.0.0',
@@ -23,3 +28,4 @@ class HttpInputPluginConfig(
         validate_default=True
     )
     port: int = Field(ge=1)
+    max_pending_requests: int = Field(default=100, ge=1)

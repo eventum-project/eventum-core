@@ -1,15 +1,28 @@
-from concurrent.futures import ThreadPoolExecutor
-from http.server import HTTPServer
-from threading import Event
+from concurrent.futures import Future, ThreadPoolExecutor
+from queue import Empty, Queue
+from typing import Iterator
 
-from numpy import full
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from numpy import datetime64, full
+from numpy.typing import NDArray
+from pydantic import BaseModel, Field
 
-from eventum.plugins.exceptions import (PluginConfigurationError,
-                                        PluginRuntimeError)
+from eventum.plugins.exceptions import PluginRuntimeError
 from eventum.plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum.plugins.input.plugins.http.config import HttpInputPluginConfig
-from eventum.plugins.input.plugins.http.server import RequestHandler
 from eventum.plugins.input.utils.time_utils import now64
+
+
+class GenerateRequestData(BaseModel, extra='forbid', frozen=True):
+    """Data for generate request.
+
+    Attributes
+    ----------
+    count : int
+        Number of events to generate
+    """
+    count: int = Field(ge=1, description='Number of events to generate')
 
 
 class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
@@ -21,11 +34,9 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
     For generating events a POST request is required with following
     data in body:
     ```json
-    {
-        "count": x
-    }
+    {"count": 10}
     ```
-    , where `x` - is a number of events to generate
+    , where 10 - is an example number of events to generate
     """
 
     def __init__(
@@ -34,70 +45,129 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
         params: InputPluginParams
     ) -> None:
         super().__init__(config, params)
-        self._request_handler_cls = RequestHandler
-        self._stop_event = Event()
-        self._stop_event.clear()
-
-        try:
-            self._server = HTTPServer(
-                server_address=(
-                    self._config.host,
-                    self._config.port
-                ),
-                RequestHandlerClass=self._request_handler_cls
+        self._app = FastAPI(
+            docs_url=None,
+            redoc_url=None,
+            openapi_url=None
+        )
+        self._app.add_api_route(
+            '/generate',
+            self._handle_generate,
+            methods=['POST'],
+            status_code=201,
+            response_description='Enqueued'
+        )
+        self._app.add_api_route(
+            '/stop',
+            self._handle_stop,
+            methods=['POST'],
+            status_code=200,
+            response_description='Stopped'
+        )
+        self._server = uvicorn.Server(
+            uvicorn.Config(
+                self._app,
+                host=self._config.host,
+                port=self._config.port,
+                log_config=None
             )
-        except OSError as e:
-            raise PluginConfigurationError(
-                'Failed to initialize http server',
+        )
+        self._request_queue: Queue[int] = Queue(
+            maxsize=config.max_pending_requests
+        )
+        self._is_stopping = False
+
+    async def _handle_generate(
+        self,
+        data: GenerateRequestData
+    ) -> None:
+        """Handle incoming generate request.
+
+        Parameters
+        ----------
+        data : GenerateRequest
+            Request data
+
+        Raises
+        ------
+        HTTPException
+            429 - If requests queue is full
+            403 - If server is stopping
+        """
+        if self._is_stopping:
+            await self._logger.awarning(
+                'Generate request is refused due to server is stopping',
+                count=data.count
+            )
+            raise HTTPException(
+                status_code=403,
+                detail='Server is stopping'
+            )
+
+        if self._request_queue.full():
+            await self._logger.awarning(
+                'Generate request is skipped due to queue is full',
+                count=data.count
+            )
+            raise HTTPException(
+                status_code=429,
+                detail='Too Many Requests'
+            )
+        else:
+            await self._logger.ainfo(
+                'Generate request is received',
+                count=data.count
+            )
+            self._request_queue.put_nowait(data.count)
+
+    async def _handle_stop(self) -> None:
+        """Handle incoming stop request."""
+        await self._logger.ainfo('Stop request is received')
+        self._is_stopping = True
+        self._server.should_exit = True
+
+    def _watch_server(self, future: Future) -> None:
+        """Watch server execution.
+
+        Parameters
+        ----------
+        future : Future
+            Done future
+        """
+        try:
+            future.result()
+        except Exception as e:
+            self._is_stopping = True
+            self._server.should_exit = True
+
+            raise PluginRuntimeError(
+                'Error during server execution',
                 context=dict(self.instance_info, reason=str(e))
             )
 
-    def _handle_stop(self) -> None:
-        """Shut down the server once handler thread notifies via
-        condition.
-        """
-        self._stop_event.wait()
-        self._logger.info(
-            'Stop request is received, shutting down the http server'
-        )
-        self._server.shutdown()
-
-    def _generate_sample(self) -> None:
-        self._request_handler_cls.set_logger(self._logger)
-        self._request_handler_cls.set_generate_callback(
-            callback=lambda count:
-            self._enqueue(
-                full(
-                    shape=count,
-                    fill_value=now64(self._timezone),
-                    dtype='datetime64[us]'
-                )
-            )
-        )
-        self._request_handler_cls.set_stop_callback(
-            callback=self._stop_event.set
-        )
-
+    def generate(
+        self,
+        skip_past: bool = True
+    ) -> Iterator[NDArray[datetime64]]:
         self._logger.info(
             'Starting http server',
             host=self._config.host,
             port=self._config.port
         )
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            stop_future = executor.submit(self._handle_stop)
-            serve_future = executor.submit(self._server.serve_forever)
+
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(self._server.run)
+            future.add_done_callback(self._watch_server)
 
             self._logger.info('Waiting for incoming generation requests')
-            try:
-                serve_future.result()
-                self._stop_event.set()
-                stop_future.result()
-            except Exception as e:
-                self._server.server_close()
-                raise PluginRuntimeError(
-                    'HTTP server was stopped due to error',
-                    context=dict(self.instance_info, reason=str(e))
-                )
+            while not (self._is_stopping and self._request_queue.empty()):
+                try:
+                    count = self._request_queue.get(timeout=0.1)
+                except Empty:
+                    continue
 
-    def _generate_live(self) -> None:
-        self._generate_sample()
+                yield full(
+                    shape=count,
+                    fill_value=now64(self._timezone),
+                    dtype='datetime64[us]'
+                )
