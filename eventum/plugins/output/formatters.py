@@ -96,11 +96,6 @@ class Formatter(ABC, Generic[T]):
         -------
         FormattingResult
             Result of events formatting
-
-        Notes
-        -----
-        Note that this method only applies formatting, encoding and
-        separator are considered to be used separately
         """
         ...
 

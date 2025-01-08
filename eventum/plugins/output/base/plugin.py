@@ -196,7 +196,7 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
         Returns
         -------
         int
-            Number of successfully written formatted events
+            Number of successfully written events
 
         Raises
         ------
@@ -222,7 +222,17 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
             if not formatting_result.events:
                 return 0
 
-            return await self._write(formatting_result.events)
+            written = await self._write(formatting_result.events)
+
+            # handle possible events aggregation
+            if (
+                len(formatting_result.events) == 1
+                and formatting_result.formatted_count > 1
+                and written == 1
+            ):
+                return formatting_result.formatted_count
+
+            return written
 
     @abstractmethod
     async def _open(self) -> None:

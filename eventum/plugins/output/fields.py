@@ -43,16 +43,7 @@ class Format(StrEnum):
 
 
 class BaseFormatterConfig(BaseModel, ABC, frozen=True, extra='forbid'):
-    """Base formatter config.
-
-    Parameters
-    ----------
-    encoding : Encoding, default='utf-8'
-        Target encoding
-
-    separator : str, default=os.linesep
-        Separator between events
-    """
+    """Base formatter config."""
 
 
 class SimpleFormatterConfig(BaseFormatterConfig, frozen=True):
