@@ -1,8 +1,11 @@
-from numpy import full
+from datetime import datetime
+from typing import Iterator
+
+from numpy import datetime64, full
+from numpy.typing import NDArray
 
 from eventum.plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum.plugins.input.plugins.static.config import StaticInputPluginConfig
-from eventum.plugins.input.utils.time_utils import now64
 
 
 class StaticInputPlugin(InputPlugin[StaticInputPluginConfig]):
@@ -18,15 +21,20 @@ class StaticInputPlugin(InputPlugin[StaticInputPluginConfig]):
     ) -> None:
         super().__init__(config, params)
 
-    def _generate_sample(self) -> None:
-        self._logger.info('Generating at current timestamp')
+    def generate(
+        self,
+        skip_past: bool = True
+    ) -> Iterator[NDArray[datetime64]]:
+        now = datetime.now().astimezone(self._timezone)
+        self._logger.info(
+            'Generating in range',
+            start_timestamp=now.isoformat(),
+            end_timestamp=now.isoformat()
+        )
         timestamps = full(
             shape=self._config.count,
-            fill_value=now64(timezone=self._timezone),
+            fill_value=datetime64(now.replace(tzinfo=None)),
             dtype='datetime64[us]'
         )
 
-        self._enqueue(timestamps)
-
-    def _generate_live(self) -> None:
-        self._generate_sample()
+        yield timestamps
