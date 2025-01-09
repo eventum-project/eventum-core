@@ -7,6 +7,7 @@ from pydantic import RootModel
 from pytz import BaseTzInfo
 
 from eventum.plugins.base.plugin import Plugin, PluginParams
+from eventum.plugins.input.base.buffer import Buffer
 from eventum.plugins.input.base.config import InputPluginConfig
 
 QueueOverflowMode: TypeAlias = Literal['block', 'skip']
@@ -50,17 +51,21 @@ class InputPlugin(Plugin[ConfigT, InputPluginParams], register=False):
         with self.required_params():
             self._timezone = params['timezone']
 
+        self._buffer = Buffer()
+
     @abstractmethod
     def generate(
         self,
+        size: int,
         skip_past: bool = True
     ) -> Iterator[NDArray[datetime64]]:
         """Start timestamps generation with yielding timestamp batches.
-        Size of batches mostly depends on configuration parameters.
-        Generation is not blocked for future timestamps.
 
         Parameters
         ----------
+        size : int
+            Number of events to generate
+
         skip_past : bool, default=True
             Wether to skip past timestamps before starting generation
 
