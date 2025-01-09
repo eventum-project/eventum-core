@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Iterator
 
 import croniter
-from numpy import datetime64, full
+from numpy import datetime64
 from numpy.typing import NDArray
 
 from eventum.plugins.input.base.plugin import InputPlugin, InputPluginParams
@@ -24,6 +24,7 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
 
     def generate(
         self,
+        size: int,
         skip_past: bool = True
     ) -> Iterator[NDArray[datetime64]]:
         now = datetime.now().astimezone(self._timezone)
@@ -58,8 +59,12 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
         )
 
         for timestamp in range:
-            yield full(
-                shape=self._config.count,
-                fill_value=datetime64(timestamp.replace(tzinfo=None)),
-                dtype='datetime64[us]'
+            self._buffer.m_push(
+                timestamp=datetime64(timestamp.replace(tzinfo=None)),
+                multiply=self._config.count
             )
+
+            if self._buffer.size >= size:
+                yield from self._buffer.read(size, partial=False)
+
+        yield from self._buffer.read(size, partial=True)

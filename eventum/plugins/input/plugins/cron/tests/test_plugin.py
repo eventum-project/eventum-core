@@ -23,7 +23,7 @@ def test_plugin():
 
     timestamps = []
 
-    for batch in plugin.generate(skip_past=False):
+    for batch in plugin.generate(size=100, skip_past=False):
         timestamps.extend(batch)
 
     assert len(timestamps) == (1440 * 2)
