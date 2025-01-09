@@ -20,8 +20,8 @@ class TimerInputPluginConfig(InputPluginConfig, frozen=True):
         Number of timestamps to generate
 
     repeat : bool
-        Number of cycles to repeat, if value is not set (only for live
-        mode) repeat infinitely
+        Number of cycles to repeat, if value is not set, then repeat
+        infinitely
     """
     start: VersatileDatetime = Field(default=None, union_mode='left_to_right')
     seconds: float = Field(ge=0.1)

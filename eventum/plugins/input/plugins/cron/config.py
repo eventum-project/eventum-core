@@ -21,8 +21,8 @@ class CronInputPluginConfig(
         is used
 
     end : VersatileDatetime, default = None
-        End of the generating date range, if not set (only for live
-        mode), never end generation
+        End of the generating date range, if not set, then never end
+        generation
 
     expression : str
         Cron expression (supports specifying seconds, years, random
