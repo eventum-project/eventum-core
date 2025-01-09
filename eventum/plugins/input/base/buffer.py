@@ -66,7 +66,7 @@ class Buffer:
             )
 
         self._buffer.append(
-            BufferItem(type='v', value=timestamp, multiply=multiply)
+            BufferItem(type='m', value=timestamp, multiply=multiply)
         )
         self._buffer_size += multiply
 
@@ -81,7 +81,7 @@ class Buffer:
         if timestamps.size == 0:
             return
 
-        self._buffer.append(BufferItem(type='v', value=timestamps))
+        self._buffer.append(BufferItem(type='mv', value=timestamps))
         self._buffer_size += timestamps.size
 
     def read(
@@ -120,7 +120,7 @@ class Buffer:
                 'Parameter "size" must be greater or equal to 1'
             )
 
-        to_concatenate: list[NDArray] = []
+        to_concatenate: list[NDArray[datetime64]] = []
         current_size = 0
 
         while True:
@@ -179,11 +179,14 @@ class Buffer:
 
             if current_size == size:
                 yield concatenate(to_concatenate)
+
                 self._buffer_size -= size
                 current_size = 0
+                to_concatenate.clear()
 
         if to_concatenate:
             remaining_array = concatenate(to_concatenate)
+            to_concatenate.clear()
 
             if partial:
                 yield remaining_array
@@ -197,6 +200,6 @@ class Buffer:
                 )
 
     @property
-    def buffer_size(self) -> int:
+    def size(self) -> int:
         """Current number of timestamps in buffer."""
         return self._buffer_size
