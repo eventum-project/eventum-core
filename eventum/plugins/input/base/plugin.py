@@ -7,7 +7,7 @@ from pydantic import RootModel
 from pytz import BaseTzInfo
 
 from eventum.plugins.base.plugin import Plugin, PluginParams
-from eventum.plugins.input.base.buffer import Buffer
+from eventum.plugins.input.buffer import Buffer
 from eventum.plugins.input.base.config import InputPluginConfig
 
 QueueOverflowMode: TypeAlias = Literal['block', 'skip']
@@ -64,7 +64,7 @@ class InputPlugin(Plugin[ConfigT, InputPluginParams], register=False):
         Parameters
         ----------
         size : int
-            Number of events to generate
+            Number of timestamps to generate
 
         skip_past : bool, default=True
             Wether to skip past timestamps before starting generation

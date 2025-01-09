@@ -1,6 +1,6 @@
 import numpy as np
 
-from eventum.plugins.input.base.buffer import Buffer
+from eventum.plugins.input.buffer import Buffer
 
 
 def test_add_v():
