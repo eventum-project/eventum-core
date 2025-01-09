@@ -4,7 +4,7 @@ from typing import Iterator
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from numpy import datetime64, full
+from numpy import datetime64
 from numpy.typing import NDArray
 from pydantic import BaseModel, Field
 
@@ -147,6 +147,7 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
 
     def generate(
         self,
+        size: int,
         skip_past: bool = True
     ) -> Iterator[NDArray[datetime64]]:
         self._logger.info(
@@ -166,8 +167,11 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
                 except Empty:
                     continue
 
-                yield full(
-                    shape=count,
-                    fill_value=now64(self._timezone),
-                    dtype='datetime64[us]'
+                self._buffer.m_push(
+                    timestamp=now64(self._timezone),
+                    multiply=count
                 )
+                if self._buffer.size >= size:
+                    yield from self._buffer.read(size, partial=False)
+
+            yield from self._buffer.read(size, partial=True)

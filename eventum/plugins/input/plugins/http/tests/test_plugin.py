@@ -24,7 +24,7 @@ def test_plugin():
         timestamps = []
 
         def generate():
-            for batch in plugin.generate():
+            for batch in plugin.generate(size=100):
                 timestamps.extend(batch)
 
         future = executor.submit(generate)
