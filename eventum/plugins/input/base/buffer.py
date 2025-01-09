@@ -97,8 +97,8 @@ class Buffer:
             Size of arrays
 
         partial : bool, default = False
-            Whether to read until buffer is empty or until complete
-            arrays are available
+            Read until buffer is empty event if the last array is not
+            complete
 
         Yields
         ------
