@@ -1,6 +1,6 @@
 import os
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 from numpy import datetime64
@@ -24,48 +24,17 @@ def test_timestamps_sample():
         config=config,
         params={
             'id': 1,
-            'live_mode': False,
             'timezone': timezone('UTC')
         }
     )
     timestamps = []
-    for batch in plugin.generate():
+    for batch in plugin.generate(size=100, skip_past=False):
         timestamps.extend(batch)
 
     assert timestamps == [
         datetime64('2024-01-01T00:00:00.000'),
         datetime64('2024-01-01T00:00:00.050'),
         datetime64('2024-01-01T00:00:00.100'),
-    ]
-
-
-def test_timestamps_live():
-    now = datetime.now(tz=timezone('UTC'))
-    config = TimestampsInputPluginConfig(
-        source=[
-            now + timedelta(seconds=0.3),
-            now + timedelta(seconds=0.4),
-            now + timedelta(seconds=0.5)
-        ]
-    )
-    plugin = TimestampsInputPlugin(
-        config=config,
-        params={
-            'id': 1,
-            'live_mode': True,
-            'timezone': timezone('UTC')
-        }
-    )
-
-    timestamps = []
-
-    for batch in plugin.generate():
-        timestamps.extend(batch)
-
-    assert timestamps == [
-        datetime64((now + timedelta(seconds=0.3)).replace(tzinfo=None)),
-        datetime64((now + timedelta(seconds=0.4)).replace(tzinfo=None)),
-        datetime64((now + timedelta(seconds=0.5)).replace(tzinfo=None)),
     ]
 
 
@@ -86,13 +55,12 @@ def test_timestamps_from_file(timestamps_filename):
         config=config,
         params={
             'id': 1,
-            'live_mode': False,
             'timezone': timezone('UTC')
         }
     )
 
     timestamps = []
-    for batch in plugin.generate():
+    for batch in plugin.generate(size=100, skip_past=False):
         timestamps.extend(batch)
 
     assert timestamps == [

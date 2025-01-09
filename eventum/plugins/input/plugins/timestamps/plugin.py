@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Iterator
 
 from numpy import array, astype, datetime64
 from numpy.typing import NDArray
@@ -89,8 +90,11 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
                 )
             ) from None
 
-    def _log_generation_range(self) -> None:
-        """Log generation range."""
+    def generate(
+        self,
+        size: int,
+        skip_past: bool = True
+    ) -> Iterator[NDArray[datetime64]]:
         start = self._timezone.localize(
             astype(self._timestamps[0], datetime)   # type: ignore[arg-type]
         )
@@ -103,19 +107,13 @@ class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
             end_timestamp=end.isoformat(),
         )
 
-    def _generate_sample(self) -> None:
-        self._log_generation_range()
-        self._enqueue(self._timestamps)
+        if skip_past:
+            timestamps = get_future_slice(
+                timestamps=self._timestamps,
+                after=now64(timezone=self._timezone)
+            )
+        else:
+            timestamps = self._timestamps
 
-    def _generate_live(self) -> None:
-        self._log_generation_range()
-
-        future_timestamps = get_future_slice(
-            timestamps=self._timestamps,
-            after=now64(timezone=self._timezone)
-        )
-
-        if len(future_timestamps) < len(self._timestamps):
-            self._logger.info('Past timestamp are skipped')
-
-        self._enqueue(future_timestamps)
+        self._buffer.mv_push(timestamps)
+        yield from self._buffer.read(size, partial=True)
