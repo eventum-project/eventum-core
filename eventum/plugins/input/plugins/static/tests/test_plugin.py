@@ -18,7 +18,7 @@ def test_plugin():
 
     now = datetime.now().astimezone(timezone('UTC'))
     timestamps = []
-    for batch in plugin.generate():
+    for batch in plugin.generate(size=100):
         timestamps.extend(batch)
 
     assert len(timestamps) == 100

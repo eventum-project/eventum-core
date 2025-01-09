@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Iterator
 
-from numpy import datetime64, full
+from numpy import datetime64
 from numpy.typing import NDArray
 
 from eventum.plugins.input.base.plugin import InputPlugin, InputPluginParams
@@ -23,6 +23,7 @@ class StaticInputPlugin(InputPlugin[StaticInputPluginConfig]):
 
     def generate(
         self,
+        size: int,
         skip_past: bool = True
     ) -> Iterator[NDArray[datetime64]]:
         now = datetime.now().astimezone(self._timezone)
@@ -31,10 +32,8 @@ class StaticInputPlugin(InputPlugin[StaticInputPluginConfig]):
             start_timestamp=now.isoformat(),
             end_timestamp=now.isoformat()
         )
-        timestamps = full(
-            shape=self._config.count,
-            fill_value=datetime64(now.replace(tzinfo=None)),
-            dtype='datetime64[us]'
+        self._buffer.m_push(
+            timestamp=datetime64(now.replace(tzinfo=None)),
+            multiply=self._config.count
         )
-
-        yield timestamps
+        yield from self._buffer.read(size, partial=True)
