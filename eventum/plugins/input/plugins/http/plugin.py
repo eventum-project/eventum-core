@@ -174,4 +174,5 @@ class HttpInputPlugin(InputPlugin[HttpInputPluginConfig]):
                 if self._buffer.size >= size:
                     yield from self._buffer.read(size, partial=False)
 
-            yield from self._buffer.read(size, partial=True)
+            if self._buffer.size > 0:
+                yield from self._buffer.read(size, partial=True)
