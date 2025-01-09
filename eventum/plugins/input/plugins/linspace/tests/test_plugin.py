@@ -44,7 +44,7 @@ def test_plugin(start, end, count, endpoint, expected):
     )
 
     timestamps = []
-    for batch in plugin.generate(skip_past=False):
+    for batch in plugin.generate(size=100, skip_past=False):
         timestamps.extend(batch)
 
     assert timestamps == expected

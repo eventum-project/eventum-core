@@ -14,6 +14,12 @@ from eventum.plugins.input.utils.time_utils import now64, to_naive
 class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
     """Input plugin for generating specified count of events linearly
     spaced in specified date range.
+
+    Notes
+    -----
+    Plugin allocates all the timestamp at generation start. If you have
+    deal with large number of timestamps and need lazy evaluation, see
+    timer input plugin
     """
 
     def __init__(
@@ -25,6 +31,7 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
 
     def generate(
         self,
+        size: int,
         skip_past: bool = True
     ) -> Iterator[NDArray[datetime64]]:
         start, end = normalize_versatile_daterange(
@@ -64,4 +71,6 @@ class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
                 )
                 return
 
-        yield timestamps
+        self._buffer.mv_push(timestamps)
+
+        yield from self._buffer.read(size, partial=True)
