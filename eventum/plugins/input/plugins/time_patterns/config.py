@@ -232,12 +232,6 @@ class TimePatternsInputPluginConfig(InputPluginConfig, frozen=True):
     ----------
     patterns : list[str]
         File paths to time pattern configurations
-
-    ordered_merging : bool, default = False
-        Whether to merge timestamps from different patterns with
-        keeping resulting timestamps sequence ordered (actual only for
-        live mode with usage of multiple configs)
     """
 
     patterns: list[str] = Field(min_length=1)
-    ordered_merging: bool = False
