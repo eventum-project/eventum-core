@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Annotated, Iterable, Iterator, Literal, TypeAlias, overload
 
 import numpy as np
@@ -41,8 +40,7 @@ class InputPluginsMerger:
     def _find_cutoff_timestamp(
         self,
         arrays: Iterable[NDArray[np.datetime64]],
-        aligned: bool
-    ) -> tuple[np.datetime64, bool]:
+    ) -> np.datetime64:
         """Find cutoff timestamp for timestamp arrays.
 
         Parameters
@@ -50,13 +48,10 @@ class InputPluginsMerger:
         arrays : Iterable[NDArray[np.datetime64]]
             Arrays to find timestamp for
 
-        aligned : bool
-            Wether the arrays are aligned at start
-
         Returns
         -------
-        datetime64, bool
-            Cutoff timestamp and aligning status
+        datetime64
+            Cutoff timestamp
 
         Raises
         ------
@@ -71,30 +66,8 @@ class InputPluginsMerger:
 
         if len(arrays) == 0:
             raise ValueError('At least one array is expected')
-        elif len(arrays) == 1:
-            return (arrays[0][-1], False)
 
-        first_min_ts = np.datetime64(datetime.max.isoformat(), 'us')
-        second_min_ts = first_min_ts
-
-        cutoff_timestamp = first_min_ts
-
-        next_align = False
-
-        for array in arrays:
-            if array[0] < first_min_ts:
-                second_min_ts = first_min_ts
-                first_min_ts = array[0]
-                cutoff_timestamp = array[-1]
-                next_align = False
-            elif array[0] < second_min_ts:
-                second_min_ts = array[0]
-
-            if second_min_ts < cutoff_timestamp and not aligned:
-                cutoff_timestamp = second_min_ts
-                next_align = True
-
-        return (cutoff_timestamp, next_align)
+        return min(arrays, key=lambda arr: arr[-1])[-1]
 
     def _slice(
         self,
@@ -102,9 +75,8 @@ class InputPluginsMerger:
         skip_past: bool
     ) -> Iterator[dict[int, NDArray[np.datetime64]]]:
         """Slice timestamps from active generators. For each active
-        generator current slice starts at earliest timestamp across all
-        generators current arrays and ends at latest timestamps of this
-        array with earliest timestamp.
+        generator current slice starts at earliest available timestamp
+        and ends at minimal latest of arrays across all generators
 
         Parameters
         ----------
@@ -126,16 +98,15 @@ class InputPluginsMerger:
         ```
         gen.
         ^
-        |    0 1  2     3  4 5 6  7  8  9
-        |    v v  v     v  v v v  v  v  v
+        |    0          1  2 3       4  5
+        |    v          v  v v       v  v
         |3   |/////////////|   |////////|
         |2        |//////////|    |/////|
         |1     |////////|  |/////////|
         --------------------------------> t
         ```
         In the above example for 3 independent generators `_slice`
-        method will yield 9 times (on each point of overlapping of
-        arrays returned by generators)
+        method will yield 5 times.
         """
         active_generators = {
             plugin.id: iter(plugin.generate(size, skip_past))
@@ -145,9 +116,7 @@ class InputPluginsMerger:
         next_arrays: dict[int, NDArray[np.datetime64]] = dict()
         next_required_ids = list(active_generators.keys())
 
-        aligned = False
-
-        while active_generators or next_arrays:
+        while True:
             # get next arrays from generators if required
             if next_required_ids:
                 for id in next_required_ids:
@@ -183,10 +152,12 @@ class InputPluginsMerger:
 
                 next_required_ids.clear()
 
+            if not next_arrays:
+                break
+
             # find cutoff timestamp
-            cutoff_timestamp, aligned = self._find_cutoff_timestamp(
-                arrays=next_arrays.values(),
-                aligned=aligned
+            cutoff_timestamp = self._find_cutoff_timestamp(
+                arrays=next_arrays.values()
             )
 
             # fill the slice
