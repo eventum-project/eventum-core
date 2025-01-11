@@ -38,6 +38,7 @@ aiofiles = "^24.1.0"
 aiohttp = {extras = ["speedups"], version = "^3.10.10"}
 structlog = "^24.4.0"
 clickhouse-connect = "^0.8.10"
+fastapi = {extras = ["standard"], version = "^0.115.6"}
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
