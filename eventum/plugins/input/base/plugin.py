@@ -7,8 +7,8 @@ from pydantic import RootModel
 from pytz import BaseTzInfo
 
 from eventum.plugins.base.plugin import Plugin, PluginParams
-from eventum.plugins.input.buffer import Buffer
 from eventum.plugins.input.base.config import InputPluginConfig
+from eventum.plugins.input.buffer import Buffer
 
 QueueOverflowMode: TypeAlias = Literal['block', 'skip']
 
