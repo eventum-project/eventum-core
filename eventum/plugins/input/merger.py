@@ -1,9 +1,5 @@
-import threading
-import time
-from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
-from typing import (Annotated, Generic, Iterable, Iterator, Literal, TypeAlias,
-                    TypeVar, overload)
+from typing import Annotated, Iterable, Iterator, Literal, TypeAlias, overload
 
 import numpy as np
 import structlog
@@ -11,454 +7,315 @@ from numpy.typing import NDArray
 
 from eventum.plugins.exceptions import PluginRuntimeError
 from eventum.plugins.input.base.plugin import InputPlugin
-from eventum.plugins.input.utils.array_utils import chunk_array, merge_arrays
+from eventum.plugins.input.utils.array_utils import merge_arrays
 
 logger = structlog.stdlib.get_logger()
 
-
-T = TypeVar('T')
-
-
-class AccumulatorClosedError(Exception):
-    """Trying to add batches to a closed `BatchesAccumulator`."""
-
-
-class BatchesAccumulator(Generic[T]):
-    """Thread safe accumulator of batches."""
-
-    def __init__(self):
-        self._lock = threading.RLock()
-        self._batches = []
-        self._is_closed = False
-
-    def add(self, batch: T) -> None:
-        """Add batch to accumulator.
-
-        Parameters
-        ----------
-        batch : T
-            Batch to add
-
-        Raises
-        ------
-        AccumulatorClosedError
-            If accumulator is closed
-        """
-        with self._lock:
-            if self._is_closed:
-                raise AccumulatorClosedError
-
-            self._batches.append(batch)
-
-    def consume(self) -> list[T]:
-        """Get all accumulated batches.
-
-        Returns
-        -------
-        list[T]
-            List of accumulated baches
-        """
-        with self._lock:
-            batches = self._batches
-            self._batches = []
-
-        return batches
-
-    def close(self) -> None:
-        """Close the accumulator."""
-        with self._lock:
-            self._is_closed = True
-
-    @property
-    def closed(self) -> bool:
-        """Closed status of accumulator."""
-        with self._lock:
-            return self._is_closed
-
-
-TimestampBatch: TypeAlias = NDArray[np.datetime64]
-TimestampIdBatch: TypeAlias = Annotated[
+TimestampArray: TypeAlias = NDArray[np.datetime64]
+TimestampIdArray: TypeAlias = Annotated[
     NDArray,
     np.dtype([('timestamp', 'datetime64[us]'), ('id', 'uint16')])
 ]
-MinimizedTimestampIdBatch: TypeAlias = tuple[NDArray[np.datetime64], int]
 
 
-class InputPluginsLiveMerger:
-    """Merger of live timestamp generation flows of multiple input
-    plugins. Timestamp batches generating by provided input plugins
-    are merged with re-batching and can be optionally ordered to
-    achieve generation of sorted timestamps sequence.
-
-    Attributes
-    ----------
-    MIN_DELAY : float
-        Minimum value for parameter `delay` that can be configured
-
-    MIN_BATCH_SIZE : int
-        Minimum value for parameter `batch_size` that can be configured
+class InputPluginsMerger:
+    """Merger of timestamp generating by multiple input plugins.
 
     Parameters
     ----------
     plugins : Iterable[InputPlugin]
         Input plugins to merge
 
-    target_delay : float
-        Time (in seconds) that indicates how long plugins can delay
-        publishing batches
-
-    batch_size : int | None
-        Maximum size of producing batches after merge, not limited if
-        value is `None` (within one cycle of elements consuming)
-
-    ordering : bool
-        Whether to order timestamps during merging
-
     Raises
     ------
     ValueError
-        If some of the provided plugins are not in live mode
-
-    ValueError
-        If `delay` or `batch_size` parameters is out of range
-
-    ValueError
-        If number of provided plugins are less than one
-
-    Notes
-    -----
-    Using ordering requires additional delays (2 * `target_delay`) for
-    publishing batches.
+        If no plugins provided in sequence
     """
 
-    MIN_DELAY = 0.1
-    MIN_BATCH_SIZE = 1
+    def __init__(self, plugins: Iterable[InputPlugin]) -> None:
+        self._plugins = list(plugins)
 
-    def __init__(
-        self,
-        plugins: Iterable[InputPlugin],
-        target_delay: float,
-        batch_size: int | None,
-        ordering: bool
-    ) -> None:
-        plugins = list(plugins)
-        if not plugins:
+        if not self._plugins:
             raise ValueError('At least one plugin must be provided')
 
-        for plugin in plugins:
-            if not plugin.live_mode:
-                raise ValueError(
-                    f'Input plugin "{plugin.plugin_name}" is not in live mode'
-                )
-
-        if target_delay < self.MIN_DELAY:
-            raise ValueError(
-                'Parameter `delay` must be greater or equal '
-                f'to {self.MIN_DELAY}'
-            )
-
-        if batch_size is not None and batch_size < self.MIN_BATCH_SIZE:
-            raise ValueError(
-                'Parameter `batch_size` must be greater or equal '
-                f'to {self.MIN_BATCH_SIZE}'
-            )
-
-        self._delay = target_delay
-        self._batch_size = batch_size
-        self._ordering = ordering
-        self._plugins = {idx: plugin for idx, plugin in enumerate(plugins)}
-        self._accumulators: dict[
-            int,
-            BatchesAccumulator[MinimizedTimestampIdBatch]
-        ] = {idx: BatchesAccumulator() for idx in self._plugins.keys()}
-        self._active_plugin_indices = list(self._plugins.keys())
-        self._overlapped_future_part: TimestampIdBatch | None = None
-
-    @overload
-    def generate(
+    def _find_cutoff_timestamp(
         self,
-        include_id: Literal[False]
-    ) -> Iterator[TimestampBatch]:
-        ...
-
-    @overload
-    def generate(
-        self,
-        include_id: Literal[True]
-    ) -> Iterator[TimestampIdBatch]:
-        ...
-
-    def generate(
-        self,
-        include_id: bool = False
-    ) -> Iterator[TimestampBatch | TimestampIdBatch]:
-        """Start timestamps generation of input plugins concurrently.
+        arrays: Iterable[NDArray[np.datetime64]],
+        aligned: bool
+    ) -> tuple[np.datetime64, bool]:
+        """Find cutoff timestamp for timestamp arrays.
 
         Parameters
         ----------
+        arrays : Iterable[NDArray[np.datetime64]]
+            Arrays to find timestamp for
+
+        aligned : bool
+            Wether the arrays are aligned at start
+
+        Returns
+        -------
+        datetime64, bool
+            Cutoff timestamp and aligning status
+
+        Raises
+        ------
+        ValueError
+            If no arrays in iterable provided
+
+        Notes
+        -----
+        See description of cutoff timestamp in `_slice` method
+        """
+        arrays = tuple(arrays)
+
+        if len(arrays) == 0:
+            raise ValueError('At least one array is expected')
+        elif len(arrays) == 1:
+            return (arrays[0][-1], False)
+
+        first_min_ts = np.datetime64(datetime.max.isoformat(), 'us')
+        second_min_ts = first_min_ts
+
+        cutoff_timestamp = first_min_ts
+
+        next_align = False
+
+        for array in arrays:
+            if array[0] < first_min_ts:
+                second_min_ts = first_min_ts
+                first_min_ts = array[0]
+                cutoff_timestamp = array[-1]
+                next_align = False
+            elif array[0] < second_min_ts:
+                second_min_ts = array[0]
+
+            if second_min_ts < cutoff_timestamp and not aligned:
+                cutoff_timestamp = second_min_ts
+                next_align = True
+
+        return (cutoff_timestamp, next_align)
+
+    def _slice(
+        self,
+        size: int,
+        skip_past: bool
+    ) -> Iterator[dict[int, NDArray[np.datetime64]]]:
+        """Slice timestamps from active generators. For each active
+        generator current slice starts at earliest timestamp across all
+        generators current arrays and ends at latest timestamps of this
+        array with earliest timestamp.
+
+        Parameters
+        ----------
+        size : int
+            Number of timestamps to read from each generator
+
+        skip_past : bool
+            Parameter "skip_past" of generate method of input plugins
+
+        Yields
+        ------
+        dict[int, NDArray[np.datetime64]]
+            Slices of generators as a map with plugin id in keys and
+            arrays in values
+
+        Notes
+        -----
+        Algorithm can be described by the following illustration:
+        ```
+        gen.
+        ^
+        |    0 1  2     3  4 5 6  7  8  9
+        |    v v  v     v  v v v  v  v  v
+        |3   |/////////////|   |////////|
+        |2        |//////////|    |/////|
+        |1     |////////|  |/////////|
+        --------------------------------> t
+        ```
+        In the above example for 3 independent generators `_slice`
+        method will yield 9 times (on each point of overlapping of
+        arrays returned by generators)
+        """
+        active_generators = {
+            plugin.id: iter(plugin.generate(size, skip_past))
+            for plugin in self._plugins
+        }
+
+        next_arrays: dict[int, NDArray[np.datetime64]] = dict()
+        next_required_ids = list(active_generators.keys())
+
+        aligned = False
+
+        while active_generators or next_arrays:
+            # get next arrays from generators if required
+            if next_required_ids:
+                for id in next_required_ids:
+                    try:
+                        array = next(active_generators[id])
+                        next_arrays[id] = array
+                    except StopIteration:
+                        del active_generators[id]
+                    except PluginRuntimeError as e:
+                        logger.error(
+                            (
+                                'One of the input plugins finished execution '
+                                ' with error'
+                            ),
+                            **e.context
+                        )
+                        del active_generators[id]
+                    except Exception as e:
+                        plugin = next(
+                            filter(
+                                lambda plugin: plugin.id == plugin_id,
+                                self._plugins
+                            )
+                        )
+                        logger.exception(
+                            (
+                                'One of the input plugins finished execution '
+                                ' with unexpected error'
+                            ),
+                            **plugin.instance_info,
+                            reason=str(e),
+                        )
+
+                next_required_ids.clear()
+
+            # find cutoff timestamp
+            cutoff_timestamp, aligned = self._find_cutoff_timestamp(
+                arrays=next_arrays.values(),
+                aligned=aligned
+            )
+
+            # fill the slice
+            slice: dict[int, NDArray[np.datetime64]] = dict()
+            for plugin_id in tuple(next_arrays.keys()):
+                array = next_arrays[plugin_id]
+
+                if array[-1] <= cutoff_timestamp:
+                    slice[plugin_id] = array
+                    del next_arrays[plugin_id]
+
+                    if plugin_id in active_generators:
+                        next_required_ids.append(plugin_id)
+                elif array[0] < cutoff_timestamp < array[-1]:
+                    index = np.searchsorted(
+                        a=array,
+                        v=cutoff_timestamp,
+                        side='right'
+                    )
+                    left_part = array[:index]
+                    right_part = array[index:]
+
+                    if left_part.size > 0:
+                        slice[plugin_id] = left_part
+
+                    if right_part.size > 0:
+                        next_arrays[plugin_id] = right_part
+                    else:
+                        del next_arrays[plugin_id]
+
+                        if plugin_id in active_generators:
+                            next_required_ids.append(plugin_id)
+
+            yield slice
+
+    @overload
+    def generate(
+        self,
+        size: int,
+        skip_past: bool,
+        include_id: Literal[False]
+    ) -> Iterator[TimestampArray]:
+        ...
+
+    @overload
+    def generate(
+        self,
+        size: int,
+        skip_past: bool,
+        include_id: Literal[True]
+    ) -> Iterator[TimestampIdArray]:
+        ...
+
+    def generate(
+        self,
+        size: int,
+        skip_past: bool,
+        include_id: bool = False,
+    ) -> Iterator[TimestampArray | TimestampIdArray]:
+        """Start timestamps generation of input plugins.
+
+        Parameters
+        ----------
+        size : int
+            Number of timestamps to generate
+
+        skip_past : bool
+            Parameter "skip_past" of generate method of input plugins
+
         include_id : bool, default=False
             Wether to include id of plugins in batches
 
         Yields
         ------
-        TimestampBatch | TimestampIdBatch
-            Timestamp batches or timestamp batches with plugin ids if
+        TimestampArray | TimestampIdArray
+            Timestamps array or timestamps with plugin id array if
             parameter `include_id` is `True`
-
-        Raises
-        ------
-        PluginRuntimeError
-            If any plugins raises exception during execution, exception
-            is raised after all plugins finished
         """
-        with ThreadPoolExecutor(max_workers=len(self._plugins)) as executor:
-            futures: list[Future] = []
-            for idx, plugin in self._plugins.items():
-                future = executor.submit(
-                    self._execute_plugin,
-                    plugin,
-                    self._accumulators[idx]
-                )
-                future.add_done_callback(
-                    lambda future, plugin=plugin:   # type: ignore[misc]
-                    self._handle_done_future(future, plugin)
-                )
-                futures.append(future)
+        if size < 1:
+            raise ValueError(
+                'Parameter "size" must be greater or equal to 1'
+            )
 
-            if self._ordering:
-                generator = self._generate_with_ordering()
+        consume_size = max(10_000, size // len(self._plugins))
+
+        current_size = 0
+        merged_arrays: list[TimestampIdArray] = []
+
+        for arrays in self._slice(size=consume_size, skip_past=skip_past):
+            # build arrays with id from simple arrays
+            arrays_with_id: list[TimestampIdArray] = []
+            for plugin_id, array in arrays.items():
+                array_with_id = np.empty(
+                    shape=array.size,
+                    dtype=[('timestamp', 'datetime64[us]'), ('id', 'uint16')]
+                )
+                array_with_id['timestamp'][:] = array
+                array_with_id['id'][:] = plugin_id
+
+                arrays_with_id.append(array_with_id)
+
+            if len(arrays_with_id) > 1:
+                merged_array = merge_arrays(arrays_with_id)
             else:
-                generator = self._generate()
+                merged_array = arrays_with_id[0]
+
+            merged_arrays.append(merged_array)
+
+            current_size += merged_array.size
+
+            if current_size >= size:
+                result_array = np.concatenate(merged_arrays)
+                merged_arrays.clear()
+
+                if result_array.size > size:
+                    merged_arrays.append(result_array[size:])
+                    result_array = result_array[:size]
+
+                if include_id:
+                    yield result_array
+                else:
+                    yield result_array['timestamp']
+
+                current_size -= result_array.size
+
+        if merged_arrays:
+            result_array = np.concatenate(merged_arrays)
 
             if include_id:
-                yield from generator
+                yield result_array
             else:
-                for batch in generator:
-                    yield batch['timestamp']
-
-            errors = []
-            for future in futures:
-                try:
-                    future.result()
-                except Exception as e:
-                    errors.append(str(e))
-
-            if errors:
-                raise PluginRuntimeError(
-                    'Some plugins finished execution with errors',
-                    context=dict(reason=str(errors))
-                )
-
-    def _execute_plugin(
-        self,
-        plugin: InputPlugin,
-        accumulator: BatchesAccumulator
-    ) -> None:
-        """Execute plugin with putting generating timestamps to
-        accumulator.
-
-        Parameters
-        ----------
-        plugin : InputPlugin
-            Input plugin to execute
-
-        accumulator : BatchesAccumulator
-            Accumulator for the plugin batches
-        """
-        try:
-            for batch in plugin.generate():
-                minimized_batch: MinimizedTimestampIdBatch = (batch, plugin.id)
-                accumulator.add(minimized_batch)
-        except Exception:
-            raise
-        finally:
-            accumulator.close()
-
-    def _handle_done_future(
-        self,
-        future: Future,
-        plugin: InputPlugin
-    ) -> None:
-        """Handle done future with executed plugin.
-
-        Parameters
-        ----------
-        future : Future
-            Future to handle
-
-        plugin : InputPlugin
-            Input plugin related to provided `future`
-        """
-        log = logger.bind(
-            plugin_id=plugin.id,
-            plugin_name=plugin.plugin_name
-        )
-        try:
-            future.result()
-            log.info(
-                'Plugin included in merger finished execution successfully'
-            )
-        except PluginRuntimeError as e:
-            log.error(
-                'Plugin included in merger finished execution with error',
-                reason=str(e)
-            )
-        except Exception:
-            log.exception(
-                'Plugin included in merger finished execution with '
-                'unexpected error'
-            )
-
-    def _unminimize_batch(
-        self,
-        batch: MinimizedTimestampIdBatch
-    ) -> TimestampIdBatch:
-        """Unminimize batch converting it to structured array in which
-        id is duplicated for each timestamp.
-
-        Parameters
-        ----------
-        batch : MinimizedTimestampIdBatch
-            Minimized batch
-
-        Returns
-        -------
-        TimestampIdBatch
-            Unminimized timestamps batch
-        """
-        timestamps = batch[0]
-        id = batch[1]
-
-        unminimized_batch = np.empty(
-            shape=timestamps.size,
-            dtype=[('timestamp', 'datetime64[us]'), ('id', 'uint16')]
-        )
-        unminimized_batch['timestamp'][:] = timestamps
-        unminimized_batch['id'][:] = id
-
-        return unminimized_batch
-
-    def _consume_batches(self) -> list[TimestampIdBatch]:
-        """Consume all currently available batches.
-
-        Returns
-        -------
-        list[TimestampIdBatch]
-            List of consumed batches
-        """
-        if not self._active_plugin_indices:
-            return []
-
-        batches: list[MinimizedTimestampIdBatch] = []
-        done_indices: list[int] = []
-
-        for idx in self._active_plugin_indices:
-            accumulator = self._accumulators[idx]
-            batches.extend(accumulator.consume())
-
-            if accumulator.closed:
-                done_indices.append(idx)
-
-        for idx in done_indices:
-            self._active_plugin_indices.remove(idx)
-
-        unminimized_batches: list[TimestampIdBatch] = [
-            self._unminimize_batch(batch) for batch in batches
-        ]
-
-        return unminimized_batches
-
-    def _generate(self,) -> Iterator[TimestampIdBatch]:
-        """Generate timestamps without ordering.
-
-        Yields
-        ------
-        TimestampIdBatch
-            Timestamp batches
-        """
-
-        while self._active_plugin_indices:
-            time.sleep(self._delay)
-            batches = self._consume_batches()
-
-            if not batches:
-                continue
-
-            if self._batch_size is None:
-                yield np.concatenate(batches)
-            else:
-                yield from chunk_array(
-                    array=np.concatenate(batches),
-                    size=self._batch_size
-                )
-
-    def _generate_with_ordering(self) -> Iterator[TimestampIdBatch]:
-        """Generate timestamps with ordering.
-
-        Yields
-        ------
-        TimestampIdBatch
-            Timestamp batches
-        """
-        while (
-            self._active_plugin_indices
-            or self._overlapped_future_part is not None
-        ):
-            time.sleep(self._delay)
-            batches = self._consume_batches()
-
-            if self._overlapped_future_part is not None:
-                batches.append(self._overlapped_future_part)
-                self._overlapped_future_part = None
-
-            if not batches:
-                continue
-
-            # after getting batches within delay time we need to wait for
-            # overlapping batches that are not yet captured
-            # Scheme: :
-            #      capturing starts after first batch is received
-            #      |     capturing ends after the delay has elapsed
-            #      |     | overlapping batch is published after capturing !
-            # -----|     | |   that's why we should wait delay once again
-            #   ----- +++++|   |
-            #      ----- | |   |
-            #
-
-            if self._active_plugin_indices:
-                # finding latest timestamp that will be a cutoff point
-                latest_timestamp = np.datetime64(datetime.min.isoformat())
-                for batch in batches:
-                    last_timestamp: np.datetime64 = batch['timestamp'][-1]
-
-                    if last_timestamp > latest_timestamp:
-                        latest_timestamp = last_timestamp
-
-                time.sleep(self._delay)
-                overlapped_batches = self._consume_batches()
-
-                if overlapped_batches:
-                    overlapped = merge_arrays(overlapped_batches)
-                    index = np.searchsorted(
-                        a=overlapped['timestamp'],
-                        v=latest_timestamp,
-                        side='right'
-                    )
-                    overlapped_part = overlapped[:index]
-                    future_part = overlapped[index:]
-
-                    if overlapped_part.size > 0:
-                        batches.append(overlapped_part)
-
-                    if future_part.size > 0:
-                        self._overlapped_future_part = future_part
-
-            sorted_array = merge_arrays(batches)
-
-            if self._batch_size is None:
-                yield sorted_array
-            else:
-                yield from chunk_array(
-                    array=sorted_array,
-                    size=self._batch_size
-                )
+                yield result_array['timestamp']
