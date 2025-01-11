@@ -37,38 +37,6 @@ class InputPluginsMerger:
         if not self._plugins:
             raise ValueError('At least one plugin must be provided')
 
-    def _find_cutoff_timestamp(
-        self,
-        arrays: Iterable[NDArray[np.datetime64]],
-    ) -> np.datetime64:
-        """Find cutoff timestamp for timestamp arrays.
-
-        Parameters
-        ----------
-        arrays : Iterable[NDArray[np.datetime64]]
-            Arrays to find timestamp for
-
-        Returns
-        -------
-        datetime64
-            Cutoff timestamp
-
-        Raises
-        ------
-        ValueError
-            If no arrays in iterable provided
-
-        Notes
-        -----
-        See description of cutoff timestamp in `_slice` method
-        """
-        arrays = tuple(arrays)
-
-        if len(arrays) == 0:
-            raise ValueError('At least one array is expected')
-
-        return min(arrays, key=lambda arr: arr[-1])[-1]
-
     def _slice(
         self,
         size: int,
@@ -156,9 +124,10 @@ class InputPluginsMerger:
                 break
 
             # find cutoff timestamp
-            cutoff_timestamp = self._find_cutoff_timestamp(
-                arrays=next_arrays.values()
-            )
+            cutoff_timestamp = min(
+                next_arrays.values(),
+                key=lambda arr: arr[-1]
+            )[-1]
 
             # fill the slice
             slice: dict[int, NDArray[np.datetime64]] = dict()
