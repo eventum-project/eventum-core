@@ -15,7 +15,7 @@ STATIC_FILES_DIR = os.path.join(
 )
 
 
-def test_time_pattern_sample():
+def test_plugin():
     config = TimePatternsInputPluginConfig(
         patterns=[
             os.path.join(STATIC_FILES_DIR, 'pattern1.yml'),
@@ -27,13 +27,12 @@ def test_time_pattern_sample():
         config=config,
         params={
             'id': 1,
-            'live_mode': False,
             'timezone': timezone('UTC')
         }
     )
 
     timestamps = []
-    for batch in plugin.generate():
+    for batch in plugin.generate(1000, skip_past=False):
         timestamps.extend(batch)
 
     assert timestamps
@@ -59,36 +58,6 @@ def test_time_pattern_sample():
     # plt.show()
 
 
-def test_time_pattern_live():
-    config = TimePatternsInputPluginConfig(
-        patterns=[
-            os.path.join(STATIC_FILES_DIR, 'pattern1.yml'),
-            os.path.join(STATIC_FILES_DIR, 'pattern2.yml'),
-            os.path.join(STATIC_FILES_DIR, 'pattern3.yml')
-        ]
-    )
-    plugin = TimePatternsInputPlugin(
-        config=config,
-        params={
-            'id': 1,
-            'live_mode': True,
-            'timezone': timezone('UTC')
-        }
-    )
-
-    timestamps = []
-    for batch in plugin.generate():
-        timestamps.extend(batch)
-
-    assert timestamps
-
-    # Uncomment section below to visualize distribution
-
-    # import matplotlib.pyplot as plt
-    # plt.hist(timestamps, bins=1000)
-    # plt.show()
-
-
 def test_time_pattern_invalid_config():
     config = TimePatternsInputPluginConfig(
         patterns=[
@@ -101,7 +70,6 @@ def test_time_pattern_invalid_config():
             config=config,
             params={
                 'id': 1,
-                'live_mode': True,
                 'timezone': timezone('UTC')
             }
         )
