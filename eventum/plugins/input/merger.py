@@ -32,7 +32,7 @@ class InputPluginsMerger:
     """
 
     def __init__(self, plugins: Iterable[InputPlugin]) -> None:
-        self._plugins = list(plugins)
+        self._plugins = {plugin.guid: plugin for plugin in plugins}
 
         if not self._plugins:
             raise ValueError('At least one plugin must be provided')
@@ -41,7 +41,7 @@ class InputPluginsMerger:
         self,
         size: int,
         skip_past: bool
-    ) -> Iterator[dict[int, NDArray[np.datetime64]]]:
+    ) -> Iterator[dict[str, NDArray[np.datetime64]]]:
         """Slice timestamps from active generators. For each active
         generator current slice starts at earliest available timestamp
         and ends at minimal latest of arrays across all generators
@@ -56,14 +56,14 @@ class InputPluginsMerger:
 
         Yields
         ------
-        dict[int, NDArray[np.datetime64]]
-            Slices of generators as a map with plugin id in keys and
+        dict[str, NDArray[np.datetime64]]
+            Slices of generators as a map with plugin guids in keys and
             arrays in values
 
         Notes
         -----
         Algorithm can be described by the following illustration:
-        ```
+        ```txt
         gen.
         ^
         |    0          1  2 3       4  5
@@ -77,22 +77,22 @@ class InputPluginsMerger:
         method will yield 5 times.
         """
         active_generators = {
-            plugin.id: iter(plugin.generate(size, skip_past))
-            for plugin in self._plugins
+            guid: iter(plugin.generate(size, skip_past))
+            for guid, plugin in self._plugins.items()
         }
 
-        next_arrays: dict[int, NDArray[np.datetime64]] = dict()
-        next_required_ids = list(active_generators.keys())
+        next_arrays: dict[str, NDArray[np.datetime64]] = dict()
+        next_required_guids = list(active_generators.keys())
 
         while True:
             # get next arrays from generators if required
-            if next_required_ids:
-                for id in next_required_ids:
+            if next_required_guids:
+                for guid in next_required_guids:
                     try:
-                        array = next(active_generators[id])
-                        next_arrays[id] = array
+                        array = next(active_generators[guid])
+                        next_arrays[guid] = array
                     except StopIteration:
-                        del active_generators[id]
+                        del active_generators[guid]
                     except PluginRuntimeError as e:
                         logger.error(
                             (
@@ -101,14 +101,9 @@ class InputPluginsMerger:
                             ),
                             **e.context
                         )
-                        del active_generators[id]
+                        del active_generators[guid]
                     except Exception as e:
-                        plugin = next(
-                            filter(
-                                lambda plugin: plugin.id == plugin_id,
-                                self._plugins
-                            )
-                        )
+                        plugin = self._plugins[guid]
                         logger.exception(
                             (
                                 'One of the input plugins finished execution '
@@ -118,7 +113,7 @@ class InputPluginsMerger:
                             reason=str(e),
                         )
 
-                next_required_ids.clear()
+                next_required_guids.clear()
 
             if not next_arrays:
                 break
@@ -130,16 +125,16 @@ class InputPluginsMerger:
             )[-1]
 
             # fill the slice
-            slice: dict[int, NDArray[np.datetime64]] = dict()
-            for plugin_id in tuple(next_arrays.keys()):
-                array = next_arrays[plugin_id]
+            slice: dict[str, NDArray[np.datetime64]] = dict()
+            for guid in tuple(next_arrays.keys()):
+                array = next_arrays[guid]
 
                 if array[-1] <= cutoff_timestamp:
-                    slice[plugin_id] = array
-                    del next_arrays[plugin_id]
+                    slice[guid] = array
+                    del next_arrays[guid]
 
-                    if plugin_id in active_generators:
-                        next_required_ids.append(plugin_id)
+                    if guid in active_generators:
+                        next_required_guids.append(guid)
                 elif array[0] < cutoff_timestamp < array[-1]:
                     index = np.searchsorted(
                         a=array,
@@ -150,15 +145,15 @@ class InputPluginsMerger:
                     right_part = array[index:]
 
                     if left_part.size > 0:
-                        slice[plugin_id] = left_part
+                        slice[guid] = left_part
 
                     if right_part.size > 0:
-                        next_arrays[plugin_id] = right_part
+                        next_arrays[guid] = right_part
                     else:
-                        del next_arrays[plugin_id]
+                        del next_arrays[guid]
 
-                        if plugin_id in active_generators:
-                            next_required_ids.append(plugin_id)
+                        if guid in active_generators:
+                            next_required_guids.append(guid)
 
             yield slice
 
@@ -218,13 +213,13 @@ class InputPluginsMerger:
         for arrays in self._slice(size=consume_size, skip_past=skip_past):
             # build arrays with id from simple arrays
             arrays_with_id: list[TimestampIdArray] = []
-            for plugin_id, array in arrays.items():
+            for guid, array in arrays.items():
                 array_with_id = np.empty(
                     shape=array.size,
                     dtype=[('timestamp', 'datetime64[us]'), ('id', 'uint16')]
                 )
                 array_with_id['timestamp'][:] = array
-                array_with_id['id'][:] = plugin_id
+                array_with_id['id'][:] = self._plugins[guid].id
 
                 arrays_with_id.append(array_with_id)
 
