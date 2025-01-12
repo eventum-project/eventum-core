@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from types import ModuleType
 from typing import (Any, Generic, Iterator, NotRequired, Required, TypedDict,
                     TypeVar, get_args)
+from uuid import uuid4
 
 import structlog
 from pydantic import RootModel
@@ -162,6 +163,13 @@ class Plugin(ABC, Generic[ConfigT, ParamsT]):
         with self.required_params():
             self._id = params['id']
 
+        self._guid = str(uuid4())
+
+        if 'ephemeral_name' in params:
+            self._plugin_name = params['ephemeral_name']
+        if 'ephemeral_type' in params:
+            self._plugin_type = params['ephemeral_type']
+
         self._config = config
         self._logger = logger.bind(**self.instance_info)
 
@@ -253,6 +261,11 @@ class Plugin(ABC, Generic[ConfigT, ParamsT]):
     def id(self) -> int:
         """ID of the plugin."""
         return self._id
+
+    @property
+    def guid(self) -> str:
+        """GUID of the plugin."""
+        return self._guid
 
     @property
     def plugin_name(self) -> str:
