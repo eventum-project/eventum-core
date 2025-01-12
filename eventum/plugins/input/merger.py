@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 
 from eventum.plugins.exceptions import PluginRuntimeError
 from eventum.plugins.input.base.plugin import InputPlugin
-from eventum.plugins.input.utils.array_utils import merge_arrays
+from eventum.plugins.input.utils.array_utils import chunk_array, merge_arrays
 
 logger = structlog.stdlib.get_logger()
 
@@ -241,21 +241,24 @@ class InputPluginsMerger:
                 result_array = np.concatenate(merged_arrays)
                 merged_arrays.clear()
 
-                if result_array.size > size:
-                    merged_arrays.append(result_array[size:])
-                    result_array = result_array[:size]
+                chunks = chunk_array(result_array, size)
+                if chunks[-1].size < size:
+                    merged_arrays.append(chunks.pop())
 
-                if include_id:
-                    yield result_array
-                else:
-                    yield result_array['timestamp']
+                for chunk in chunks:
+                    if include_id:
+                        yield chunk
+                    else:
+                        yield chunk['timestamp']
 
-                current_size -= result_array.size
+                    current_size -= chunk.size
 
         if merged_arrays:
             result_array = np.concatenate(merged_arrays)
 
-            if include_id:
-                yield result_array
-            else:
-                yield result_array['timestamp']
+            chunks = chunk_array(result_array, size)
+            for chunk in chunks:
+                if include_id:
+                    yield chunk
+                else:
+                    yield chunk['timestamp']
