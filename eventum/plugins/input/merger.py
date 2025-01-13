@@ -181,7 +181,7 @@ class InputPluginsMerger:
         skip_past: bool,
         include_id: bool = False,
     ) -> Iterator[TimestampArray | TimestampIdArray]:
-        """Start iterating over merged timestamps.
+        """Iterate over merged timestamps.
 
         Parameters
         ----------

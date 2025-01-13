@@ -59,7 +59,7 @@ class InputPlugin(Plugin[ConfigT, InputPluginParams], register=False):
         size: int,
         skip_past: bool = True
     ) -> Iterator[NDArray[datetime64]]:
-        """Start timestamps generation with yielding timestamp batches.
+        """Generate timestamps.
 
         Parameters
         ----------
