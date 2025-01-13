@@ -392,7 +392,7 @@ class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
 
         self._logger.info('Generating in time patterns range')
 
-        yield from merger.generate(size, skip_past, include_id=False)
+        yield from merger.iter_merged(size, skip_past, include_id=False)
 
     @property
     def count(self) -> int:

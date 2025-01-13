@@ -50,9 +50,10 @@ def test_merger():
 
     plugins_lst = [plugin_1, plugin_2, plugin_3]
 
-    plugins = InputPluginsMerger(plugins=plugins_lst)
+    merger = InputPluginsMerger(plugins=plugins_lst)
 
-    batches = list(plugins.generate(10000, skip_past=False, include_id=False))
+    batches = list(merger.iter_merged(
+        10000, skip_past=False, include_id=False))
 
     array = np.concatenate(batches)
     assert array.size == 300_000
@@ -100,9 +101,10 @@ def test_merger_with__ids():
 
     plugins_lst = [plugin_1, plugin_2, plugin_3]
 
-    plugins = InputPluginsMerger(plugins=plugins_lst)
+    merger = InputPluginsMerger(plugins=plugins_lst)
 
-    batches = list(plugins.generate(10000, skip_past=False, include_id=True))
+    batches = list(merger.iter_merged(
+        10000, skip_past=False, include_id=True))
 
     array = np.concatenate(batches)
 

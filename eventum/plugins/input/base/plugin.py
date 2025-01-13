@@ -64,7 +64,7 @@ class InputPlugin(Plugin[ConfigT, InputPluginParams], register=False):
         Parameters
         ----------
         size : int
-            Number of timestamps to generate
+            Number of timestamps to generate for each iteration
 
         skip_past : bool, default=True
             Wether to skip past timestamps before starting generation

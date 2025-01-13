@@ -158,7 +158,7 @@ class InputPluginsMerger:
             yield slice
 
     @overload
-    def generate(
+    def iter_merged(
         self,
         size: int,
         skip_past: bool,
@@ -167,7 +167,7 @@ class InputPluginsMerger:
         ...
 
     @overload
-    def generate(
+    def iter_merged(
         self,
         size: int,
         skip_past: bool,
@@ -175,18 +175,18 @@ class InputPluginsMerger:
     ) -> Iterator[TimestampIdArray]:
         ...
 
-    def generate(
+    def iter_merged(
         self,
         size: int,
         skip_past: bool,
         include_id: bool = False,
     ) -> Iterator[TimestampArray | TimestampIdArray]:
-        """Start timestamps generation of input plugins.
+        """Start iterating over merged timestamps.
 
         Parameters
         ----------
         size : int
-            Number of timestamps to generate
+            Number of timestamps to get for each iteration
 
         skip_past : bool
             Parameter "skip_past" of generate method of input plugins
