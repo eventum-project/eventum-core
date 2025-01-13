@@ -174,9 +174,8 @@ class InputPluginsMerger:
 
         Yields
         ------
-        TimestampArray | TimestampIdArray
-            Timestamps array or timestamps with plugin id array if
-            parameter `include_id` is `True`
+        TimestampIdArray
+            Array of timestamps with plugin ids
         """
         if size < 1:
             raise ValueError(
