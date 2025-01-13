@@ -1,4 +1,4 @@
-from typing import Annotated, Iterable, Iterator, Literal, TypeAlias, overload
+from typing import Annotated, Iterable, Iterator, TypeAlias
 
 import numpy as np
 import structlog
@@ -157,30 +157,11 @@ class InputPluginsMerger:
 
             yield slice
 
-    @overload
     def iterate(
         self,
         size: int,
         skip_past: bool,
-        include_id: Literal[False]
-    ) -> Iterator[TimestampArray]:
-        ...
-
-    @overload
-    def iterate(
-        self,
-        size: int,
-        skip_past: bool,
-        include_id: Literal[True]
     ) -> Iterator[TimestampIdArray]:
-        ...
-
-    def iterate(
-        self,
-        size: int,
-        skip_past: bool,
-        include_id: bool = False,
-    ) -> Iterator[TimestampArray | TimestampIdArray]:
         """Iterate over merged timestamps.
 
         Parameters
@@ -190,9 +171,6 @@ class InputPluginsMerger:
 
         skip_past : bool
             Parameter "skip_past" of generate method of input plugins
-
-        include_id : bool, default=False
-            Wether to include id of plugins in batches
 
         Yields
         ------
@@ -241,19 +219,9 @@ class InputPluginsMerger:
                     merged_arrays.append(chunks.pop())
 
                 for chunk in chunks:
-                    if include_id:
-                        yield chunk
-                    else:
-                        yield chunk['timestamp']
-
+                    yield chunk
                     current_size -= chunk.size
 
         if merged_arrays:
             result_array = np.concatenate(merged_arrays)
-
-            chunks = chunk_array(result_array, size)
-            for chunk in chunks:
-                if include_id:
-                    yield chunk
-                else:
-                    yield chunk['timestamp']
+            yield from chunk_array(result_array, size)
