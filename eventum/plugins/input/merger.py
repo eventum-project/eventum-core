@@ -1,4 +1,4 @@
-from typing import Annotated, Iterable, Iterator, TypeAlias
+from typing import Iterable, Iterator
 
 import numpy as np
 import structlog
@@ -6,18 +6,13 @@ from numpy.typing import NDArray
 
 from eventum.plugins.exceptions import PluginRuntimeError
 from eventum.plugins.input.base.plugin import InputPlugin
+from eventum.plugins.input.protocols import TimestampIdArray, TimestampIterator
 from eventum.plugins.input.utils.array_utils import chunk_array, merge_arrays
 
 logger = structlog.stdlib.get_logger()
 
-TimestampArray: TypeAlias = NDArray[np.datetime64]
-TimestampIdArray: TypeAlias = Annotated[
-    NDArray,
-    np.dtype([('timestamp', 'datetime64[us]'), ('id', 'uint16')])
-]
 
-
-class InputPluginsMerger:
+class InputPluginsMerger(TimestampIterator):
     """Merger of timestamp generating by multiple input plugins.
 
     Parameters
@@ -52,7 +47,7 @@ class InputPluginsMerger:
             Number of timestamps to read from each generator
 
         skip_past : bool
-            Parameter "skip_past" of generate method of input plugins
+            Wether to skip past timestamps before starting slicing
 
         Yields
         ------
@@ -160,23 +155,8 @@ class InputPluginsMerger:
     def iterate(
         self,
         size: int,
-        skip_past: bool,
+        skip_past: bool = True
     ) -> Iterator[TimestampIdArray]:
-        """Iterate over merged timestamps.
-
-        Parameters
-        ----------
-        size : int
-            Number of timestamps to get for each iteration
-
-        skip_past : bool
-            Parameter "skip_past" of generate method of input plugins
-
-        Yields
-        ------
-        TimestampIdArray
-            Array of timestamps with plugin ids
-        """
         if size < 1:
             raise ValueError(
                 'Parameter "size" must be greater or equal to 1'
