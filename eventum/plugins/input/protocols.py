@@ -10,6 +10,8 @@ TimestampIdArray: TypeAlias = Annotated[
 
 
 class TimestampIterator(Protocol):
+    """Class for iterating over `TimestampIdArray` arrays."""
+
     def iterate(
         self,
         size: int,
