@@ -52,7 +52,7 @@ def test_merger():
 
     merger = InputPluginsMerger(plugins=plugins_lst)
 
-    batches = list(merger.iter_merged(
+    batches = list(merger.iterate(
         10000, skip_past=False, include_id=False))
 
     array = np.concatenate(batches)
@@ -103,7 +103,7 @@ def test_merger_with__ids():
 
     merger = InputPluginsMerger(plugins=plugins_lst)
 
-    batches = list(merger.iter_merged(
+    batches = list(merger.iterate(
         10000, skip_past=False, include_id=True))
 
     array = np.concatenate(batches)

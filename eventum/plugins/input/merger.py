@@ -158,7 +158,7 @@ class InputPluginsMerger:
             yield slice
 
     @overload
-    def iter_merged(
+    def iterate(
         self,
         size: int,
         skip_past: bool,
@@ -167,7 +167,7 @@ class InputPluginsMerger:
         ...
 
     @overload
-    def iter_merged(
+    def iterate(
         self,
         size: int,
         skip_past: bool,
@@ -175,7 +175,7 @@ class InputPluginsMerger:
     ) -> Iterator[TimestampIdArray]:
         ...
 
-    def iter_merged(
+    def iterate(
         self,
         size: int,
         skip_past: bool,
