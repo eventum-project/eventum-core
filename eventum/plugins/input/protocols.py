@@ -3,21 +3,24 @@ from typing import Annotated, Iterator, Protocol, TypeAlias
 import numpy as np
 from numpy.typing import NDArray
 
-TimestampIdArray: TypeAlias = Annotated[
+IdentifiedTimestamps: TypeAlias = Annotated[
     NDArray,
     np.dtype([('timestamp', 'datetime64[us]'), ('id', 'uint16')])
 ]
 
 
-class TimestampIterator(Protocol):
-    """Class for iterating over `TimestampIdArray` arrays."""
+class SupportsIdentifiedTimestampsIterate(Protocol):
+    """Protocol for iterating over identified timestamps. Defines an
+    interface for objects capable of yielding timestamp arrays with
+    associated plugin identifiers.
+    """
 
     def iterate(
         self,
         size: int,
         skip_past: bool = True
-    ) -> Iterator[TimestampIdArray]:
-        """Iterate over timestamps.
+    ) -> Iterator[IdentifiedTimestamps]:
+        """Iterate over arrays of identified timestamps.
 
         Parameters
         ----------

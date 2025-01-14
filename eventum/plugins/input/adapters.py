@@ -3,11 +3,13 @@ from typing import Iterator
 import numpy as np
 
 from eventum.plugins.input.base.plugin import InputPlugin
-from eventum.plugins.input.protocols import TimestampIdArray, TimestampIterator
+from eventum.plugins.input.protocols import (
+    IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
 
 
-class TimestampIteratorAdapter(TimestampIterator):
-    """Adapter for input plugin to follow `TimestampIterator` protocol.
+class IdentifiedTimestampsPluginAdapter(SupportsIdentifiedTimestampsIterate):
+    """Adapter for input plugin to follow
+    `SupportsIdentifiedTimestampsIterate` protocol.
 
     Parameters
     ----------
@@ -22,14 +24,14 @@ class TimestampIteratorAdapter(TimestampIterator):
         self,
         size: int,
         skip_past: bool = True
-    ) -> Iterator[TimestampIdArray]:
+    ) -> Iterator[IdentifiedTimestamps]:
         if size < 1:
             raise ValueError(
                 'Parameter "size" must be greater or equal to 1'
             )
 
         for array in self._plugin.generate(size=size, skip_past=skip_past):
-            array_with_id: TimestampIdArray = np.empty(
+            array_with_id: IdentifiedTimestamps = np.empty(
                 shape=array.size,
                 dtype=[('timestamp', 'datetime64[us]'), ('id', 'uint16')]
             )

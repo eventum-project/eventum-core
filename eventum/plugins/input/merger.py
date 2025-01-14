@@ -6,13 +6,14 @@ from numpy.typing import NDArray
 
 from eventum.plugins.exceptions import PluginRuntimeError
 from eventum.plugins.input.base.plugin import InputPlugin
-from eventum.plugins.input.protocols import TimestampIdArray, TimestampIterator
+from eventum.plugins.input.protocols import (
+    IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
 from eventum.plugins.input.utils.array_utils import chunk_array, merge_arrays
 
 logger = structlog.stdlib.get_logger()
 
 
-class InputPluginsMerger(TimestampIterator):
+class InputPluginsMerger(SupportsIdentifiedTimestampsIterate):
     """Merger of timestamp generating by multiple input plugins.
 
     Parameters
@@ -156,7 +157,7 @@ class InputPluginsMerger(TimestampIterator):
         self,
         size: int,
         skip_past: bool = True
-    ) -> Iterator[TimestampIdArray]:
+    ) -> Iterator[IdentifiedTimestamps]:
         if size < 1:
             raise ValueError(
                 'Parameter "size" must be greater or equal to 1'
@@ -165,11 +166,11 @@ class InputPluginsMerger(TimestampIterator):
         consume_size = max(10_000, size // len(self._plugins))
 
         current_size = 0
-        merged_arrays: list[TimestampIdArray] = []
+        merged_arrays: list[IdentifiedTimestamps] = []
 
         for arrays in self._slice(size=consume_size, skip_past=skip_past):
             # build arrays with id from simple arrays
-            arrays_with_id: list[TimestampIdArray] = []
+            arrays_with_id: list[IdentifiedTimestamps] = []
             for guid, array in arrays.items():
                 array_with_id = np.empty(
                     shape=array.size,

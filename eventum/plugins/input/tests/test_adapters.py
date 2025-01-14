@@ -1,12 +1,12 @@
 import numpy as np
 from pytz import timezone
 
-from eventum.plugins.input.adapters import TimestampIteratorAdapter
+from eventum.plugins.input.adapters import IdentifiedTimestampsPluginAdapter
 from eventum.plugins.input.plugins.cron.config import CronInputPluginConfig
 from eventum.plugins.input.plugins.cron.plugin import CronInputPlugin
 
 
-def test_timestamp_iterator_adapter():
+def test_identified_timestamps_plugin_adapter():
     plugin = CronInputPlugin(
         config=CronInputPluginConfig(
             start='now',
@@ -16,7 +16,7 @@ def test_timestamp_iterator_adapter():
         ),
         params={'id': 1437, 'timezone': timezone('UTC')}
     )
-    adapted = TimestampIteratorAdapter(plugin=plugin)
+    adapted = IdentifiedTimestampsPluginAdapter(plugin=plugin)
 
     plugin_arrays = []
     for array in plugin.generate(size=1000, skip_past=False):
