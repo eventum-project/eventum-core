@@ -8,7 +8,8 @@ from pytz.tzinfo import BaseTzInfo
 
 from eventum.plugins.input.protocols import (
     IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
-from eventum.plugins.input.utils.time_utils import now64
+from eventum.plugins.input.utils.time_utils import (now64,
+                                                    timedelta64_to_seconds)
 
 
 class TimestampsBatcher:
@@ -24,8 +25,8 @@ class TimestampsBatcher:
 
     Parameters
     ----------
-    source : InputPluginsMerger
-        Source of timestamp arrays
+    source : SupportsIdentifiedTimestampsIterate
+        Source of identified timestamp arrays
 
     batch_size : int | None, default=100_000
         Maximum size of producing batches, not limited if value is
@@ -108,10 +109,13 @@ class TimestampsBatcher:
         if self._scheduling:
             for batch in self._collect_batch(skip_past=skip_past):
                 now = now64(self._timezone)
-                latest_ts = batch[-1]
+                latest_ts: np.datetime64 = batch['timestamp'][-1]
+                delta = latest_ts - now
 
-                if latest_ts < now:
-                    time.sleep(now - latest_ts)
+                seconds = timedelta64_to_seconds(timedelta=delta)
+
+                if seconds > 0:
+                    time.sleep(seconds)
 
                 yield batch
         else:
