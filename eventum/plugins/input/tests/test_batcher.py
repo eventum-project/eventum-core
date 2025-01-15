@@ -24,8 +24,7 @@ def test_size_batching(source):
     batcher = TimestampsBatcher(
         source=source,
         batch_size=1000,
-        batch_delay=None,
-        timezone=timezone('UTC')
+        batch_delay=None
     )
 
     batches = list(batcher.iterate(skip_past=False))
@@ -38,8 +37,7 @@ def test_uneven_size_batching(source):
     batcher = TimestampsBatcher(
         source=source,
         batch_size=333_333,
-        batch_delay=None,
-        timezone=timezone('UTC')
+        batch_delay=None
     )
 
     batches = list(batcher.iterate(skip_past=False))
@@ -70,8 +68,7 @@ def test_delay_batching(delay_source):
     batcher = TimestampsBatcher(
         source=delay_source,
         batch_size=None,
-        batch_delay=600,
-        timezone=timezone('UTC')
+        batch_delay=600
     )
 
     batches = list(batcher.iterate(skip_past=False))
@@ -111,8 +108,7 @@ def test_delay_with_size_batching(uneven_delay_source):
     batcher = TimestampsBatcher(
         source=uneven_delay_source,
         batch_size=15,
-        batch_delay=600,
-        timezone=timezone('UTC')
+        batch_delay=600
     )
 
     batches = list(batcher.iterate(skip_past=False))
