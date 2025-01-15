@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import re
 from abc import ABC, abstractmethod
@@ -454,9 +452,9 @@ ConditionCheck: TypeAlias = (
     | Before | After
     | Defined | HasTags
 )
-ConditionLogic: TypeAlias = Union['Or', 'And', 'Not']
+ConditionLogic: TypeAlias = Union['Or', 'And', 'Not']   # type: ignore
 
-Condition: TypeAlias = ConditionLogic | ConditionCheck
+Condition: TypeAlias = ConditionLogic | ConditionCheck  # type: ignore
 
 
 class Or(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
@@ -501,3 +499,12 @@ class Not(BaseModel, Checkable[EventContext], frozen=True, extra='forbid'):
 
     def check(self, context: EventContext) -> bool:
         return not self.not_.check(context)
+
+
+# resolve forward references
+ConditionLogic: TypeAlias = (Or | And | Not)            # type: ignore
+Condition: TypeAlias = ConditionLogic | ConditionCheck  # type: ignore
+
+Or.model_rebuild()
+And.model_rebuild()
+Not.model_rebuild()
