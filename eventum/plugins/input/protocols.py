@@ -32,7 +32,7 @@ class SupportsIdentifiedTimestampsIterate(Protocol):
 
         Yields
         ------
-        TimestampIdArray
+        IdentifiedTimestamps
             Array of timestamps with plugin ids
 
         Raises

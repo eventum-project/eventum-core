@@ -94,8 +94,8 @@ class TimestampsBatcher:
 
         Yields
         ------
-        TimestampIdArray
-            Timestamp batch
+        IdentifiedTimestamps
+            Batch of identified timestamps
         """
         read_size = self._batch_size or 10_000
 
