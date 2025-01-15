@@ -1,4 +1,3 @@
-import time
 from datetime import timedelta
 from typing import Iterator
 
@@ -8,8 +7,6 @@ from pytz.tzinfo import BaseTzInfo
 
 from eventum.plugins.input.protocols import (
     IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
-from eventum.plugins.input.utils.time_utils import (now64,
-                                                    timedelta64_to_seconds)
 
 
 class TimestampsBatcher:
@@ -37,10 +34,6 @@ class TimestampsBatcher:
         incoming timestamps, not limited if value is `None`, cannot be
         less then `MIN_BATCH_DELAY` attribute
 
-    scheduling : bool, default=False
-        Whether to respect timestamp values and publish them according
-        to real time
-
     timezone : BaseTzInfo, default=pytz.timezone('UTC')
         Timezone of incoming timestamps, used to track current time
         when `scheduling` parameter is set to `True`
@@ -59,7 +52,6 @@ class TimestampsBatcher:
         source: SupportsIdentifiedTimestampsIterate,
         batch_size: int | None = 100_000,
         batch_delay: float | None = None,
-        scheduling: bool = False,
         timezone: BaseTzInfo = timezone('UTC'),
     ) -> None:
         if batch_size is None and batch_delay is None:
@@ -85,7 +77,6 @@ class TimestampsBatcher:
 
         self._batch_size = batch_size
         self._batch_delay = batch_delay
-        self._scheduling = scheduling
         self._timezone = timezone
 
         self._source = source
@@ -99,37 +90,6 @@ class TimestampsBatcher:
         Parameters
         ----------
         skip_past : bool, default=True
-            Wether to skip past timestamps before starting iteration
-
-        Yields
-        ------
-        TimestampIdArray
-            Timestamp batch
-        """
-        if self._scheduling:
-            for batch in self._collect_batch(skip_past=skip_past):
-                now = now64(self._timezone)
-                latest_ts: np.datetime64 = batch['timestamp'][-1]
-                delta = latest_ts - now
-
-                seconds = timedelta64_to_seconds(timedelta=delta)
-
-                if seconds > 0:
-                    time.sleep(seconds)
-
-                yield batch
-        else:
-            yield from self._collect_batch(skip_past=skip_past)
-
-    def _collect_batch(
-        self,
-        skip_past: bool
-    ) -> Iterator[IdentifiedTimestamps]:
-        """Collect batch.
-
-        Parameters
-        ----------
-        skip_past : bool
             Wether to skip past timestamps before starting iteration
 
         Yields

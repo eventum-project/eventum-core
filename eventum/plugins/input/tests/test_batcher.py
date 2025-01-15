@@ -25,7 +25,6 @@ def test_size_batching(source):
         source=source,
         batch_size=1000,
         batch_delay=None,
-        scheduling=False,
         timezone=timezone('UTC')
     )
 
@@ -40,7 +39,6 @@ def test_uneven_size_batching(source):
         source=source,
         batch_size=333_333,
         batch_delay=None,
-        scheduling=False,
         timezone=timezone('UTC')
     )
 
@@ -73,7 +71,6 @@ def test_delay_batching(delay_source):
         source=delay_source,
         batch_size=None,
         batch_delay=600,
-        scheduling=False,
         timezone=timezone('UTC')
     )
 
@@ -115,25 +112,9 @@ def test_delay_with_size_batching(uneven_delay_source):
         source=uneven_delay_source,
         batch_size=15,
         batch_delay=600,
-        scheduling=False,
         timezone=timezone('UTC')
     )
 
     batches = list(batcher.iterate(skip_past=False))
 
     assert [batch.size for batch in batches] == [11, 11, 8, 15, 5]
-
-
-def test_active_scheduling(source):
-    batcher = TimestampsBatcher(
-        source=source,
-        batch_size=1000,
-        batch_delay=None,
-        scheduling=True,
-        timezone=timezone('UTC')
-    )
-
-    batches = list(batcher.iterate(skip_past=False))
-
-    assert len(batches) == 1000
-    assert all([batch.size == 1000 for batch in batches])
