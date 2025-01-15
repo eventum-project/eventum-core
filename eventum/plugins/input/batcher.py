@@ -2,8 +2,6 @@ from datetime import timedelta
 from typing import Iterator
 
 import numpy as np
-from pytz import timezone
-from pytz.tzinfo import BaseTzInfo
 
 from eventum.plugins.input.protocols import (
     IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
@@ -34,10 +32,6 @@ class TimestampsBatcher:
         incoming timestamps, not limited if value is `None`, cannot be
         less then `MIN_BATCH_DELAY` attribute
 
-    timezone : BaseTzInfo, default=pytz.timezone('UTC')
-        Timezone of incoming timestamps, used to track current time
-        when `scheduling` parameter is set to `True`
-
     Raises
     ------
     ValueError
@@ -52,7 +46,6 @@ class TimestampsBatcher:
         source: SupportsIdentifiedTimestampsIterate,
         batch_size: int | None = 100_000,
         batch_delay: float | None = None,
-        timezone: BaseTzInfo = timezone('UTC'),
     ) -> None:
         if batch_size is None and batch_delay is None:
             raise ValueError(
@@ -77,7 +70,6 @@ class TimestampsBatcher:
 
         self._batch_size = batch_size
         self._batch_delay = batch_delay
-        self._timezone = timezone
 
         self._source = source
 
