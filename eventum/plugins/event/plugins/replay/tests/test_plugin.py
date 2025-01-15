@@ -17,7 +17,7 @@ STATIC_DIR = os.path.join(
 def test_plugin_substitution_with_format():
     plugin = ReplayEventPlugin(
         config=ReplayEventPluginConfig(
-            path=os.path.join(STATIC_DIR, 'example.log'),
+            path=os.path.join(STATIC_DIR, 'example'),
             timestamp_pattern=r'\[(?P<timestamp>.*?)\]',
             timestamp_format='%Y'
         ),
@@ -54,7 +54,7 @@ def test_plugin_substitution_with_format():
 def test_plugin_substitution_with_default_format():
     plugin = ReplayEventPlugin(
         config=ReplayEventPluginConfig(
-            path=os.path.join(STATIC_DIR, 'example.log'),
+            path=os.path.join(STATIC_DIR, 'example'),
             timestamp_pattern=r'\[(?P<timestamp>.*?)\]',
         ),
         params={'id': 1}
@@ -91,7 +91,7 @@ def test_plugin_substitution_with_default_format():
 def test_plugin_substitution_with_missing_group():
     plugin = ReplayEventPlugin(
         config=ReplayEventPluginConfig(
-            path=os.path.join(STATIC_DIR, 'example.log'),
+            path=os.path.join(STATIC_DIR, 'example'),
             timestamp_pattern=r'\[(?P<ts>.*?)\]',
         ),
         params={'id': 1}
@@ -112,7 +112,7 @@ def test_plugin_substitution_with_missing_group():
 def test_plugin_repeat():
     plugin = ReplayEventPlugin(
         config=ReplayEventPluginConfig(
-            path=os.path.join(STATIC_DIR, 'example.log'),
+            path=os.path.join(STATIC_DIR, 'example'),
             timestamp_pattern=r'\[(?P<timestamp>.*?)\]',
             repeat=True
         ),
@@ -155,7 +155,7 @@ def test_plugin_substitution_with_bad_regex():
     with pytest.raises(PluginConfigurationError):
         ReplayEventPlugin(
             config=ReplayEventPluginConfig(
-                path=os.path.join(STATIC_DIR, 'example.log'),
+                path=os.path.join(STATIC_DIR, 'example'),
                 timestamp_pattern=r'\[(?P<timestamp>[.*?)\]',
             ),
             params={'id': 1}
@@ -166,7 +166,7 @@ def test_plugin_missing_file():
     with pytest.raises(PluginConfigurationError):
         ReplayEventPlugin(
             config=ReplayEventPluginConfig(
-                path=os.path.join(STATIC_DIR, 'unexistent.log'),
+                path=os.path.join(STATIC_DIR, 'unexistent'),
                 timestamp_pattern=r'\[(?P<timestamp>.*?)\]',
             ),
             params={'id': 1}
