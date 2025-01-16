@@ -1,6 +1,7 @@
-from concurrent.futures import Future, ThreadPoolExecutor
-from eventum.core.parameters.generator import GeneratorParameters
+from typing import Iterable
+
 from eventum.core.generator import Generator
+from eventum.core.models.parameters.generator import GeneratorParameters
 
 
 class ManagingError(Exception):
@@ -12,24 +13,6 @@ class GeneratorManager:
 
     def __init__(self) -> None:
         self._generators: dict[str, Generator] = dict()
-        self._running_tasks: dict[str, Future] = dict()
-        self._executor = ThreadPoolExecutor()
-
-    def shutdown(
-        self,
-        wait: bool = True,
-        cancel_pending: bool = False
-    ) -> None:
-        """Shutdown generators manager.
-
-        wait : bool, default=True
-            Wait until all running generators have finished execution
-
-        cancel_pending : bool, default=False
-            Wether to cancel all pending generators that was added but
-            not yet being started by executor
-        """
-        self._executor.shutdown(wait, cancel_futures=cancel_pending)
 
     def add(self, parameters: GeneratorParameters) -> None:
         """Add new generator with provided parameters to list of managed
@@ -39,11 +22,20 @@ class GeneratorManager:
         ----------
         parameters : GeneratorParameters
             Parameters for generator
+
+        Raises
+        ------
+        ManagingError
+            If generator with this id is already added
         """
-        ...
+        if parameters.id in self._generators:
+            raise ManagingError('Generator with this id is already added')
+
+        self._generators[parameters.id] = Generator(parameters)
 
     def remove(self, generator_id: str) -> None:
-        """Remove generator from list of managed generators.
+        """Remove generator from list of managed generators. Stop it in
+        case it is running.
 
         Parameters
         ----------
@@ -52,21 +44,38 @@ class GeneratorManager:
 
         Raises
         ------
-        ValueError
-            If generator is not found in list of managed generators
-
         ManagingError
-            If generator is currently running
+            If generator is not found in list of managed generators
         """
         generator = self.get_generator(generator_id)
 
         if generator.is_running:
-            raise ManagingError('Generator is running')
-        else:
-            del self._generators[generator_id]
+            generator.stop()
 
-    def run(self, generator_id: str) -> None:
-        """Run generator.
+        del self._generators[generator_id]
+
+    def bulk_remove(self, generator_ids: Iterable[str]) -> None:
+        """Remove generators from list of managed generators. Stop
+        generators that are running. If no generator of specified id
+        found in list of managed generators it is just skipped.
+
+        Parameters
+        ----------
+        generator_ids : Iterable[str]
+            ID of generators to remove
+        """
+        for id in generator_ids:
+            if id in self._generators:
+                generator = self._generators[id]
+
+                if generator.is_running:
+                    generator.stop()
+
+                del self._generators[id]
+
+    def start(self, generator_id: str) -> None:
+        """Start generator. Ignore call if generator is already
+        running.
 
         Parameters
         ----------
@@ -75,16 +84,35 @@ class GeneratorManager:
 
         Raises
         ------
-        ValueError
+        ManagingError
             If generator is not found in list of managed generators
         """
         generator = self.get_generator(generator_id)
 
-        task = self._executor.submit(generator.run)
-        self._running_tasks[generator_id] = task
+        if generator.is_running:
+            return
+
+        generator.start()
+
+    def bulk_start(self, generator_ids: Iterable[str]) -> None:
+        """Start generators. Ignore call for those that are already
+        running. If no generator of specified id found in list of
+        managed generators it is just skipped.
+
+        Parameters
+        ----------
+        generator_ids : Iterable[str]
+            ID of generators to start
+        """
+        for id in generator_ids:
+            if id in self._generators:
+                generator = self._generators[id]
+
+                if not generator.is_running:
+                    generator.start()
 
     def stop(self, generator_id: str) -> None:
-        """Stop generator.
+        """Stop generator. Ignore call if generator is not running.
 
         Parameters
         ----------
@@ -93,89 +121,32 @@ class GeneratorManager:
 
         Raises
         ------
-        ValueError
-            If generator is not found in list of managed generators
-
         ManagingError
-            If error occurs during generator stopping
+            If generator is not found in list of managed generators
         """
         generator = self.get_generator(generator_id)
 
-        try:
-            generator.stop()
-        except Exception as e:  # TODO narrow exception type
-            raise ManagingError(str(e))
+        if not generator.is_running:
+            return
 
-    def get_metrics(self, generator_id: str) -> GeneratorMetrics:
-        """Get metrics of generator.
+        generator.stop()
 
-        Parameters
-        ----------
-        generator_id : str
-            ID of generator to get metrics of
-
-        Returns
-        -------
-        GeneratorMetrics
-            Metrics
-
-        Raises
-        ------
-        ValueError
-            If generator is not found in list of managed generators
-
-        ManagingError
-            If error occurs during getting metrics
-        """
-        generator = self.get_generator(generator_id)
-
-        try:
-            return generator.get_metrics()
-        except Exception as e:  # TODO narrow exception type
-            raise ManagingError(str(e))
-
-    def wait(self, generator_id: str, timeout: float | None = None) -> None:
-        """Wait for generator to complete.
+    def bulk_stop(self, generator_ids: Iterable[str]) -> None:
+        """Stop generators. Ignore call for those that are not running.
+        If no generator of specified id found in list of managed
+        generators it is just skipped.
 
         Parameters
         ----------
-        generator_id : str
-            ID of generator to wait for
-
-        timeout : float | None, default=None
-            The number of seconds to wait for the generator if it is
-            not done, if `None` is passed, then there is no limit on
-            the wait time
-
-        Raises
-        ------
-        ManagingError
-            If generator is not running
-
-        TimeoutError
-            If timeout expired
-
-        ManagingError
-            If error occurs during waiting for generator
+        generator_ids : Iterable[str]
+            ID of generators to stop
         """
-        try:
-            future = self._running_tasks[generator_id]
-        except KeyError:
-            raise ManagingError('Generator is not running')
+        for id in generator_ids:
+            if id in self._generators:
+                generator = self._generators[id]
 
-        try:
-            future.result(timeout=timeout)
-            del self._running_tasks[generator_id]
-        except TimeoutError as e:
-            raise e
-        except Exception as e:  # TODO narrow exception type
-            del self._running_tasks[generator_id]
-            raise ManagingError(str(e))
-
-    @property
-    def generator_ids(self) -> list[str]:
-        """List of generator ids."""
-        return list(self._generators.keys())
+                if generator.is_running:
+                    generator.stop()
 
     def get_generator(self, generator_id: str) -> Generator:
         """Get generator from list of managed generators.
@@ -192,11 +163,16 @@ class GeneratorManager:
 
         Raises
         ------
-        ValueError
+        ManagingError
             If no generator with provided ID found in managed
             generators
         """
         try:
             return self._generators[generator_id]
         except KeyError:
-            raise ValueError('No such generator')
+            raise ManagingError('No such generator')
+
+    @property
+    def generator_ids(self) -> list[str]:
+        """List of generator ids."""
+        return list(self._generators.keys())
