@@ -1,0 +1,12 @@
+input:
+  - cron: 
+      expression: "*/5 * * * *"
+      count: 1
+
+kinda:
+  invalid
+  
+
+output:       
+  - stdout:
+      stream: "${params.stream}"
