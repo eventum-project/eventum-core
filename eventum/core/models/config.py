@@ -44,7 +44,7 @@ class GeneratorConfig(BaseModel, frozen=True, extra='forbid'):
         for plugin_config in v:
             for key in plugin_config.keys():
                 if key not in INPUT_PLUGIN_NAMES:
-                    raise ValueError('Unknown input plugin')
+                    raise ValueError(f'Unknown input plugin "{key}"')
 
         return v
 
@@ -55,7 +55,7 @@ class GeneratorConfig(BaseModel, frozen=True, extra='forbid'):
     ) -> PluginConfig:
         for key in v.keys():
             if key not in EVENT_PLUGIN_NAMES:
-                raise ValueError('Unknown event plugin')
+                raise ValueError(f'Unknown event plugin "{key}"')
 
         return v
 
@@ -68,6 +68,6 @@ class GeneratorConfig(BaseModel, frozen=True, extra='forbid'):
         for plugin_config in v:
             for key in plugin_config.keys():
                 if key not in OUTPUT_PLUGIN_NAMES:
-                    raise ValueError('Unknown output plugin')
+                    raise ValueError(f'Unknown output plugin "{key}"')
 
         return v
