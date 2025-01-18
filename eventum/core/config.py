@@ -215,27 +215,25 @@ def _substitute_tokens(
     TokenSubstitutionError
         If any error occurs during tokens substitution
     """
-    if params or secrets:
-        rendering_kwargs = {
-            'params': params,
-            'secrets': secrets
-        }
-        env = Environment(
-            loader=BaseLoader(),
-            variable_start_string='${',
-            variable_end_string='}'
+    rendering_kwargs = {
+        'params': params,
+        'secrets': secrets
+    }
+    env = Environment(
+        loader=BaseLoader(),
+        variable_start_string='${',
+        variable_end_string='}'
+    )
+    try:
+        template = env.from_string(content)
+        return template.render(rendering_kwargs)
+    except TemplateSyntaxError as e:
+        raise TokenSubstitutionError(
+            f'Tokens substitution structure is malformed: {e} '
+            f'(line {e.lineno})'
         )
-        try:
-            template = env.from_string(content)
-            return template.render(rendering_kwargs)
-        except TemplateSyntaxError as e:
-            raise TokenSubstitutionError(
-                f'Tokens substitution structure is malformed: {e}'
-            )
-        except Exception as e:
-            raise TokenSubstitutionError(str(e))
-    else:
-        return content
+    except Exception as e:
+        raise TokenSubstitutionError(str(e))
 
 
 def load(path: str, params: dict[str, Any]) -> GeneratorConfig:
