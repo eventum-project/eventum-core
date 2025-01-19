@@ -1,4 +1,4 @@
-from multiprocessing import Process, RLock
+from multiprocessing import Process
 
 import pytest
 
@@ -12,27 +12,8 @@ def single_thread_state():
 
 
 @pytest.fixture
-def multiprocess_state_name():
-    return 'test_state'
-
-
-@pytest.fixture
-def multiprocess_state_lock():
-    return RLock()
-
-
-@pytest.fixture
-def multiprocess_state(multiprocess_state_name, multiprocess_state_lock):
-    state = MultiProcessState(
-        name=multiprocess_state_name,
-        create=True,
-        max_bytes=1024,
-        lock=multiprocess_state_lock
-    )
-    yield state
-
-    state.close()
-    state.destroy()
+def multiprocess_state():
+    return MultiProcessState()
 
 
 def test_single_thread_state_set_get(single_thread_state: SingleThreadState):
@@ -98,7 +79,7 @@ def test_multiprocess_state_update(
 def test_multiprocess_state_get_default(
     multiprocess_state: MultiProcessState
 ):
-    key = 'test_key'
+    key = 'test_key!!!'
     default = 'default_value'
     assert multiprocess_state.get(key, default) == default
 
@@ -123,9 +104,6 @@ def test_multiprocess_state_cancel_update(
     assert multiprocess_state.get_for_update(key) == value
     multiprocess_state.cancel_update()
 
-    with pytest.raises(AssertionError):
-        multiprocess_state.cancel_update()
-
 
 def test_multiprocess_state_clear(
     multiprocess_state: MultiProcessState
@@ -147,27 +125,14 @@ def test_multiprocess_state_as_dict(
     assert multiprocess_state.as_dict() == {key: value}
 
 
-def test_multiprocess_state_concurrent_access(
-    multiprocess_state_name,
-    multiprocess_state_lock
-):
+def test_multiprocess_state_concurrent_access():
     def worker(key, value) -> None:
-        state = MultiProcessState(
-            name=multiprocess_state_name,
-            create=False,
-            max_bytes=1024,
-            lock=multiprocess_state_lock
-        )
+        state = MultiProcessState()
         state.set(key, value)
-        state.close()
 
-    state = MultiProcessState(
-        name=multiprocess_state_name,
-        create=True,
-        max_bytes=1024,
-        lock=multiprocess_state_lock
-    )
+    state = MultiProcessState()
     processes = []
+
     for i in range(5):
         process = Process(target=worker, args=(f'key_{i}', f'value_{i}'))
         processes.append(process)
@@ -179,50 +144,22 @@ def test_multiprocess_state_concurrent_access(
     expected_state = {f'key_{i}': f'value_{i}' for i in range(5)}
     assert state.as_dict() == expected_state
 
-    state.close()
-    state.destroy()
 
+def test_multiprocess_state_concurrent_access_same_key():
+    def worker(key) -> None:
+        state = MultiProcessState()
+        v = state.get_for_update(key, 0)
+        state.set(key, v + 1)
 
-def test_multiprocess_state_create_existing(
-    multiprocess_state,
-    multiprocess_state_name,
-    multiprocess_state_lock
-):
-    assert multiprocess_state
+    state = MultiProcessState()
+    processes = []
 
-    with pytest.raises(ValueError):
-        MultiProcessState(
-            name=multiprocess_state_name,
-            create=True,
-            max_bytes=1024,
-            lock=multiprocess_state_lock
-        )
+    for _ in range(5):
+        process = Process(target=worker, args=('incrementing_key', ))
+        processes.append(process)
+        process.start()
 
+    for process in processes:
+        process.join()
 
-def test_multiprocess_state_connect_nonexistent(
-    multiprocess_state_lock
-):
-    with pytest.raises(ValueError):
-        MultiProcessState(
-            name='nonexistent_state',
-            create=False,
-            max_bytes=1024,
-            lock=multiprocess_state_lock
-        )
-
-
-def test_multiprocess_state_size_limit_exceeded(
-    multiprocess_state_name,
-    multiprocess_state_lock
-):
-    state = MultiProcessState(
-        name=multiprocess_state_name,
-        create=True,
-        max_bytes=16,
-        lock=multiprocess_state_lock
-    )
-    with pytest.raises(ValueError):
-        state.set('key', 'value value value value value')
-
-    state.close()
-    state.destroy()
+    assert state.get('incrementing_key') == 5

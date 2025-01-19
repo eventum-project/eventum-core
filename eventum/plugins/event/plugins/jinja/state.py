@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from multiprocessing.shared_memory import SharedMemory
-from multiprocessing.synchronize import RLock
 from typing import Any
 
 import msgspec
+
+from eventum.plugins.event.plugins.jinja.file_lock import FileLock
 
 
 class State(ABC):
@@ -117,57 +118,55 @@ class MultiProcessState(State):
 
     Raises
     ------
-    ValueError
-        If `create` is `True` but state already exists
-
-    ValueError
-        If `create` is `False` but state does not exist
-
-    ValueError
-        If `create` is `False` but `initial` is provided
-
     RuntimeError
-        If state cannot be created due to other shared memory error
+        If state cannot be created or connected due to some error
     """
 
-    __slots__ = ('_shm', '_lock', '_encoder', '_decoder', '_state_to_update')
     _HEADER_SIZE = 8
+    _BUFFER_SIZE = 1 * 1024 * 1024
+    _SHM_NAME = 'eventum-jinja-globals'
 
-    def __init__(
-        self,
-        name: str,
-        create: bool,
-        max_bytes: int,
-        lock: RLock,
-        initial: dict[str, Any] | None = None
-    ) -> None:
-        if initial is not None and not create:
-            raise ValueError(
-                'Parameter `initial` must be none when `create` is `False`'
-            )
+    def __init__(self, initial: dict[str, Any] | None = None) -> None:
         try:
-            self._shm = SharedMemory(name=name, create=create, size=max_bytes)
-        except FileExistsError:
-            raise ValueError(
-                f'State with name "{name}" already exists'
-            ) from None
-        except FileNotFoundError:
-            raise ValueError(
-                f'State with name "{name}" does not exist'
-            ) from None
+            try:
+                self._shm = SharedMemory(
+                    name=MultiProcessState._SHM_NAME,
+                    create=True,
+                    size=MultiProcessState._BUFFER_SIZE
+                )
+                self._creator = True
+            except FileExistsError:
+                self._shm = SharedMemory(
+                    name=MultiProcessState._SHM_NAME,
+                    create=False,
+                    size=MultiProcessState._BUFFER_SIZE
+                )
+                self._creator = False
         except OSError as e:
-            raise RuntimeError(f'Cannot create shared state: {e}')
+            raise RuntimeError(
+                f'Cannot create or connect to shared state: {e}'
+            )
 
-        self._lock = lock
+        self._lock = FileLock(name=MultiProcessState._SHM_NAME)
+
         self._encoder = msgspec.msgpack.Encoder()
         self._decoder = msgspec.msgpack.Decoder()
-        self._state_to_update: dict[str, Any] | None = None
+        self._state_to_update: dict[str, Any] = dict()
 
-        if create:
-            self._write_state(initial or dict())
+        if self._creator:
+            with self._lock:
+                self._write_state(dict())
+
+        if initial is not None:
+            with self._lock:
+                self._write_state(initial)
 
     def get(self, key: str, default: Any = None) -> Any:
-        state: dict[str, Any] = self._load_state()
+        if self._lock.acquired:
+            return self._state_to_update
+
+        with self._lock:
+            state: dict[str, Any] = self._load_state()
 
         if key not in state:
             return default
@@ -175,36 +174,40 @@ class MultiProcessState(State):
             return state[key]
 
     def set(self, key: str, value: Any) -> None:
-        with self._lock:
-            if self._state_to_update is None:
+        if self._lock.acquired:
+            try:
+                self._state_to_update[key] = value
+                self._write_state(self._state_to_update)
+            finally:
+                self._lock.release()
+        else:
+            with self._lock:
                 state: dict[str, Any] = self._load_state()
-            else:
-                state = self._state_to_update
-
-            state[key] = value
-            self._write_state(state)
-
-        if self._state_to_update is not None:
-            self._state_to_update = None
-            self._lock.release()
+                state[key] = value
+                self._write_state(state)
 
     def update(self, m: dict[str, Any], /) -> None:
-        with self._lock:
-            if self._state_to_update is None:
+        if self._lock.acquired:
+            try:
+                self._state_to_update.update(m)
+                self._write_state(self._state_to_update)
+            finally:
+                self._lock.release()
+        else:
+            with self._lock:
                 state: dict[str, Any] = self._load_state()
-            else:
-                state = self._state_to_update
-
-            state.update(m)
-            self._write_state(state)
-
-        if self._state_to_update is not None:
-            self._state_to_update = None
-            self._lock.release()
+                state.update(m)
+                self._write_state(state)
 
     def clear(self) -> None:
-        with self._lock:
-            self._write_state(dict())
+        if self._lock.acquired:
+            try:
+                self._write_state(dict())
+            finally:
+                self._lock.release()
+        else:
+            with self._lock:
+                self._write_state(dict())
 
     def get_for_update(self, key: str, default: Any = None) -> Any:
         """Get value from state for next update with acquiring state lock
@@ -225,32 +228,31 @@ class MultiProcessState(State):
             Value from the state, or default value if there is no value
             in state with specified key
         """
-        self._lock.acquire()
-        state: dict[str, Any] = self._load_state()
-        self._state_to_update = state
+        if self._lock.acquired:
+            return self._state_to_update
 
-        if key not in state:
-            return default
-        else:
-            return state[key]
+        self._lock.acquire()
+        try:
+            self._state_to_update = self._load_state()
+
+            if key not in self._state_to_update:
+                return default
+            else:
+                return self._state_to_update[key]
+        except Exception:
+            self._lock.release()
 
     def cancel_update(self) -> None:
         """Release state lock acquired by `get_for_update` method."""
-        self._lock.release()
+        if self._lock.acquired:
+            self._lock.release()
 
     def as_dict(self) -> dict[str, Any]:
-        state: dict[str, Any] = self._load_state()
-        return state
-
-    def close(self) -> None:
-        """Close state for caller process."""
-        self._shm.close()
-
-    def destroy(self) -> None:
-        """Destroy state with releasing resources. This method should
-        be called once after closing state in all related processes.
-        """
-        self._shm.unlink()
+        if self._lock.acquired:
+            return self._state_to_update
+        else:
+            with self._lock:
+                return self._load_state()
 
     def _write_state(self, object: Any) -> None:
         """Write object to shared memory.
@@ -274,26 +276,30 @@ class MultiProcessState(State):
         if total_size > self._shm.size:
             raise ValueError('State size limit exceeded')
 
-        with self._lock:
-            self._shm.buf[:total_size] = data
+        self._shm.buf[:total_size] = data
 
     def _load_state(self) -> Any:
-        """Load object from the shared memory.
+        """Load object from shared memory.
 
         Returns
         -------
         Any
             Loaded object
         """
-        with self._lock:
-            size = int.from_bytes(self._shm.buf[:self._HEADER_SIZE])
+        size = int.from_bytes(self._shm.buf[:self._HEADER_SIZE])
 
-            try:
-                object = self._decoder.decode(
-                    self._shm.buf[self._HEADER_SIZE:self._HEADER_SIZE + size]
-                )
-                return object
-            except msgspec.DecodeError as e:
-                raise RuntimeError(
-                    f'Cannot decode data from shared memory: {e}'
-                ) from None
+        try:
+            object = self._decoder.decode(
+                self._shm.buf[self._HEADER_SIZE:self._HEADER_SIZE + size]
+            )
+            return object
+        except msgspec.DecodeError as e:
+            raise RuntimeError(
+                f'Cannot decode data from shared memory: {e}'
+            ) from None
+
+    def __del__(self) -> None:
+        self._shm.close()
+
+        if self._creator:
+            self._shm.unlink()
