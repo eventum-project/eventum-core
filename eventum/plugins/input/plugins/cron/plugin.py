@@ -10,7 +10,7 @@ from eventum.plugins.input.normalizers import normalize_versatile_daterange
 from eventum.plugins.input.plugins.cron.config import CronInputPluginConfig
 
 
-class CronInputPlugin(InputPlugin[CronInputPluginConfig]):
+class CronInputPlugin(InputPlugin[CronInputPluginConfig, InputPluginParams]):
     """Input plugin for generating timestamps at moments defined by
     cron expression.
     """

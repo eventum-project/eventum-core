@@ -12,7 +12,7 @@ from eventum.plugins.input.plugins.timer.config import TimerInputPluginConfig
 from eventum.plugins.input.utils.time_utils import skip_periods, to_naive
 
 
-class TimerInputPlugin(InputPlugin[TimerInputPluginConfig]):
+class TimerInputPlugin(InputPlugin[TimerInputPluginConfig, InputPluginParams]):
     """Input plugin for generating timestamps after specified number of
     seconds.
     """

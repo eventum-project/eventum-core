@@ -15,7 +15,9 @@ from eventum.plugins.input.utils.time_utils import now64, to_naive
 logger = logging.getLogger(__name__)
 
 
-class TimestampsInputPlugin(InputPlugin[TimestampsInputPluginConfig]):
+class TimestampsInputPlugin(
+    InputPlugin[TimestampsInputPluginConfig, InputPluginParams]
+):
     """Input plugin for generating events at specified timestamps."""
 
     def __init__(

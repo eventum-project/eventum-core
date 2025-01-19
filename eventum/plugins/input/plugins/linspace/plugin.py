@@ -11,7 +11,9 @@ from eventum.plugins.input.utils.array_utils import get_future_slice
 from eventum.plugins.input.utils.time_utils import now64, to_naive
 
 
-class LinspaceInputPlugin(InputPlugin[LinspaceInputPluginConfig]):
+class LinspaceInputPlugin(
+    InputPlugin[LinspaceInputPluginConfig, InputPluginParams]
+):
     """Input plugin for generating specified count of events linearly
     spaced in specified date range.
 

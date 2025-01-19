@@ -19,7 +19,10 @@ from eventum.plugins.input.utils.time_utils import (now64, skip_periods,
                                                     to_naive)
 
 
-class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
+class TimePatternInputPlugin(
+    InputPlugin[TimePatternConfig, InputPluginParams],
+    register=False
+):
     """Input plugin for generating events with specific pattern of
     distribution in time.
 
@@ -292,7 +295,9 @@ class TimePatternInputPlugin(InputPlugin[TimePatternConfig], register=False):
         yield from self._buffer.read(size, partial=True)
 
 
-class TimePatternsInputPlugin(InputPlugin[TimePatternsInputPluginConfig]):
+class TimePatternsInputPlugin(
+    InputPlugin[TimePatternsInputPluginConfig, InputPluginParams]
+):
     """Input plugin for merging timestamps from multiple
     `TimePatternInputPlugin` instances.
     """

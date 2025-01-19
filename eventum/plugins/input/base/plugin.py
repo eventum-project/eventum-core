@@ -28,9 +28,10 @@ ConfigT = TypeVar(
     'ConfigT',
     bound=(InputPluginConfig | RootModel[InputPluginConfig])
 )
+ParamsT = TypeVar('ParamsT', bound=InputPluginParams)
 
 
-class InputPlugin(Plugin[ConfigT, InputPluginParams], register=False):
+class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
     """Base class for all input plugins.
 
     Parameters
@@ -45,7 +46,7 @@ class InputPlugin(Plugin[ConfigT, InputPluginParams], register=False):
         provided parameters
     """
 
-    def __init__(self, config: ConfigT, params: InputPluginParams) -> None:
+    def __init__(self, config: ConfigT, params: ParamsT) -> None:
         super().__init__(config, params)
 
         with self.required_params():

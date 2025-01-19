@@ -8,7 +8,9 @@ from eventum.plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum.plugins.input.plugins.static.config import StaticInputPluginConfig
 
 
-class StaticInputPlugin(InputPlugin[StaticInputPluginConfig]):
+class StaticInputPlugin(
+    InputPlugin[StaticInputPluginConfig, InputPluginParams]
+):
     """Input plugin for generating specified number of timestamps with
     static value. All timestamps have a value of time when generation
     was started.
