@@ -1,7 +1,7 @@
 import os
 from copy import copy
 from datetime import datetime
-from typing import Any, MutableMapping
+from typing import Any, MutableMapping, NotRequired, Required
 
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateSyntaxError)
@@ -33,12 +33,12 @@ class JinjaEventPluginParams(EventPluginParams):
     global_state : MultiProcessState
         Global state for cross generators communication
 
-    templates_loader : BaseLoader | None
+    templates_loader : BaseLoader
         Templates loader, if `None` is provided then default
         (FileSystemLoader) loader is used
     """
-    global_state: MultiProcessState
-    templates_loader: BaseLoader | None
+    global_state: Required[MultiProcessState]
+    templates_loader: NotRequired[BaseLoader]
 
 
 class JinjaEventPlugin(
