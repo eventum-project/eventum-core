@@ -126,6 +126,11 @@ class PluginParams(TypedDict):
         Ephemeral type of plugin, might be helpful when plugin is not
         registered but it needs representable type to moment of
         initialization
+
+    Notes
+    -----
+    Parameters for specific plugins must be not required for possibility
+    of generic creation of plugins of specific type
     """
     id: Required[int]
     ephemeral_name: NotRequired[str]
