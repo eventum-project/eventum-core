@@ -1,7 +1,7 @@
 import os
 from copy import copy
 from datetime import datetime
-from typing import Any, MutableMapping, NotRequired, Required
+from typing import Any, MutableMapping, NotRequired
 
 from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateSyntaxError)
@@ -30,14 +30,10 @@ class JinjaEventPluginParams(EventPluginParams):
 
     Attributes
     ----------
-    global_state : MultiProcessState
-        Global state for cross generators communication
-
     templates_loader : BaseLoader
         Templates loader, if `None` is provided then default
         (FileSystemLoader) loader is used
     """
-    global_state: Required[MultiProcessState]
     templates_loader: NotRequired[BaseLoader]
 
 
@@ -78,8 +74,13 @@ class JinjaEventPlugin(
         self._subprocess_runner = SubprocessRunner()
         self._shared_state = SingleThreadState()
 
-        with self.required_params():
-            self._global_state = params['global_state']
+        try:
+            self._global_state = MultiProcessState()
+        except RuntimeError as e:
+            raise PluginConfigurationError(
+                'Failed to create global state',
+                context=dict(self.instance_info, reason=str(e))
+            )
 
         self._env.globals['params'] = self._config.root.params
         self._env.globals['samples'] = self._samples
