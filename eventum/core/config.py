@@ -312,7 +312,7 @@ def load(path: str, params: dict[str, Any]) -> GeneratorConfig:
         return GeneratorConfig.model_validate(config_data)
     except ValidationError as e:
         raise ConfigurationLoadError(
-            'Invalid configuration structure',
+            'Invalid configuration',
             context=dict(
                 reason=prettify_validation_errors(e.errors()),
                 file_path=path
