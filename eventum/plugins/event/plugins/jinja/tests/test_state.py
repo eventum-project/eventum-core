@@ -131,6 +131,7 @@ def test_multiprocess_state_concurrent_access():
         state.set(key, value)
 
     state = MultiProcessState()
+    state.clear()
     processes = []
 
     for i in range(5):

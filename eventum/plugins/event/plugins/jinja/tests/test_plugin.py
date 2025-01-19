@@ -1,7 +1,6 @@
 # type: ignore
 import os
 from datetime import datetime
-from multiprocessing import RLock
 
 from jinja2 import DictLoader
 
@@ -10,7 +9,6 @@ from eventum.plugins.event.plugins.jinja.config import (
     JinjaEventPluginConfigForGeneralModes, SampleType,
     TemplateConfigForGeneralModes, TemplatePickingMode)
 from eventum.plugins.event.plugins.jinja.plugin import JinjaEventPlugin
-from eventum.plugins.event.plugins.jinja.state import MultiProcessState
 
 STATIC_FILES_DIR = os.path.join(
     os.path.abspath(os.path.dirname(__file__)),
@@ -39,8 +37,7 @@ def test_rendering():
             'id': 1,
             'templates_loader': DictLoader(
                 mapping={'test.jinja': '1 + 1 = {{ 1 + 1 }}'}
-            ),
-            'global_state': ...
+            )
         }
     )
 
@@ -76,8 +73,7 @@ def test_rendering_parameters():
             'id': 1,
             'templates_loader': DictLoader(
                 mapping={'test.jinja': '{{ params.passed_parameter }}'}
-            ),
-            'global_state': ...
+            )
         }
     )
 
@@ -118,8 +114,7 @@ def test_items_sample():
             'id': 1,
             'templates_loader': DictLoader(
                 mapping={'test.jinja': '{{ samples.test_sample[0][0] }}'}
-            ),
-            'global_state': ...
+            )
         }
     )
 
@@ -161,8 +156,7 @@ def test_csv_sample():
             'id': 1,
             'templates_loader': DictLoader(
                 mapping={'test.jinja': '{{ samples.test_sample[0] }}'}
-            ),
-            'global_state': ...
+            )
         }
     )
 
@@ -207,8 +201,7 @@ def test_subprocess():
                         '{{subprocess.run("echo Hello").stdout | trim}}'
                     )
                 }
-            ),
-            'global_state': ...
+            )
         }
     )
 
@@ -264,8 +257,7 @@ def test_locals_state():
                         '{{ i }}\n'
                     )
                 }
-            ),
-            'global_state': ...
+            )
         }
     )
 
@@ -329,8 +321,7 @@ def test_shared_state():
                         '{{ i }}\n'
                     )
                 }
-            ),
-            'global_state': ...
+            )
         }
     )
 
@@ -354,7 +345,6 @@ def test_shared_state():
 
 
 def test_global_state():
-    global_state = MultiProcessState('test', True, 1024, RLock())
     plugin = JinjaEventPlugin(
         config=JinjaEventPluginConfig(
             root=JinjaEventPluginConfigForGeneralModes(
@@ -395,8 +385,7 @@ def test_global_state():
                         '{{ i }}\n'
                     )
                 }
-            ),
-            'global_state': global_state
+            )
         }
     )
 
@@ -410,9 +399,6 @@ def test_global_state():
                 }
             )
         )
-
-    global_state.close()
-    global_state.destroy()
 
     assert len(events) == 6
     assert events == [
@@ -452,8 +438,7 @@ def test_modules():
                         '{{ module.rand.number.integer(1, 10) }}'
                     )
                 }
-            ),
-            'global_state': ...
+            )
         }
     )
 
@@ -496,8 +481,7 @@ def test_timestamp():
                 mapping={
                     'test.jinja': '{{ timestamp.isoformat() }}'
                 }
-            ),
-            'global_state': ...
+            )
         }
     )
     ts = datetime.now().astimezone()
@@ -541,8 +525,7 @@ def test_tags():
                 mapping={
                     'test.jinja': '{{ tags[1] }}'
                 }
-            ),
-            'global_state': ...
+            )
         }
     )
 
