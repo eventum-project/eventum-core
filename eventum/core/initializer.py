@@ -117,19 +117,15 @@ def init_plugin(
                 plugin_info = load_output_plugin(name=name)
             case t:
                 assert_never(t)
-    except PluginNotFoundError:
+    except PluginNotFoundError as e:
         raise InitializationError(
             'Plugin is not found',
-            context=dict(plugin_name=name, plugin_type=type)
+            context=(e.context | dict(plugin_type=type))
         )
     except PluginLoadError as e:
         raise InitializationError(
             'Failed to load plugin',
-            context=dict(
-                plugin_name=name,
-                plugin_type=type,
-                reason=str(e)
-            )
+            context=(e.context | dict(plugin_type=type))
         )
 
     PluginCls = plugin_info.cls
@@ -153,15 +149,7 @@ def init_plugin(
     try:
         return PluginCls(config=plugin_config, params=params)
     except PluginConfigurationError as e:
-        raise InitializationError(
-            'Failed to initialize plugin',
-            context=dict(
-                plugin_name=name,
-                plugin_type=type,
-                plugin_id=params['id'],
-                reason=str(e)
-            )
-        )
+        raise InitializationError(str(e), context=e.context)
     except Exception as e:
         raise InitializationError(
             'Unexpected error during plugin initialization',
