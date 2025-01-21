@@ -1,4 +1,5 @@
 import os
+
 from eventum.core.initializer import init_plugins
 from eventum.core.models.parameters.generator import GeneratorParameters
 from eventum.plugins.event.plugins.jinja.plugin import JinjaEventPlugin
@@ -6,7 +7,6 @@ from eventum.plugins.input.plugins.cron.plugin import CronInputPlugin
 from eventum.plugins.input.plugins.static.plugin import StaticInputPlugin
 from eventum.plugins.output.plugins.file.plugin import FileOutputPlugin
 from eventum.plugins.output.plugins.stdout.plugin import StdoutOutputPlugin
-
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, 'static', 'template.jinja')
