@@ -16,6 +16,11 @@
         <td>Reason of event (e.g. exception message)</td>
         <td>str</td>
     </tr>
+    <tr>
+        <td>parameters</td>
+        <td>Parameters dictionary (e.g. generator parameters)</td>
+        <td>dict</td>
+    </tr>
 </table>
 
 ## Network

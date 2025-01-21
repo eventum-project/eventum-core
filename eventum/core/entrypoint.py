@@ -67,7 +67,7 @@ def start(params: GeneratorParameters) -> None:
     init_time = round(time.time() - init_start_time, 3)
     logger.info('Initialization completed', seconds=init_time)
 
-    logger.info('Starting execution')
+    logger.info('Starting execution', parameters=params.model_dump())
     try:
         executor.execute()
     except ExecutionError as e:
