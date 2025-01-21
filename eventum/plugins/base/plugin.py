@@ -212,8 +212,6 @@ class Plugin(ABC, Generic[ConfigT, ParamsT]):
             setattr(cls, '_plugin_type', '[unregistered]')
             return
 
-        log.info('Registering plugin')
-
         try:
             registration_info = _inspect_plugin(cls)
         except TypeError as e:
@@ -256,7 +254,7 @@ class Plugin(ABC, Generic[ConfigT, ParamsT]):
         )
 
         log.info(
-            'Plugin successfully registered',
+            'Plugin is registered',
             plugin_type=registration_info['type'],
             plugin_name=registration_info['name'],
             plugin_config_class=config_cls.__name__,
