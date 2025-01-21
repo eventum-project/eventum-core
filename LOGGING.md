@@ -63,6 +63,11 @@
         <td>str</td>
     </tr>
     <tr>
+        <td>path</td>
+        <td>Directory path</td>
+        <td>str</td>
+    </tr>
+    <tr>
         <td>cert_file_path</td>
         <td>Path to certificate file (used in combination with key_file_path)</td>
         <td>str</td>
