@@ -35,11 +35,6 @@
         <td>int</td>
     </tr>
     <tr>
-        <td>request_info</td>
-        <td>Information about request</td>
-        <td>str</td>
-    </tr>
-    <tr>
         <td>url</td>
         <td>URL address</td>
         <td>str</td>
@@ -51,7 +46,7 @@
     </tr>
 </table>
 
-## Files
+## File system
 
 <table>
     <th>Name</th>
@@ -76,6 +71,19 @@
         <td>key_file_path</td>
         <td>Path to certificate key file (used in combination with cert_file_path)</td>
         <td>str</td>
+    </tr>
+</table>
+
+## Time
+
+<table>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Data type</th>
+    <tr>
+        <td>seconds</td>
+        <td>Duration in seconds</td>
+        <td>float</td>
     </tr>
 </table>
 

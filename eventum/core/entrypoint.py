@@ -1,4 +1,5 @@
 import os
+import time
 
 import structlog
 
@@ -20,6 +21,8 @@ def start(params: GeneratorParameters) -> None:
         Parameters for generator
     """
     logger.info('Loading configuration')
+    init_start_time = time.time()
+
     try:
         config = load(params.path, params.params)
     except ConfigurationLoadError as e:
@@ -61,6 +64,10 @@ def start(params: GeneratorParameters) -> None:
         output=plugins.output
     )
 
+    init_time = round(time.time() - init_start_time, 3)
+    logger.info('Initialization completed', seconds=init_time)
+
+    logger.info('Starting execution')
     try:
         executor.execute()
     except ExecutionError as e:
