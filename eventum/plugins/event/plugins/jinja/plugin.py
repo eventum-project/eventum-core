@@ -64,7 +64,7 @@ class JinjaEventPlugin(
         except SampleLoadError as e:
             raise PluginConfigurationError(
                 str(e),
-                context=dict(self.instance_info)
+                context=dict(self.instance_info, **e.context)
             ) from None
 
         if self._config.root.samples:

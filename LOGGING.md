@@ -163,7 +163,12 @@
     <th>Data type</th>
     <tr>
         <td>template_alias</td>
-        <td>Alias of template</td>
+        <td>Alias of template (used in generic context or when file_path is not known)</td>
+        <td>str</td>
+    </tr>
+    <tr>
+        <td>sample_alias</td>
+        <td>Alias of sample (used in generic context or when file_path is not known)</td>
         <td>str</td>
     </tr>
 </table>

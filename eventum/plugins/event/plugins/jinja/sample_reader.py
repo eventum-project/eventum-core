@@ -13,6 +13,11 @@ from eventum.plugins.event.plugins.jinja.config import (CSVSampleConfig,
 class SampleLoadError(Exception):
     """Failed to load sample."""
 
+    def __init__(self, *args: object, context: dict[str, Any]) -> None:
+        super().__init__(*args)
+
+        self.context = context
+
 
 class Sample:
     """Immutable sample."""
@@ -193,7 +198,8 @@ class SampleReader:
                 sample = loader(sample_config.root)  # type: ignore[arg-type]
             except Exception as e:
                 raise SampleLoadError(
-                    f'Failed to load sample "{name}": {e}'
+                    'Failed to load sample',
+                    context=dict(sample_alias=name, reason=str(e))
                 ) from None
 
             samples[name] = sample
