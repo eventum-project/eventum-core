@@ -174,8 +174,4 @@ class HttpInputPlugin(
                     timestamp=now64(self._timezone),
                     multiply=count
                 )
-                if self._buffer.size >= size:
-                    yield from self._buffer.read(size, partial=False)
-
-            if self._buffer.size > 0:
                 yield from self._buffer.read(size, partial=True)

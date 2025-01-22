@@ -79,7 +79,12 @@ class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
         Parameters
         ----------
         size : int
-            Number of timestamps to generate for each iteration
+            Number of timestamps to generate for each iteration, for
+            the last iteration it is allowed to yield array not of
+            full size, for interactive plugins it is allowed to yield
+            array not of full size for each interaction with the plugin
+            but if single interaction produces more than `size`
+            timestamps then they must be chunked
 
         skip_past : bool, default=True
             Wether to skip past timestamps before starting generation
