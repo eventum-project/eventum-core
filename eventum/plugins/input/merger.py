@@ -24,11 +24,21 @@ class InputPluginsMerger(SupportsIdentifiedTimestampsIterate):
     Raises
     ------
     ValueError
-        If no plugins provided in sequence
+        If no plugins provided in sequence or some of the plugin is
+        interactive
     """
 
     def __init__(self, plugins: Iterable[InputPlugin]) -> None:
-        self._plugins = {plugin.guid: plugin for plugin in plugins}
+        self._plugins: dict[str, InputPlugin] = dict()
+
+        for plugin in plugins:
+            if plugin.is_interactive:
+                raise ValueError(
+                    f'"{plugin.plugin_name}" input plugin is interactive '
+                    'and cannot be merged'
+                )
+
+            self._plugins[plugin.guid] = plugin
 
         if not self._plugins:
             raise ValueError('At least one plugin must be provided')

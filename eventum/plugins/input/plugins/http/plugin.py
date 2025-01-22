@@ -25,7 +25,10 @@ class GenerateRequestData(BaseModel, extra='forbid', frozen=True):
     count: int = Field(ge=1, description='Number of events to generate')
 
 
-class HttpInputPlugin(InputPlugin[HttpInputPluginConfig, InputPluginParams]):
+class HttpInputPlugin(
+    InputPlugin[HttpInputPluginConfig, InputPluginParams],
+    interactive=True
+):
     """Input plugin for generating timestamps when HTTP request is
     received.
 

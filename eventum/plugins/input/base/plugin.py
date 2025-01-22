@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Iterator, Literal, Required, TypeAlias, TypeVar
+from typing import Any, Iterator, Literal, Required, TypeAlias, TypeVar
 
 from numpy import datetime64
 from numpy.typing import NDArray
@@ -39,6 +39,15 @@ class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
     **kwargs : Unpack[InputPluginKwargs]
         Arguments for plugin configuration (see `InputPluginKwargs`)
 
+
+    Other Parameters
+    ----------------
+    interactive : bool, default=False
+        Whether to mark input plugin as interactive, interactive input
+        plugins cannot be merged with others and are used individually
+        since they are blocking generation due to unpredictable user
+        interactions
+
     Raises
     ------
     PluginConfigurationError
@@ -53,6 +62,11 @@ class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
             self._timezone = params['timezone']
 
         self._buffer = Buffer()
+
+    def __init_subclass__(cls, interactive: bool = False, **kwargs: Any):
+        super().__init_subclass__(**kwargs)
+
+        setattr(cls, '_interactive', interactive)
 
     @abstractmethod
     def generate(
@@ -81,3 +95,8 @@ class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
             If any error occurs during timestamps generation
         """
         ...
+
+    @property
+    def is_interactive(self) -> bool:
+        """Wether the plugin is interactive."""
+        return getattr(self, '_interactive')
