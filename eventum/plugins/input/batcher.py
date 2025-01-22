@@ -5,6 +5,7 @@ import numpy as np
 
 from eventum.plugins.input.protocols import (
     IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
+from eventum.plugins.input.utils.array_utils import chunk_array
 
 
 class TimestampsBatcher:
@@ -92,16 +93,42 @@ class TimestampsBatcher:
         read_size = self._batch_size or 10_000
 
         if self._batch_delay is None:
-            yield from self._source.iterate(
+            # batch size must be set when delay is None
+            assert isinstance(self._batch_size, int)
+
+            current_size = 0
+            to_concatenate: list[IdentifiedTimestamps] = []
+
+            for array in self._source.iterate(
                 size=read_size,
                 skip_past=skip_past
-            )
+            ):
+                to_concatenate.append(array)
+                current_size += array.size
+
+                if current_size >= self._batch_size:
+                    chunks = chunk_array(
+                        array=np.concatenate(to_concatenate),
+                        size=self._batch_size
+                    )
+                    to_concatenate.clear()
+                    current_size = 0
+
+                    if chunks[-1].size < self._batch_size:
+                        last_partial_chunk = chunks.pop()
+                        to_concatenate.append(last_partial_chunk)
+                        current_size += last_partial_chunk.size
+
+                    yield from chunks
+
+            if to_concatenate:
+                yield np.concatenate(to_concatenate)
         else:
             delta = np.timedelta64(timedelta(seconds=self._batch_delay), 'us')
             iterator = iter(
                 self._source.iterate(size=read_size, skip_past=skip_past)
             )
-            to_concatenate: list[IdentifiedTimestamps] = []
+            to_concatenate = []
             prev_array: IdentifiedTimestamps | None = None
 
             current_size = 0

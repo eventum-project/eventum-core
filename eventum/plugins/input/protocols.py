@@ -25,7 +25,9 @@ class SupportsIdentifiedTimestampsIterate(Protocol):
         Parameters
         ----------
         size : int
-            Number of timestamps to yield for each iteration
+            Number of timestamps to yield for each iteration, actual
+            number can be lower than specified, see `generate` method
+            of `InputPlugin` for details
 
         skip_past : bool, default=True
             Wether to skip past timestamps before starting iteration
