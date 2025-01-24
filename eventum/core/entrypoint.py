@@ -72,7 +72,7 @@ def start(params: GeneratorParameters) -> None:
         executor.execute()
     except ExecutionError as e:
         logger.error(str(e), **e.context)
-        exit(ExitCode.PLUGIN_INIT_ERROR)
+        exit(ExitCode.EXECUTION_ERROR)
     except Exception as e:
         logger.exception(
             'Unexpected error occurred during execution',
