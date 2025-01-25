@@ -58,7 +58,7 @@ class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
     def __init__(self, config: ConfigT, params: ParamsT) -> None:
         super().__init__(config, params)
 
-        with self.required_params():
+        with self._required_params():
             self._timezone = params['timezone']
 
         self._buffer = Buffer()

@@ -165,7 +165,7 @@ class Plugin(ABC, Generic[ConfigT, ParamsT]):
     """
 
     def __init__(self, config: ConfigT, params: ParamsT) -> None:
-        with self.required_params():
+        with self._required_params():
             self._id = params['id']
 
         self._guid = str(uuid4())
@@ -179,7 +179,7 @@ class Plugin(ABC, Generic[ConfigT, ParamsT]):
         self._logger = logger.bind(**self.instance_info)
 
     @contextmanager
-    def required_params(self) -> Iterator:
+    def _required_params(self) -> Iterator:
         """Context manager for handling missing keys in plugin parameters.
 
         Raises
@@ -288,3 +288,8 @@ class Plugin(ABC, Generic[ConfigT, ParamsT]):
             'plugin_type': self.plugin_type,
             'plugin_id': self.id
         }
+
+    @property
+    def config(self) -> ConfigT:
+        """Plugin config."""
+        return self._config
