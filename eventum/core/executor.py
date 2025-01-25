@@ -90,6 +90,7 @@ class Executor:
         self._input_tags = self._build_input_tags_map()
         self._configured_input = self._configure_input()
 
+        self._output_tasks: set[asyncio.Task] = set()
         self._output_semaphore = asyncio.Semaphore(
             value=self._params.max_concurrency
         )
@@ -255,7 +256,7 @@ class Executor:
 
         self._event_queue.put(None)
 
-    def _handle_write_result(self, future: asyncio.Future[int]) -> None:
+    def _handle_write_result(self, task: asyncio.Task[int]) -> None:
         """Handle result of output plugin write task.
 
         Parameters
@@ -264,7 +265,7 @@ class Executor:
             Done future
         """
         try:
-            future.result()
+            task.result()
         except PluginRuntimeError as e:
             logger.error(str(e), **e.context)
         except Exception as e:
@@ -274,12 +275,13 @@ class Executor:
             )
         finally:
             self._output_semaphore.release()
+            self._output_tasks.remove(task)
 
     async def _execute_output(self) -> None:
         """Execute output plugins."""
         loop = asyncio.get_running_loop()
 
-        tasks: list[asyncio.Task] = []
+        gathering_tasks: list[asyncio.Task] = []
         while True:
             events = await loop.run_in_executor(
                 executor=None,
@@ -291,11 +293,18 @@ class Executor:
 
             for plugin in self._output:
                 await self._output_semaphore.acquire()
+
                 task = loop.create_task(plugin.write(events))
+                self._output_tasks.add(task)
+                gathering_tasks.append(task)
+
                 task.add_done_callback(self._handle_write_result)
-                tasks.append(task)
 
             if self._params.keep_order:
-                await asyncio.gather(*tasks, return_exceptions=True)
+                await asyncio.gather(*gathering_tasks, return_exceptions=True)
 
-            tasks.clear()
+            gathering_tasks.clear()
+
+        if self._output_tasks:
+            await asyncio.gather(*self._output_tasks, return_exceptions=True)
+            self._output_tasks.clear()
