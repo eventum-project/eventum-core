@@ -19,8 +19,8 @@ class FileLock:
     )
 
     def __init__(self, name: str) -> None:
-        self._name = name
-        self._path = os.path.join(FileLock._LOCKS_DIR, name)
+        self._name = name + '.lock'
+        self._path = os.path.join(FileLock._LOCKS_DIR, self._name)
         self._file: TextIOWrapper | None = None
 
     def _open(self) -> TextIOWrapper:
