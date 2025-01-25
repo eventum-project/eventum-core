@@ -23,9 +23,8 @@ class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
         Interval (in seconds) to wait new events before closing file,
         file is reopened once new events are received
 
-    file_mode : int, default = -1
-        File access mode to use (e.g. 640), if value is -1 then default
-        OS mode is used
+    file_mode : int, default = 640
+        File access mode to use (e.g. 640)
 
     write_mode : Literal['append', 'overwrite'], default = 'append'
         Mode that is used to write if the file already exists
@@ -39,7 +38,7 @@ class FileOutputPluginConfig(OutputPluginConfig, frozen=True):
     path: str
     flush_interval: float = Field(default=1, ge=0)
     cleanup_interval: float = Field(default=10, ge=1.0)
-    file_mode: int = Field(default=-1, ge=-1, le=7777)
+    file_mode: int = Field(default=640, ge=0, le=7777)
     write_mode: Literal['append', 'overwrite'] = 'append'
     encoding: Encoding = Field(default='utf_8')
     separator: str = Field(default=os.linesep)
