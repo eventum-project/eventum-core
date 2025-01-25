@@ -4,7 +4,8 @@ import time
 import structlog
 
 from eventum.core.config import ConfigurationLoadError, load
-from eventum.core.executor import ExecutionError, Executor
+from eventum.core.executor import (ExecutionError, Executor,
+                                   ImproperlyConfiguredError)
 from eventum.core.initializer import InitializationError, init_plugins
 from eventum.core.models.exit_codes import ExitCode
 from eventum.core.models.parameters.generator import GeneratorParameters
@@ -50,7 +51,7 @@ def start(params: GeneratorParameters) -> None:
         )
     except InitializationError as e:
         logger.error(str(e), **e.context)
-        exit(ExitCode.PLUGIN_INIT_ERROR)
+        exit(ExitCode.INIT_ERROR)
     except Exception as e:
         logger.exception(
             'Unexpected error occurred during initializing plugins',
@@ -58,11 +59,16 @@ def start(params: GeneratorParameters) -> None:
         )
         exit(ExitCode.UNEXPECTED_ERROR)
 
-    executor = Executor(
-        input=plugins.input,
-        event=plugins.event,
-        output=plugins.output
-    )
+    try:
+        executor = Executor(
+            input=plugins.input,
+            event=plugins.event,
+            output=plugins.output,
+            params=params
+        )
+    except ImproperlyConfiguredError as e:
+        logger.error(str(e), **e.context)
+        exit(ExitCode.INIT_ERROR)
 
     init_time = round(time.time() - init_start_time, 3)
     logger.info('Initialization completed', seconds=init_time)
