@@ -61,7 +61,7 @@ class Executor:
     Raises
     ------
     ImproperlyConfiguredError
-        If initialization failed with provided plugins and parameters
+        If initialization fails with provided plugins and parameters
 
     Notes
     -----
@@ -106,7 +106,7 @@ class Executor:
         return tags_map
 
     def _configure_input(self) -> SupportsIdentifiedTimestampsIterate:
-        """Configure input plugins according to generating parameters
+        """Configure input plugins according to generator parameters
         by wrapping it to merger, batcher and scheduler.
 
         Returns
@@ -121,7 +121,7 @@ class Executor:
         """
         if len(self._input) > 1:
             try:
-                input_plugin: SupportsIdentifiedTimestampsSizedIterate \
+                input: SupportsIdentifiedTimestampsSizedIterate \
                     = InputPluginsMerger(plugins=self._input)
             except ValueError as e:
                 raise ImproperlyConfiguredError(
@@ -129,13 +129,13 @@ class Executor:
                     context=dict(reason=str(e))
                 )
         else:
-            input_plugin = IdentifiedTimestampsPluginAdapter(
+            input = IdentifiedTimestampsPluginAdapter(
                 plugin=self._input[0]
             )
 
         try:
             batcher = TimestampsBatcher(
-                source=input_plugin,
+                source=input,
                 batch_size=self._params.batch.size,
                 batch_delay=self._params.batch.delay
             )
@@ -209,17 +209,15 @@ class Executor:
                 skip_past=skip_past
             ):
                 self._input_queue.put(timestamps)
-
-            self._input_queue.put(None)
         except PluginRuntimeError as e:
             logger.error(str(e), **e.context)
-            self._input_queue.put(None)
         except Exception as e:
             logger.exception(
                 'Unexpected error during input plugins execution',
                 reason=str(e)
             )
-            self._input_queue.put(None)
+
+        self._input_queue.put(None)
 
     def _execute_event(self) -> None:
         """Execute event plugin."""
@@ -276,6 +274,7 @@ class Executor:
         """Execute output plugins."""
         loop = asyncio.get_running_loop()
 
+        tasks: list[asyncio.Task] = []
         while True:
             events = await loop.run_in_executor(
                 executor=None,
@@ -285,11 +284,12 @@ class Executor:
             if events is None:
                 break
 
-            tasks: list[asyncio.Task] = []
             for plugin in self._output:
                 task = loop.create_task(plugin.write(events))
                 task.add_done_callback(self._handle_write_result)
                 tasks.append(task)
 
             if self._params.keep_order:
-                await asyncio.gather(*tasks)
+                await asyncio.gather(*tasks, return_exceptions=True)
+
+            tasks.clear()
