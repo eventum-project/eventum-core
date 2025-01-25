@@ -47,7 +47,6 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
         self._loop: asyncio.AbstractEventLoop
 
         self._is_opened = False
-        self._lock = asyncio.Lock()
 
         self._formatter_config = self._get_formatter_config()
         self._formatter = self._get_formatter(self._formatter_config)
@@ -113,18 +112,17 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
         PluginRuntimeError
             If error occurs during opening
         """
-        async with self._lock:
-            try:
-                self._loop = asyncio.get_running_loop()
-            except RuntimeError as e:
-                raise PluginRuntimeError(
-                    str(e).capitalize(),
-                    context=dict(self.instance_info)
-                )
+        try:
+            self._loop = asyncio.get_running_loop()
+        except RuntimeError as e:
+            raise PluginRuntimeError(
+                str(e).capitalize(),
+                context=dict(self.instance_info)
+            )
 
-            if not self._is_opened:
-                await self._open()
-                self._is_opened = True
+        if not self._is_opened:
+            await self._open()
+            self._is_opened = True
 
         await self._logger.ainfo('Plugin is opened for writing')
 
@@ -132,10 +130,9 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
         """Close plugin for writing with releasing resources and
         flushing events.
         """
-        async with self._lock:
-            if self._is_opened:
-                await self._close()
-                self._is_opened = False
+        if self._is_opened:
+            await self._close()
+            self._is_opened = False
 
         await self._logger.ainfo('Plugin is closed')
 
@@ -210,29 +207,28 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
         if not events:
             return 0
 
-        async with self._lock:
-            if not self._is_opened:
-                raise PluginRuntimeError(
-                    'Output plugin is not opened for writing',
-                    context=dict(self.instance_info)
-                )
+        if not self._is_opened:
+            raise PluginRuntimeError(
+                'Output plugin is not opened for writing',
+                context=dict(self.instance_info)
+            )
 
-            formatting_result = await self._format_events(events)
+        formatting_result = await self._format_events(events)
 
-            if not formatting_result.events:
-                return 0
+        if not formatting_result.events:
+            return 0
 
-            written = await self._write(formatting_result.events)
+        written = await self._write(formatting_result.events)
 
-            # handle possible events aggregation
-            if (
-                len(formatting_result.events) == 1
-                and formatting_result.formatted_count > 1
-                and written == 1
-            ):
-                return formatting_result.formatted_count
+        # handle possible events aggregation
+        if (
+            len(formatting_result.events) == 1
+            and formatting_result.formatted_count > 1
+            and written == 1
+        ):
+            return formatting_result.formatted_count
 
-            return written
+        return written
 
     @abstractmethod
     async def _open(self) -> None:
