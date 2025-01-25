@@ -170,8 +170,56 @@ class Executor:
                 for plugin in self._output:
                     group.create_task(plugin.open())
         except* PluginRuntimeError as e:
-            exc: PluginRuntimeError = e.exceptions[0]   # type: ignore
-            raise ExecutionError(str(exc), **exc.context)
+            await asyncio.gather(
+                *[
+                    logger.aerror(str(exc), **exc.context)   # type: ignore
+                    for exc in e.exceptions
+                ]
+            )
+            raise ExecutionError(
+                'Failed to open some of the output plugins',
+                context=dict()
+            )
+        except* Exception as e:
+            await asyncio.gather(
+                *[logger.aexception(str(exc)) for exc in e.exceptions]
+            )
+            raise ExecutionError(
+                'Unexpected error occurred during opening output plugins',
+                context=dict()
+            )
+
+    async def _close_output_plugins(self) -> None:
+        """Close output plugins.
+
+        Raises
+        ------
+        ExecutionError
+            If closing for at least one output plugin fails
+        """
+        try:
+            async with asyncio.TaskGroup() as group:
+                for plugin in self._output:
+                    group.create_task(plugin.close())
+        except* PluginRuntimeError as e:
+            await asyncio.gather(
+                *[
+                    logger.aerror(str(exc), **exc.context)   # type: ignore
+                    for exc in e.exceptions
+                ]
+            )
+            raise ExecutionError(
+                'Failed to close some of the output plugins',
+                context=dict()
+            )
+        except* Exception as e:
+            await asyncio.gather(
+                *[logger.aexception(str(exc)) for exc in e.exceptions]
+            )
+            raise ExecutionError(
+                'Unexpected error occurred during closing output plugins',
+                context=dict()
+            )
 
     async def _execute(self) -> None:
         """Start execution of plugins in different threads.
@@ -192,6 +240,8 @@ class Executor:
         await input_task
         await event_task
         await output_task
+
+        await self._close_output_plugins()
 
     def execute(self) -> None:
         """Start execution of plugins.
