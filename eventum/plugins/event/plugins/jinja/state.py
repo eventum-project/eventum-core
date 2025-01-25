@@ -299,7 +299,9 @@ class MultiProcessState(State):
             ) from None
 
     def cleanup(self) -> None:
-        """Cleanup inter-process resources."""
+        """Cleanup inter-process resources. The state cannot be used
+        after calling this method.
+        """
         self._shm.close()
 
         if self._creator:
