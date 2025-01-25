@@ -91,6 +91,10 @@ class Executor:
         self._input_tags = self._build_input_tags_map()
         self._timezone = timezone(self._params.timezone)
 
+        self._output_semaphore = asyncio.Semaphore(
+            value=self._params.max_concurrency
+        )
+
     def _build_input_tags_map(self) -> dict[int, tuple[str, ...]]:
         """Build map of input plugin tags.
 
@@ -269,6 +273,8 @@ class Executor:
                 'Unexpected error occurred during output plugins execution',
                 reason=str(e)
             )
+        finally:
+            self._output_semaphore.release()
 
     async def _execute_output(self) -> None:
         """Execute output plugins."""
@@ -285,6 +291,7 @@ class Executor:
                 break
 
             for plugin in self._output:
+                await self._output_semaphore.acquire()
                 task = loop.create_task(plugin.write(events))
                 task.add_done_callback(self._handle_write_result)
                 tasks.append(task)
