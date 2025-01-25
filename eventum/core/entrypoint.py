@@ -69,6 +69,12 @@ def start(params: GeneratorParameters) -> None:
     except ImproperlyConfiguredError as e:
         logger.error(str(e), **e.context)
         exit(ExitCode.INIT_ERROR)
+    except Exception as e:
+        logger.exception(
+            'Unexpected error occurred during initializing',
+            reason=str(e)
+        )
+        exit(ExitCode.UNEXPECTED_ERROR)
 
     init_time = round(time.time() - init_start_time, 3)
     logger.info('Initialization completed', seconds=init_time)
