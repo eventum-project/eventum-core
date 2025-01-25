@@ -4,7 +4,6 @@ from queue import Queue
 from typing import Any, Sequence
 
 import structlog
-import uvloop
 from pytz import timezone
 
 from eventum.core.models.parameters.generator import GeneratorParameters
@@ -79,6 +78,7 @@ class Executor:
         self._event = event
         self._output = list(output)
         self._params = params
+        self._timezone = timezone(self._params.timezone)
 
         self._input_queue: Queue[IdentifiedTimestamps | None] = Queue(
             maxsize=params.queue.max_batches
@@ -87,9 +87,8 @@ class Executor:
             maxsize=params.queue.max_batches
         )
 
-        self._configured_input = self._configure_input()
         self._input_tags = self._build_input_tags_map()
-        self._timezone = timezone(self._params.timezone)
+        self._configured_input = self._configure_input()
 
         self._output_semaphore = asyncio.Semaphore(
             value=self._params.max_concurrency
@@ -201,7 +200,7 @@ class Executor:
         ExecutionError
             If any error occurs during execution
         """
-        with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
+        with asyncio.Runner() as runner:
             runner.run(self._execute())
 
     def _execute_input(self) -> None:
