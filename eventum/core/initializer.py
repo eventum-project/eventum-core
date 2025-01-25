@@ -196,7 +196,7 @@ def init_plugins(
         If any error occurs during initializing
     """
     input_plugins: list[InputPlugin] = []
-    for i, conf in enumerate(input):
+    for i, conf in enumerate(input, start=1):
         plugin_name, plugin_conf = next(iter(conf.items()))
         input_plugins.append(
             init_plugin(
@@ -216,7 +216,7 @@ def init_plugins(
     )
 
     output_plugins: list[OutputPlugin] = []
-    for i, conf in enumerate(output):
+    for i, conf in enumerate(output, start=1):
         plugin_name, plugin_conf = next(iter(conf.items()))
         output_plugins.append(
             init_plugin(
