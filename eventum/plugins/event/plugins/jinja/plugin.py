@@ -1,3 +1,4 @@
+import atexit
 import os
 from copy import copy
 from datetime import datetime
@@ -76,6 +77,7 @@ class JinjaEventPlugin(
 
         try:
             self._global_state = MultiProcessState()
+            atexit.register(self._global_state.cleanup)
         except RuntimeError as e:
             raise PluginConfigurationError(
                 'Failed to create global state',

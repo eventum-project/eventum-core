@@ -298,7 +298,8 @@ class MultiProcessState(State):
                 f'Cannot decode data from shared memory: {e}'
             ) from None
 
-    def __del__(self) -> None:
+    def cleanup(self) -> None:
+        """Cleanup inter-process resources."""
         self._shm.close()
 
         if self._creator:
