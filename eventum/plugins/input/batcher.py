@@ -4,11 +4,12 @@ from typing import Iterator
 import numpy as np
 
 from eventum.plugins.input.protocols import (
-    IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
+    IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate,
+    SupportsIdentifiedTimestampsSizedIterate)
 from eventum.plugins.input.utils.array_utils import chunk_array
 
 
-class TimestampsBatcher:
+class TimestampsBatcher(SupportsIdentifiedTimestampsIterate):
     """Batcher of timestamps.
 
     Attributes
@@ -21,7 +22,7 @@ class TimestampsBatcher:
 
     Parameters
     ----------
-    source : SupportsIdentifiedTimestampsIterate
+    source : SupportsIdentifiedTimestampsSizedIterate
         Source of identified timestamp arrays
 
     batch_size : int | None, default=100_000
@@ -44,28 +45,25 @@ class TimestampsBatcher:
 
     def __init__(
         self,
-        source: SupportsIdentifiedTimestampsIterate,
+        source: SupportsIdentifiedTimestampsSizedIterate,
         batch_size: int | None = 100_000,
         batch_delay: float | None = None,
     ) -> None:
         if batch_size is None and batch_delay is None:
-            raise ValueError(
-                'Parameters `batch_size` and `batch_delay` '
-                'cannot be both `None`'
-            )
+            raise ValueError('Batch size and delay cannot be both omitted')
 
         if (
             batch_size is not None
             and not self.MIN_BATCH_SIZE <= batch_size
         ):
             raise ValueError(
-                'Parameter `batch_size` must be greater or equal to'
+                'Batch size must be greater or equal to '
                 f'{self.MIN_BATCH_SIZE}'
             )
 
         if batch_delay is not None and batch_delay < self.MIN_BATCH_DELAY:
             raise ValueError(
-                'Parameter `batch_delay` must be greater or equal to '
+                'Batch delay must be greater or equal to '
                 f'{self.MIN_BATCH_DELAY}'
             )
 
@@ -78,18 +76,6 @@ class TimestampsBatcher:
         self,
         skip_past: bool = True
     ) -> Iterator[IdentifiedTimestamps]:
-        """Iterate over batches.
-
-        Parameters
-        ----------
-        skip_past : bool, default=True
-            Wether to skip past timestamps before starting iteration
-
-        Yields
-        ------
-        IdentifiedTimestamps
-            Batch of identified timestamps
-        """
         read_size = self._batch_size or 10_000
 
         if self._batch_delay is None:

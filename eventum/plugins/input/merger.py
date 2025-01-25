@@ -7,13 +7,15 @@ from numpy.typing import NDArray
 from eventum.plugins.exceptions import PluginRuntimeError
 from eventum.plugins.input.base.plugin import InputPlugin
 from eventum.plugins.input.protocols import (
-    IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
+    IdentifiedTimestamps, SupportsIdentifiedTimestampsSizedIterate)
 from eventum.plugins.input.utils.array_utils import chunk_array, merge_arrays
 
 logger = structlog.stdlib.get_logger()
 
 
-class InputPluginsMerger(SupportsIdentifiedTimestampsIterate):
+class InputPluginsMerger(
+    SupportsIdentifiedTimestampsSizedIterate
+):
     """Merger of timestamp generating by multiple input plugins.
 
     Parameters

@@ -9,10 +9,10 @@ IdentifiedTimestamps: TypeAlias = Annotated[
 ]
 
 
-class SupportsIdentifiedTimestampsIterate(Protocol):
+class SupportsIdentifiedTimestampsSizedIterate(Protocol):
     """Protocol for iterating over identified timestamps. Defines an
     interface for objects capable of yielding timestamp arrays with
-    associated plugin identifiers.
+    associated plugin identifiers of specified size.
     """
 
     def iterate(
@@ -41,5 +41,30 @@ class SupportsIdentifiedTimestampsIterate(Protocol):
         ------
         ValueError
             If parameter "size" is less than 1
+        """
+        ...
+
+
+class SupportsIdentifiedTimestampsIterate(Protocol):
+    """Protocol for iterating over identified timestamps. Defines an
+    interface for objects capable of yielding timestamp arrays with
+    associated plugin identifiers.
+    """
+
+    def iterate(
+        self,
+        skip_past: bool = True
+    ) -> Iterator[IdentifiedTimestamps]:
+        """Iterate over arrays of identified timestamps.
+
+        Parameters
+        ----------
+        skip_past : bool, default=True
+            Wether to skip past timestamps before starting iteration
+
+        Yields
+        ------
+        IdentifiedTimestamps
+            Array of timestamps with plugin ids
         """
         ...

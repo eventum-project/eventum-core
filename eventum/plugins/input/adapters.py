@@ -4,12 +4,14 @@ import numpy as np
 
 from eventum.plugins.input.base.plugin import InputPlugin
 from eventum.plugins.input.protocols import (
-    IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
+    IdentifiedTimestamps, SupportsIdentifiedTimestampsSizedIterate)
 
 
-class IdentifiedTimestampsPluginAdapter(SupportsIdentifiedTimestampsIterate):
+class IdentifiedTimestampsPluginAdapter(
+    SupportsIdentifiedTimestampsSizedIterate
+):
     """Adapter for input plugin to follow
-    `SupportsIdentifiedTimestampsIterate` protocol.
+    `SupportsIdentifiedTimestampsSizedIterate` protocol.
 
     Parameters
     ----------

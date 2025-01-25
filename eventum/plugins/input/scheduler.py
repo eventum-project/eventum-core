@@ -5,12 +5,13 @@ import numpy as np
 from pytz import BaseTzInfo
 
 from eventum.plugins.input.batcher import TimestampsBatcher
-from eventum.plugins.input.protocols import IdentifiedTimestamps
+from eventum.plugins.input.protocols import (
+    IdentifiedTimestamps, SupportsIdentifiedTimestampsIterate)
 from eventum.plugins.input.utils.time_utils import (now64,
                                                     timedelta64_to_seconds)
 
 
-class BatchScheduler:
+class BatchScheduler(SupportsIdentifiedTimestampsIterate):
     """Scheduler of timestamp batches. Scheduler iterates over batches
     of timestamps and does not yield them immediately, but it waits
     until current time reaches the last timestamps in the batch.
@@ -36,19 +37,6 @@ class BatchScheduler:
         self,
         skip_past: bool = True
     ) -> Iterator[IdentifiedTimestamps]:
-        """Iterate over batches with scheduled yielding.
-
-
-        Parameters
-        ----------
-        skip_past : bool, default=True
-            Wether to skip past timestamps before starting iteration
-
-        Yields
-        ------
-        IdentifiedTimestamps
-            Batch of identified timestamps
-        """
         for array in self._batcher.iterate(skip_past=skip_past):
             now = now64(self._timezone)
             latest_ts: np.datetime64 = array['timestamp'][-1]
