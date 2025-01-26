@@ -186,7 +186,7 @@ class JinjaEventPlugin(
                 'Failed to load template',
                 context=dict(
                     self.instance_info,
-                    reason=f'Bad syntax in template: {e}',
+                    reason=f'Bad syntax in template: {e} (line {e.lineno})',
                     file_name=name
                 )
             ) from e
