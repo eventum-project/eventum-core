@@ -76,6 +76,11 @@ class JinjaEventPluginMetrics(EventPluginMetrics):
     state: JinjaEventPluginStateMetrics
 
 
+EventPluginMetricsT: TypeAlias = (
+    EventPluginMetrics | JinjaEventPluginMetrics
+)
+
+
 class OutputPluginMetrics(PluginMetrics):
     """Output plugin metrics.
 
@@ -95,46 +100,27 @@ class OutputPluginMetrics(PluginMetrics):
     written: int
 
 
-class InputMetrics(TypedDict):
-    """Input metrics.
+class PluginsMetrics(TypedDict):
+    """Plugins metrics.
 
     Attributes
     ----------
-    plugins : list[InputPluginMetrics]
-        List of input plugin metrics
-    """
-    plugins: list[InputPluginMetrics]
+    input : list[InputPluginMetrics]
+        Input plugins metrics
 
-
-EventPluginMetricsT: TypeAlias = (
-    EventPluginMetrics | JinjaEventPluginMetrics
-)
-
-
-class EventMetrics(TypedDict):
-    """Event metrics.
-
-    Attributes
-    ----------
-    plugin : EventPluginMetricsT
+    event : EventPluginMetricsT
         Event plugin metrics
+
+    output : list[OutputPluginMetrics]
+        Output plugins metrics
     """
-    plugin: EventPluginMetricsT
+    input: list[InputPluginMetrics]
+    event: EventPluginMetricsT
+    output: list[OutputPluginMetrics]
 
 
-class OutputMetrics(TypedDict):
-    """Output metrics.
-
-    Attributes
-    ----------
-    plugins : list[OutputPluginMetrics]
-        List of output plugin metrics
-    """
-    plugins: list[OutputPluginMetrics]
-
-
-class Metrics(TypedDict):
-    """Metrics of generator.
+class CommonMetrics(TypedDict):
+    """Common metrics.
 
     Attributes
     ----------
@@ -143,18 +129,21 @@ class Metrics(TypedDict):
 
     parameters : dict
         Model-dumped generator parameters
-
-    input : InputMetrics
-        Input metrics
-
-    event : EventMetrics
-        Event metrics
-
-    output : OutputMetrics
-        Output metrics
     """
     started: str
     parameters: dict
-    input: InputMetrics
-    event: EventMetrics
-    output: OutputMetrics
+
+
+class Metrics(TypedDict):
+    """Metrics of generator.
+
+    Attributes
+    ----------
+    common: CommonMetrics
+        Common metrics
+
+    plugins: PluginsMetrics
+        Plugins metrics
+    """
+    common: CommonMetrics
+    plugins: PluginsMetrics
