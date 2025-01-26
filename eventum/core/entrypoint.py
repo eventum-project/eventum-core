@@ -2,6 +2,7 @@ import os
 import time
 
 import structlog
+from setproctitle import getproctitle, setproctitle
 
 from eventum.core.config import ConfigurationLoadError, load
 from eventum.core.executor import (ExecutionError, Executor,
@@ -21,6 +22,8 @@ def start(params: GeneratorParameters) -> None:
     params : GeneratorParameters
         Parameters for generator
     """
+    setproctitle(title=f'{getproctitle()} ({params.id})')
+
     logger.info('Loading configuration')
     init_start_time = time.time()
 
