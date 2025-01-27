@@ -100,8 +100,8 @@ class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
         self._created = 0
 
         for array in self._generate(size=size, skip_past=skip_past):
-            self._created += array.size
             yield array
+            self._created += array.size
 
     @abstractmethod
     def _generate(
