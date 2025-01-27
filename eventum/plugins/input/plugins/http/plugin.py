@@ -95,7 +95,7 @@ class HttpInputPlugin(
         ------
         HTTPException
             429 - If requests queue is full
-            403 - If server is stopping
+            409 - If server is stopping
         """
         if self._is_stopping:
             await self._logger.awarning(
@@ -103,7 +103,7 @@ class HttpInputPlugin(
                 count=data.count
             )
             raise HTTPException(
-                status_code=403,
+                status_code=409,
                 detail='Server is stopping'
             )
 
