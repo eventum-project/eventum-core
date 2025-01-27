@@ -22,7 +22,7 @@ class CronInputPlugin(InputPlugin[CronInputPluginConfig, InputPluginParams]):
     ) -> None:
         super().__init__(config, params)
 
-    def generate(
+    def _generate(
         self,
         size: int,
         skip_past: bool = True

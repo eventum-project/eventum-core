@@ -92,7 +92,7 @@ class TimestampsInputPlugin(
                 )
             ) from None
 
-    def generate(
+    def _generate(
         self,
         size: int,
         skip_past: bool = True

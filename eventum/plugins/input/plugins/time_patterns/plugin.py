@@ -213,7 +213,7 @@ class TimePatternInputPlugin(
         """
         return self._generate_distribution(size, duration) + start
 
-    def generate(
+    def _generate(
         self,
         size: int,
         skip_past: bool = True
@@ -388,7 +388,7 @@ class TimePatternsInputPlugin(
 
         return time_patterns
 
-    def generate(
+    def _generate(
         self,
         size: int,
         skip_past: bool = True

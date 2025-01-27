@@ -148,7 +148,7 @@ class HttpInputPlugin(
                 context=dict(self.instance_info, reason=str(e))
             )
 
-    def generate(
+    def _generate(
         self,
         size: int,
         skip_past: bool = True

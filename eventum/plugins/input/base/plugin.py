@@ -60,13 +60,13 @@ class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
             self._timezone = params['timezone']
 
         self._buffer = Buffer()
+        self._created = 0
 
     def __init_subclass__(cls, interactive: bool = False, **kwargs: Any):
         super().__init_subclass__(**kwargs)
 
         setattr(cls, '_interactive', interactive)
 
-    @abstractmethod
     def generate(
         self,
         size: int,
@@ -97,9 +97,32 @@ class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
         PluginRuntimeError
             If any error occurs during timestamps generation
         """
+        self._created = 0
+
+        for array in self._generate(size=size, skip_past=skip_past):
+            self._created += array.size
+            yield array
+
+    @abstractmethod
+    def _generate(
+        self,
+        size: int,
+        skip_past: bool = True
+    ) -> Iterator[NDArray[datetime64]]:
+        """Generate timestamps.
+
+        Notes
+        -----
+        See `generate` method for more info
+        """
         ...
 
     @property
     def is_interactive(self) -> bool:
         """Wether the plugin is interactive."""
         return getattr(self, '_interactive')
+
+    @property
+    def created(self) -> int:
+        """Number of created events."""
+        return self._created
