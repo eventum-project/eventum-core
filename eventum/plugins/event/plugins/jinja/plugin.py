@@ -200,7 +200,7 @@ class JinjaEventPlugin(
                 )
             ) from e
 
-    def produce(self, params: ProduceParams) -> list[str]:
+    def _produce(self, params: ProduceParams) -> list[str]:
         self._event_context['timestamp'] = params['timestamp']
         self._event_context['tags'] = params['tags']
 

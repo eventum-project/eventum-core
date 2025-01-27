@@ -202,7 +202,7 @@ class ReplayEventPlugin(
 
         return message[:match_start] + string + message[match_end:]
 
-    def produce(self, params: ProduceParams) -> list[str]:
+    def _produce(self, params: ProduceParams) -> list[str]:
         try:
             line = next(self._lines)
         except StopIteration:

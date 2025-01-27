@@ -55,7 +55,9 @@ class EventPlugin(Plugin[ConfigT, ParamsT], register=False):
     def __init__(self, config: ConfigT, params: ParamsT) -> None:
         super().__init__(config, params)
 
-    @abstractmethod
+        self._produced = 0
+        self._produce_failed = 0
+
     def produce(self, params: ProduceParams) -> list[str]:
         """Produce events with provided parameters.
 
@@ -77,4 +79,31 @@ class EventPlugin(Plugin[ConfigT, ParamsT], register=False):
         EventsExhausted
             If no more events can be produced by event plugin
         """
+        try:
+            result = self._produce(params=params)
+        except Exception as e:
+            self._produce_failed += 1
+            raise e
+
+        self._produced += len(result)
+        return result
+
+    @abstractmethod
+    def _produce(self, params: ProduceParams) -> list[str]:
+        """Produce events with provided parameters.
+
+        Notes
+        -----
+        See `produce` method for more info
+        """
         ...
+
+    @property
+    def produced(self) -> int:
+        """Number of produced events."""
+        return self._produced
+
+    @property
+    def produce_failed(self) -> int:
+        """Number of unsuccessfully produced events."""
+        return self._produce_failed

@@ -90,7 +90,7 @@ class ScriptEventPlugin(
 
         return function
 
-    def produce(self, params: ProduceParams) -> list[str]:
+    def _produce(self, params: ProduceParams) -> list[str]:
         try:
             result = self._function(params)
         except Exception as e:
