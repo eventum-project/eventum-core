@@ -8,13 +8,13 @@ from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateSyntaxError)
 
 import eventum.plugins.event.plugins.jinja.modules as modules
-from eventum.core.models.metrics import (JinjaEventPluginMetrics,
-                                         JinjaEventPluginStateMetrics)
 from eventum.plugins.event.base.plugin import (EventPlugin, EventPluginParams,
                                                ProduceParams)
 from eventum.plugins.event.plugins.jinja.config import (
     JinjaEventPluginConfig, TemplateConfigForGeneralModes)
 from eventum.plugins.event.plugins.jinja.context import EventContext
+from eventum.plugins.event.plugins.jinja.metrics import (
+    JinjaEventPluginMetrics, JinjaEventPluginStateMetrics)
 from eventum.plugins.event.plugins.jinja.module_provider import ModuleProvider
 from eventum.plugins.event.plugins.jinja.sample_reader import (SampleLoadError,
                                                                SampleReader)
