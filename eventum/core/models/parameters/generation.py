@@ -114,6 +114,11 @@ class GenerationParameters(BaseModel, extra='forbid', frozen=True):
             'in live mode'
         )
     )
+    metrics_interval: float = Field(
+        default=5.0,
+        ge=1.0,
+        description='Time interval (in seconds) of metrics gauging'
+    )
 
     @field_validator('timezone')
     def validate_timezone(cls, v: str) -> str:
