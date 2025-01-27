@@ -8,6 +8,8 @@ from jinja2 import (BaseLoader, Environment, FileSystemLoader, Template,
                     TemplateError, TemplateNotFound, TemplateSyntaxError)
 
 import eventum.plugins.event.plugins.jinja.modules as modules
+from eventum.core.models.metrics import (JinjaEventPluginMetrics,
+                                         JinjaEventPluginStateMetrics)
 from eventum.plugins.event.base.plugin import (EventPlugin, EventPluginParams,
                                                ProduceParams)
 from eventum.plugins.event.plugins.jinja.config import (
@@ -251,3 +253,17 @@ class JinjaEventPlugin(
     def subprocess_runner(self) -> SubprocessRunner:
         """Subprocess runner."""
         return self._subprocess_runner
+
+    def get_metrics(self) -> JinjaEventPluginMetrics:
+        metrics = super().get_metrics()
+        return JinjaEventPluginMetrics(
+            **metrics,
+            state=JinjaEventPluginStateMetrics(
+                locals={
+                    name: state.as_dict()
+                    for name, state in self.local_states.items()
+                },
+                shared=self.shared_state.as_dict(),
+                globals=self.global_state.as_dict()
+            )
+        )

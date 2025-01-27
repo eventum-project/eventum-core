@@ -2,6 +2,7 @@ import importlib
 import inspect
 from abc import ABC
 from contextlib import contextmanager
+from copy import deepcopy
 from types import ModuleType
 from typing import (Any, Generic, Iterator, NotRequired, Required, TypedDict,
                     TypeVar, get_args)
@@ -11,6 +12,7 @@ import structlog
 from pydantic import RootModel
 
 from eventum.plugins.base.config import PluginConfig
+from eventum.plugins.base.metrics import PluginMetrics
 from eventum.plugins.exceptions import (PluginConfigurationError,
                                         PluginRegistrationError)
 from eventum.plugins.registry import PluginInfo, PluginsRegistry
@@ -178,6 +180,12 @@ class Plugin(ABC, Generic[ConfigT, ParamsT]):
         self._config = config
         self._logger = logger.bind(**self.instance_info)
 
+        self._metrics = PluginMetrics(
+            name=self.plugin_name,
+            id=self.id,
+            configuration=self.config.model_dump()
+        )
+
     @contextmanager
     def _required_params(self) -> Iterator:
         """Context manager for handling missing keys in plugin parameters.
@@ -293,3 +301,13 @@ class Plugin(ABC, Generic[ConfigT, ParamsT]):
     def config(self) -> ConfigT:
         """Plugin config."""
         return self._config
+
+    def get_metrics(self) -> PluginMetrics:
+        """Get plugin metrics.
+
+        Returns
+        -------
+        PluginMetrics
+            Plugins metrics
+        """
+        return deepcopy(self._metrics)

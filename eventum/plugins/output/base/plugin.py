@@ -4,6 +4,7 @@ from typing import Any, Sequence, TypeVar
 
 from pydantic import RootModel
 
+from eventum.core.models.metrics import OutputPluginMetrics
 from eventum.plugins.base.plugin import Plugin, PluginParams
 from eventum.plugins.exceptions import (PluginConfigurationError,
                                         PluginRuntimeError)
@@ -295,3 +296,12 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
     def format_failed(self) -> int:
         """Number of unsuccessfully formatted events."""
         return self._format_failed
+
+    def get_metrics(self) -> OutputPluginMetrics:
+        metrics = super().get_metrics()
+        return OutputPluginMetrics(
+            **metrics,
+            written=self.written,
+            format_failed=self.format_failed,
+            write_failed=self.write_failed
+        )

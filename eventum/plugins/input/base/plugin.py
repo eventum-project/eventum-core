@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 from pydantic import RootModel
 from pytz import BaseTzInfo
 
+from eventum.core.models.metrics import InputPluginMetrics
 from eventum.plugins.base.plugin import Plugin, PluginParams
 from eventum.plugins.input.base.config import InputPluginConfig
 from eventum.plugins.input.buffer import Buffer
@@ -126,3 +127,7 @@ class InputPlugin(Plugin[ConfigT, ParamsT], register=False):
     def created(self) -> int:
         """Number of created events."""
         return self._created
+
+    def get_metrics(self) -> InputPluginMetrics:
+        metrics = super().get_metrics()
+        return InputPluginMetrics(**metrics, created=self.created)
