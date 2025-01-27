@@ -92,16 +92,16 @@ def start(params: GeneratorParameters, metrics: DictProxy) -> None:
         params=params
     )
     stop_event = Event()
+    gauge_thread = Thread(
+        target=_gauge_metrics,
+        args=(gauge, metrics, stop_event, params.metrics_interval)
+    )
 
     init_time = round(time.time() - init_start_time, 3)
     logger.info('Initialization completed', seconds=init_time)
 
     logger.info('Starting execution', parameters=params.model_dump())
-
-    gauge_thread = Thread(
-        target=_gauge_metrics,
-        args=(gauge, metrics, stop_event, params.metrics_interval)
-    )
+    gauge_thread.start()
     try:
         executor.execute()
     except ExecutionError as e:
@@ -116,6 +116,9 @@ def start(params: GeneratorParameters, metrics: DictProxy) -> None:
     finally:
         stop_event.set()
         gauge_thread.join()
+
+    logger.info('Finishing execution')
+    exit(ExitCode.SUCCESS)
 
 
 def _gauge_metrics(

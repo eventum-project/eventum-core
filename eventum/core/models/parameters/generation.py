@@ -79,6 +79,9 @@ class GenerationParameters(BaseModel, extra='forbid', frozen=True):
     skip_past : bool, default=True
         Whether to skip past timestamps when starting generation in
         live mode
+
+    metrics_interval : float, default=5.0
+        Time interval (in seconds) of metrics gauging
     """
     timezone: str = Field(
         default='UTC',

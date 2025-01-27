@@ -14,13 +14,13 @@ class GeneratorManager:
     def __init__(self) -> None:
         self._generators: dict[str, Generator] = dict()
 
-    def add(self, parameters: GeneratorParameters) -> None:
+    def add(self, params: GeneratorParameters) -> None:
         """Add new generator with provided parameters to list of managed
         generators.
 
         Parameters
         ----------
-        parameters : GeneratorParameters
+        params : GeneratorParameters
             Parameters for generator
 
         Raises
@@ -28,10 +28,10 @@ class GeneratorManager:
         ManagingError
             If generator with this id is already added
         """
-        if parameters.id in self._generators:
+        if params.id in self._generators:
             raise ManagingError('Generator with this id is already added')
 
-        self._generators[parameters.id] = Generator(parameters)
+        self._generators[params.id] = Generator(params)
 
     def remove(self, generator_id: str) -> None:
         """Remove generator from list of managed generators. Stop it in
