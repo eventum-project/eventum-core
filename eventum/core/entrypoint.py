@@ -152,10 +152,7 @@ def _gauge_metrics(
         raise ValueError('Interval must be greater than zero')
 
     while not stop_event.is_set():
-        for key, value in gauge.gauge_metrics().items():
-            metrics[key] = value
-
+        metrics.update(gauge.gauge_metrics())
         time.sleep(interval)
 
-    for key, value in gauge.gauge_metrics().items():
-        metrics[key] = value
+    metrics.update(gauge.gauge_metrics())
