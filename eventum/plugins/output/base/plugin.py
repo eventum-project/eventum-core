@@ -51,6 +51,10 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
         self._formatter_config = self._get_formatter_config()
         self._formatter = self._get_formatter(self._formatter_config)
 
+        self._written = 0
+        self._format_failed = 0
+        self._write_failed = 0
+
     def _get_formatter_config(self) -> FormatterConfigT:
         """Get formatter config.
 
@@ -111,6 +115,10 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
         ------
         PluginRuntimeError
             If error occurs during opening
+
+        Notes
+        -----
+        Metrics are reset on successful opening
         """
         try:
             self._loop = asyncio.get_running_loop()
@@ -123,6 +131,9 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
         if not self._is_opened:
             await self._open()
             self._is_opened = True
+            self._written = 0
+            self._format_failed = 0
+            self._write_failed = 0
 
         await self._logger.ainfo('Plugin is opened for writing')
 
@@ -213,12 +224,20 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
                 context=dict(self.instance_info)
             )
 
-        formatting_result = await self._format_events(events)
+        try:
+            formatting_result = await self._format_events(events)
+        except Exception as e:
+            self._format_failed += len(events)
+            raise e
 
         if not formatting_result.events:
             return 0
 
-        written = await self._write(formatting_result.events)
+        try:
+            written = await self._write(formatting_result.events)
+        except Exception as e:
+            self._write_failed += formatting_result.formatted_count
+            raise e
 
         # handle possible events aggregation
         if (
@@ -226,43 +245,53 @@ class OutputPlugin(Plugin[ConfigT, ParamsT], register=False):
             and formatting_result.formatted_count > 1
             and written == 1
         ):
-            return formatting_result.formatted_count
+            written = formatting_result.formatted_count
 
+        self._written += written
         return written
 
     @abstractmethod
     async def _open(self) -> None:
-        """Perform actions for plugin opening.
+        """Open plugin for writing.
 
-        Raises
-        ------
-        PluginRuntimeError
-            If error occurs during opening
+        Notes
+        -----
+        See `open` method for more info
         """
         ...
 
     @abstractmethod
     async def _close(self) -> None:
-        """Perform actions for plugin closing."""
+        """Close plugin for writing with releasing resources and
+        flushing events.
+
+        Notes
+        -----
+        See `close` method for more info
+        """
         ...
 
     @abstractmethod
     async def _write(self, events: Sequence[str]) -> int:
-        """Perform writing of formatted events.
+        """Write events.
 
-        Parameters
-        ----------
-        events : Sequence[str]
-            Sequence of events to write
-
-        Returns
-        -------
-        int
-            Number of successfully written events
-
-        Raises
-        ------
-        PluginRuntimeError
-            If error occurs during writing events
+        Notes
+        -----
+        See `write` method for more info
         """
         ...
+
+    @property
+    def written(self) -> int:
+        """Number of written events."""
+        return self._written
+
+    @property
+    def write_failed(self) -> int:
+        """Number of unsuccessfully written events."""
+        return self._write_failed
+
+    @property
+    def format_failed(self) -> int:
+        """Number of unsuccessfully formatted events."""
+        return self._format_failed
