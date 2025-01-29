@@ -27,7 +27,7 @@ def get(name: str) -> None:
 def set(name: str, value: str | None) -> None:
     """Set secret to keyring."""
     if value is None:
-        value = pwinput(f'Enter password of "{value}": ')
+        value = pwinput(f'Enter password of "{name}": ')
 
     try:
         set_secret(name=name, value=value)
