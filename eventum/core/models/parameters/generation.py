@@ -19,16 +19,8 @@ class BatchParameters(BaseModel, extra='forbid', frozen=True):
     -----
     At least one parameter must be provided
     """
-    size: int | None = Field(
-        default=10_000,
-        ge=1,
-        description='Batch size for generating events'
-    )
-    delay: float | None = Field(
-        default=1.0,
-        ge=0.1,
-        description='Batch timeout (in seconds) for generating events'
-    )
+    size: int | None = Field(default=10_000, ge=1)
+    delay: float | None = Field(default=1.0, ge=0.1)
 
     @model_validator(mode='after')
     def validate_batch_params(self) -> Self:
@@ -46,11 +38,7 @@ class QueueParameters(BaseModel, extra='forbid', frozen=True):
     max_batches : int, default=10
         Maximum number of batches in queue
     """
-    max_batches: int = Field(
-        default=10,
-        ge=1,
-        description='Maximum number of batches in queue'
-    )
+    max_batches: int = Field(default=10, ge=1)
 
 
 class GenerationParameters(BaseModel, extra='forbid', frozen=True):
@@ -83,45 +71,13 @@ class GenerationParameters(BaseModel, extra='forbid', frozen=True):
     metrics_interval : float, default=5.0
         Time interval (in seconds) of metrics gauging
     """
-    timezone: str = Field(
-        default='UTC',
-        min_length=3,
-        description='Time zone for generating timestamps'
-    )
-    batch: BatchParameters = Field(
-        default_factory=lambda: BatchParameters(),
-        description='Batch parameters'
-    )
-    queue: QueueParameters = Field(
-        default_factory=lambda: QueueParameters(),
-        description='Queue parameters'
-    )
-    keep_order: bool = Field(
-        default=False,
-        description=(
-            'Whether to keep chronological order of timestamps by disabling '
-            'output plugins concurrency'
-        )
-    )
-    max_concurrency: int = Field(
-        default=100,
-        description=(
-            'Maximum number of concurrent write operations performed '
-            'by output plugins'
-        )
-    )
-    skip_past: bool = Field(
-        default=True,
-        description=(
-            'Whether to skip past timestamps when starting generation '
-            'in live mode'
-        )
-    )
-    metrics_interval: float = Field(
-        default=5.0,
-        ge=1.0,
-        description='Time interval (in seconds) of metrics gauging'
-    )
+    timezone: str = Field(default='UTC', min_length=3)
+    batch: BatchParameters = Field(default_factory=lambda: BatchParameters())
+    queue: QueueParameters = Field(default_factory=lambda: QueueParameters())
+    keep_order: bool = Field(default=False)
+    max_concurrency: int = Field(default=100)
+    skip_past: bool = Field(default=True)
+    metrics_interval: float = Field(default=5.0, ge=1.0)
 
     @field_validator('timezone')
     def validate_timezone(cls, v: str) -> str:

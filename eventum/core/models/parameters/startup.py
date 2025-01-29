@@ -16,17 +16,8 @@ class StartupParameters(BaseModel, extra='forbid', frozen=True):
         Absolute path to configuration file or database file with
         defined generators to run on startup
     """
-    source: Literal['db', 'file'] = Field(
-        default='file',
-        description='Type of source with configuration'
-    )
-    path: str = Field(
-        min_length=1,
-        description=(
-            'Absolute path to configuration file or database file '
-            'with defined generators to run on startup'
-        )
-    )
+    source: Literal['db', 'file'] = Field(default='file')
+    path: str = Field(min_length=1)
 
     @field_validator('path')
     def validate_path(cls, v: str):

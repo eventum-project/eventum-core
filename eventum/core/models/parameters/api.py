@@ -26,24 +26,11 @@ class SSLParameters(BaseModel, extra='forbid', frozen=True):
     """
     enabled: bool = Field(default=True, description='Whether to enable SSL')
     verify_mode: Literal['none', 'optional', 'required'] = Field(
-        default='optional',
-        description='Verification mode of SSL connections'
+        default='optional'
     )
-    ca_cert: str | None = Field(
-        default=None,
-        min_length=1,
-        description='Absolute path to CA certificate'
-    )
-    cert: str | None = Field(
-        default=None,
-        min_length=1,
-        description='Absolute path to server certificate'
-    )
-    cert_key: str | None = Field(
-        default=None,
-        min_length=1,
-        description='Absolute path to server certificate key'
-    )
+    ca_cert: str | None = Field(default=None, min_length=1)
+    cert: str | None = Field(default=None, min_length=1)
+    cert_key: str | None = Field(default=None, min_length=1)
 
     @field_validator('ca_cert', 'server_cert', 'server_cert_key')
     def validate_absolute_paths(cls, v: str | None):
@@ -85,21 +72,7 @@ class APIParameters(BaseModel, extra='forbid', frozen=True):
     ssl : SSLParameters, default=SSLParameters(...)
         SSL parameters
     """
-    enabled: bool = Field(
-        default=True,
-        description='Whether to enable REST API'
-    )
-    host: str = Field(
-        default='0.0.0.0',
-        min_length=1,
-        description='Bind address for API'
-    )
-    port: int = Field(
-        default=9474,
-        ge=1,
-        description='Bind port for API'
-    )
-    ssl: SSLParameters = Field(
-        default_factory=lambda: SSLParameters(),
-        description='SSL parameters'
-    )
+    enabled: bool = Field(default=True)
+    host: str = Field(default='0.0.0.0', min_length=1)
+    port: int = Field(default=9474, ge=1)
+    ssl: SSLParameters = Field(default_factory=lambda: SSLParameters())
