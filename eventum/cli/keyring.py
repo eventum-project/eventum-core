@@ -19,6 +19,7 @@ def get(name: str) -> None:
         click.echo(secret)
     except (ValueError, EnvironmentError) as e:
         click.secho(f'Failed to get secret: {e}', fg='red')
+        exit(1)
 
 
 @cli.command()
@@ -33,8 +34,10 @@ def set(name: str, value: str | None) -> None:
         set_secret(name=name, value=value)
     except ValueError as e:
         click.secho(f'Failed to set secret: {e}', fg='red')
+        exit(1)
     except EnvironmentError as e:
         click.secho(f'Failed to set secret: {e}', fg='red')
+        exit(1)
     else:
         click.secho('Done', fg='green')
 
@@ -47,8 +50,10 @@ def remove(name: str) -> None:
         remove_secret(name=name)
     except ValueError as e:
         click.secho(f'Failed to remove secret: {e}', fg='red')
+        exit(1)
     except EnvironmentError as e:
         click.secho(f'Failed to remove secret: {e}', fg='red')
+        exit(1)
     else:
         click.secho('Done', fg='green')
 
