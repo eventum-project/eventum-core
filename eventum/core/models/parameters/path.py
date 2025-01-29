@@ -12,11 +12,15 @@ class PathParameters(BaseModel, extra='forbid', frozen=True):
 
     generators : str
         Absolute path to file with generator definitions
+
+    db : str
+        Absolute path to database
     """
     logs: str = Field(min_length=1)
     generators: str = Field(min_length=1)
+    db: str = Field(min_length=1)
 
-    @field_validator('logs', 'generators')
+    @field_validator('logs', 'generators', 'db')
     def validate_paths(cls, v: str):
         if os.path.isabs(v):
             return v
