@@ -2335,6 +2335,16 @@ files = [
 ]
 
 [[package]]
+name = "pwinput"
+version = "1.0.3"
+description = "A cross-platform Python module that displays **** for password input. Works on Windows, unlike getpass. Formerly called stdiomask."
+optional = false
+python-versions = "*"
+files = [
+    {file = "pwinput-1.0.3.tar.gz", hash = "sha256:ca1a8bd06e28872d751dbd4132d8637127c25b408ea3a349377314a5491426f3"},
+]
+
+[[package]]
 name = "pycares"
 version = "4.5.0"
 description = "Python interface for c-ares"
@@ -3767,4 +3777,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "cc6576ae26de45181fed5d2dd04c266cec12a53e8dd2c72eb3fb69827a4ea18e"
+content-hash = "212e9bf96d9fdf0546a07365fa8c81075b8a78520979d3f25624c4aa33eb98ae"
