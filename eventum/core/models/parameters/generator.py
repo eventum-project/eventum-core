@@ -17,7 +17,7 @@ class GeneratorParameters(GenerationParameters, frozen=True):
     path : str
         Absolute path to configuration
 
-    time_mode : Literal['live', 'sample']
+    time_mode : Literal['live', 'sample'], default='live'
         Wether to use live mode and generate events at moments defined
         by timestamp values or sample mode to generate all events at a
         time
@@ -27,7 +27,7 @@ class GeneratorParameters(GenerationParameters, frozen=True):
     """
     id: str = Field(min_length=1)
     path: str = Field(min_length=1)
-    time_mode: Literal['live', 'sample']
+    time_mode: Literal['live', 'sample'] = 'live'
     params: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator('path')
