@@ -92,6 +92,29 @@
     </tr>
 </table>
 
+## App
+
+<table>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Data type</th>
+    <tr>
+        <td>generator_id</td>
+        <td>ID of the generator</td>
+        <td>str</td>
+    </tr>
+    <tr>
+        <td>running_generators</td>
+        <td>IDs of running generators</td>
+        <td>list[str]</td>
+    </tr>
+    <tr>
+        <td>non_running_generators</td>
+        <td>IDs of non running generators</td>
+        <td>list[str]</td>
+    </tr>
+</table>
+
 ## Plugins
 
 <table>
