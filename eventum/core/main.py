@@ -36,7 +36,13 @@ class App:
         self._manager = GeneratorManager()
 
     def start(self) -> NoReturn:
-        """Start the app."""
+        """Start the app.
+
+        Raises
+        ------
+        AppError
+            If error occurs during initialization
+        """
         gen_list = self._load_generators_list()
         self._start_generators(generators_params=gen_list)
 
@@ -63,6 +69,11 @@ class App:
         list[GeneratorParameters]
             Validated list of generators parameters applied above
             generation parameters from setting
+
+        Raises
+        ------
+        ValidationError
+            If validation of provided object fails
         """
         generators_parameters: list[GeneratorParameters] = []
 
@@ -82,6 +93,11 @@ class App:
         -------
         list[GeneratorParameters]
             List of defined generators parameters
+
+        Raises
+        ------
+        AppError
+            If error occurs during loading generators list
         """
         logger.info(
             'Loading generators list',
@@ -146,8 +162,13 @@ class App:
                     reason=str(e)
                 )
 
+        if len(running_generators) > 0:
+            message = 'Generators are running'
+        else:
+            message = 'No generators are running'
+
         logger.info(
-            'Generators are running',
+            message,
             count=len(running_generators),
             running_generators=running_generators,
             non_running_generators=non_running_generators
