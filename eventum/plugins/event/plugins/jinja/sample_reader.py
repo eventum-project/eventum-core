@@ -8,15 +8,11 @@ from eventum.plugins.event.plugins.jinja.config import (CSVSampleConfig,
                                                         JSONSampleConfig,
                                                         SampleConfig,
                                                         SampleType)
+from eventum.utils.exceptions import ContextualException
 
 
-class SampleLoadError(Exception):
+class SampleLoadError(ContextualException):
     """Failed to load sample."""
-
-    def __init__(self, *args: object, context: dict[str, Any]) -> None:
-        super().__init__(*args)
-
-        self.context = context
 
 
 class Sample:

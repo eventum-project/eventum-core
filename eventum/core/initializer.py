@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Iterable, Literal, assert_never, overload
+from typing import Iterable, Literal, assert_never, overload
 
 from pydantic import ValidationError
 from pytz import timezone
@@ -13,16 +13,12 @@ from eventum.plugins.input.base.plugin import InputPlugin, InputPluginParams
 from eventum.plugins.loader import (load_event_plugin, load_input_plugin,
                                     load_output_plugin)
 from eventum.plugins.output.base.plugin import OutputPlugin, OutputPluginParams
+from eventum.utils.exceptions import ContextualException
 from eventum.utils.validation_prettier import prettify_validation_errors
 
 
-class InitializationError(Exception):
+class InitializationError(ContextualException):
     """Error during initialization."""
-
-    def __init__(self, *args: object, context: dict[str, Any]) -> None:
-        super().__init__(*args)
-
-        self.context = context
 
 
 @dataclass(frozen=True)

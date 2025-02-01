@@ -1,5 +1,5 @@
 import time
-from typing import Any, Iterable, NoReturn
+from typing import Iterable, NoReturn
 
 import structlog
 import yaml
@@ -8,18 +8,14 @@ from pydantic import ValidationError, validate_call
 from eventum.core.manager import GeneratorManager, ManagingError
 from eventum.core.models.parameters.generator import GeneratorParameters
 from eventum.core.models.settings import Settings
+from eventum.utils.exceptions import ContextualException
 from eventum.utils.validation_prettier import prettify_validation_errors
 
 logger = structlog.stdlib.get_logger()
 
 
-class AppError(Exception):
+class AppError(ContextualException):
     """Application error."""
-
-    def __init__(self, *args: object, context: dict[str, Any]) -> None:
-        super().__init__(*args)
-
-        self.context = context
 
 
 class App:

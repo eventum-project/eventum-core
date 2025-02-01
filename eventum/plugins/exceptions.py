@@ -1,22 +1,8 @@
-from typing import Any
+from eventum.utils.exceptions import ContextualException
 
 
-class PluginError(Exception):
-    """Base plugin error.
-
-    Parameters
-    ----------
-    context : dict[str, Any]
-        Context information about plugin (e.g. plugin id, name etc.)
-    """
-
-    def __init__(
-        self,
-        *args: Any,
-        context: dict[str, Any]
-    ) -> None:
-        super().__init__(*args)
-        self.context = context
+class PluginError(ContextualException):
+    """Base plugin error."""
 
 
 class PluginRegistrationError(PluginError):

@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 from queue import Queue
-from typing import Any, Sequence
+from typing import Sequence
 
 import structlog
 from pytz import timezone
@@ -18,26 +18,17 @@ from eventum.plugins.input.protocols import (
     SupportsIdentifiedTimestampsSizedIterate)
 from eventum.plugins.input.scheduler import BatchScheduler
 from eventum.plugins.output.base.plugin import OutputPlugin
+from eventum.utils.exceptions import ContextualException
 
 logger = structlog.stdlib.get_logger()
 
 
-class ImproperlyConfiguredError(Exception):
+class ImproperlyConfiguredError(ContextualException):
     """Plugins cannot be executed with provided parameters."""
 
-    def __init__(self, *args: object, context: dict[str, Any]) -> None:
-        super().__init__(*args)
 
-        self.context = context
-
-
-class ExecutionError(Exception):
+class ExecutionError(ContextualException):
     """Execution error."""
-
-    def __init__(self, *args: object, context: dict[str, Any]) -> None:
-        super().__init__(*args)
-
-        self.context = context
 
 
 class Executor:

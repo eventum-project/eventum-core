@@ -7,18 +7,14 @@ from pydantic import ValidationError
 
 from eventum.core.models.config import GeneratorConfig
 from eventum.security.manage import get_secret
+from eventum.utils.exceptions import ContextualException
 from eventum.utils.validation_prettier import prettify_validation_errors
 
 TOKEN_PATTERN = re.compile(pattern=r'\${\s*?(\S*?)\s*?}')
 
 
-class ConfigurationLoadError(Exception):
+class ConfigurationLoadError(ContextualException):
     """Error during loading generator configuration."""
-
-    def __init__(self, *args: object, context: dict[str, Any]) -> None:
-        super().__init__(*args)
-
-        self.context = context
 
 
 class TokenSubstitutionError(Exception):
