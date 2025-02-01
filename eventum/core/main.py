@@ -1,5 +1,6 @@
-import time
-from typing import Iterable, NoReturn
+import signal
+from threading import Event
+from typing import Iterable
 
 import structlog
 import yaml
@@ -30,8 +31,12 @@ class App:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._manager = GeneratorManager()
+        self._termination_event = Event()
 
-    def start(self) -> NoReturn:
+        signal.signal(signal.SIGINT, lambda _, __: self._handle_termination())
+        signal.signal(signal.SIGTERM, lambda _, __: self._handle_termination())
+
+    def start(self) -> None:
         """Start the app.
 
         Raises
@@ -45,10 +50,9 @@ class App:
         if self._settings.api.enabled:
             self._start_api()
 
-        while True:
-            time.sleep(812)
+        self._termination_event.wait()
 
-    @validate_call
+    @ validate_call
     def _validate_generators_list(
         self,
         object: list[dict]
@@ -170,6 +174,20 @@ class App:
             non_running_generators=non_running_generators
         )
 
+    def _stop_generators(self) -> None:
+        """Stop generators."""
+        self._manager.bulk_stop(self._manager.generator_ids)
+
     def _start_api(self) -> None:
         """Start application API."""
         # TODO: implement
+
+    def _stop_api(self) -> None:
+        """Stop application API."""
+        # TODO: implement
+
+    def _handle_termination(self) -> None:
+        """Handle termination signal."""
+        self._stop_api()
+        self._stop_generators()
+        self._termination_event.set()
